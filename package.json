@@ -1,0 +1,44 @@
+{
+  "name": "rebenchdb",
+  "version": "0.1.0",
+  "description": "A Web-Based Database for ReBench Results",
+  "main": "index.js",
+  "author": {
+    "name": "Stefan Marr",
+    "email": "git@stefan-marr.de"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "koa": "^2.11.0",
+    "koa-router": "^7.4.0",
+    "pg": "7.14.0"
+  },
+  "devDependencies": {
+    "@types/chai": "4.1.3",
+    "@types/mocha": "5.2.7",
+    "@types/koa": "2.11.0",
+    "@types/koa-router": "7.0.28",
+    "@types/pg": "7.4.8",
+    "chai": "4.2.0",
+    "mocha": "6.2.2",
+    "nock": "11.7.0",
+    "source-map-support": "0.5.16",
+    "tslint": "5.20.1",
+    "typescript": "3.4.3",
+    "typescript-formatter": "7.2.2",
+    "typescript-json-schema": "0.41.0",
+    "ajv": "6.10.2"
+  },
+  "scripts": {
+    "postinstall": "npm run compile",
+    "start": "node ./dist/src/index.js",
+    "compile": "tsc && npm run copy-resources",
+    "copy-resources": "cp src/db.sql dist/src/ && cp tests/*.json dist/tests/",
+    "format": "tsfmt -r",
+    "verifyformat": "tsfmt --verify",
+    "verify": "npm run lint && npm run verifyformat",
+    "lint": "tslint -c tslint.json --project tsconfig.json",
+    "watch": "tsc -w",
+    "test": "mocha --require source-map-support/register -t 15000 -u bdd ./dist/tests/"
+  }
+}
