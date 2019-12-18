@@ -1,0 +1,41 @@
+{
+  "rules": {
+    "no-unused-expression": false,
+    "no-duplicate-variable": true,
+    "no-trailing-whitespace": true,
+    "no-var-keyword": true,
+    "one-line": [true, "check-catch", "check-finally", "check-else",
+      "check-open-brace", "check-whitespace"],
+    "whitespace": [
+      true,
+      "check-branch",
+      "check-decl",
+      "check-operator",
+      "check-module",
+      "check-separator",
+      "check-type",
+      "check-typecast"],
+    "typedef-whitespace": [
+    	true, {
+        "call-signature": "nospace",
+        "index-signature": "nospace",
+        "parameter": "nospace",
+        "property-declaration": "nospace",
+        "variable-declaration": "nospace"
+    	}, {
+        "call-signature": "space",
+        "index-signature": "space",
+        "parameter": "space",
+        "property-declaration": "space",
+        "variable-declaration": "space"}],
+    "quotemark": [true, "single", "avoid-escape"],
+    "curly": true,
+    "comment-format": [true, "check-space"],
+    "class-name": true,
+    "semicolon": [true, "always"],
+    "member-access": [
+      true
+    ],
+    "triple-equals": true
+  }
+}
