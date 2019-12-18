@@ -142,6 +142,23 @@ describe('Recording a ReBench execution', () => {
     expect(s.commitMsg).to.equal(result.commitmessage);
   });
 
+  it('should accept environment information', async () => {
+    const e = basicTestData.env;
+    const result = await db.recordEnvironment(e);
+    expect(e.hostName).to.equal(result.hostname);
+    expect(e.osType).to.equal(result.ostype);
+  });
+
+  it('should accept experiment information', async () => {
+    const e = basicTestData.env;
+    const env = await db.recordEnvironment(e);
+
+    const result = await db.recordExperiment(basicTestData, env);
+    expect(e.userName).to.equal(result.username);
+    expect(e.manualRun).to.equal(result.manualrun);
+    expect(env.id).to.equal(result.envid);
+  });
+
   after(async () => {
     db.client.query('ROLLBACK');
   });

@@ -72,8 +72,16 @@ CREATE TABLE Experiment (
   sourceId smallint,
   manualRun bool,
   startTime timestamp,
-  endTime timestamp,
+
+  -- can only be supplied when everything is done
+  -- but we may want to start storing data before
+  endTime timestamp NULL,
+
   projectId smallint,
+
+  -- We assume that there is only
+  -- a single experiment per user/envirnment/startTime.
+  unique (username, envId, startTime),
 
   foreign key (projectId) references Project (id),
   foreign key (envId) references Environment (id),

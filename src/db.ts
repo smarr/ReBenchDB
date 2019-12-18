@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { BenchmarkData, Executor, Suite, Benchmark, RunId, Source } from './api';
+import { BenchmarkData, Executor, Suite, Benchmark, RunId, Source, Environment } from './api';
 import { Pool, PoolConfig, PoolClient } from 'pg';
 
 export function loadScheme() {
@@ -14,6 +14,8 @@ export class Database {
   private readonly benchmarks: Map<string, any>;
   private readonly runs: Map<string, any>;
   private readonly sources: Map<string, any>;
+  private readonly envs: Map<string, any>;
+  private readonly exps: Map<string, any>;
 
   private readonly queries = {
     fetchExecutorByName: 'SELECT * from Executor WHERE name = $1',
@@ -38,7 +40,15 @@ export class Database {
     insertSource: `INSERT INTO Source (
         repoURL, branchOrTag, commitId, commitMessage,
         authorName, authorEmail, committerName, committerEmail)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+    fetchEnvByHostName: 'SELECT * from Environment WHERE hostname =  $1',
+    insertEnv: `INSERT INTO Environment (hostname, osType) VALUES ($1, $2) RETURNING *`,
+
+    // TODO: add  AND startTime = $3
+    fetchExpByUserEnvStart: 'SELECT * from Experiment WHERE username = $1 AND envId = $2',
+    // TODO: add other fields
+    insertExp: `INSERT INTO Experiment (username, envId, sourceId, manualRun)
+      VALUES ($1, $2, $3, $4) RETURNING *`
   };
 
   constructor(config: PoolConfig) {
@@ -48,6 +58,8 @@ export class Database {
     this.benchmarks = new Map();
     this.runs = new Map();
     this.sources = new Map();
+    this.envs = new Map();
+    this.exps = new Map();
   }
 
   public clearCache() {
@@ -56,6 +68,8 @@ export class Database {
     this.benchmarks.clear();
     this.runs.clear();
     this.sources.clear();
+    this.envs.clear();
+    this.exps.clear();
   }
 
 
@@ -137,8 +151,47 @@ export class Database {
     return result.rows[0];
   }
 
-  public recordData(data: BenchmarkData) {
-   // data.data[0].run_id.benchmark.suite.executor.
+  public async recordEnvironment(e: Environment) {
+    if (this.envs.has(e.hostName)) {
+      return this.envs.get(e.hostName);
+    }
+
+    let result = await this.client.query(this.queries.fetchEnvByHostName, [e.hostName]);
+    if (result.rowCount === 0) {
+      result = await this.client.query(this.queries.insertEnv, [
+        // TODO: much more missing
+        e.hostName, e.osType ]);
+    }
+    console.assert(result.rowCount === 1);
+    this.sources.set(e.hostName, result.rows[0]);
+    return result.rows[0];
+  }
+
+  public async recordExperiment(data: BenchmarkData, env) {
+    const e = data.env;
+
+    // TODO: need to use startTime
+    const cacheKey = `${e.userName}-${env.id}-`;
+    if (this.exps.has(cacheKey)) {
+      return this.exps.get(cacheKey);
+    }
+
+    let result = await this.client.query(this.queries.fetchExpByUserEnvStart, [
+      // TODO: add e.startTime
+      e.userName, env.id]);
+    if (result.rowCount === 0) {
+      const source = await this.recordSource(data.source);
+      result = await this.client.query(this.queries.insertExp, [
+        // TODO: much more missing
+        e.userName, env.id, source.id, e.manualRun, /* TODO...*/ ]);
+    }
+    console.assert(result.rowCount === 1);
+    this.sources.set(e.hostName, result.rows[0]);
+    return result.rows[0];
+  }
+
+  public async recordData(data: BenchmarkData) {
+    const env = await this.recordEnvironment(data.env);
   }
 }
 
