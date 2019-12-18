@@ -62,6 +62,7 @@ export class Database {
 
     fetchCriterionByNameUnit: 'SELECT * from Criterion WHERE name = $1 AND unit = $2',
     insertCriterion: 'INSERT INTO Criterion (name, unit) VALUES ($1, $2) RETURNING *',
+    fetchUnit: 'SELECT * from Unit WHERE name = $1',
     insertUnit: 'INSERT INTO Unit (name) VALUES ($1)'
   };
 
@@ -184,6 +185,13 @@ export class Database {
         e.userName, env.id, source.id, e.manualRun, /* TODO...*/ ]);
   }
 
+  private async recordUnit(unitName: string) {
+    const result = await this.client.query(this.queries.fetchUnit, [unitName]);
+    if (result.rowCount === 0) {
+      await this.client.query(this.queries.insertUnit, [unitName]);
+    }
+  }
+
   public async recordCriterion(c: Criterion) {
     const cacheKey = `${c.c}::${c.u}`;
 
@@ -191,7 +199,7 @@ export class Database {
       return this.criteria.get(cacheKey);
     }
 
-    await this.client.query(this.queries.insertUnit, [c.u]);
+    await this.recordUnit(c.u);
     return this.recordCached(this.criteria, cacheKey,
       this.queries.fetchCriterionByNameUnit, [c.c, c.u],
       this.queries.insertCriterion, [c.c, c.u]);
