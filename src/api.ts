@@ -56,16 +56,6 @@ export interface DataPoint {
 }
 
 export interface Experiment {
-  userName: string;
-
-  /**
-   * Is set true when the data was gathered by a manual run,
-   * possibly on a developer machine, instead of the usual benchmark server.
-   */
-  manualRun: boolean;
-
-  env: Environment;
-  source: Source;
   startTime: number;
   endTime: number;
 
@@ -77,26 +67,33 @@ export interface Source {
   branchOrTag: string;
   commitId: string;
   commitMsg: string;
-  author: string;
-  committer: string;
+  authorName: string;
+  authorEmail: string;
+  committerName: string;
+  committerEmail: string;
 }
 
 export interface Environment {
-  /** Host Name */
-  host: string;
-  hardware: {
-    cpu: string;
-    memory: string;
-    osType: string;
-  };
+  hostName: string;
+  cpu: string;
+  memory: string;
+  osType: string;
   software: VersionInfo[];
-}
 
+  userName: string;
+
+  /**
+   * Is set true when the data was gathered by a manual run,
+   * possibly on a developer machine, instead of the usual benchmark server.
+   */
+  manualRun: boolean;
+}
 
 export interface BenchmarkData {
   data: Run[];
   criteria: Criterion[];
   env: Environment;
+  source: Source;
 }
 
 export interface Criterion {
