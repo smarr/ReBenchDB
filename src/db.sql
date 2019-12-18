@@ -54,13 +54,15 @@ CREATE TABLE Project (
 );
 
 CREATE TABLE Source (
-  id smallint primary key,
+  id serial primary key,
   repoURL varchar,
   branchOrTag varchar,
-  commitId varchar,
+  commitId varchar unique,
   commitMessage text,
-  author varchar,
-  committer varchar
+  authorName varchar,
+  authorEmail varchar,
+  committerName varchar,
+  committerEmail varchar
 );
 
 CREATE TABLE Experiment (

@@ -135,6 +135,13 @@ describe('Recording a ReBench execution', () => {
     expectIdsToBeUnique(ids);
   });
 
+  it('should accept source information', async () => {
+    const s = basicTestData.source;
+    const result = await db.recordSource(s);
+    expect(s.commitId).to.equal(result.commitid);
+    expect(s.commitMsg).to.equal(result.commitmessage);
+  });
+
   after(async () => {
     db.client.query('ROLLBACK');
   });
