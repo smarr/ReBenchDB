@@ -28,7 +28,7 @@ export class Database {
     fetchBenchmarkByName: 'SELECT * from Benchmark WHERE name = $1',
     insertBenchmark: 'INSERT INTO Benchmark (name, description) VALUES ($1, $2) RETURNING *',
 
-    fetchRunByUrl: 'SELECT * from Run WHERE cmdline = $1',
+    fetchRunByCmd: 'SELECT * from Run WHERE cmdline = $1',
     insertRun: `INSERT INTO Run (
         cmdline,
         benchmarkId, execId, suiteId,
@@ -88,7 +88,6 @@ export class Database {
     this.criteria.clear();
   }
 
-
   public async initializeDatabase() {
     const schema = loadScheme();
     return await this.client.query(schema);
@@ -98,19 +97,23 @@ export class Database {
     this.client = <PoolClient> await this.client.connect();
   }
 
-  private async recordNameDesc(item, cache, fetchQ, insertQ) {
-    if (cache.has(item.name)) {
-      return cache.get(item.name);
+  private async recordCached(cache, cacheKey, fetchQ, qVals, insertQ, insertVals) {
+    if (cache.has(cacheKey)) {
+      return cache.get(cacheKey);
     }
 
-    let result = await this.client.query(fetchQ, [item.name]);
+    let result = await this.client.query(fetchQ, qVals);
     if (result.rowCount === 0) {
-      result = await this.client.query(insertQ, [item.name, item.desc]);
+      result = await this.client.query(insertQ, insertVals);
     }
 
     console.assert(result.rowCount === 1);
-    this.executors.set(item.name, result.rows[0]);
+    cache.set(cacheKey, result.rows[0]);
     return result.rows[0];
+  }
+
+  private async recordNameDesc(item, cache, fetchQ, insertQ) {
+    return this.recordCached(cache, item.name, fetchQ, [item.name], insertQ, [item.name, item.desc]);
   }
 
   public async recordExecutor(e: Executor) {
@@ -137,50 +140,29 @@ export class Database {
     const suite = await this.recordSuite(run.benchmark.suite);
     const benchmark = await this.recordBenchmark(run.benchmark);
 
-    let result = await this.client.query(this.queries.fetchRunByUrl, [run.cmdline]);
-    if (result.rowCount === 0) {
-      result = await this.client.query(this.queries.insertRun, [
-        run.cmdline, benchmark.id, exec.id, suite.id, run.location,
-        run.cores, run.input_size, run.var_value,
-        run.benchmark.run_details.max_invocation_time,
-        run.benchmark.run_details.min_iteration_time,
-        run.benchmark.run_details.warmup]);
-    }
-    console.assert(result.rowCount === 1);
-    this.runs.set(run.cmdline, result.rows[0]);
-    return result.rows[0];
+    return this.recordCached(this.runs, run.cmdline,
+      this.queries.fetchRunByCmd, [run.cmdline],
+      this.queries.insertRun, [run.cmdline, benchmark.id, exec.id, suite.id, run.location,
+      run.cores, run.input_size, run.var_value,
+      run.benchmark.run_details.max_invocation_time,
+      run.benchmark.run_details.min_iteration_time,
+      run.benchmark.run_details.warmup]);
   }
 
   public async recordSource(s: Source) {
-    if (this.sources.has(s.commitId)) {
-      return this.sources.get(s.commitId);
-    }
-
-    let result = await this.client.query(this.queries.fetchSourceByCommitId, [s.commitId]);
-    if (result.rowCount === 0) {
-      result = await this.client.query(this.queries.insertSource, [
+    return this.recordCached(this.sources, s.commitId,
+      this.queries.fetchSourceByCommitId, [s.commitId],
+      this.queries.insertSource, [
         s.repoURL, s.branchOrTag, s.commitId, s.commitMsg,
         s.authorName, s.authorEmail, s.committerName, s.committerEmail]);
-    }
-    console.assert(result.rowCount === 1);
-    this.sources.set(s.commitId, result.rows[0]);
-    return result.rows[0];
   }
 
   public async recordEnvironment(e: Environment) {
-    if (this.envs.has(e.hostName)) {
-      return this.envs.get(e.hostName);
-    }
-
-    let result = await this.client.query(this.queries.fetchEnvByHostName, [e.hostName]);
-    if (result.rowCount === 0) {
-      result = await this.client.query(this.queries.insertEnv, [
+    return this.recordCached(this.envs, e.hostName,
+      this.queries.fetchEnvByHostName, [e.hostName],
+      this.queries.insertEnv, [
         // TODO: much more missing
         e.hostName, e.osType ]);
-    }
-    console.assert(result.rowCount === 1);
-    this.envs.set(e.hostName, result.rows[0]);
-    return result.rows[0];
   }
 
   public async recordExperiment(data: BenchmarkData, env) {
@@ -192,34 +174,27 @@ export class Database {
       return this.exps.get(cacheKey);
     }
 
-    let result = await this.client.query(this.queries.fetchExpByUserEnvStart, [
-      // TODO: add e.startTime
-      e.userName, env.id]);
-    if (result.rowCount === 0) {
-      const source = await this.recordSource(data.source);
-      result = await this.client.query(this.queries.insertExp, [
+    const source = await this.recordSource(data.source);
+    return this.recordCached(this.exps, cacheKey,
+      this.queries.fetchExpByUserEnvStart, [
+        // TODO: add e.startTime
+        e.userName, env.id],
+      this.queries.insertExp, [
         // TODO: much more missing
         e.userName, env.id, source.id, e.manualRun, /* TODO...*/ ]);
-    }
-    console.assert(result.rowCount === 1);
-    this.exps.set(cacheKey, result.rows[0]);
-    return result.rows[0];
   }
 
   public async recordCriterion(c: Criterion) {
     const cacheKey = `${c.c}::${c.u}`;
+
     if (this.criteria.has(cacheKey)) {
       return this.criteria.get(cacheKey);
     }
 
-    let result = await this.client.query(this.queries.fetchCriterionByNameUnit, [c.c, c.u]);
-    if (result.rowCount === 0) {
-      await this.client.query(this.queries.insertUnit, [c.u]);
-      result = await this.client.query(this.queries.insertCriterion, [c.c, c.u]);
-    }
-    console.assert(result.rowCount === 1);
-    this.criteria.set(cacheKey, result.rows[0]);
-    return result.rows[0];
+    await this.client.query(this.queries.insertUnit, [c.u]);
+    return this.recordCached(this.criteria, cacheKey,
+      this.queries.fetchCriterionByNameUnit, [c.c, c.u],
+      this.queries.insertCriterion, [c.c, c.u]);
   }
 
   private async resolveCriteria(data: Criterion[]) {
