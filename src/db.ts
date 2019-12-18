@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { BenchmarkData, Executor, Suite, Benchmark, RunId, Source, Environment } from './api';
+import { BenchmarkData, Executor, Suite, Benchmark, RunId, Source, Environment, Criterion } from './api';
 import { Pool, PoolConfig, PoolClient } from 'pg';
 
 export function loadScheme() {
@@ -16,6 +16,7 @@ export class Database {
   private readonly sources: Map<string, any>;
   private readonly envs: Map<string, any>;
   private readonly exps: Map<string, any>;
+  private readonly criteria: Map<string, any>;
 
   private readonly queries = {
     fetchExecutorByName: 'SELECT * from Executor WHERE name = $1',
@@ -48,7 +49,20 @@ export class Database {
     fetchExpByUserEnvStart: 'SELECT * from Experiment WHERE username = $1 AND envId = $2',
     // TODO: add other fields
     insertExp: `INSERT INTO Experiment (username, envId, sourceId, manualRun)
-      VALUES ($1, $2, $3, $4) RETURNING *`
+      VALUES ($1, $2, $3, $4) RETURNING *`,
+
+    //  [ runId, expId, invocation, iteration, critId, value]
+    insertMeasurement: {
+      name: 'insertMeasurement',
+      text: `INSERT INTO Measurement
+          (runId, expId, invocation, iteration, criterion, value)
+        VALUES ($1, $2, $3, $4, $5, $6)`,
+      values: <any[]> []
+    },
+
+    fetchCriterionByNameUnit: 'SELECT * from Criterion WHERE name = $1 AND unit = $2',
+    insertCriterion: 'INSERT INTO Criterion (name, unit) VALUES ($1, $2) RETURNING *',
+    insertUnit: 'INSERT INTO Unit (name) VALUES ($1)'
   };
 
   constructor(config: PoolConfig) {
@@ -60,6 +74,7 @@ export class Database {
     this.sources = new Map();
     this.envs = new Map();
     this.exps = new Map();
+    this.criteria = new Map();
   }
 
   public clearCache() {
@@ -70,6 +85,7 @@ export class Database {
     this.sources.clear();
     this.envs.clear();
     this.exps.clear();
+    this.criteria.clear();
   }
 
 
@@ -163,7 +179,7 @@ export class Database {
         e.hostName, e.osType ]);
     }
     console.assert(result.rowCount === 1);
-    this.sources.set(e.hostName, result.rows[0]);
+    this.envs.set(e.hostName, result.rows[0]);
     return result.rows[0];
   }
 
@@ -186,12 +202,54 @@ export class Database {
         e.userName, env.id, source.id, e.manualRun, /* TODO...*/ ]);
     }
     console.assert(result.rowCount === 1);
-    this.sources.set(e.hostName, result.rows[0]);
+    this.exps.set(cacheKey, result.rows[0]);
     return result.rows[0];
+  }
+
+  public async recordCriterion(c: Criterion) {
+    const cacheKey = `${c.c}::${c.u}`;
+    if (this.criteria.has(cacheKey)) {
+      return this.criteria.get(cacheKey);
+    }
+
+    let result = await this.client.query(this.queries.fetchCriterionByNameUnit, [c.c, c.u]);
+    if (result.rowCount === 0) {
+      await this.client.query(this.queries.insertUnit, [c.u]);
+      result = await this.client.query(this.queries.insertCriterion, [c.c, c.u]);
+    }
+    console.assert(result.rowCount === 1);
+    this.criteria.set(cacheKey, result.rows[0]);
+    return result.rows[0];
+  }
+
+  private async resolveCriteria(data: Criterion[]) {
+    const criteria = new Map();
+    for (const c of data) {
+      criteria.set(c.i, await this.recordCriterion(c));
+    }
+    return criteria;
   }
 
   public async recordData(data: BenchmarkData) {
     const env = await this.recordEnvironment(data.env);
+    const exp = await this.recordExperiment(data, env);
+
+    const criteria = await this.resolveCriteria(data.criteria);
+
+    for (const r of data.data) {
+      const run = await this.recordRun(r.run_id);
+      for (const d of r.d) {
+        for (const m of d.m) {
+          await this.recordMeasurement(run.id, exp.id, d.in, d.it, criteria.get(m.c).id, m.v);
+        }
+      }
+    }
+  }
+
+  public async recordMeasurement(runId, expId, invocation: number, iteration: number, critId, value: number) {
+    const q = this.queries.insertMeasurement;
+    q.values = [runId, expId, invocation, iteration, critId, value];
+    return await this.client.query(this.queries.insertMeasurement, );
   }
 }
 

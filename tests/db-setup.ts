@@ -159,6 +159,21 @@ describe('Recording a ReBench execution', () => {
     expect(env.id).to.equal(result.envid);
   });
 
+  it('should accept criterion information', async () => {
+    const c = basicTestData.criteria[0];
+    const criterion = await db.recordCriterion(c);
+    expect(c.c).to.equal(criterion.name);
+    expect(c.u).to.equal(criterion.unit);
+    expect(criterion.id).to.be.a('number');
+    expect(criterion.id).to.be.gte(0);
+  });
+
+  it('should accept all data, and have the measurements persisted', async () => {
+    await db.recordData(basicTestData);
+    const measurements = await db.client.query('SELECT * from Measurement');
+    expect(measurements.rowCount).to.equal(3);
+  });
+
   after(async () => {
     db.client.query('ROLLBACK');
   });

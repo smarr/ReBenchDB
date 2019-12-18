@@ -43,6 +43,8 @@ CREATE TABLE Criterion (
   id serial primary key,
   name varchar,
   unit varchar,
+
+  unique (name, unit),
   foreign key (unit) references Unit (name)
 );
 
@@ -123,7 +125,7 @@ CREATE TABLE Measurement (
   invocation smallint,
   iteration smallint,
 
-  value float4,
+  value float4 NOT NULL,
 
   primary key (iteration, invocation, runId, expId, criterion),
   foreign key (expId) references Experiment (id),
