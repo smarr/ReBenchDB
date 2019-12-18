@@ -60,11 +60,31 @@ export class Database {
       values: <any[]> []
     },
 
+    insertMeasurementBatched10: {
+      name: 'insertMeasurementN',
+      text: `INSERT INTO Measurement
+          (runId, expId, invocation, iteration, criterion, value)
+        VALUES
+          ($1, $2, $3, $4, $5, $6),
+          ($7, $8, $9, $10, $11, $12),
+          ($13, $14, $15, $16, $17, $18),
+          ($19, $20, $21, $22, $23, $24),
+          ($25, $26, $27, $28, $29, $30),
+          ($31, $32, $33, $34, $35, $36),
+          ($37, $38, $39, $40, $41, $42),
+          ($43, $44, $45, $46, $47, $48),
+          ($49, $50, $51, $52, $53, $54),
+          ($55, $56, $57, $58, $59, $60)`,
+      values: <any[]> []
+    },
+
     fetchCriterionByNameUnit: 'SELECT * from Criterion WHERE name = $1 AND unit = $2',
     insertCriterion: 'INSERT INTO Criterion (name, unit) VALUES ($1, $2) RETURNING *',
     fetchUnit: 'SELECT * from Unit WHERE name = $1',
     insertUnit: 'INSERT INTO Unit (name) VALUES ($1)'
   };
+
+  static readonly batchN = 50;
 
   constructor(config: PoolConfig) {
     this.client = new Pool(config);
@@ -76,6 +96,24 @@ export class Database {
     this.envs = new Map();
     this.exps = new Map();
     this.criteria = new Map();
+
+    this.queries.insertMeasurementBatched10.text =
+      `INSERT INTO Measurement
+         (runId, expId, invocation, iteration, criterion, value)
+       VALUES ` + this.generateBatchInsert(Database.batchN, 6);
+
+  }
+
+  private generateBatchInsert(numTuples: number, sizeTuples: number) {
+    let nums: string[] = [];
+    for (let i = 0; i < numTuples; i += 1) {
+      let tupleNums: number[] = [];
+      for (let j = 1; j <= sizeTuples; j += 1) {
+        tupleNums.push(i * sizeTuples + j);
+      }
+      nums.push('($' + tupleNums.join(', $') + ')');
+    }
+    return nums.join(',\n');
   }
 
   public clearCache() {
@@ -220,19 +258,44 @@ export class Database {
     const criteria = await this.resolveCriteria(data.criteria);
 
     for (const r of data.data) {
+      let batchedMs = 0;
+      let batchedValues: any[] = [];
+
       const run = await this.recordRun(r.run_id);
+
       for (const d of r.d) {
         for (const m of d.m) {
-          await this.recordMeasurement(run.id, exp.id, d.in, d.it, criteria.get(m.c).id, m.v);
+          // batched inserts are much faster
+          // so let's do this
+          const values = [run.id, exp.id, d.in, d.it, criteria.get(m.c).id, m.v];
+          batchedMs += 1;
+          batchedValues = batchedValues.concat(values);
+          if (batchedMs === Database.batchN) {
+            await this.recordMeasurementBatched(batchedValues);
+            batchedValues = [];
+            batchedMs = 0;
+          }
         }
+      }
+
+      while (batchedValues.length > 0) {
+        const rest = batchedValues.splice(6); // there are 6 parameters, i.e., values
+        await this.recordMeasurement(batchedValues);
+        batchedValues = rest;
       }
     }
   }
 
-  public async recordMeasurement(runId, expId, invocation: number, iteration: number, critId, value: number) {
+  public async recordMeasurementBatched(values: any[]) {
+    const q = this.queries.insertMeasurementBatched10;
+    q.values = values; // [runId, expId, invocation, iteration, critId, value];
+    return await this.client.query(this.queries.insertMeasurementBatched10);
+  }
+
+  public async recordMeasurement(values: any[]) {
     const q = this.queries.insertMeasurement;
-    q.values = [runId, expId, invocation, iteration, critId, value];
-    return await this.client.query(this.queries.insertMeasurement, );
+    q.values = values; // [runId, expId, invocation, iteration, critId, value];
+    return await this.client.query(this.queries.insertMeasurement);
   }
 }
 
