@@ -49,6 +49,7 @@ describe('Setup of PostgreSQL DB', () => {
 describe('Recording a ReBench execution', () => {
   let db: Database;
   let basicTestData: BenchmarkData;
+  let largeTestData: BenchmarkData;
 
   before(async () => {
     db = new Database(testDbConfig);
@@ -61,6 +62,8 @@ describe('Recording a ReBench execution', () => {
 
     basicTestData = JSON.parse(
       readFileSync(`${__dirname}/../../tests/small-payload.json`).toString());
+    largeTestData = JSON.parse(
+      readFileSync(`${__dirname}/../../tests/large-payload.json`).toString());
   });
 
   afterEach(async () => {
@@ -168,10 +171,16 @@ describe('Recording a ReBench execution', () => {
     expect(criterion.id).to.be.gte(0);
   });
 
-  it('should accept all data, and have the measurements persisted', async () => {
+  it('should accept all data (small-payload), and have the measurements persisted', async () => {
     await db.recordData(basicTestData);
     const measurements = await db.client.query('SELECT * from Measurement');
     expect(measurements.rowCount).to.equal(3);
+  });
+
+  it('should accept all data (large-payload), and have the measurements persisted', async () => {
+    await db.recordData(largeTestData);
+    const measurements = await db.client.query('SELECT count(*) as cnt from Measurement');
+    expect(parseInt(measurements.rows[0].cnt)).to.equal(459928);
   });
 
   after(async () => {
