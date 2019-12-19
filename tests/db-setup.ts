@@ -5,10 +5,10 @@ import { readFileSync } from 'fs';
 
 // create database test_rdb;
 const testDbConfig = {
-  // user: '',
-  // password: '',
-  host: 'localhost',
-  database: 'test_rdb3',
+  user: process.env.RDB_USER || '',
+  password: process.env.RDB_PASS || '',
+  host: process.env.RDB_HOST || 'localhost',
+  database: process.env.RDB_DB || 'test_rdb3',
   port: 5432
 };
 
