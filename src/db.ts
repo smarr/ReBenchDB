@@ -3,7 +3,7 @@ import { BenchmarkData, Executor, Suite, Benchmark, RunId, Source, Environment, 
 import { Pool, PoolConfig, PoolClient } from 'pg';
 
 export function loadScheme() {
-  return readFileSync(`${__dirname}/db.sql`).toString();
+  return readFileSync(`${__dirname}/../../src/db.sql`).toString();
 }
 
 export class Database {
@@ -101,7 +101,6 @@ export class Database {
       `INSERT INTO Measurement
          (runId, expId, invocation, iteration, criterion, value)
        VALUES ` + this.generateBatchInsert(Database.batchN, 6);
-
   }
 
   private generateBatchInsert(numTuples: number, sizeTuples: number) {

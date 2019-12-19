@@ -32,13 +32,13 @@
   "scripts": {
     "postinstall": "npm run compile",
     "start": "node ./dist/src/index.js",
-    "compile": "tsc && npm run copy-resources",
-    "copy-resources": "cp src/db.sql dist/src/ && cp tests/*.json dist/tests/",
+    "compile": "tsc && npm run prep-resources",
+    "prep-resources": "(cd tests; bzip2 -d -f -k large-payload.json.bz2)",
     "format": "tsfmt -r",
     "verifyformat": "tsfmt --verify",
     "verify": "npm run lint && npm run verifyformat",
     "lint": "tslint -c tslint.json --project tsconfig.json",
     "watch": "tsc -w",
-    "test": "mocha --require source-map-support/register -t 15000 -u bdd ./dist/tests/"
+    "test": "mocha --require source-map-support/register -t 600000 -u bdd ./dist/tests/"
   }
 }
