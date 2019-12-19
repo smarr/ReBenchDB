@@ -57,7 +57,7 @@ export class Database {
       text: `INSERT INTO Measurement
           (runId, expId, invocation, iteration, criterion, value)
         VALUES ($1, $2, $3, $4, $5, $6)`,
-      values: <any[]> []
+      values: <any[]>[]
     },
 
     insertMeasurementBatched10: {
@@ -75,7 +75,7 @@ export class Database {
           ($43, $44, $45, $46, $47, $48),
           ($49, $50, $51, $52, $53, $54),
           ($55, $56, $57, $58, $59, $60)`,
-      values: <any[]> []
+      values: <any[]>[]
     },
 
     fetchCriterionByNameUnit: 'SELECT * from Criterion WHERE name = $1 AND unit = $2',
@@ -190,17 +190,17 @@ export class Database {
   public async recordSource(s: Source) {
     return this.recordCached(this.sources, s.commitId,
       this.queries.fetchSourceByCommitId, [s.commitId],
-      this.queries.insertSource, [
-        s.repoURL, s.branchOrTag, s.commitId, s.commitMsg,
-        s.authorName, s.authorEmail, s.committerName, s.committerEmail]);
+      this.queries.insertSource,
+      [s.repoURL, s.branchOrTag, s.commitId, s.commitMsg,
+      s.authorName, s.authorEmail, s.committerName, s.committerEmail]);
   }
 
   public async recordEnvironment(e: Environment) {
     return this.recordCached(this.envs, e.hostName,
       this.queries.fetchEnvByHostName, [e.hostName],
       this.queries.insertEnv, [
-        // TODO: much more missing
-        e.hostName, e.osType ]);
+      // TODO: much more missing
+      e.hostName, e.osType]);
   }
 
   public async recordExperiment(data: BenchmarkData, env) {
@@ -215,11 +215,11 @@ export class Database {
     const source = await this.recordSource(data.source);
     return this.recordCached(this.exps, cacheKey,
       this.queries.fetchExpByUserEnvStart, [
-        // TODO: add e.startTime
-        e.userName, env.id],
+      // TODO: add e.startTime
+      e.userName, env.id],
       this.queries.insertExp, [
-        // TODO: much more missing
-        e.userName, env.id, source.id, e.manualRun, /* TODO...*/ ]);
+      // TODO: much more missing
+      e.userName, env.id, source.id, e.manualRun, /* TODO...*/]);
   }
 
   private async recordUnit(unitName: string) {

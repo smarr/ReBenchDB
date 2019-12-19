@@ -13,7 +13,7 @@ describe('Ensure Test Payloads conform to API', () => {
     const program = getProgramFromFiles([`${__dirname}/../../src/api.ts`], compilerOptions);
     const schema = generateSchema(program, 'BenchmarkData');
 
-    const ajv = new Ajv({allErrors: true});
+    const ajv = new Ajv({ allErrors: true });
     validateFn = ajv.compile(<any> schema);
   });
 
