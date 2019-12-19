@@ -13,6 +13,6 @@ services:
 before_script:
   - psql -c 'create database travis_ci_test;' -U postgres
 
-build:
+script:
   - npm test
   - npm run verify
