@@ -1,20 +1,13 @@
 import { readFileSync } from 'fs';
-import { getProgramFromFiles, generateSchema, CompilerOptions } from 'typescript-json-schema';
 import Ajv from 'ajv';
 import { expect } from 'chai';
+import { createValidator } from '../src/api-validator';
 
 describe('Ensure Test Payloads conform to API', () => {
   let validateFn: Ajv.ValidateFunction;
 
   before(() => {
-    const compilerOptions: CompilerOptions = {
-      strictNullChecks: true
-    };
-    const program = getProgramFromFiles([`${__dirname}/../../src/api.ts`], compilerOptions);
-    const schema = generateSchema(program, 'BenchmarkData');
-
-    const ajv = new Ajv({ allErrors: true });
-    validateFn = ajv.compile(<any> schema);
+    validateFn = createValidator();
   });
 
   it('should validate small-payload.json', () => {
