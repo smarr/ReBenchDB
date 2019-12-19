@@ -5,9 +5,7 @@ node_js:
   - 13.5.0
 
 env:
-  - RDB_DB=travis_ci_test
-  - RDB_USER=postgres
-  - RDB_PASS=
+  - RDB_DB=travis_ci_test RDB_USER=postgres RDB_PASS=
 
 services:
   - postgresql
