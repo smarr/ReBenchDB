@@ -84,7 +84,7 @@ export class Database {
     insertUnit: 'INSERT INTO Unit (name) VALUES ($1)'
   };
 
-  static readonly batchN = 50;
+  private static readonly batchN = 50;
 
   constructor(config: PoolConfig) {
     this.client = new Pool(config);
