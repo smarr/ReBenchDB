@@ -126,9 +126,18 @@ export class Database {
     this.criteria.clear();
   }
 
+  private async needsTables() {
+    const result = await this.client.query(`SELECT *
+      FROM   information_schema.tables
+      WHERE  table_name = 'executor'`);
+    return result.rowCount <= 0;
+  }
+
   public async initializeDatabase() {
-    const schema = loadScheme();
-    return await this.client.query(schema);
+    if (await this.needsTables()) {
+      const schema = loadScheme();
+      return await this.client.query(schema);
+    }
   }
 
   public async activateTransactionSupport() {

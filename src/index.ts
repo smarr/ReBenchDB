@@ -45,5 +45,10 @@ ${e.stack}`;
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-console.log(`Starting server on localhost:${port}`);
-app.listen(port);
+(async () => {
+  console.log('Initialize Database');
+  await db.initializeDatabase();
+
+  console.log(`Starting server on localhost:${port}`);
+  app.listen(port);
+})();
