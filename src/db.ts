@@ -78,6 +78,13 @@ export class Database {
       values: <any[]>[]
     },
 
+    fetchMaxMeasurements: `SELECT
+        runId, criterion, invocation as inv, max(iteration) as ite
+      FROM Measurement
+      WHERE expId = $1
+      GROUP BY runId, criterion, invocation
+      ORDER BY runId, inv, ite, criterion`,
+
     fetchCriterionByNameUnit: 'SELECT * from Criterion WHERE name = $1 AND unit = $2',
     insertCriterion: 'INSERT INTO Criterion (name, unit) VALUES ($1, $2) RETURNING *',
     fetchUnit: 'SELECT * from Unit WHERE name = $1',
@@ -259,6 +266,44 @@ export class Database {
     return criteria;
   }
 
+  private async retrieveAvailableMeasurements(expId) {
+    const results = await this.client.query(this.queries.fetchMaxMeasurements, [expId]);
+    const measurements = {};
+    for (const r of results.rows) {
+      // runid, criterion, inv, ite
+      if (!(r.runid in measurements)) {
+        measurements[r.runid] = {};
+      }
+
+      const run = measurements[r.runid];
+
+      if (!(r.criterion in run)) {
+        run[r.criterion] = {};
+      }
+
+      const crit = run[r.criterion];
+
+      console.assert(!(r.inv in crit), `${r.runid}, ${r.criterion}, ${r.inv} in ${JSON.stringify(crit)}`);
+      crit[r.inv] = r.ite;
+    }
+
+    return measurements;
+  }
+
+  private alreadyRecorded(measurements, [runId, _expId, inv, ite, critId, _val]: any[]) {
+    if (runId in measurements) {
+      const run = measurements[runId];
+      if (critId in run) {
+        const crit = run[critId];
+        if (inv in crit) {
+          return crit[inv] <= ite;
+        }
+      }
+    }
+
+    return false;
+  }
+
   public async recordData(data: BenchmarkData) {
     const env = await this.recordEnvironment(data.env);
     const exp = await this.recordExperiment(data, env);
@@ -271,11 +316,17 @@ export class Database {
 
       const run = await this.recordRun(r.run_id);
 
+      const availableMs = await this.retrieveAvailableMeasurements(exp.id);
+
       for (const d of r.d) {
         for (const m of d.m) {
           // batched inserts are much faster
           // so let's do this
           const values = [run.id, exp.id, d.in, d.it, criteria.get(m.c).id, m.v];
+          if (this.alreadyRecorded(availableMs, values)) {
+            // then,just skip this one.
+            continue;
+          }
           batchedMs += 1;
           batchedValues = batchedValues.concat(values);
           if (batchedMs === Database.batchN) {
