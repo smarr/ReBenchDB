@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "koa": "^2.11.0",
+    "koa-body": "4.1.1",
     "koa-router": "^7.4.0",
     "pg": "7.14.0"
   },
