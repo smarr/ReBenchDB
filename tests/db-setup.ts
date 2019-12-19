@@ -184,6 +184,7 @@ describe('Recording a ReBench execution', () => {
   });
 
   after(async () => {
-    db.client.query('ROLLBACK');
+    await db.client.query('ROLLBACK');
+    await (<any> db.client).end();
   });
 });
