@@ -49,8 +49,6 @@ ${validateFn.errors}`;
 // DEBUG: koaBody({includeUnparsed: true})
 router.put('/rebenchdb/results', koaBody(), async ctx => {
   const data: BenchmarkData = await ctx.request.body;
-
-
   ctx.type = 'text';
 
   if (DEBUG) {

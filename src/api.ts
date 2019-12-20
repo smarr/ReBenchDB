@@ -55,13 +55,6 @@ export interface DataPoint {
   m: Measure[];
 }
 
-export interface Experiment {
-  startTime: number;
-  endTime: number;
-
-  projectName: string;
-}
-
 export interface Source {
   repoURL: string;
   branchOrTag: string;
@@ -94,6 +87,10 @@ export interface BenchmarkData {
   criteria: Criterion[];
   env: Environment;
   source: Source;
+
+  startTime: string;
+  endTime: string | null;
+  projectName: string | null; // TODO: remove the null support and make it mandatory
 }
 
 export interface Criterion {

@@ -73,11 +73,11 @@ CREATE TABLE Experiment (
   envId smallint,
   sourceId smallint,
   manualRun bool,
-  startTime timestamp,
+  startTime timestamp with time zone,
 
   -- can only be supplied when everything is done
   -- but we may want to start storing data before
-  endTime timestamp NULL,
+  endTime timestamp with time zone NULL,
 
   projectId smallint,
 

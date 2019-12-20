@@ -45,13 +45,11 @@ export class Database {
     fetchEnvByHostName: 'SELECT * from Environment WHERE hostname =  $1',
     insertEnv: `INSERT INTO Environment (hostname, osType) VALUES ($1, $2) RETURNING *`,
 
-    // TODO: add  AND startTime = $3
-    fetchExpByUserEnvStart: 'SELECT * from Experiment WHERE username = $1 AND envId = $2',
-    // TODO: add other fields
-    insertExp: `INSERT INTO Experiment (username, envId, sourceId, manualRun)
-      VALUES ($1, $2, $3, $4) RETURNING *`,
+    fetchExpByUserEnvStart: 'SELECT * from Experiment WHERE username = $1 AND envId = $2 AND startTime = $3',
+    // TODO: add projectId
+    insertExp: `INSERT INTO Experiment (username, envId, sourceId, manualRun, startTime)
+      VALUES ($1, $2, $3, $4, $5) RETURNING *`,
 
-    //  [ runId, expId, invocation, iteration, critId, value]
     insertMeasurement: {
       name: 'insertMeasurement',
       text: `INSERT INTO Measurement
@@ -222,8 +220,7 @@ export class Database {
   public async recordExperiment(data: BenchmarkData, env) {
     const e = data.env;
 
-    // TODO: need to use startTime
-    const cacheKey = `${e.userName}-${env.id}-`;
+    const cacheKey = `${e.userName}-${env.id}-${data.startTime}`;
     if (this.exps.has(cacheKey)) {
       return this.exps.get(cacheKey);
     }
@@ -231,11 +228,10 @@ export class Database {
     const source = await this.recordSource(data.source);
     return this.recordCached(this.exps, cacheKey,
       this.queries.fetchExpByUserEnvStart, [
-      // TODO: add e.startTime
-      e.userName, env.id],
+      e.userName, env.id, data.startTime],
       this.queries.insertExp, [
       // TODO: much more missing
-      e.userName, env.id, source.id, e.manualRun, /* TODO...*/]);
+      e.userName, env.id, source.id, e.manualRun, data.startTime /* TODO...*/]);
   }
 
   private async recordUnit(unitName: string) {
