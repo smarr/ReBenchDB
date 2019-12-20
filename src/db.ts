@@ -49,7 +49,9 @@ export class Database {
     // TODO: add projectId
     insertExp: `INSERT INTO Experiment (username, envId, sourceId, manualRun, startTime)
       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    countExp: 'SELECT count(*) as cnt from Experiment',
 
+    countMeasurement: 'SELECT count(*) as cnt from Measurement',
     insertMeasurement: {
       name: 'insertMeasurement',
       text: `INSERT INTO Measurement
@@ -147,6 +149,16 @@ export class Database {
 
   public async activateTransactionSupport() {
     this.client = <PoolClient> await this.client.connect();
+  }
+
+  public async getNumberOfExperiments() {
+    const result = await this.client.query(this.queries.countExp);
+    return result.rows[0].cnt;
+  }
+
+  public async getNumberOfMeasurements() {
+    const result = await this.client.query(this.queries.countMeasurement);
+    return result.rows[0].cnt;
   }
 
   private async recordCached(cache, cacheKey, fetchQ, qVals, insertQ, insertVals) {

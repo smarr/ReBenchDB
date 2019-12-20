@@ -6,7 +6,9 @@ import { BenchmarkData } from './api';
 import { createValidator } from './api-validator';
 import ajv from 'ajv';
 
-console.log('Starting up ReBenchDB');
+import { version } from '../package.json';
+
+console.log('Starting ReBenchDB Version ' + version);
 
 const dbConfig = {
   user: process.env.RDB_USER || '',
@@ -27,6 +29,17 @@ const db = new Database(dbConfig);
 
 router.get('/', async ctx => {
   ctx.body = 'TODO';
+  ctx.type = 'text';
+});
+
+router.get('/status', async ctx => {
+  ctx.body = `# ReBenchDB Status
+
+- version ${version}
+- data
+  - measurements ${await db.getNumberOfMeasurements()}
+  - experiments ${await db.getNumberOfExperiments()}
+`;
   ctx.type = 'text';
 });
 
