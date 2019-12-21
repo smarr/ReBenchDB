@@ -1,3 +1,4 @@
+import { readFileSync } from 'fs';
 import Koa from 'koa';
 import koaBody from 'koa-body';
 import Router from 'koa-router';
@@ -8,6 +9,7 @@ import ajv from 'ajv';
 
 import { version } from '../package.json';
 import { initPerfTracker, startRequest, completeRequest } from './perf-tracker';
+import { dashReBenchDb, dashStatistics } from './dashboard';
 
 console.log('Starting ReBenchDB Version ' + version);
 
@@ -29,8 +31,21 @@ const router = new Router();
 const db = new Database(dbConfig);
 
 router.get('/', async ctx => {
-  ctx.body = 'TODO';
-  ctx.type = 'text';
+  ctx.body = readFileSync(`${__dirname}/../../src/views/index.html`);
+  ctx.type = 'html';
+});
+
+router.get('/rebenchdb/dash/:project', async ctx => {
+  if (ctx.params.project === 'rebenchdb') {
+    ctx.body = await dashReBenchDb(db);
+    ctx.type = 'application/json';
+  }
+});
+
+router.get('/rebenchdb/stats', async ctx => {
+  ctx.body = await dashStatistics(db);
+  ctx.body.version = version;
+  ctx.type = 'application/json';
 });
 
 router.get('/status', async ctx => {
