@@ -7,6 +7,7 @@ import { createValidator } from './api-validator';
 import ajv from 'ajv';
 
 import { version } from '../package.json';
+import { initPerfTracker, startRequest, completeRequest } from './perf-tracker';
 
 console.log('Starting ReBenchDB Version ' + version);
 
@@ -61,6 +62,8 @@ ${validateFn.errors}`;
 // curl -X PUT -H "Content-Type: application/json" -d '{"foo":"bar","baz":3}' http://localhost:33333/rebenchdb/results
 // DEBUG: koaBody({includeUnparsed: true})
 router.put('/rebenchdb/results', koaBody(), async ctx => {
+  const start = startRequest();
+
   const data: BenchmarkData = await ctx.request.body;
   ctx.type = 'text';
 
@@ -77,6 +80,12 @@ router.put('/rebenchdb/results', koaBody(), async ctx => {
     ctx.body = `${e.stack}`;
     console.log(e.stack);
   }
+
+  try {
+    await completeRequest(start, db);
+  } catch (e) {
+    console.error(e);
+  }
 });
 
 app.use(router.routes());
@@ -85,6 +94,8 @@ app.use(router.allowedMethods());
 (async () => {
   console.log('Initialize Database');
   await db.initializeDatabase();
+
+  initPerfTracker();
 
   console.log(`Starting server on localhost:${port}`);
   app.listen(port);
