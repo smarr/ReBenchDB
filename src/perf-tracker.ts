@@ -3,7 +3,7 @@ import { Database } from './db';
 import { BenchmarkData, DataPoint, Measure } from './api';
 
 let _data: BenchmarkData;
-const measure: Measure = {c: 0, v: 0};
+const measure: Measure = { c: 0, v: 0 };
 const dataPoint: DataPoint = {
   in: 0,
   it: 0,
@@ -34,7 +34,7 @@ export function initPerfTracker() {
       }
     }],
     criteria: [
-      {i: 0, c: 'total', u: 'ms'}
+      { i: 0, c: 'total', u: 'ms' }
     ],
     env: {
       hostName: 'self',
