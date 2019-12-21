@@ -304,7 +304,7 @@ export class Database {
       if (critId in run) {
         const crit = run[critId];
         if (inv in crit) {
-          return crit[inv] <= ite;
+          return crit[inv] >= ite;
         }
       }
     }
