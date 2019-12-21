@@ -72,8 +72,8 @@ router.put('/rebenchdb/results', koaBody(), async ctx => {
   }
 
   try {
-    await db.recordData(data);
-    ctx.body = 'Data recorded';
+    const recordedMeasurements = await db.recordData(data);
+    ctx.body = `Data recorded, ${recordedMeasurements} measurements stored.`;
     ctx.status = 200;
   } catch (e) {
     ctx.status = 500;

@@ -312,11 +312,13 @@ export class Database {
     return false;
   }
 
-  public async recordData(data: BenchmarkData) {
+  public async recordData(data: BenchmarkData): Promise<number> {
     const env = await this.recordEnvironment(data.env);
     const exp = await this.recordExperiment(data, env);
 
     const criteria = await this.resolveCriteria(data.criteria);
+
+    let recordedMeasurements = 0;
 
     for (const r of data.data) {
       let batchedMs = 0;
@@ -336,6 +338,7 @@ export class Database {
             continue;
           }
           batchedMs += 1;
+          recordedMeasurements += 1;
           batchedValues = batchedValues.concat(values);
           if (batchedMs === Database.batchN) {
             await this.recordMeasurementBatched(batchedValues);
@@ -351,6 +354,8 @@ export class Database {
         batchedValues = rest;
       }
     }
+
+    return recordedMeasurements;
   }
 
   public async recordMeasurementBatched(values: any[]) {
