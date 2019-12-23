@@ -389,13 +389,13 @@ for (e in levels(norm$exe)) {
 
     cp('<table class="table table-sm benchmark-details">')
     cp('<thead><tr>
-          <th scope="col"></th>
-          <th scope="col"></th>
-          <th scope="col">#samples</th>
-          <th scope="col">mean in ', levels(data_s$unit), '</th>
-          <th scope="col">median in ', levels(data_s$unit), '</th>
-          <th scope="col">change in %</th>
-        </tr></thead>')
+<th scope="col"></th>
+<th scope="col"></th>
+<th scope="col">#samples</th>
+<th scope="col">mean in ', levels(data_s$unit), '</th>
+<th scope="col">median in ', levels(data_s$unit), '</th>
+<th scope="col">change in %</th>
+</tr></thead>')
     
     
     for (b in levels(data_s$bench)) {
