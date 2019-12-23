@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>ReBenchDB for {{project}}: Comparing {{baselineHash6}} with {{changeHash6}}</title>
+
+  {{{headerHtml}}}
+
+  {{#generatingReport}}
+  <meta http-equiv="refresh" content="30" />
+  {{/generatingReport}}
+
+  <script>
+    //@ts-check
+
+    $(document).ready(() => {
+      $(".stats-change").each((i, e) => {
+        const change = parseFloat(e.textContent);
+        if (change < -0.05) {
+          $(e).parent().css('background-color', '#e4ffc7');
+        } else if (change > 0.05) {
+          $(e).parent().css('background-color', '#ffcccc');
+        }
+      });
+    });
+  </script>
+</head>
+<body class="compare">
+
+<div class="jumbotron">
+  <h2>ReBenchDB for {{project}}</h2>
+  <h3>Comparing {{baselineHash6}} with {{changeHash6}}</h3>
+</div>
+
+{{{report}}}
+
+{{#generatingReport}}
+<div class="alert alert-secondary" role="alert">
+  <h4 class="alert-heading">Report is currently being generated</h4>
+  <p>Please wait, the requested report is currently still generated.</p>
+  <p>Last page reload was at {{currentTime}}</p>
+  <hr>
+  <p class="mb-0">This can take a couple of minutes and the page will reload automatically.</p>
+</div>
+{{/generatingReport}}
+</body>
+</html>

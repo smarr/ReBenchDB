@@ -1,0 +1,482 @@
+---
+title: "SOMns Performance Comparison"
+output: html_fragment
+# http://localhost:33333/compare/SOMns/0d020c65f5ff950d5a9f3a6a87c08585f136afc8/b93035d99ba0f066240c3515745111be7d151e00
+params:
+  baseline: "0d020c65f5ff950d5a9f3a6a87c08585f136afc8"
+  change: "b93035d99ba0f066240c3515745111be7d151e00"
+  baselineColor: "#729fcf"
+  changeColor: "#e9b96e"
+---
+
+```{r setup, include=FALSE, echo=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+
+# avoid scientific notation for numbers, it's more readable to me
+options(scipen=999)
+
+# prints stack trace on error, from: http://stackoverflow.com/a/2000757/916546
+options(warn = 2, keep.source = TRUE, error = 
+          quote({ 
+            cat("Environment:\n", file=stderr()); 
+            
+            # TODO: setup option for dumping to a file (?)
+            # Set `to.file` argument to write this to a file for post-mortem debugging    
+            dump.frames();  # writes to last.dump
+            
+            #
+            # Debugging in R
+            #   http://www.stats.uwo.ca/faculty/murdoch/software/debuggingR/index.shtml
+            #
+            # Post-mortem debugging
+            #   http://www.stats.uwo.ca/faculty/murdoch/software/debuggingR/pmd.shtml
+            #
+            # Relation functions:
+            #   dump.frames
+            #   recover
+            # >>limitedLabels  (formatting of the dump with source/line numbers)
+            #   sys.frame (and associated)
+            #   traceback
+            #   geterrmessage
+            #
+            # Output based on the debugger function definition.
+            
+            n <- length(last.dump)
+            calls <- names(last.dump)
+            cat(paste("  ", 1L:n, ": ", calls, sep = ""), sep = "\n", file=stderr())
+            cat("\n", file=stderr())
+            
+            if (!interactive()) {
+              q(status=1) # indicate error
+            }
+          }))
+
+
+```
+
+```{r warmup-fn, include=FALSE, echo=FALSE, warning=FALSE}
+
+theme_simple <- function(font_size = 12) {
+    theme_bw() +
+    theme(axis.text.x          = element_text(size = font_size, lineheight=0.7),
+          axis.title.x         = element_blank(),
+          axis.title.y         = element_text(size = font_size),
+          axis.text.y          = element_text(size = font_size),
+          axis.line            = element_line(colour = "gray"),
+          plot.title           = element_text(size = font_size),
+          legend.text          = element_text(size = font_size),
+          legend.title         = element_blank(),
+          legend.background    = element_blank(),
+          panel.background     = element_blank(), #element_rect(fill = NA, colour = NA),
+          panel.grid.major     = element_blank(),
+          panel.grid.minor     = element_blank(),
+          panel.border         = element_blank(),
+          plot.background      = element_blank(), #element_rect(fill = NA, colour = NA)
+          strip.background     = element_blank(),
+          strip.text           = element_text(size = font_size),
+          plot.margin = unit(c(0,0,0,0), "cm")) 
+}
+
+element90 <- function() { element_text(angle = 90, hjust = 1, vjust=0.5) }
+
+
+warmup_plot <- function (data_b, b, s, e) {
+  ## First take the medians over the values for each VM separated
+  medians <- data_b %>%
+    group_by(commitid) %>%
+    summarise(median = median(value))
+
+  # use the highest one with a little margin as an upper bound
+  upperBound <- 2 * max(medians$median)
+
+  plot <- ggplot(data_b, aes(x=iteration, y=value))
+  plot <- plot + geom_line(aes(colour = commitid)) +
+    scale_color_manual(values = color)
+  plot <- plot + # ggtitle(paste(b, s, e)) + 
+    ylab(levels(data_b$unit))
+  #plot <- plot + scale_x_continuous(breaks = seq(0, max(data_b$iteration), 10))
+  plot <- plot + coord_cartesian(ylim=c(0, upperBound))
+  plot <- plot + geom_vline(xintercept = seq(0, max(data_b$iteration), 50), linetype = "longdash", colour = "#cccccc")
+  plot <- plot + theme_simple()
+  plot <- plot + theme(legend.position=c(0.92, .95))
+  print(plot)
+}
+```
+
+
+```{r load-db, include=FALSE, echo=FALSE, warning=FALSE}
+#### install.packages("dbplyr")
+#### install.packages("dplyr")
+# install.packages("RPostgres")
+# install.packages("ggplot2")
+
+load_and_install_if_necessary <- function(package_name) {
+  if (!suppressPackageStartupMessages(library(package_name, character.only=TRUE, logical.return=TRUE))) {
+    cat(paste0("Package ", package_name, " not found. Will install it."))
+    install.packages(package_name)
+    library(package_name, character.only=TRUE)
+  }
+}
+
+baselineHash <- params$baseline
+changeHash <- params$change
+baselineHash6 <- substr(baselineHash, 1, 6)
+changeHash6 <- substr(changeHash, 1, 6)
+
+baselineColor <- params$baselineColor
+changeColor <- params$changeColor
+
+color <- setNames(c(baselineColor, changeColor), c(baselineHash6, changeHash6))
+
+
+
+library(DBI)
+library(dplyr)
+library(ggplot2)
+library(boot)
+library(ggstance)
+
+# load_and_install_if_necessary("psych")   # uses only geometric.mean
+
+db <- DBI::dbConnect(
+  RPostgres::Postgres(),
+  dbname = 'rdb_sm1')
+
+
+# SELECT expId, runId, invocation, iteration, criterion, value from Measurement
+# 	JOIN Experiment ON expId = Experiment.id
+# 	JOIN Source ON source.id = sourceId
+# 
+# WHERE commitId = '0d020c65f5ff950d5a9f3a6a87c08585f136afc8' OR commitid = 'b93035d99ba0f066240c3515745111be7d151e00'
+# ORDER BY expId, runId, invocation, iteration, criterion
+
+# SELECT expId, runId, invocation, iteration, criterion, value from Measurement
+# 	JOIN Experiment ON expId = Experiment.id
+# 	JOIN Source ON source.id = sourceId
+# 	JOIN Criterion on criterion = criterion.id
+# WHERE criterion.name = 'total' AND (commitId = '0d020c65f5ff950d5a9f3a6a87c08585f136afc8' OR commitid = 'b93035d99ba0f066240c3515745111be7d151e00')
+# ORDER BY expId, runId, invocation, iteration, criterion
+
+
+qry <- dbSendQuery(db, "
+  SELECT expId, runId, substring(commitId, 1, 6) as commitid,
+		benchmark.name as bench, executor.name as exe, suite.name as suite,
+		cmdline, varValue, cores, inputSize,
+		invocation, iteration, warmup,
+		criterion.name as criterion, criterion.unit as unit,
+		value
+	FROM Measurement
+		JOIN Experiment ON expId = Experiment.id
+		JOIN Source ON source.id = sourceId
+		JOIN Criterion ON criterion = criterion.id
+		JOIN Run ON runId = run.id
+		JOIN Suite ON suiteId = suite.id
+		JOIN Benchmark ON benchmarkId = benchmark.id
+		JOIN Executor ON execId = executor.id
+	WHERE criterion.name = 'total' AND (commitId = $1 OR commitid = $2)
+	ORDER BY expId, runId, invocation, iteration, criterion")
+dbBind(qry, list(baselineHash, changeHash))
+result <- dbFetch(qry)
+
+result$expid <- factor(result$expid)
+result$runid <- factor(result$runid)
+result$commitid <- factor(result$commitid)
+result$bench <- factor(result$bench)
+result$suite <- factor(result$suite)
+result$exe <- factor(result$exe)
+result$cmdline <- factor(result$cmdline)
+result$varvalue <- factor(result$varvalue)
+result$cores <- factor(result$cores)
+result$inputsize <- factor(result$inputsize)
+result$criterion <- factor(result$criterion)
+result$unit <- factor(result$unit)
+
+warmup <- result %>%
+  filter(!grepl("startup", suite, fixed = TRUE),
+         !grepl("interp", exe, fixed = TRUE))
+
+```
+
+
+```{r comp}
+peak <- result %>%
+  group_by(commitid, exe, suite, bench) %>%
+  filter(is.na(warmup) | iteration >= warmup)
+
+
+base <- peak %>%
+  filter(commitid == baselineHash6) %>%
+  group_by(exe, suite, bench) %>%
+  summarise(base_mean = mean(value),
+            base_median = median(value))
+
+norm <- peak %>%
+  left_join(base, by = c("exe", "suite", "bench")) %>%
+  group_by(exe, suite, bench) %>%
+  transform(ratio_mean = value / base_mean,
+            ratio_median = value / base_median)
+
+
+boot_median <- function(data, indices) {
+  resampled_data <- data[indices]
+  return (median(resampled_data))
+}
+
+get_bca <- function(data) {
+  if (length(data) < 30) {
+    return(return(list(median=NA, lower=NA, upper=NA)))
+  }
+  
+  b <- boot(data, boot_median, 1000)
+  bb <- boot.ci(b, type="bca")
+  # column 4 and 5 contain the lower and upper ends of the interval
+  return(list(median=b$t0, lower=bb$bca[4], upper=bb$bca[5]))
+}
+
+stats <- norm %>%
+  group_by(commitid, exe, suite, bench) %>%
+  filter(is.na(warmup) | iteration >= warmup) %>%
+  summarise(
+    unit = unit[1],
+    min = min(value),
+    max = max(value),
+    sd = sd(value),
+    mean = mean(value),
+    median = median(value),
+    samples = length(value),
+            
+    # mean_ratio_mean = mean(ratio_mean),
+    # median_ratio_median = median(ratio_mean),
+    # mean_ratio_median = mean(ratio_median),
+    lowerBCI95 = get_bca(value)$lower,
+    upperBCI95 = get_bca(value)$upper,
+            
+    ratio = median / base_median[1],
+    ratioLower = lowerBCI95 / base_median[1],
+    ratioUpper = upperBCI95 / base_median[1],
+            
+    change_m = ratio - 1,
+    change_l = ratioLower - 1,
+    change_u = ratioUpper - 1)
+
+geometric.mean <- function(x) { exp(mean(log(x))) }
+
+## Are we faster/slower? have a rough 5% boundary for all the noise
+slower_category <- function(data) {
+  m <- geometric.mean(data)
+  if (m > 1.05) {
+    return(TRUE)
+  } else if (m < 0.95) {
+    return(FALSE)
+  } else {
+    return(NA)
+  }
+}
+
+stats_suite <- stats %>%
+  filter(commitid == changeHash6) %>% # need to remove it so that statistics are accurate, or put it into the group
+  group_by(exe, suite) %>%
+  summarise(
+    unit = unit[1],
+    min = min(ratio),
+    max = max(ratio),
+    geomean = geometric.mean(ratio),
+    num_benchmarks = length(ratio),
+    slower = slower_category(ratio))
+
+stats_all <- stats_suite %>%
+  ungroup() %>%
+  summarise(
+    unit = unit[1],
+    min = min(geomean),
+    max = max(geomean),
+    geomean = geometric.mean(geomean),
+    num_benchmarks = sum(num_benchmarks))
+```
+
+## Summary Over All Benchmarks
+
+```{r summary-suites, fig.height=2.5, fig.width=4.5}
+
+cp <- function(...) {
+  cat(paste0(...))
+}
+
+r2 <- function(val) {
+  if (is.na(val)) {
+    return("")
+  }
+  return(round(val, 2))
+}
+
+pro <- function(val) {
+  if (is.na(val)) {
+    return("")
+  }
+  return(round(val * 100))
+}
+
+
+data_chg <- stats %>%
+  filter(commitid == changeHash6) %>%
+  droplevels()
+
+data_chg_slow <- data_chg %>%
+  left_join(stats_suite, by = c("exe", "suite")) %>%
+  filter(commitid == changeHash6) %>%
+  droplevels()
+
+negative_geometric.mean <- function(d) { 
+  # just shift values temporarily away from 0,
+  # transformation doesn't change results when using a sufficiently large constant
+  # normally, one would use simply 1, but in this case, it may change the results
+  # fixed_geomean should really only be used in the context of stat_summary
+  m <- geometric.mean(d + 10000000)
+  m - 10000000
+}
+
+ggplot(data_chg_slow, aes(ratio, suite, fill=slower)) +
+  geom_vline(aes(xintercept=1), colour="#999999", linetype="solid") +
+  geom_vline(aes(xintercept=1.05), colour="#cccccc", linetype="dashed") +
+  geom_vline(aes(xintercept=0.95), colour="#cccccc", linetype="dashed") +
+  geom_boxploth(aes(colour = commitid),
+                outlier.size = 0.9,
+                outlier.alpha = 0.6) +
+  stat_summaryh(fun.x = negative_geometric.mean, size = 1, colour = "#503000", geom = "point") +
+  scale_x_log10() +
+  ylab("") +
+  coord_cartesian(xlim=c(0.5, 2.5)) +
+  theme_simple(8) +
+  scale_color_manual(values = color) +
+  #scale_fill_manual(values = color) +
+  scale_fill_manual(breaks=c(TRUE, FALSE, NA), 
+                    values=c("#e4ffc7", "#ffcccc", NA)) +
+  theme(legend.position = "none")
+
+```
+
+
+Number of Benchmarks
+: `r stats_all$num_benchmarks`
+
+Geometric Mean
+: `r round(stats_all$geomean, 3)` (min. `r r2(stats_all$min)`, max. `r r2(stats_all$max)`)
+
+
+
+TODO:
+-- range tool for highlighting slow downs, defining the cut-off
+  -- standard setting 5%
+
+
+## Benchmark Performance
+
+```{r suites, results='asis', echo=FALSE, dev='svg', fig.keep='all', fig.height=0.3, fig.width=3}
+
+for (e in levels(norm$exe)) {
+  data_e <- norm %>%
+    filter(exe == e) %>%
+    droplevels()
+
+  for (s in levels(data_e$suite)) {
+    data_s <- data_e %>%
+      filter(suite == s) %>%
+      droplevels()
+
+    cp("<h3>", s, "</h3>")
+    cp('<div class="title-executor">Executor: ', e, "</div>")
+
+    cp('<table class="table table-sm benchmark-details">')
+    cp('<thead><tr>
+          <th scope="col"></th>
+          <th scope="col"></th>
+          <th scope="col">#samples</th>
+          <th scope="col">mean in ', levels(data_s$unit), '</th>
+          <th scope="col">median in ', levels(data_s$unit), '</th>
+          <th scope="col">change in %</th>
+        </tr></thead>')
+    
+    
+    for (b in levels(data_s$bench)) {
+      data_b <- data_s %>%
+        filter(bench == b) %>%
+        droplevels()
+      
+      cp('<tr>')
+      
+      cp('<th scope="row">',  b, '</th>')
+      
+      cp('<td>')
+      p <- ggplot(data_b, aes(ratio_median, bench)) +
+        geom_vline(aes(xintercept=1), colour="#333333", linetype="solid") +
+        geom_boxploth(aes(colour = commitid),
+                          outlier.size = 0.9,
+                          outlier.alpha = 0.6) +
+        scale_x_log10() +
+        coord_cartesian(xlim=c(0.5, 5)) + 
+        theme_simple(5) +
+        ylab("") +
+        scale_color_manual(values = color) +
+        scale_fill_manual(values = color) +
+        theme(legend.position = "none",
+              axis.ticks.y=element_blank(),
+              axis.text.y=element_blank(),
+              axis.ticks.length.x = unit(-.05, "cm"),
+              axis.text.x = element_text(margin = margin(t = 0.1, unit = "cm")),
+              axis.line.y.left=element_blank(),
+              axis.line.x.bottom=element_blank())
+      print(p)
+      cp('</td>')
+      
+      stats_b <- stats %>%
+        filter(bench == b, suite == s, exe == e, commitid == changeHash6) %>%
+        droplevels()
+      
+      cp('<td class="stats-samples">', stats_b$samples, '</td>')
+      cp('<td><span class="stats-mean" title="mean">', r2(stats_b$mean), '</span><span class="stats-sd" title="standard deviation">', r2(stats_b$sd), '</span></td>')
+      cp('<td><span class="stats-median" title="median">', r2(stats_b$median), '</span><span class="stats-min" title="minimum">', r2(stats_b$min), '</span><span class="stats-max" title="maximum">', r2(stats_b$max),'</span></td>')
+      cp('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span><span class="stats-change-l" title="lower bound of 95% bootstrap confidence interval">', pro(stats_b$change_l), '</span><span class="stats-change-u" title="upper bound of 95% bootstrap confidence interval">', pro(stats_b$change_u), '</span></td>')
+
+      cp('</tr>')
+    }
+    
+    cp('</table>')
+  }
+}
+```
+
+
+## Warmup Behavior
+
+This section excludes all interpreter-only and startup benchmarks.
+```{r warmup-plots, echo=FALSE, results='asis', dev='svg', fig.keep='all', fig.width=6, fig.height=2.5}
+# b <- "Mandelbrot"
+
+for (e in levels(warmup$exe)) {
+  data_e <- warmup %>%
+    filter(exe == e) %>%
+    droplevels()
+  
+  for (s in levels(data_e$suite)) {
+    data_s <- data_e %>%
+      filter(suite == s) %>%
+      droplevels()
+    
+    for (b in levels(data_s$bench)) {
+      data_b <- data_s %>%
+        filter(bench == b) %>%
+        droplevels()
+      
+      cp('<div><span class="warmup-benchmark">', b, '</span><span class="warmup-suite">', s, '</span><span class="warmup-exe">', e, '</span>')
+      cp('<div class="warmup-plot">')
+      warmup_plot(data_b, b, s, e)
+      cp('</div></div>')
+    }
+  }
+}
+```
+
+## TODO
+
+ - show environment and software information
+   - possibly via template replacement instead of in R

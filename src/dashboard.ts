@@ -1,3 +1,5 @@
+import { readFileSync, existsSync } from 'fs';
+import { execFile } from 'child_process';
 import { Database } from './db';
 
 /**
@@ -55,3 +57,59 @@ export async function dashChanges(projectName, db) {
     [projectName]);
   return { changes: result.rows };
 }
+
+const reportGeneration = new Map();
+
+export function dashCompare(base: string, change: string, project: string) {
+  const baselineHash6 = base.substr(0, 6);
+  const changeHash6 = change.substr(0, 6);
+
+  const reportId = `${project}-${baselineHash6}-${changeHash6}`;
+
+  const reportFile = `${__dirname}/../../resources/reports/${reportId}.html`;
+
+  let data: any = {
+    project,
+    baselineHash6,
+    changeHash6,
+  };
+
+  if (existsSync(reportFile)) {
+    data.report = readFileSync(reportFile);
+    data.generatingReport = false;
+  } else {
+    data.report = undefined;
+    data.generatingReport = true;
+    data.currentTime = new Date().toISOString();
+
+    if (!reportGeneration.get(reportId)) {
+      // start generating a report
+      const args = [
+        `${__dirname}/../../src/views/somns.Rmd`,
+        `${__dirname}/../../resources/reports/${reportId}.html`,
+        `${__dirname}/../../src/views/tmp-i`,
+        `${__dirname}/../../src/views/tmp-k`,
+        base,
+        change,
+        '#729fcf',
+        '#e9b96e'
+      ];
+
+      console.log(`Generate Report: ${__dirname}/../../src/views/knitr.R ${args.join(' ')}`);
+
+      execFile(`${__dirname}/../../src/views/knitr.R`, args,
+        (error, stdout, stderr) => {
+          if (error) {
+            console.error(`Report generation error: ${error}`);
+          }
+          console.log(stdout);
+          console.log(stderr);
+          reportGeneration.set(reportId, false);
+        });
+      reportGeneration.set(reportId, true);
+    }
+  }
+
+  return data;
+}
+
