@@ -26,6 +26,7 @@ const dbConfig = {
 const port = process.env.PORT || 33333;
 
 const DEBUG = 'DEBUG' in process.env ? process.env.DEBUG === 'true' : false;
+const DEV = 'DEV' in process.env ? process.env.DEV === 'true' : false;
 
 
 const app = new Koa();
@@ -65,6 +66,16 @@ router.get('/compare/:project/:baseline/:change', async ctx => {
     ctx.set('Cache-Control', 'no-cache');
   }
 });
+
+if (DEV) {
+  router.get('/static/:filename', async ctx => {
+    console.log(`serve ${ctx.params.filename}`);
+    ctx.body = readFileSync(`${__dirname}/../../resources/${ctx.params.filename}`);
+    if (ctx.params.filename.endsWith('.css')) {
+      ctx.type = 'css';
+    }
+  });
+}
 
 router.get('/status', async ctx => {
   ctx.body = `# ReBenchDB Status

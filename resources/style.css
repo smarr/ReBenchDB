@@ -1,0 +1,50 @@
+body {
+  max-width: 800px;
+  margin: 0 auto;
+}
+body.compare {
+  max-width: 900px;
+}
+
+.card {
+  margin-top: 1em;
+}
+
+.min-padding {
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+.list-min-padding {
+  padding: .5rem .75rem;
+}
+
+.scroll-list {
+  max-height: 200px;
+  overflow: scroll;
+}
+
+.baseline .list-group-item.active {
+  background-color: #729fcf;
+  border-color: #729fcf;
+}
+
+.change .list-group-item.active {
+  background-color: #e9b96e;
+  border-color: #e9b96e;
+}
+
+.stats-mean, .stats-median, .stats-change {
+  width: 4em;
+  display: inline-block;
+  text-align: right;
+  padding-right: 1ex;
+}
+
+.stats-sd, .stats-min, .stats-max, .stats-change-l, .stats-change-u {
+  text-align: right;
+  display: inline-block;
+  padding-right: 0.5ex;
+  width: 4em;
+  font-size: 0.7rem;
+}
