@@ -40,7 +40,23 @@
   <p>Last page reload was at {{currentTime}}</p>
   <hr>
   <p class="mb-0">This can take a couple of minutes and the page will reload automatically.</p>
+  <div class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+      <span class="sr-only">Loading...</span>
+    </div>
+  </div>
 </div>
 {{/generatingReport}}
+
+{{#generationFailed}}
+<div class="alert alert-warning" role="alert">
+  <h4 class="alert-heading">Report generation failed</h4>
+  <hr>
+  <h6>Standard Out</h6>
+  <pre>{{stdout}}</pre>
+  <h6>Standard Error</h6>
+  <pre>{{stderr}}</pre>
+</div>
+{{/generationFailed}}
 </body>
 </html>

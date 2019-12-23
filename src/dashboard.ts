@@ -79,10 +79,13 @@ export function dashCompare(base: string, change: string, project: string) {
     data.generatingReport = false;
   } else {
     data.report = undefined;
-    data.generatingReport = true;
     data.currentTime = new Date().toISOString();
 
-    if (!reportGeneration.get(reportId)) {
+    const prevGenerationDetails = reportGeneration.get(reportId);
+
+    // no previous attempt to generate
+    if (!prevGenerationDetails) {
+      data.generatingReport = true;
       // start generating a report
       const args = [
         `${__dirname}/../../src/views/somns.Rmd`,
@@ -102,14 +105,24 @@ export function dashCompare(base: string, change: string, project: string) {
           if (error) {
             console.error(`Report generation error: ${error}`);
           }
-          console.log(stdout);
-          console.log(stderr);
-          reportGeneration.set(reportId, false);
+          reportGeneration.set(reportId, {
+            error, stdout, stderr,
+            inProgress: false
+          });
         });
-      reportGeneration.set(reportId, true);
+      reportGeneration.set(reportId, {
+        inProgress: true
+      });
+    } else if (prevGenerationDetails.error) {
+      // if previous attempt failed
+      data.generationFailed = true;
+      data.stdout = prevGenerationDetails.stdout;
+      data.stderr = prevGenerationDetails.stderr;
+      data.generatingReport = false;
+    } else {
+      data.generatingReport = true;
     }
   }
 
   return data;
 }
-
