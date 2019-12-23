@@ -7,12 +7,13 @@ args <- commandArgs(trailingOnly = TRUE)
 
 # Now, they suggest this:
 render(args[1], "html_fragment", args[2],
-       intermediates_dir = args[3], knit_root_dir = args[4],
+       output_dir = args[3],
+       intermediates_dir = args[4], knit_root_dir = args[5],
        output_options = list(self_contained=FALSE),
        params = list(
-         baseline = args[5],
-         change = args[6],
-         baselineColor = args[7],
-         changeColor = args[8]
+         baseline = args[6],
+         change = args[7],
+         baselineColor = args[8],
+         changeColor = args[9]
        ),
        runtime = "static", clean = TRUE)

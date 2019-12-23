@@ -90,8 +90,11 @@ export function dashCompare(base: string, change: string, project: string) {
       const args = [
         `${__dirname}/../../src/views/somns.Rmd`,
         `${reportId}.html`,
-        `${__dirname}/../../src/views/tmp-i`,
-        `${__dirname}/../../src/views/tmp-k`,
+        // paths created in package.json
+        // output dir implicit, from cwd
+        '.',
+        `${__dirname}/../../tmp/interm`,
+        `${__dirname}/../../tmp/knit`,
         base,
         change,
         '#729fcf',
