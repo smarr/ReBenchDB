@@ -106,7 +106,7 @@ export function dashCompare(base: string, change: string, project: string, dbCon
 
       console.log(`Generate Report: ${__dirname}/../../src/views/knitr.R ${args.join(' ')}`);
 
-      execFile(`${__dirname}/../../src/views/knitr.R`, args, {cwd: `${__dirname}/../../resources/reports/`},
+      execFile(`${__dirname}/../../src/views/knitr.R`, args, { cwd: `${__dirname}/../../resources/reports/` },
         (error, stdout, stderr) => {
           if (error) {
             console.error(`Report generation error: ${error}`);
