@@ -7,6 +7,9 @@ params:
   change: "b93035d99ba0f066240c3515745111be7d151e00"
   baselineColor: "#729fcf"
   changeColor: "#e9b96e"
+  dbUser: rdb_sm1
+  dbPass: null
+  dbName: null
 ---
 
 ```{r setup, include=FALSE, echo=FALSE, warning=FALSE}
@@ -140,7 +143,9 @@ library(ggstance)
 
 db <- DBI::dbConnect(
   RPostgres::Postgres(),
-  dbname = 'rdb_sm1')
+  dbname = params$dbName,
+  user = params$dbUser,
+  password = params$dbPass)
 
 
 # SELECT expId, runId, invocation, iteration, criterion, value from Measurement

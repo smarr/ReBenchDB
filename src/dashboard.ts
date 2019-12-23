@@ -60,7 +60,7 @@ export async function dashChanges(projectName, db) {
 
 const reportGeneration = new Map();
 
-export function dashCompare(base: string, change: string, project: string) {
+export function dashCompare(base: string, change: string, project: string, dbConfig) {
   const baselineHash6 = base.substr(0, 6);
   const changeHash6 = change.substr(0, 6);
 
@@ -98,7 +98,10 @@ export function dashCompare(base: string, change: string, project: string) {
         base,
         change,
         '#729fcf',
-        '#e9b96e'
+        '#e9b96e',
+        dbConfig.database,
+        dbConfig.user,
+        dbConfig.password
       ];
 
       console.log(`Generate Report: ${__dirname}/../../src/views/knitr.R ${args.join(' ')}`);

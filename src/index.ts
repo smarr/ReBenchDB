@@ -58,7 +58,7 @@ router.get('/rebenchdb/dash/:project/changes', async ctx => {
 
 router.get('/compare/:project/:baseline/:change', async ctx => {
   const data = dashCompare(
-    ctx.params.baseline, ctx.params.change, ctx.params.project);
+    ctx.params.baseline, ctx.params.change, ctx.params.project, dbConfig);
   ctx.body = processTemplate('compare.html', data);
   ctx.type = 'html';
 
