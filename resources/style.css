@@ -24,14 +24,27 @@ body.compare {
   overflow: scroll;
 }
 
-.baseline .list-group-item.active {
+.baseline .list-group-item.active, .baseline-badge {
   background-color: #729fcf;
   border-color: #729fcf;
 }
 
-.change .list-group-item.active {
+.change .list-group-item.active, .change-badge {
   background-color: #e9b96e;
   border-color: #e9b96e;
+}
+
+.change-badge, .baseline-badge {
+  display: inline-block;
+  padding: .25em .4em;
+  transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: .25rem;
+  color: #fff;
 }
 
 .stats-mean, .stats-median, .stats-change {

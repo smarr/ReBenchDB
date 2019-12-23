@@ -98,7 +98,7 @@ warmup_plot <- function (data_b, b, s, e) {
   plot <- plot + coord_cartesian(ylim=c(0, upperBound))
   plot <- plot + geom_vline(xintercept = seq(0, max(data_b$iteration), 50), linetype = "longdash", colour = "#cccccc")
   plot <- plot + theme_simple(8)
-  plot <- plot + theme(legend.position=c(0.92, .95))
+  plot <- plot + theme(legend.position=c(0.92, .92))
   print(plot)
 }
 ```
@@ -370,6 +370,14 @@ TODO:
 
 
 ## Benchmark Performance
+
+<dl class="row">
+  <dt class="col-sm-2">Baseline</dt>
+  <dd class="col-sm-9"><span class="baseline-badge">`r baselineHash6`</span></dd>
+
+  <dt class="col-sm-2">Change</dt>
+  <dd class="col-sm-9"><span class="change-badge">`r changeHash6`</span></dd>
+</dl>
 
 ```{r suites, results='asis', echo=FALSE, dev='svg', fig.keep='all', fig.height=0.3, fig.width=3}
 
