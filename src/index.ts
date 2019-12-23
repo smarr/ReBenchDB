@@ -1,4 +1,5 @@
 import { readFileSync } from 'fs';
+
 import Koa from 'koa';
 import koaBody from 'koa-body';
 import Router from 'koa-router';
@@ -10,6 +11,7 @@ import ajv from 'ajv';
 import { version } from '../package.json';
 import { initPerfTracker, startRequest, completeRequest } from './perf-tracker';
 import { dashReBenchDb, dashStatistics } from './dashboard';
+import { processTemplate } from './templates';
 
 console.log('Starting ReBenchDB Version ' + version);
 
@@ -31,7 +33,7 @@ const router = new Router();
 const db = new Database(dbConfig);
 
 router.get('/', async ctx => {
-  ctx.body = readFileSync(`${__dirname}/../../src/views/index.html`);
+  ctx.body = processTemplate('index.html');
   ctx.type = 'html';
 });
 
