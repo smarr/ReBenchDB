@@ -9,6 +9,7 @@
     //@ts-check
     const rebenchDashP = fetch(`/rebenchdb/dash/rebenchdb`);
     const statsP = fetch(`/rebenchdb/stats`);
+    const changesSomP = fetch(`/rebenchdb/dash/SOMns/changes`);
 
     var trace1 = {
       x: [],
@@ -34,6 +35,12 @@
       },
     }
 
+    function openCompare() {
+      const baseline = $('#p1-baseline').find('.active').data('hash');
+      const change = $('#p1-change').find('.active').data('hash');
+      window.location.href = `/compare/SOMns/${baseline}/${change}`;
+    }
+
     $(document).ready(async () => {
       const statsResponse = await statsP;
       const stats = await statsResponse.json();
@@ -56,6 +63,27 @@
       trace1.x = index;
 
       Plotly.newPlot('project-overview-rebenchdb', data, layout);
+
+      const changesSomResponse = await changesSomP;
+      const changesSom = await changesSomResponse.json();
+
+      const p1baseline = $('#p1-baseline');
+      const p1change = $('#p1-change');
+      for (const change of changesSom.changes) {
+        // strip out some metadata to be nicer to view.
+        const msg = change.commitmessage.replace(/Signed-off-by:.*?\n/, '');
+
+        const option = `<a class="list-group-item list-group-item-action list-min-padding"
+          data-toggle="list" data-hash="${change.commitid}" href="">
+            ${change.commitid.substr(0,  6)} ${change.branchortag}<br>
+            <div style="font-size: 80%; line-height: 1">${msg}</div>
+          </a>`;
+
+        p1baseline.append(option);
+        p1change.append(option);
+      }
+
+      $('#p1-compare').click(openCompare);
     });
   </script>
 </head>
