@@ -97,7 +97,7 @@ warmup_plot <- function (data_b, b, s, e) {
   #plot <- plot + scale_x_continuous(breaks = seq(0, max(data_b$iteration), 10))
   plot <- plot + coord_cartesian(ylim=c(0, upperBound))
   plot <- plot + geom_vline(xintercept = seq(0, max(data_b$iteration), 50), linetype = "longdash", colour = "#cccccc")
-  plot <- plot + theme_simple()
+  plot <- plot + theme_simple(8)
   plot <- plot + theme(legend.position=c(0.92, .95))
   print(plot)
 }
@@ -390,7 +390,7 @@ for (e in levels(norm$exe)) {
     cp('<thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
-<th scope="col">#samples</th>
+<th scope="col" title="Number of Samples">#M</th>
 <th scope="col">mean in ', levels(data_s$unit), '</th>
 <th scope="col">median in ', levels(data_s$unit), '</th>
 <th scope="col">change in %</th>

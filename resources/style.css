@@ -35,16 +35,50 @@ body.compare {
 }
 
 .stats-mean, .stats-median, .stats-change {
-  width: 4em;
   display: inline-block;
   text-align: right;
   padding-right: 1ex;
+}
+
+.stats-mean, .stats-median {
+  width: 4em;
+}
+
+.stats-change {
+  width: 3em;
 }
 
 .stats-sd, .stats-min, .stats-max, .stats-change-l, .stats-change-u {
   text-align: right;
   display: inline-block;
   padding-right: 0.5ex;
-  width: 4em;
   font-size: 0.7rem;
+}
+
+.stats-sd, .stats-min, .stats-max {
+  width: 4em;
+}
+
+.stats-change-l, .stats-change-u {
+  width: 2em;
+}
+
+table.benchmark-details tr th:nth-child(1) {
+  max-width: 7em;
+  word-break: break-all;
+}
+
+.warmup-benchmark {
+  padding-right: 1.5ex;
+  font-weight: bold;
+}
+
+.warmup-suite, .warmup-exe {
+  font-size: 0.7rem;
+  padding-right: 0.5ex;
+}
+
+.warmup-plot {
+  margin-top: 1ex;
+  margin-bottom: 1ex;
 }
