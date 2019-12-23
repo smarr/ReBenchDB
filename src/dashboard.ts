@@ -86,7 +86,7 @@ export function dashCompare(base: string, change: string, project: string) {
       // start generating a report
       const args = [
         `${__dirname}/../../src/views/somns.Rmd`,
-        `${__dirname}/../../resources/reports/${reportId}.html`,
+        `${reportId}.html`,
         `${__dirname}/../../src/views/tmp-i`,
         `${__dirname}/../../src/views/tmp-k`,
         base,
@@ -97,7 +97,7 @@ export function dashCompare(base: string, change: string, project: string) {
 
       console.log(`Generate Report: ${__dirname}/../../src/views/knitr.R ${args.join(' ')}`);
 
-      execFile(`${__dirname}/../../src/views/knitr.R`, args,
+      execFile(`${__dirname}/../../src/views/knitr.R`, args, {cwd: `${__dirname}/../../resources/reports/`},
         (error, stdout, stderr) => {
           if (error) {
             console.error(`Report generation error: ${error}`);

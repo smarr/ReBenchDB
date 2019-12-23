@@ -11,6 +11,7 @@ params:
 
 ```{r setup, include=FALSE, echo=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+knitr::opts_knit$set(base.url = "/static/reports/")
 
 # avoid scientific notation for numbers, it's more readable to me
 options(scipen=999)
