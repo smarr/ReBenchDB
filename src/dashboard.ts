@@ -1,4 +1,4 @@
-import { Database } from "./db";
+import { Database } from './db';
 
 /**
  * SELECT exp.id, exp.startTime, m.iteration, m.value FROM Source s
@@ -42,4 +42,16 @@ export async function dashStatistics(db: Database) {
     ) as counts
     ORDER BY counts.table`);
   return { stats: result.rows };
+}
+
+export async function dashChanges(projectName, db) {
+  const result = await db.client.query(`
+      SELECT commitId, branchOrTag, projectId, repoURL, commitMessage FROM experiment
+        JOIN Source ON sourceid = source.id
+        JOIN Project ON projectId = project.id
+      WHERE name = $1
+      GROUP BY commitId, branchOrTag, projectId, repoURL, commitMessage
+      ORDER BY max(startTime) DESC`,
+    [projectName]);
+  return { changes: result.rows };
 }

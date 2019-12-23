@@ -50,6 +50,11 @@ router.get('/rebenchdb/stats', async ctx => {
   ctx.type = 'application/json';
 });
 
+router.get('/rebenchdb/dash/:project/changes', async ctx => {
+  ctx.body = await dashChanges(ctx.params.project, db);
+  ctx.type = 'application/json';
+});
+
 router.get('/status', async ctx => {
   ctx.body = `# ReBenchDB Status
 
