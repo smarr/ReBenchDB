@@ -13,15 +13,28 @@
   <script>
     //@ts-check
 
-    $(document).ready(() => {
+    function determineAndDisplaySignificance() {
+      const val = $('#significance').val();
+      displaySignificance(val);
+    }
+
+    function displaySignificance(sig) {
+      $('#significance-val').val(`${sig}%`);
       $(".stats-change").each((i, e) => {
         const change = parseFloat(e.textContent);
-        if (change < -0.05) {
+        if (change < (-sig)) {
           $(e).parent().css('background-color', '#e4ffc7');
-        } else if (change > 0.05) {
+        } else if (change > sig) {
           $(e).parent().css('background-color', '#ffcccc');
+        } else {
+          $(e).parent().css('background-color', '');
         }
       });
+    }
+
+    $(document).ready(() => {
+      $('#significance')
+        .on('input', determineAndDisplaySignificance);
     });
   </script>
 </head>
