@@ -360,12 +360,13 @@ ggplot(data_chg_slow, aes(ratio, suite, fill=slower)) +
 
 ```
 
+<dl class="row">
+  <dt class="col-sm-3">Number of Benchmarks</dt>
+  <dd class="col-sm-8">`r stats_all$num_benchmarks`</dd>
 
-Number of Benchmarks
-: `r stats_all$num_benchmarks`
-
-Geometric Mean
-: `r round(stats_all$geomean, 3)` (min. `r r2(stats_all$min)`, max. `r r2(stats_all$max)`)
+  <dt class="col-sm-3">Geometric Mean</dt>
+  <dd class="col-sm-8">`r round(stats_all$geomean, 3)` (min. `r r2(stats_all$min)`, max. `r r2(stats_all$max)`)</dd>
+</dl>
 
 
 ## Benchmark Performance
