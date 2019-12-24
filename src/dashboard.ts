@@ -1,6 +1,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { execFile } from 'child_process';
 import { Database } from './db';
+import { startRequest, completeRequest } from './perf-tracker';
 
 /**
  * SELECT exp.id, exp.startTime, m.iteration, m.value FROM Source s
@@ -60,7 +61,7 @@ export async function dashChanges(projectName, db) {
 
 const reportGeneration = new Map();
 
-export function dashCompare(base: string, change: string, project: string, dbConfig) {
+export function dashCompare(base: string, change: string, project: string, dbConfig, db: Database) {
   const baselineHash6 = base.substr(0, 6);
   const changeHash6 = change.substr(0, 6);
 
@@ -85,6 +86,8 @@ export function dashCompare(base: string, change: string, project: string, dbCon
 
     // no previous attempt to generate
     if (!prevGenerationDetails) {
+      const start = startRequest();
+
       data.generatingReport = true;
       // start generating a report
       const args = [
@@ -107,7 +110,7 @@ export function dashCompare(base: string, change: string, project: string, dbCon
       console.log(`Generate Report: ${__dirname}/../../src/views/knitr.R ${args.join(' ')}`);
 
       execFile(`${__dirname}/../../src/views/knitr.R`, args, { cwd: `${__dirname}/../../resources/reports/` },
-        (error, stdout, stderr) => {
+        async (error, stdout, stderr) => {
           if (error) {
             console.error(`Report generation error: ${error}`);
           }
@@ -115,6 +118,8 @@ export function dashCompare(base: string, change: string, project: string, dbCon
             error, stdout, stderr,
             inProgress: false
           });
+
+          await completeRequest(start, db, 'generate-report');
         });
       reportGeneration.set(reportId, {
         inProgress: true

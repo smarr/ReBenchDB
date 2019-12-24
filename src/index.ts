@@ -57,14 +57,18 @@ router.get('/rebenchdb/dash/:project/changes', async ctx => {
 });
 
 router.get('/compare/:project/:baseline/:change', async ctx => {
+  const start = startRequest();
+
   const data = dashCompare(
-    ctx.params.baseline, ctx.params.change, ctx.params.project, dbConfig);
+    ctx.params.baseline, ctx.params.change, ctx.params.project, dbConfig, db);
   ctx.body = processTemplate('compare.html', data);
   ctx.type = 'html';
 
   if (data.generatingReport) {
     ctx.set('Cache-Control', 'no-cache');
   }
+
+  await completeRequest(start, db, 'change');
 });
 
 if (DEV) {
@@ -125,11 +129,7 @@ router.put('/rebenchdb/results', koaBody(), async ctx => {
     console.log(e.stack);
   }
 
-  try {
-    await completeRequest(start, db);
-  } catch (e) {
-    console.error(e);
-  }
+  await completeRequest(start, db, 'put-results');
 });
 
 app.use(router.routes());

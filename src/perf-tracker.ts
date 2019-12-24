@@ -2,21 +2,31 @@ import { performance } from 'perf_hooks';
 import { Database } from './db';
 import { BenchmarkData, DataPoint, Measure } from './api';
 
-let _data: BenchmarkData;
-const measure: Measure = { c: 0, v: 0 };
-const dataPoint: DataPoint = {
-  in: 0,
-  it: 0,
-  m: [measure]
+let startTime: string;
+const iterations = {
+  'put-results': 0,
+  'change': 0,
+  'generate-report': 0
 };
 
 export function initPerfTracker() {
-  _data = {
+  startTime = new Date().toISOString();
+}
+
+function constructData(time: number, it: number, benchmark: string) {
+  const measure: Measure = { c: 0, v: time };
+  const dataPoint: DataPoint = {
+    in: 0,
+    it: it,
+    m: [measure]
+  };
+
+  const data: BenchmarkData = {
     data: [{
       d: [dataPoint],
       run_id: {
         benchmark: {
-          name: 'put-results',
+          name: benchmark,
           suite: {
             name: 'ReBenchDB API',
             desc: 'Performance tracking of the ReBenchDB API',
@@ -55,16 +65,16 @@ export function initPerfTracker() {
     endTime: null,
     projectName: 'ReBenchDB Self-Tracking'
   };
+
+  return data;
 }
 
 export function startRequest(): number {
   return performance.now();
 }
 
-export async function completeRequest(reqStart: number, db: Database) {
+export async function completeRequest(reqStart: number, db: Database, request: string) {
   const time = performance.now() - reqStart;
-  measure.v = time;
-  dataPoint.it += 1;
-
-  await db.recordData(_data);
+  iterations[request] += 1;
+  await db.recordData(constructData(time, iterations[request], request));
 }
