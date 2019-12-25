@@ -40,7 +40,7 @@ function constructData(time: number, it: number, benchmark: string) {
           },
           desc: 'Time of PUT /results'
         },
-        cmdline: '', location: '', var_value: null, cores: null, input_size: null
+        cmdline: '', location: '', var_value: null, cores: null, input_size: null, extra_args: null
       }
     }],
     criteria: [
@@ -48,7 +48,7 @@ function constructData(time: number, it: number, benchmark: string) {
     ],
     env: {
       hostName: 'self',
-      cpu: '', memory: '', osType: '', userName: '', software: [],
+      cpu: '', memory: 0, osType: '', userName: '', software: [],
       manualRun: false
     },
     source: {
