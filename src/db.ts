@@ -33,9 +33,9 @@ export class Database {
         cmdline,
         benchmarkId, execId, suiteId,
         location,
-        cores, inputSize, varValue,
+        cores, inputSize, varValue, extraArgs,
         maxInvocationTime, minIterationTime, warmup)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
 
     fetchSourceByCommitId: 'SELECT * from Source WHERE commitId = $1',
     insertSource: `INSERT INTO Source (
@@ -207,7 +207,7 @@ export class Database {
     return this.recordCached(this.runs, run.cmdline,
       this.queries.fetchRunByCmd, [run.cmdline],
       this.queries.insertRun, [run.cmdline, benchmark.id, exec.id, suite.id, run.location,
-      run.cores, run.input_size, run.var_value,
+      run.cores, run.input_size, run.var_value, run.extra_args,
       run.benchmark.run_details.max_invocation_time,
       run.benchmark.run_details.min_iteration_time,
       run.benchmark.run_details.warmup]);

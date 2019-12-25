@@ -30,6 +30,7 @@ export interface RunId {
   var_value: number | string | null;
   cores: number | string | null;
   input_size: number | string | null;
+  extra_args: string | null;
 }
 
 export interface Run {

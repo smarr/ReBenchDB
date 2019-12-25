@@ -109,6 +109,7 @@ CREATE TABLE Run (
   varValue varchar,
   cores varchar,
   inputSize varchar,
+  extraArgs varchar,
   maxInvocationTime smallint,
   minIterationTime smallint,
   warmup smallint,
