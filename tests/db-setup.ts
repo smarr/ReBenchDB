@@ -106,7 +106,7 @@ describe('Recording a ReBench execution', () => {
 
     for (const datum of basicTestData.data) {
       const b = datum.run_id.benchmark;
-      const result = await db.recordExecutor(b);
+      const result = await db.recordBenchmark(b);
       expect(b.name).to.equal(result.name);
       if (b.desc !== undefined) {
         expect(b.desc).to.equal(result.description);
