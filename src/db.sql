@@ -27,7 +27,8 @@ CREATE TABLE Environment (
   id serial primary key,
   hostname varchar unique,
   osType varchar,
-  memory varchar,
+  -- total number of bytes of memory provided by the system
+  memory bigint,
   cpu varchar,
   clockSpeed varchar,
   note text

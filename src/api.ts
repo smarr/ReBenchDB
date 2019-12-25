@@ -70,7 +70,9 @@ export interface Source {
 export interface Environment {
   hostName: string;
   cpu: string;
-  memory: string;
+
+  /** Total number of bytes of memory provided by the system. */
+  memory: number;
   osType: string;
   software: VersionInfo[];
 

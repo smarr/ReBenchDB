@@ -43,7 +43,7 @@ export class Database {
         authorName, authorEmail, committerName, committerEmail)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
     fetchEnvByHostName: 'SELECT * from Environment WHERE hostname =  $1',
-    insertEnv: `INSERT INTO Environment (hostname, osType) VALUES ($1, $2) RETURNING *`,
+    insertEnv: `INSERT INTO Environment (hostname, cpu, memory, osType, username) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
 
     fetchExpByUserEnvStart: 'SELECT * from Experiment WHERE username = $1 AND envId = $2 AND startTime = $3',
     // TODO: add projectId
@@ -225,8 +225,7 @@ export class Database {
     return this.recordCached(this.envs, e.hostName,
       this.queries.fetchEnvByHostName, [e.hostName],
       this.queries.insertEnv, [
-      // TODO: much more missing
-      e.hostName, e.osType]);
+      e.hostName, e.cpu, e.memory, e.osType, e.userName]);
   }
 
   public async recordExperiment(data: BenchmarkData, env) {
