@@ -19,7 +19,7 @@ export interface Benchmark {
   name: string;
   suite: Suite;
   run_details: RunDetails;
-  desc: string;
+  desc?: string;
 }
 
 export interface RunId {
@@ -89,7 +89,7 @@ export interface BenchmarkData {
   source: Source;
 
   startTime: string;
-  endTime: string | null;
+  endTime?: string | null;
   projectName: string | null; // TODO: remove the null support and make it mandatory
 }
 
