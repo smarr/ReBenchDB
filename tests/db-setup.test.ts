@@ -28,7 +28,15 @@ function expectIdsToBeUnique(ids) {
   expect(new Set(ids).size).toEqual(ids.length);
 }
 
+describe('Test Setup', () => {
+  it('should execute tests in the right folder', () => {
+    expect(__dirname).toMatch(/tests$/);
+  });
+});
+
 describe('Setup of PostgreSQL DB', () => {
+  jest.setTimeout(120 * 1000);
+
   it('should load the database scheme without error', async () => {
     const createTablesSql = loadScheme();
     const db = new Database(testDbConfig);
@@ -60,9 +68,9 @@ describe('Recording a ReBench execution', () => {
     await db.client.query('SAVEPOINT freshDB');
 
     basicTestData = JSON.parse(
-      readFileSync(`${__dirname}/../../tests/small-payload.json`).toString());
+      readFileSync(`${__dirname}/small-payload.json`).toString());
     largeTestData = JSON.parse(
-      readFileSync(`${__dirname}/../../tests/large-payload.json`).toString());
+      readFileSync(`${__dirname}/large-payload.json`).toString());
   });
 
   afterEach(async () => {
@@ -74,7 +82,7 @@ describe('Recording a ReBench execution', () => {
     const ids: number[] = [];
 
     for (const datum of basicTestData.data) {
-      const e = datum.run_id.benchmark.suite.executor;
+      const e = datum.runId.benchmark.suite.executor;
       const result = await db.recordExecutor(e);
       expect(e.name).toEqual(result.name);
       expect(e.desc).toEqual(result.description);
@@ -89,7 +97,7 @@ describe('Recording a ReBench execution', () => {
     const ids: number[] = [];
 
     for (const datum of basicTestData.data) {
-      const s = datum.run_id.benchmark.suite;
+      const s = datum.runId.benchmark.suite;
       const result = await db.recordSuite(s);
       expect(s.name).toEqual(result.name);
       expect(s.desc).toEqual(result.description);
@@ -104,7 +112,7 @@ describe('Recording a ReBench execution', () => {
     const ids: number[] = [];
 
     for (const datum of basicTestData.data) {
-      const b = datum.run_id.benchmark;
+      const b = datum.runId.benchmark;
       const result = await db.recordBenchmark(b);
       expect(b.name).toEqual(result.name);
       if (b.desc !== undefined) {
@@ -121,7 +129,7 @@ describe('Recording a ReBench execution', () => {
     const ids: number[] = [];
 
     for (const datum of basicTestData.data) {
-      const run = datum.run_id;
+      const run = datum.runId;
       const result = await db.recordRun(run);
       expect(run.cmdline).toEqual(result.cmdline);
       expect(run.location).toEqual(result.location);
@@ -151,14 +159,25 @@ describe('Recording a ReBench execution', () => {
     expect(e.osType).toEqual(result.ostype);
   });
 
+  it('should accept trial information', async () => {
+    const e = basicTestData.env;
+    const env = await db.recordEnvironment(e);
+    const exp = await db.recordExperiment(basicTestData);
+
+    const result = await db.recordTrial(basicTestData, env, exp);
+    expect(e.userName).toEqual(result.username);
+    expect(e.manualRun).toEqual(result.manualrun);
+    expect(env.id).toEqual(result.envid);
+  });
+
+
   it('should accept experiment information', async () => {
     const e = basicTestData.env;
     const env = await db.recordEnvironment(e);
 
-    const result = await db.recordExperiment(basicTestData, env);
-    expect(e.userName).toEqual(result.username);
-    expect(e.manualRun).toEqual(result.manualrun);
-    expect(env.id).toEqual(result.envid);
+    const result = await db.recordExperiment(basicTestData);
+    expect(result.name).toEqual(basicTestData.experimentName);
+    expect(result.projectid).toBeGreaterThanOrEqual(0);
   });
 
   it('should accept criterion information', async () => {

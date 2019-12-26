@@ -1,9 +1,14 @@
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { BenchmarkData, Executor, Suite, Benchmark, RunId, Source, Environment, Criterion } from './api';
 import { Pool, PoolConfig, PoolClient } from 'pg';
 
 export function loadScheme() {
-  return readFileSync(`${__dirname}/../../src/db.sql`).toString();
+  let schema = `${__dirname}/../src/db.sql`;
+  if (!existsSync(schema)) {
+    schema = `${__dirname}/../../src/db.sql`;
+  }
+
+  return readFileSync(schema).toString();
 }
 
 export class Database {
@@ -15,8 +20,10 @@ export class Database {
   private readonly runs: Map<string, any>;
   private readonly sources: Map<string, any>;
   private readonly envs: Map<string, any>;
+  private readonly trials: Map<string, any>;
   private readonly exps: Map<string, any>;
   private readonly criteria: Map<string, any>;
+  private readonly projects: Map<string, any>;
 
   private readonly queries = {
     fetchExecutorByName: 'SELECT * from Executor WHERE name = $1',
@@ -43,19 +50,23 @@ export class Database {
         authorName, authorEmail, committerName, committerEmail)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
     fetchEnvByHostName: 'SELECT * from Environment WHERE hostname =  $1',
-    insertEnv: `INSERT INTO Environment (hostname, cpu, memory, osType, username) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    insertEnv: `INSERT INTO Environment (hostname, osType, memory, cpu, clockSpeed) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
 
-    fetchExpByUserEnvStart: 'SELECT * from Experiment WHERE username = $1 AND envId = $2 AND startTime = $3',
-    // TODO: add projectId
-    insertExp: `INSERT INTO Experiment (username, envId, sourceId, manualRun, startTime)
-      VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-    countExp: 'SELECT count(*) as cnt from Experiment',
+    fetchTrialByUserEnvStart: 'SELECT * from Trial WHERE username = $1 AND envId = $2 AND startTime = $3',
+    insertTrial: `INSERT INTO Trial (manualRun, startTime, expId, username, envId, sourceId)
+      VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
 
-    countMeasurement: 'SELECT count(*) as cnt from Measurement',
+    fetchProjectByName: 'SELECT * from Project WHERE name = $1',
+    insertProject: 'INSERT INTO Project (name) VALUES ($1) RETURNING *',
+
+    fetchExpByProjectIdName: 'SELECT * from Experiment WHERE projectId = $1 AND name = $2',
+    insertExp: `INSERT INTO Experiment (name, projectId, description)
+      VALUES ($1, $2, $3) RETURNING *`,
+
     insertMeasurement: {
       name: 'insertMeasurement',
       text: `INSERT INTO Measurement
-          (runId, expId, invocation, iteration, criterion, value)
+          (runId, trialId, invocation, iteration, criterion, value)
         VALUES ($1, $2, $3, $4, $5, $6)`,
       values: <any[]>[]
     },
@@ -63,7 +74,7 @@ export class Database {
     insertMeasurementBatched10: {
       name: 'insertMeasurementN',
       text: `INSERT INTO Measurement
-          (runId, expId, invocation, iteration, criterion, value)
+          (runId, trialId, invocation, iteration, criterion, value)
         VALUES
           ($1, $2, $3, $4, $5, $6),
           ($7, $8, $9, $10, $11, $12),
@@ -81,7 +92,7 @@ export class Database {
     fetchMaxMeasurements: `SELECT
         runId, criterion, invocation as inv, max(iteration) as ite
       FROM Measurement
-      WHERE expId = $1
+      WHERE trialId = $1
       GROUP BY runId, criterion, invocation
       ORDER BY runId, inv, ite, criterion`,
 
@@ -102,11 +113,13 @@ export class Database {
     this.sources = new Map();
     this.envs = new Map();
     this.exps = new Map();
+    this.trials = new Map();
     this.criteria = new Map();
+    this.projects = new Map();
 
     this.queries.insertMeasurementBatched10.text =
       `INSERT INTO Measurement
-         (runId, expId, invocation, iteration, criterion, value)
+         (runId, trialId, invocation, iteration, criterion, value)
        VALUES ` + this.generateBatchInsert(Database.batchN, 6);
   }
 
@@ -130,7 +143,9 @@ export class Database {
     this.sources.clear();
     this.envs.clear();
     this.exps.clear();
+    this.trials.clear();
     this.criteria.clear();
+    this.projects.clear();
   }
 
   private async needsTables() {
@@ -149,16 +164,6 @@ export class Database {
 
   public async activateTransactionSupport() {
     this.client = <PoolClient> await this.client.connect();
-  }
-
-  public async getNumberOfExperiments() {
-    const result = await this.client.query(this.queries.countExp);
-    return result.rows[0].cnt;
-  }
-
-  public async getNumberOfMeasurements() {
-    const result = await this.client.query(this.queries.countMeasurement);
-    return result.rows[0].cnt;
   }
 
   private async recordCached(cache, cacheKey, fetchQ, qVals, insertQ, insertVals) {
@@ -207,10 +212,10 @@ export class Database {
     return this.recordCached(this.runs, run.cmdline,
       this.queries.fetchRunByCmd, [run.cmdline],
       this.queries.insertRun, [run.cmdline, benchmark.id, exec.id, suite.id, run.location,
-      run.cores, run.input_size, run.var_value, run.extra_args,
-      run.benchmark.run_details.max_invocation_time,
-      run.benchmark.run_details.min_iteration_time,
-      run.benchmark.run_details.warmup]);
+      run.cores, run.inputSize, run.varValue, run.extraArgs,
+      run.benchmark.runDetails.maxInvocationTime,
+      run.benchmark.runDetails.minIterationTime,
+      run.benchmark.runDetails.warmup]);
   }
 
   public async recordSource(s: Source) {
@@ -225,24 +230,44 @@ export class Database {
     return this.recordCached(this.envs, e.hostName,
       this.queries.fetchEnvByHostName, [e.hostName],
       this.queries.insertEnv, [
-      e.hostName, e.cpu, e.memory, e.osType, e.userName]);
+      e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed ]);
   }
 
-  public async recordExperiment(data: BenchmarkData, env) {
+  public async recordTrial(data: BenchmarkData, env, exp) {
     const e = data.env;
-
     const cacheKey = `${e.userName}-${env.id}-${data.startTime}`;
+
+    if (this.trials.has(cacheKey)) {
+      return this.trials.get(cacheKey);
+    }
+
+    const source = await this.recordSource(data.source);
+
+    return this.recordCached(this.trials, cacheKey,
+      this.queries.fetchTrialByUserEnvStart,
+      [ e.userName, env.id, data.startTime ],
+      this.queries.insertTrial,
+      [ e.manualRun, data.startTime, exp.id, e.userName, env.id, source.id ]);
+  }
+
+  public async recordProject(projectName) {
+    return this.recordCached(this.projects, projectName,
+      this.queries.fetchProjectByName, [projectName],
+      this.queries.insertProject, [projectName]);
+  }
+
+  public async recordExperiment(data: BenchmarkData) {
+    const cacheKey = `${data.projectName}::${data.experimentName}`;
+
     if (this.exps.has(cacheKey)) {
       return this.exps.get(cacheKey);
     }
 
-    const source = await this.recordSource(data.source);
+    const project = await this.recordProject(data.projectName);
+
     return this.recordCached(this.exps, cacheKey,
-      this.queries.fetchExpByUserEnvStart, [
-      e.userName, env.id, data.startTime],
-      this.queries.insertExp, [
-      // TODO: much more missing
-      e.userName, env.id, source.id, e.manualRun, data.startTime /* TODO...*/]);
+      this.queries.fetchExpByProjectIdName, [ project.id, data.experimentName ],
+      this.queries.insertExp, [ data.experimentName, project.id, data.experimentDesc ]);
   }
 
   private async recordUnit(unitName: string) {
@@ -273,8 +298,8 @@ export class Database {
     return criteria;
   }
 
-  private async retrieveAvailableMeasurements(expId) {
-    const results = await this.client.query(this.queries.fetchMaxMeasurements, [expId]);
+  private async retrieveAvailableMeasurements(trialId) {
+    const results = await this.client.query(this.queries.fetchMaxMeasurements, [trialId]);
     const measurements = {};
     for (const r of results.rows) {
       // runid, criterion, inv, ite
@@ -313,7 +338,8 @@ export class Database {
 
   public async recordData(data: BenchmarkData): Promise<number> {
     const env = await this.recordEnvironment(data.env);
-    const exp = await this.recordExperiment(data, env);
+    const exp = await this.recordExperiment(data);
+    const trial = await this.recordTrial(data, env, exp);
 
     const criteria = await this.resolveCriteria(data.criteria);
 
@@ -323,15 +349,15 @@ export class Database {
       let batchedMs = 0;
       let batchedValues: any[] = [];
 
-      const run = await this.recordRun(r.run_id);
+      const run = await this.recordRun(r.runId);
 
-      const availableMs = await this.retrieveAvailableMeasurements(exp.id);
+      const availableMs = await this.retrieveAvailableMeasurements(trial.id);
 
       for (const d of r.d) {
         for (const m of d.m) {
           // batched inserts are much faster
           // so let's do this
-          const values = [run.id, exp.id, d.in, d.it, criteria.get(m.c).id, m.v];
+          const values = [run.id, trial.id, d.in, d.it, criteria.get(m.c).id, m.v];
           if (this.alreadyRecorded(availableMs, values)) {
             // then,just skip this one.
             continue;
@@ -359,13 +385,13 @@ export class Database {
 
   public async recordMeasurementBatched(values: any[]) {
     const q = this.queries.insertMeasurementBatched10;
-    q.values = values; // [runId, expId, invocation, iteration, critId, value];
-    return await this.client.query(this.queries.insertMeasurementBatched10);
+    q.values = values; // [runId, trialId, invocation, iteration, critId, value];
+    return await this.client.query(q);
   }
 
   public async recordMeasurement(values: any[]) {
     const q = this.queries.insertMeasurement;
-    q.values = values; // [runId, expId, invocation, iteration, critId, value];
+    q.values = values; // [runId, trialId, invocation, iteration, critId, value];
     return await this.client.query(this.queries.insertMeasurement);
   }
 }

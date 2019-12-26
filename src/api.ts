@@ -71,6 +71,9 @@ export interface Environment {
   hostName: string;
   cpu: string;
 
+  /** Advertised or nominal clock speed in Hertz. */
+  clockSpeed: number;
+
   /** Total number of bytes of memory provided by the system. */
   memory: number;
   osType: string;
@@ -90,6 +93,9 @@ export interface BenchmarkData {
   criteria: Criterion[];
   env: Environment;
   source: Source;
+
+  experimentName: string;
+  experimentDesc?: string;
 
   startTime: string;
   endTime?: string | null;

@@ -29,6 +29,8 @@ export async function dashStatistics(db: Database) {
     SELECT * FROM (
       SELECT 'Experiments' as table, count(*) as cnt FROM experiment
       UNION ALL
+      SELECT 'Trials' as table, count(*) as cnt FROM trial
+      UNION ALL
       SELECT 'Executors' as table, count(*) as cnt FROM executor
       UNION ALL
       SELECT 'Benchmarks' as table, count(*) as cnt FROM benchmark
@@ -50,7 +52,7 @@ export async function dashStatistics(db: Database) {
 export async function dashChanges(projectName, db) {
   const result = await db.client.query(`
       SELECT commitId, branchOrTag, projectId, repoURL, commitMessage FROM experiment
-        JOIN Source ON sourceid = source.id
+        JOIN Source ON sourceId = source.id
         JOIN Project ON projectId = project.id
       WHERE name = $1
       GROUP BY commitId, branchOrTag, projectId, repoURL, commitMessage

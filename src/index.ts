@@ -85,9 +85,6 @@ router.get('/status', async ctx => {
   ctx.body = `# ReBenchDB Status
 
 - version ${version}
-- data
-  - measurements ${await db.getNumberOfMeasurements()}
-  - experiments ${await db.getNumberOfExperiments()}
 `;
   ctx.type = 'text';
 });

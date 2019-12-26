@@ -30,7 +30,9 @@ CREATE TABLE Environment (
   -- total number of bytes of memory provided by the system
   memory bigint,
   cpu varchar,
-  clockSpeed varchar,
+
+  -- nominal clock speed in Hz
+  clockSpeed bigint,
   note text
 );
 
@@ -70,23 +72,39 @@ CREATE TABLE Source (
 
 CREATE TABLE Experiment (
   id serial primary key,
+
+  name varchar NOT NULL,
+  projectId smallint,
+
+  description text,
+
+  unique (projectId, name),
+
+  foreign key (projectId) references Project (id)
+);
+
+CREATE TABLE Trial (
+  id serial primary key,
+  manualRun bool,
+  startTime timestamp with time zone,
+
+  expId smallint,
+
   username varchar,
   envId smallint,
   sourceId smallint,
-  manualRun bool,
-  startTime timestamp with time zone,
 
   -- can only be supplied when everything is done
   -- but we may want to start storing data before
   endTime timestamp with time zone NULL,
 
-  projectId smallint,
-
   -- We assume that there is only
-  -- a single experiment per user/envirnment/startTime.
+  -- a single experiment per user/environment/startTime.
+  -- sourceId is not included, since it should be
+  -- functionally dependent on startTime in the intended scenarios.
   unique (username, envId, startTime),
 
-  foreign key (projectId) references Project (id),
+  foreign key (expId) references Experiment (id),
   foreign key (envId) references Environment (id),
   foreign key (sourceId) references Source (id)
 );
@@ -122,15 +140,15 @@ CREATE TABLE Run (
 
 CREATE TABLE Measurement (
   runId smallint,
-  expId smallint,
+  trialId smallint,
   criterion smallint,
   invocation smallint,
   iteration smallint,
 
   value float4 NOT NULL,
 
-  primary key (iteration, invocation, runId, expId, criterion),
-  foreign key (expId) references Experiment (id),
+  primary key (iteration, invocation, runId, trialId, criterion),
+  foreign key (trialId) references Trial (id),
   foreign key (runId) references Run (id),
   foreign key (criterion) references Criterion (id)
 );
