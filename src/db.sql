@@ -1,21 +1,26 @@
+-- A named program/configuration for executing benchmarks.
 CREATE TABLE Executor (
   id serial primary key,
   name varchar unique,
   description text
 );
 
+-- A set of benchmarks.
 CREATE TABLE Suite (
   id serial primary key,
   name varchar unique,
   description text
 );
 
+-- A specific benchmark program.
 CREATE TABLE Benchmark (
   id serial primary key,
   name varchar unique,
   description varchar
 );
 
+-- A specific software version, possibly used by multiple environments
+-- or versions of environments.
 CREATE TABLE SoftwareVersionInfo (
   id serial primary key,
   name varchar,
@@ -23,6 +28,8 @@ CREATE TABLE SoftwareVersionInfo (
   unique (name, version)
 );
 
+-- Identifies the specific state of an environment, including
+-- the relevant software versions.
 CREATE TABLE Environment (
   id serial primary key,
   hostname varchar unique,
@@ -36,12 +43,16 @@ CREATE TABLE Environment (
   note text
 );
 
+-- The unit of a measure.
 CREATE TABLE Unit (
   name varchar primary key,
   description text,
   lessIsBetter boolean
 );
 
+-- A specific criterion that is measured for a benchmark.
+-- This can be anything, from total time over memory consumption
+-- to other things or parts worth measuring.
 CREATE TABLE Criterion (
   id serial primary key,
   name varchar,
@@ -51,6 +62,8 @@ CREATE TABLE Criterion (
   foreign key (unit) references Unit (name)
 );
 
+-- Groups all the data that belongs together.
+-- ReBenchDB is meant to keep data for multiple experiments.
 CREATE TABLE Project (
   id serial primary key,
   name varchar unique,
@@ -58,6 +71,8 @@ CREATE TABLE Project (
   logo varchar
 );
 
+-- Identifies the specific state of the source, the code, on which
+-- an experiment and its measurements are based.
 CREATE TABLE Source (
   id serial primary key,
   repoURL varchar,
@@ -70,6 +85,10 @@ CREATE TABLE Source (
   committerEmail varchar
 );
 
+-- ReBench executes experiments to collect the desired measurements.
+-- An experiment can be composed of multiple Trials.
+-- To identify experiments, we use a name.
+-- Optionally, a more elaborated description can be provided for documentation.
 CREATE TABLE Experiment (
   id serial primary key,
 
@@ -83,6 +102,10 @@ CREATE TABLE Experiment (
   foreign key (projectId) references Project (id)
 );
 
+-- Is part of an experiment, and consists of measurements.
+-- Multiple trials can belong to a single experiment.
+-- Trials are something like CI jobs or manual executions to collect
+-- all the data for a specific experiment.
 CREATE TABLE Trial (
   id serial primary key,
   manualRun bool,
@@ -109,6 +132,7 @@ CREATE TABLE Trial (
   foreign key (sourceId) references Source (id)
 );
 
+-- Documents the software versions used by a specific environment.
 CREATE TABLE SoftwareUse (
   envId smallint,
   softId smallint,
@@ -118,6 +142,12 @@ CREATE TABLE SoftwareUse (
   foreign key (softId) references SoftwareVersionInfo (id)
 );
 
+-- A concrete execution of a benchmark by a specific executor.
+-- A run is a specific combination of variables.
+-- It can be executed multiple times.
+-- Each time is referred to as an invocation.
+-- One run itself can also execute a benchmark multiple times,
+-- which we refer to as iterations of a run.
 CREATE TABLE Run (
   id serial primary key,
   benchmarkId smallint,
@@ -138,6 +168,7 @@ CREATE TABLE Run (
   foreign key (suiteId) references Suite (id)
 );
 
+-- One value for one specific criterion.
 CREATE TABLE Measurement (
   runId smallint,
   trialId smallint,
