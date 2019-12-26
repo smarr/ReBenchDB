@@ -10,15 +10,15 @@ export interface Suite {
 }
 
 export interface RunDetails {
-  max_invocation_time: number;
-  min_iteration_time: number;
+  maxInvocationTime: number;
+  minIterationTime: number;
   warmup: number | null;
 }
 
 export interface Benchmark {
   name: string;
   suite: Suite;
-  run_details: RunDetails;
+  runDetails: RunDetails;
   desc?: string;
 }
 
@@ -27,15 +27,15 @@ export interface RunId {
   cmdline: string;
   location: string;
 
-  var_value: number | string | null;
+  varValue: number | string | null;
   cores: number | string | null;
-  input_size: number | string | null;
-  extra_args: string | null;
+  inputSize: number | string | null;
+  extraArgs: string | null;
 }
 
 export interface Run {
   d: DataPoint[];
-  run_id: RunId;
+  runId: RunId;
 }
 
 export interface Measure {
