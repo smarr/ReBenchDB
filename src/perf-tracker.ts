@@ -25,7 +25,7 @@ function constructData(time: number, it: number, benchmark: string) {
     experimentName: 'monitoring',
     data: [{
       d: [dataPoint],
-      run_id: {
+      runId: {
         benchmark: {
           name: benchmark,
           suite: {
@@ -36,12 +36,12 @@ function constructData(time: number, it: number, benchmark: string) {
               desc: null
             }
           },
-          run_details: {
-            max_invocation_time: 0, min_iteration_time: 0, warmup: null
+          runDetails: {
+            maxInvocationTime: 0, minIterationTime: 0, warmup: null
           },
           desc: 'Time of PUT /results'
         },
-        cmdline: '', location: '', var_value: null, cores: null, input_size: null, extra_args: null
+        cmdline: '', location: '', varValue: null, cores: null, inputSize: null, extraArgs: null
       }
     }],
     criteria: [
@@ -49,7 +49,7 @@ function constructData(time: number, it: number, benchmark: string) {
     ],
     env: {
       hostName: 'self',
-      cpu: '', memory: 0, osType: '', userName: '', software: [],
+      cpu: '', memory: 0, clockSpeed: 0, osType: '', userName: '', software: [],
       manualRun: false
     },
     source: {
