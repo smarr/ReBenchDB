@@ -37,6 +37,9 @@
     "testPathIgnorePatterns": [
       "<rootDir>/dist/",
       "<rootDir>/node_modules/"
+    ],
+    "modulePathIgnorePatterns": [
+      "<rootDir>/dist/"
     ]
   },
   "scripts": {
