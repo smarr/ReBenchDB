@@ -72,7 +72,7 @@ export class Database {
     },
 
     insertMeasurementBatched10: {
-      name: 'insertMeasurementN',
+      name: 'insertMeasurement10',
       text: `INSERT INTO Measurement
           (runId, trialId, invocation, iteration, criterion, value)
         VALUES
@@ -86,6 +86,15 @@ export class Database {
           ($43, $44, $45, $46, $47, $48),
           ($49, $50, $51, $52, $53, $54),
           ($55, $56, $57, $58, $59, $60)`,
+      values: <any[]>[]
+    },
+
+    insertMeasurementBatchedN: {
+      name: 'insertMeasurementN',
+      text: `INSERT INTO Measurement
+          (runId, trialId, invocation, iteration, criterion, value)
+        VALUES
+          GENERATED`,
       values: <any[]>[]
     },
 
@@ -117,7 +126,7 @@ export class Database {
     this.criteria = new Map();
     this.projects = new Map();
 
-    this.queries.insertMeasurementBatched10.text =
+    this.queries.insertMeasurementBatchedN.text =
       `INSERT INTO Measurement
          (runId, trialId, invocation, iteration, criterion, value)
        VALUES ` + this.generateBatchInsert(Database.batchN, 6);
@@ -366,15 +375,21 @@ export class Database {
           recordedMeasurements += 1;
           batchedValues = batchedValues.concat(values);
           if (batchedMs === Database.batchN) {
-            await this.recordMeasurementBatched(batchedValues);
+            await this.recordMeasurementBatchedN(batchedValues);
             batchedValues = [];
             batchedMs = 0;
           }
         }
       }
 
+      while (batchedValues.length >= 6 * 10) {
+        const rest = batchedValues.splice(6 * 10); // there are 6 parameters, i.e., values
+        await this.recordMeasurementBatched10(batchedValues);
+        batchedValues = rest;
+      }
+
       while (batchedValues.length > 0) {
-        const rest = batchedValues.splice(6); // there are 6 parameters, i.e., values
+        const rest = batchedValues.splice(6 * 1); // there are 6 parameters, i.e., values
         await this.recordMeasurement(batchedValues);
         batchedValues = rest;
       }
@@ -383,8 +398,14 @@ export class Database {
     return recordedMeasurements;
   }
 
-  public async recordMeasurementBatched(values: any[]) {
+  public async recordMeasurementBatched10(values: any[]) {
     const q = this.queries.insertMeasurementBatched10;
+    q.values = values; // [runId, trialId, invocation, iteration, critId, value];
+    return await this.client.query(q);
+  }
+
+  public async recordMeasurementBatchedN(values: any[]) {
+    const q = this.queries.insertMeasurementBatchedN;
     q.values = values; // [runId, trialId, invocation, iteration, critId, value];
     return await this.client.query(q);
   }
