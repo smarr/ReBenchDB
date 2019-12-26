@@ -1,6 +1,5 @@
 import { BenchmarkData } from '../src/api';
 import { loadScheme, Database } from '../src/db';
-import { expect } from 'chai';
 import { readFileSync } from 'fs';
 
 // create database test_rdb;
@@ -25,8 +24,8 @@ function wrapInTransaction(sql: string) {
 }
 
 function expectIdsToBeUnique(ids) {
-  expect(ids.length).to.be.greaterThan(0);
-  expect(new Set(ids).size).to.equal(ids.length);
+  expect(ids.length).toBeGreaterThan(0);
+  expect(new Set(ids).size).toEqual(ids.length);
 }
 
 describe('Setup of PostgreSQL DB', () => {
@@ -38,11 +37,11 @@ describe('Setup of PostgreSQL DB', () => {
 
     const result = await db.client.query(sql);
     const len = (<any> result).length;
-    expect(len).is.greaterThan(numTxStatements);
+    expect(len).toBeGreaterThan(numTxStatements);
 
     const selectCommand = result[len - 2];
-    expect(selectCommand.command).to.equal('SELECT');
-    expect(selectCommand.rowCount).to.equal(0);
+    expect(selectCommand.command).toEqual('SELECT');
+    expect(selectCommand.rowCount).toEqual(0);
   });
 });
 
@@ -51,7 +50,7 @@ describe('Recording a ReBench execution', () => {
   let basicTestData: BenchmarkData;
   let largeTestData: BenchmarkData;
 
-  before(async () => {
+  beforeAll(async () => {
     db = new Database(testDbConfig);
     await db.activateTransactionSupport();
 
@@ -77,9 +76,9 @@ describe('Recording a ReBench execution', () => {
     for (const datum of basicTestData.data) {
       const e = datum.run_id.benchmark.suite.executor;
       const result = await db.recordExecutor(e);
-      expect(e.name).to.equal(result.name);
-      expect(e.desc).to.equal(result.description);
-      expect(result.id).to.be.greaterThan(0);
+      expect(e.name).toEqual(result.name);
+      expect(e.desc).toEqual(result.description);
+      expect(result.id).toBeGreaterThan(0);
       ids.push(result.id);
     }
 
@@ -92,9 +91,9 @@ describe('Recording a ReBench execution', () => {
     for (const datum of basicTestData.data) {
       const s = datum.run_id.benchmark.suite;
       const result = await db.recordSuite(s);
-      expect(s.name).to.equal(result.name);
-      expect(s.desc).to.equal(result.description);
-      expect(result.id).to.be.greaterThan(0);
+      expect(s.name).toEqual(result.name);
+      expect(s.desc).toEqual(result.description);
+      expect(result.id).toBeGreaterThan(0);
       ids.push(result.id);
     }
 
@@ -107,11 +106,11 @@ describe('Recording a ReBench execution', () => {
     for (const datum of basicTestData.data) {
       const b = datum.run_id.benchmark;
       const result = await db.recordBenchmark(b);
-      expect(b.name).to.equal(result.name);
+      expect(b.name).toEqual(result.name);
       if (b.desc !== undefined) {
-        expect(b.desc).to.equal(result.description);
+        expect(b.desc).toEqual(result.description);
       }
-      expect(result.id).to.be.greaterThan(0);
+      expect(result.id).toBeGreaterThan(0);
       ids.push(result.id);
     }
 
@@ -124,14 +123,14 @@ describe('Recording a ReBench execution', () => {
     for (const datum of basicTestData.data) {
       const run = datum.run_id;
       const result = await db.recordRun(run);
-      expect(run.cmdline).to.equal(result.cmdline);
-      expect(run.location).to.equal(result.location);
+      expect(run.cmdline).toEqual(result.cmdline);
+      expect(run.location).toEqual(result.location);
 
-      expect(result.benchmarkid).to.be.a('number');
-      expect(result.suiteid).to.be.a('number');
-      expect(result.execid).to.be.a('number');
+      expect(typeof result.benchmarkid).toEqual('number');
+      expect(typeof result.suiteid).toEqual('number');
+      expect(typeof result.execid).toEqual('number');
 
-      expect(result.id).to.be.greaterThan(0);
+      expect(result.id).toBeGreaterThan(0);
       ids.push(result.id);
     }
 
@@ -141,15 +140,15 @@ describe('Recording a ReBench execution', () => {
   it('should accept source information', async () => {
     const s = basicTestData.source;
     const result = await db.recordSource(s);
-    expect(s.commitId).to.equal(result.commitid);
-    expect(s.commitMsg).to.equal(result.commitmessage);
+    expect(s.commitId).toEqual(result.commitid);
+    expect(s.commitMsg).toEqual(result.commitmessage);
   });
 
   it('should accept environment information', async () => {
     const e = basicTestData.env;
     const result = await db.recordEnvironment(e);
-    expect(e.hostName).to.equal(result.hostname);
-    expect(e.osType).to.equal(result.ostype);
+    expect(e.hostName).toEqual(result.hostname);
+    expect(e.osType).toEqual(result.ostype);
   });
 
   it('should accept experiment information', async () => {
@@ -157,48 +156,48 @@ describe('Recording a ReBench execution', () => {
     const env = await db.recordEnvironment(e);
 
     const result = await db.recordExperiment(basicTestData, env);
-    expect(e.userName).to.equal(result.username);
-    expect(e.manualRun).to.equal(result.manualrun);
-    expect(env.id).to.equal(result.envid);
+    expect(e.userName).toEqual(result.username);
+    expect(e.manualRun).toEqual(result.manualrun);
+    expect(env.id).toEqual(result.envid);
   });
 
   it('should accept criterion information', async () => {
     const c = basicTestData.criteria[0];
     const criterion = await db.recordCriterion(c);
-    expect(c.c).to.equal(criterion.name);
-    expect(c.u).to.equal(criterion.unit);
-    expect(criterion.id).to.be.a('number');
-    expect(criterion.id).to.be.gte(0);
+    expect(c.c).toEqual(criterion.name);
+    expect(c.u).toEqual(criterion.unit);
+    expect(typeof criterion.id).toEqual('number');
+    expect(criterion.id).toBeGreaterThanOrEqual(0);
   });
 
   it('should accept all data (small-payload), and have the measurements persisted', async () => {
     const recMs = await db.recordData(basicTestData);
     const measurements = await db.client.query('SELECT * from Measurement');
-    expect(3).to.equal(recMs);
-    expect(3).to.equal(measurements.rowCount);
+    expect(3).toEqual(recMs);
+    expect(3).toEqual(measurements.rowCount);
   });
 
   it('data recording should be idempotent (small-payload)', async () => {
     let recMs = await db.recordData(basicTestData);
     let measurements = await db.client.query('SELECT * from Measurement');
-    expect(3).to.equal(recMs);
-    expect(3).to.equal(measurements.rowCount);
+    expect(3).toEqual(recMs);
+    expect(3).toEqual(measurements.rowCount);
 
     recMs = await db.recordData(basicTestData);
     measurements = await db.client.query('SELECT * from Measurement');
-    expect(0).to.equal(recMs);
-    expect(3).to.equal(measurements.rowCount);
+    expect(0).toEqual(recMs);
+    expect(3).toEqual(measurements.rowCount);
   });
 
   it('should accept all data (large-payload), and have the measurements persisted', async () => {
     const recMs = await db.recordData(largeTestData);
     const measurements = await db.client.query('SELECT count(*) as cnt from Measurement');
 
-    expect(459928).to.equal(recMs);
-    expect(459928).to.equal(parseInt(measurements.rows[0].cnt));
+    expect(459928).toEqual(recMs);
+    expect(459928).toEqual(parseInt(measurements.rows[0].cnt));
   });
 
-  after(async () => {
+  afterAll(async () => {
     await db.client.query('ROLLBACK');
     await (<any> db.client).end();
   });

@@ -1,4 +1,5 @@
 import Ajv from 'ajv';
+import { existsSync } from 'fs';
 import { getProgramFromFiles, generateSchema, CompilerOptions, PartialArgs } from 'typescript-json-schema';
 
 export function createValidator(): Ajv.ValidateFunction {
@@ -10,7 +11,12 @@ export function createValidator(): Ajv.ValidateFunction {
     required: true
   };
 
-  const program = getProgramFromFiles([`${__dirname}/../../src/api.ts`], compilerOptions);
+  let api = `${__dirname}/../src/api.ts`;
+  if (!existsSync(api)) {
+    api = `${__dirname}/../../src/api.ts`;
+  }
+
+  const program = getProgramFromFiles([api], compilerOptions);
   const schema = generateSchema(program, 'BenchmarkData', settings);
 
   const ajv = new Ajv({ allErrors: true });
