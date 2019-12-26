@@ -22,6 +22,7 @@ function constructData(time: number, it: number, benchmark: string) {
   };
 
   const data: BenchmarkData = {
+    experimentName: 'monitoring',
     data: [{
       d: [dataPoint],
       run_id: {
