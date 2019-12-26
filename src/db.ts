@@ -239,7 +239,7 @@ export class Database {
     return this.recordCached(this.envs, e.hostName,
       this.queries.fetchEnvByHostName, [e.hostName],
       this.queries.insertEnv, [
-      e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed ]);
+      e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed]);
   }
 
   public async recordTrial(data: BenchmarkData, env, exp) {
@@ -254,9 +254,9 @@ export class Database {
 
     return this.recordCached(this.trials, cacheKey,
       this.queries.fetchTrialByUserEnvStart,
-      [ e.userName, env.id, data.startTime ],
+      [e.userName, env.id, data.startTime],
       this.queries.insertTrial,
-      [ e.manualRun, data.startTime, exp.id, e.userName, env.id, source.id ]);
+      [e.manualRun, data.startTime, exp.id, e.userName, env.id, source.id]);
   }
 
   public async recordProject(projectName) {
@@ -275,8 +275,8 @@ export class Database {
     const project = await this.recordProject(data.projectName);
 
     return this.recordCached(this.exps, cacheKey,
-      this.queries.fetchExpByProjectIdName, [ project.id, data.experimentName ],
-      this.queries.insertExp, [ data.experimentName, project.id, data.experimentDesc ]);
+      this.queries.fetchExpByProjectIdName, [project.id, data.experimentName],
+      this.queries.insertExp, [data.experimentName, project.id, data.experimentDesc]);
   }
 
   private async recordUnit(unitName: string) {
