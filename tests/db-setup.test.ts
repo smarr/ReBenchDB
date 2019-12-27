@@ -35,6 +35,8 @@ describe('Setup of PostgreSQL DB', () => {
     const selectCommand = result[len - 2];
     expect(selectCommand.command).toEqual('SELECT');
     expect(selectCommand.rowCount).toEqual(0);
+
+    await (<any> db.client).end();
   });
 });
 

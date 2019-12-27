@@ -12,6 +12,11 @@ describe('Test Dashboard on empty DB', () => {
     await prepareDbForTesting(db);
   });
 
+  afterAll(async () => {
+    await db.client.query('ROLLBACK');
+    await (<any> db.client).end();
+  });
+
   afterEach(async () => {
     await rollback(db);
   });
