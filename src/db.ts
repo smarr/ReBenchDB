@@ -3,9 +3,9 @@ import { BenchmarkData, Executor, Suite, Benchmark, RunId, Source, Environment, 
 import { Pool, PoolConfig, PoolClient } from 'pg';
 
 export function loadScheme() {
-  let schema = `${__dirname}/../src/db.sql`;
+  let schema = `${__dirname}/../src/db/db.sql`;
   if (!existsSync(schema)) {
-    schema = `${__dirname}/../../src/db.sql`;
+    schema = `${__dirname}/../../src/db/db.sql`;
   }
 
   return readFileSync(schema).toString();
