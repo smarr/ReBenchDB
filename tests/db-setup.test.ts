@@ -1,27 +1,12 @@
 import { BenchmarkData } from '../src/api';
 import { loadScheme, Database } from '../src/db';
 import { readFileSync } from 'fs';
+import { getConfig, wrapInTransaction, prepareDbForTesting, rollback } from './db-testing';
 
 // create database test_rdb;
-const testDbConfig = {
-  user: process.env.RDB_USER || '',
-  password: process.env.RDB_PASS || '',
-  host: process.env.RDB_HOST || 'localhost',
-  database: process.env.RDB_DB || 'test_rdb3',
-  port: 5432
-};
+const testDbConfig = getConfig();
 
 const numTxStatements = 3;
-
-function wrapInTransaction(sql: string) {
-  return `
-  begin;
-  ${sql};
-
-  SELECT * FROM Measurement;
-  rollback;
-  `;
-}
 
 function expectIdsToBeUnique(ids) {
   expect(ids.length).toBeGreaterThan(0);
@@ -60,12 +45,7 @@ describe('Recording a ReBench execution', () => {
 
   beforeAll(async () => {
     db = new Database(testDbConfig);
-    await db.activateTransactionSupport();
-
-    await db.client.query('BEGIN');
-
-    await db.initializeDatabase();
-    await db.client.query('SAVEPOINT freshDB');
+    await prepareDbForTesting(db);
 
     basicTestData = JSON.parse(
       readFileSync(`${__dirname}/small-payload.json`).toString());
@@ -74,8 +54,7 @@ describe('Recording a ReBench execution', () => {
   });
 
   afterEach(async () => {
-    db.clearCache();
-    db.client.query('ROLLBACK TO SAVEPOINT freshDB');
+    await rollback(db);
   });
 
   it('should accept executor information', async () => {
