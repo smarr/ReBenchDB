@@ -19,7 +19,7 @@ ReBenchDB is designed to
 - [x] record benchmark measurements
 - [-] information about the environment in which the benchmarks were executed
 - [ ] enable performance tracking over time
-- [ ] enable performance comparison of experiments
+- [x] enable performance comparison of experiments
 - [-] supports custom reports and performance analyses
 - [ ] enables data export
 

@@ -68,7 +68,9 @@ CREATE TABLE Project (
   id serial primary key,
   name varchar unique,
   description text,
-  logo varchar
+  logo varchar,
+  showChanges bool DEFAULT true,
+  allResults bool DEFAULT false
 );
 
 -- Identifies the specific state of the source, the code, on which

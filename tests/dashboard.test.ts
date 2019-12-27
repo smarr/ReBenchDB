@@ -1,6 +1,6 @@
 import { Database } from '../src/db';
 import { getConfig, prepareDbForTesting, rollback } from './db-testing';
-import { dashStatistics, dashReBenchDb, dashChanges } from '../src/dashboard';
+import { dashStatistics, dashResults, dashChanges } from '../src/dashboard';
 
 const testDbConfig = getConfig();
 
@@ -21,8 +21,8 @@ describe('Test Dashboard on empty DB', () => {
     await rollback(db);
   });
 
-  it('Should get empty ReBenchDB request statistics', async () => {
-    const result = await dashReBenchDb(db);
+  it('Should get empty results request', async () => {
+    const result = await dashResults(0, db);
     expect(result.timeSeries).toHaveLength(0);
   });
 
@@ -35,7 +35,7 @@ describe('Test Dashboard on empty DB', () => {
   });
 
   it('Should get empty changes', async () => {
-    const result = await dashChanges('SOMns', db);
+    const result = await dashChanges(0, db);
     expect(result.changes).toHaveLength(0);
   });
 });

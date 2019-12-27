@@ -10,7 +10,7 @@ import ajv from 'ajv';
 
 import { version } from '../package.json';
 import { initPerfTracker, startRequest, completeRequest } from './perf-tracker';
-import { dashReBenchDb, dashStatistics, dashChanges, dashCompare } from './dashboard';
+import { dashResults, dashStatistics, dashChanges, dashCompare, dashProjects } from './dashboard';
 import { processTemplate } from './templates';
 
 console.log('Starting ReBenchDB Version ' + version);
@@ -38,11 +38,15 @@ router.get('/', async ctx => {
   ctx.type = 'html';
 });
 
-router.get('/rebenchdb/dash/:project', async ctx => {
-  if (ctx.params.project === 'rebenchdb') {
-    ctx.body = await dashReBenchDb(db);
-    ctx.type = 'application/json';
-  }
+router.get(`/rebenchdb/dash/projects`, async ctx => {
+  ctx.body = await dashProjects(db);
+  ctx.type = 'application/json';
+});
+
+
+router.get('/rebenchdb/dash/:projectId/results', async ctx => {
+  ctx.body = await dashResults(ctx.params.projectId, db);
+  ctx.type = 'application/json';
 });
 
 router.get('/rebenchdb/stats', async ctx => {
@@ -51,8 +55,8 @@ router.get('/rebenchdb/stats', async ctx => {
   ctx.type = 'application/json';
 });
 
-router.get('/rebenchdb/dash/:project/changes', async ctx => {
-  ctx.body = await dashChanges(ctx.params.project, db);
+router.get('/rebenchdb/dash/:projectId/changes', async ctx => {
+  ctx.body = await dashChanges(ctx.params.projectId, db);
   ctx.type = 'application/json';
 });
 
@@ -77,6 +81,8 @@ if (DEV) {
     ctx.body = readFileSync(`${__dirname}/../../resources/${ctx.params.filename}`);
     if (ctx.params.filename.endsWith('.css')) {
       ctx.type = 'css';
+    } else if (ctx.params.filename.endsWith('.css')) {
+      ctx.type = 'application/javascript';
     }
   });
 }

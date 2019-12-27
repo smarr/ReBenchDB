@@ -10,13 +10,20 @@ JOIN Measurement m ON  m.expId = exp.id
 WHERE repoURL = 'https://github.com/smarr/ReBenchDB'
  */
 
-export async function dashReBenchDb(db: Database) {
-  const result = await db.client.query(`SELECT t.id, m.iteration, m.value as value
-    FROM Source s
-    JOIN Trial t ON t.sourceId = s.id
-    JOIN Measurement m ON  m.trialId = t.id
-    WHERE repoURL = 'https://github.com/smarr/ReBenchDB'
-    ORDER BY t.startTime, m.iteration`);
+export async function dashProjects(db: Database) {
+  const result = await db.client.query(`SELECT * from Project`);
+  return {projects: result.rows};
+}
+
+export async function dashResults(projectId, db: Database) {
+  const result = await db.client.query(`SELECT trialId, iteration, value, criterion, b.name as benchmark
+      FROM Measurement m
+          JOIN Trial t ON  m.trialId = t.id
+          JOIN Experiment e ON t.expId = e.id
+          JOIN Run r ON m.runId = r.id
+          JOIN Benchmark b ON r.benchmarkId = b.id
+      WHERE projectId = $1
+      ORDER BY t.startTime, m.iteration`, [projectId]);
   const timeSeries: any[] = [];
   for (const r of result.rows) {
     timeSeries.push(r.value);
@@ -49,16 +56,16 @@ export async function dashStatistics(db: Database) {
   return { stats: result.rows };
 }
 
-export async function dashChanges(projectName, db) {
+export async function dashChanges(projectId, db) {
   const result = await db.client.query(`
       SELECT commitId, branchOrTag, projectId, repoURL, commitMessage FROM experiment
         JOIN Trial ON expId = experiment.id
         JOIN Source ON sourceId = source.id
         JOIN Project ON projectId = project.id
-      WHERE project.name = $1
+      WHERE project.id = $1
       GROUP BY commitId, branchOrTag, projectId, repoURL, commitMessage
       ORDER BY max(startTime) DESC`,
-    [projectName]);
+    [projectId]);
   return { changes: result.rows };
 }
 
