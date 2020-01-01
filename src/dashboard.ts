@@ -114,7 +114,9 @@ export function dashCompare(base: string, change: string, project: string, dbCon
         '#e9b96e',
         dbConfig.database,
         dbConfig.user,
-        dbConfig.password
+        dbConfig.password,
+        // R ReBenchDB library directory
+        `${__dirname}/../../src/views/`
       ];
 
       console.log(`Generate Report: ${__dirname}/../../src/views/knitr.R ${args.join(' ')}`);

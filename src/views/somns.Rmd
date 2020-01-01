@@ -14,10 +14,11 @@ params:
   db_user: null  # rdb_sm1
   db_pass: null
   db_name: rdb_sm1
+  lib_dir: "."
 ---
 
 ```{r setup, include=FALSE, echo=FALSE, warning=FALSE}
-source("common.R", chdir=TRUE)
+source(paste0(params$lib_dir, "/common.R"), chdir=TRUE)
 enable_chunk_timing()
 ```
 

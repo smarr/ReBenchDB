@@ -17,6 +17,7 @@ render(args[1], "html_fragment", args[2],
          change_color = args[9],
          db_name = args[10],
          db_user = args[11],
-         db_pass = args[12]
+         db_pass = args[12],
+         lib_dir = args[13]
        ),
        runtime = "static", clean = TRUE)
