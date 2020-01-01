@@ -80,8 +80,8 @@ stats <- norm %>%
     # mean_ratio_mean = mean(ratio_mean),
     # median_ratio_median = median(ratio_mean),
     # mean_ratio_median = mean(ratio_median),
-    lowerBCI95 = 0, get_bca(value)$lower,
-    upperBCI95 = 0, get_bca(value)$upper,
+    lowerBCI95 = get_bca(value)$lower,
+    upperBCI95 = get_bca(value)$upper,
             
     ratio = median / base_median[1],
     ratioLower = lowerBCI95 / base_median[1],
