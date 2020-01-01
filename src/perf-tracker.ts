@@ -9,6 +9,12 @@ const iterations = {
   'generate-report': 0
 };
 
+const descriptions = {
+  'put-results': 'Time of PUT /rebenchdb/results',
+  'change': 'Time of GET /compare/:project/:baseline/:change',
+  'generate-report': 'Time of Running R Reporting for /compare/*'
+}
+
 export function initPerfTracker() {
   startTime = new Date().toISOString();
 }
@@ -39,9 +45,9 @@ function constructData(time: number, it: number, benchmark: string) {
           runDetails: {
             maxInvocationTime: 0, minIterationTime: 0, warmup: null
           },
-          desc: 'Time of PUT /results'
+          desc: descriptions[benchmark]
         },
-        cmdline: '', location: '', varValue: null, cores: null, inputSize: null, extraArgs: null
+        cmdline: benchmark, location: '', varValue: null, cores: null, inputSize: null, extraArgs: null
       }
     }],
     criteria: [
@@ -62,7 +68,7 @@ function constructData(time: number, it: number, benchmark: string) {
       committerEmail: '',
       committerName: ''
     },
-    startTime: new Date().toISOString(),
+    startTime: startTime,
     endTime: null,
     projectName: 'ReBenchDB Self-Tracking'
   };
