@@ -5,9 +5,9 @@ CREATE TABLE SchemaVersion (
 
 INSERT INTO SchemaVersion (version, updateDate) VALUES (1, now());
 
-ALTER TABLE Project ADD COLUMN showChanges bool;
+ALTER TABLE Project ADD COLUMN showChanges bool DEFAULT true;
 
-ALTER TABLE Project ADD COLUMN allResults bool;
+ALTER TABLE Project ADD COLUMN allResults bool DEFAULT false;
 
 UPDATE Project SET showChanges = true, allResults = false WHERE name = 'SOMns';
 UPDATE Project SET showChanges = false, allResults = true WHERE name = 'ReBenchDB Self-Tracking';
