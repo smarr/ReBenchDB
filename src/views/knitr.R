@@ -13,10 +13,10 @@ render(args[1], "html_fragment", args[2],
        params = list(
          baseline = args[6],
          change = args[7],
-         baselineColor = args[8],
-         changeColor = args[9],
-         dbName = args[10],
-         dbUser = args[11],
-         dbPass = args[12]
+         baseline_color = args[8],
+         change_color = args[9],
+         db_name = args[10],
+         db_user = args[11],
+         db_pass = args[12]
        ),
        runtime = "static", clean = TRUE)
