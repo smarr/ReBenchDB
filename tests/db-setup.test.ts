@@ -173,20 +173,20 @@ describe('Recording a ReBench execution', () => {
   it('should accept all data (small-payload), and have the measurements persisted', async () => {
     const recMs = await db.recordData(basicTestData);
     const measurements = await db.client.query('SELECT * from Measurement');
-    expect(3).toEqual(recMs);
-    expect(3).toEqual(measurements.rowCount);
+    expect(recMs).toEqual(3);
+    expect(measurements.rowCount).toEqual(3);
   });
 
   it('data recording should be idempotent (small-payload)', async () => {
     let recMs = await db.recordData(basicTestData);
     let measurements = await db.client.query('SELECT * from Measurement');
-    expect(3).toEqual(recMs);
-    expect(3).toEqual(measurements.rowCount);
+    expect(recMs).toEqual(3);
+    expect(measurements.rowCount).toEqual(3);
 
     recMs = await db.recordData(basicTestData);
     measurements = await db.client.query('SELECT * from Measurement');
-    expect(0).toEqual(recMs);
-    expect(3).toEqual(measurements.rowCount);
+    expect(recMs).toEqual(0);
+    expect(measurements.rowCount).toEqual(3);
   });
 
   it('should accept all data (large-payload), and have the measurements persisted', async () => {
