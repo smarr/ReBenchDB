@@ -85,6 +85,16 @@ if (DEV) {
     ctx.body = readFileSync(`${__dirname}/../../resources/${ctx.params.filename}`);
     if (ctx.params.filename.endsWith('.css')) {
       ctx.type = 'css';
+    } else if (ctx.params.filename.endsWith('.js')) {
+      ctx.type = 'application/javascript';
+    }
+  });
+
+  router.get('/static/reports/:change/figure-html/:filename', async ctx => {
+    console.log(`serve ${ctx.params.filename}`);
+    ctx.body = readFileSync(`${__dirname}/../../resources/reports/${ctx.params.change}/figure-html/${ctx.params.filename}`);
+    if (ctx.params.filename.endsWith('.svg')) {
+      ctx.type = 'svg';
     } else if (ctx.params.filename.endsWith('.css')) {
       ctx.type = 'application/javascript';
     }
