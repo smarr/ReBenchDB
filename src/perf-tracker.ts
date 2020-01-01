@@ -4,12 +4,14 @@ import { BenchmarkData, DataPoint, Measure } from './api';
 
 let startTime: string;
 const iterations = {
+  'get-results': 0,
   'put-results': 0,
   'change': 0,
   'generate-report': 0
 };
 
 const descriptions = {
+  'get-results': 'Time of GET /rebenchdb/dash/:projectId/results',
   'put-results': 'Time of PUT /rebenchdb/results',
   'change': 'Time of GET /compare/:project/:baseline/:change',
   'generate-report': 'Time of Running R Reporting for /compare/*'

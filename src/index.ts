@@ -45,8 +45,12 @@ router.get(`/rebenchdb/dash/projects`, async ctx => {
 
 
 router.get('/rebenchdb/dash/:projectId/results', async ctx => {
+  const start = startRequest();
+
   ctx.body = await dashResults(ctx.params.projectId, db);
   ctx.type = 'application/json';
+
+  await completeRequest(start, db, 'get-results');
 });
 
 router.get('/rebenchdb/stats', async ctx => {
