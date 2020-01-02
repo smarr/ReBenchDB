@@ -186,4 +186,26 @@ CREATE TABLE Measurement (
   foreign key (criterion) references Criterion (id)
 );
 
+-- Summary Statistics for comparing over time
+CREATE TABLE Timeline (
+  runId smallint,
+  trialId smallint,
+  criterion smallint,
 
+  numSamples smallint,
+
+  minVal float4,
+  maxVal float4,
+  sdVal  float4,
+  mean   float4,
+  median float4,
+
+  -- bootstrap confidence interval 95%-tile
+  bci95low float4,
+  bci95up  float4,
+
+  primary key (runId, trialId, criterion),
+  foreign key (trialId) references Trial (id),
+  foreign key (runId) references Run (id),
+  foreign key (criterion) references Criterion (id)
+);
