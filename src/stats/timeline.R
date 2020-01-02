@@ -1,14 +1,22 @@
+#!/usr/bin/env Rscript
 ## Script to Calculate the Summary Statistics for a Timeline
 
-if (Sys.getenv("RSTUDIO") == "1") { 
-  if (Sys.getenv("LOGNAME") == "smarr") {
-    db_user <- NULL
-    db_pass <- NULL
-    db_name <- "rdb_sm1"
-    setwd("/Users/smarr/Projects/ReBenchDB/src/stats") } }
+if (Sys.getenv("RSTUDIO") == "1" & Sys.getenv("LOGNAME") == "smarr") {
+  db_user <- NULL
+  db_pass <- NULL
+  db_name <- "rdb_sm1"
+  setwd("/Users/smarr/Projects/ReBenchDB/src/stats")
+} else {
+  args <- commandArgs(trailingOnly = TRUE)
+  db_name <- args[1]
+  db_user <- args[2]
+  db_pass <- args[3]
+}
 
 source("../views/rebenchdb.R", chdir = TRUE)
 source("../views/stats.R", chdir = TRUE)
+
+library(dplyr)
 
 rebenchdb <- connect_to_rebenchdb(db_name, db_user, db_pass)
 
@@ -51,7 +59,7 @@ calc_stats <- function (data) {
       mean = mean(value),
       median = median(value),
       numsamples = length(value),
-      
+
       bci95low = get_bca(value)$lower,
       bci95up = get_bca(value)$upper)
   res
