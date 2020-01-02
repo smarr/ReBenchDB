@@ -10,7 +10,7 @@ boot_median <- function(data, indices) {
 # and lower and upper bound of the confidence interval.
 # The interval is calculated using the adjusted bootstrap percentile (BCa) method.
 get_bca <- function(data) {
-  if (length(data) < 30) {
+  if (length(data) < 30 || all(data == 0)) {
     return(return(list(median=NA, lower=NA, upper=NA)))
   }
 
