@@ -16,7 +16,7 @@ if (Sys.getenv("RSTUDIO") == "1" & Sys.getenv("LOGNAME") == "smarr") {
 source("../views/rebenchdb.R", chdir = TRUE)
 source("../views/stats.R", chdir = TRUE)
 
-library(dplyr)
+suppressMessages(library(dplyr))
 
 rebenchdb <- connect_to_rebenchdb(db_name, db_user, db_pass)
 
@@ -66,11 +66,14 @@ calc_stats <- function (data) {
 }
 
 if (nrow(with_tl_entry) > 0) {
+  res <- dbSendStatement(rebenchdb, "DELETE FROM Timeline WHERE runid = $1 AND trialid = $2 AND criterion = $3")
   for (i in seq(nrow(with_tl_entry))) {
     current_row <- unname(as.vector(with_tl_entry[i, ]))
-    dbExecute(rebenchdb, "DELETE FROM Timeline WHERE runid = $1 AND trialid = $2 AND criterion = $3",
-              current_row)
+    if (!is.na(current_row[1])) {
+      dbBind(res, current_row)
+    }
   }
+  dbClearResult(res);
 }
 
 stats <- result %>%
