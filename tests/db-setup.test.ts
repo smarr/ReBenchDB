@@ -20,7 +20,7 @@ describe('Test Setup', () => {
 });
 
 describe('Setup of PostgreSQL DB', () => {
-  jest.setTimeout(300 * 1000);
+  jest.setTimeout(200 * 1000);
 
   it('should load the database scheme without error', async () => {
     const createTablesSql = loadScheme();
@@ -217,10 +217,10 @@ describe('Recording a ReBench execution from payload files', () => {
 
   it('data recording should be idempotent (small-payload)', async () => {
     // check that the data from the previous test is there
-    let trails = await db.client.query('SELECT * from Trial');
-    expect(trails.rowCount).toEqual(1);
+    let trials = await db.client.query('SELECT * from Trial');
+    expect(trials.rowCount).toEqual(2); // performance tracking and the actual trial
     let exps = await db.client.query('SELECT * from Experiment');
-    expect(exps.rowCount).toEqual(1);
+    expect(exps.rowCount).toEqual(2); // performance tracking and the actual experiment
 
     // Do recordData a second time
     const recMs = await db.recordData(smallTestData);
@@ -230,12 +230,12 @@ describe('Recording a ReBench execution from payload files', () => {
 
     const measurements = await db.client.query('SELECT * from Measurement');
     expect(recMs).toEqual(0);
-    expect(measurements.rowCount).toEqual(3);
+    expect(measurements.rowCount).toEqual(4);
 
-    trails = await db.client.query('SELECT * from Trial');
-    expect(trails.rowCount).toEqual(1);
+    trials = await db.client.query('SELECT * from Trial');
+    expect(trials.rowCount).toEqual(2);  // performance tracking and the actual trial
     exps = await db.client.query('SELECT * from Experiment');
-    expect(exps.rowCount).toEqual(1);
+    expect(exps.rowCount).toEqual(2);  // performance tracking and the actual experiment
   });
 
   it('should accept all data (large-payload), and have the measurements persisted', async () => {
@@ -244,9 +244,9 @@ describe('Recording a ReBench execution from payload files', () => {
 
     await db.awaitQuiescentTimelineUpdater();
 
-    expect(459928).toEqual(recMs);
-    expect(459928 + 3).toEqual(parseInt(measurements.rows[0].cnt));
+    expect(recMs).toEqual(459928);
+    expect(parseInt(measurements.rows[0].cnt)).toEqual(459928 + 4);
     const timeline = await db.client.query('SELECT * from Timeline');
-    expect(timeline.rowCount).toEqual(461);
+    expect(timeline.rowCount).toEqual(462);
   });
 });
