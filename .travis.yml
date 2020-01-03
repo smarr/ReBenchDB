@@ -16,6 +16,10 @@ addons:
     packages:
       - r-base
 
+cache:
+  directories:
+    - $HOME/R/Library
+
 before_script:
   - psql -c 'create database travis_ci_test;' -U postgres
   - mkdir -p $R_LIBS_USER
