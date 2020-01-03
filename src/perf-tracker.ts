@@ -17,7 +17,7 @@ const descriptions = {
   'change': 'Time of GET /compare/:project/:baseline/:change',
   'generate-report': 'Time of Running R Reporting for /compare/*',
   'generate-timeline': 'Time of Running R stats to generate timeline data'
-}
+};
 
 export function initPerfTracker() {
   startTime = new Date().toISOString();
@@ -87,5 +87,5 @@ export function startRequest(): number {
 export async function completeRequest(reqStart: number, db: Database, request: string) {
   const time = performance.now() - reqStart;
   iterations[request] += 1;
-  await db.recordData(constructData(time, iterations[request], request));
+  await db.recordData(constructData(time, iterations[request], request), true);
 }

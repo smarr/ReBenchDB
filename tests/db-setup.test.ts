@@ -189,7 +189,7 @@ describe('Recording a ReBench execution from payload files', () => {
     // the test database and we
     // we do not use transactions in these tests, because we need to be able
     // to access the database from R
-    db = new Database(tmpCfg, 25);
+    db = new Database(tmpCfg, 25, true);
     await db.initializeDatabase();
 
     smallTestData = JSON.parse(

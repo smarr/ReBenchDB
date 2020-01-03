@@ -17,6 +17,7 @@ export function loadScheme() {
 export class Database {
   public client: Pool | PoolClient;
   private readonly dbConfig: PoolConfig;
+  private readonly timelineEnabled: boolean;
 
   /** Number of bootstrap samples to take for timeline. */
   private readonly numReplicates: number;
@@ -122,10 +123,11 @@ export class Database {
 
   private static readonly batchN = 50;
 
-  constructor(config: PoolConfig, numReplicates = 1000) {
+  constructor(config: PoolConfig, numReplicates = 1000, timelineEnabled = false) {
     console.assert(config !== undefined);
     this.dbConfig = config;
     this.numReplicates = numReplicates;
+    this.timelineEnabled = timelineEnabled;
     this.client = new Pool(config);
     this.executors = new Map();
     this.suites = new Map();
@@ -359,7 +361,7 @@ export class Database {
     return false;
   }
 
-  public async recordData(data: BenchmarkData): Promise<number> {
+  public async recordData(data: BenchmarkData, suppressTimeline = false): Promise<number> {
     const env = await this.recordEnvironment(data.env);
     const exp = await this.recordExperiment(data);
     const trial = await this.recordTrial(data, env, exp);
@@ -409,7 +411,7 @@ export class Database {
       }
     }
 
-    if (recordedMeasurements > 0) {
+    if (recordedMeasurements > 0 && this.timelineEnabled && !suppressTimeline) {
       this.generateTimeline();
     }
 

@@ -31,7 +31,7 @@ const DEV = 'DEV' in process.env ? process.env.DEV === 'true' : false;
 
 const app = new Koa();
 const router = new Router();
-const db = new Database(dbConfig);
+const db = new Database(dbConfig, 1000, true);
 
 router.get('/', async ctx => {
   ctx.body = processTemplate('index.html');
