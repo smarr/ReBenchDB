@@ -433,6 +433,8 @@ export class Database {
   public async recordMeasurement(values: any[]) {
     const q = this.queries.insertMeasurement;
     q.values = values; // [runId, trialId, invocation, iteration, critId, value];
+    // console.log('rec Measure');
+    // console.log(q);
     return await this.client.query(this.queries.insertMeasurement);
   }
 
@@ -441,7 +443,7 @@ export class Database {
   }
 
   public async awaitQuiescentTimelineUpdater() {
-    await this.timelineUpdater.awaitQuiescence();
+    await this.timelineUpdater.getQuiescencePromise();
   }
 
   private async performTimelineUpdate() {
