@@ -1,4 +1,4 @@
-import { SingleRequestOnly } from "../src/single-requester";
+import { SingleRequestOnly } from '../src/single-requester';
 
 describe('Basic functionality of SingleRequestOnly', () => {
 

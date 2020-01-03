@@ -455,7 +455,7 @@ export class Database {
         workDir = `${__dirname}/../src/stats/`;
       }
 
-      const dbArgs = <string[]> [
+      const dbArgs = <string[]>[
         this.dbConfig.database, this.dbConfig.user, this.dbConfig.password,
         this.numReplicates];
       const start = startRequest();

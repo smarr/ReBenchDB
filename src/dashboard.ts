@@ -12,7 +12,7 @@ WHERE repoURL = 'https://github.com/smarr/ReBenchDB'
 
 export async function dashProjects(db: Database) {
   const result = await db.client.query(`SELECT * from Project`);
-  return {projects: result.rows};
+  return { projects: result.rows };
 }
 
 export async function dashResults(projectId, db: Database) {
