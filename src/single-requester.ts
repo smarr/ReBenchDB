@@ -39,15 +39,22 @@ export class SingleRequestOnly {
     if (!this.quiescencePromise) {
       this.initializePromise();
     }
-    this.perform();
+
+    this.performRequestAsynchronously();
+  }
+
+  private performRequestAsynchronously() {
+    this.requestInProgress = true;
+
+    setTimeout(() => {
+      this.rerunRequested = false;
+      this.attachPromiseHandlers(this.request());
+    }, 0);
   }
 
   private afterRequest(failed: boolean) {
     if (this.rerunRequested) {
-      setTimeout(async () => {
-        this.rerunRequested = false;
-        this.prepareAfterRequest(this.request());
-      }, 0);
+      this.performRequestAsynchronously();
     } else {
       this.quiescencePromise = undefined;
       if (this.resolve && this.reject) {
@@ -63,7 +70,7 @@ export class SingleRequestOnly {
     }
   }
 
-  private prepareAfterRequest(promise) {
+  private attachPromiseHandlers(promise) {
     promise
       .then(() => {
         this.afterRequest(false);
@@ -73,12 +80,7 @@ export class SingleRequestOnly {
       });
   }
 
-  private perform() {
-    this.requestInProgress = true;
-    this.prepareAfterRequest(this.request());
-  }
-
-  public async awaitQuiescence() {
-    await this.quiescencePromise;
+  public getQuiescencePromise() {
+    return this.quiescencePromise;
   }
 }
