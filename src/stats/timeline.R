@@ -43,9 +43,9 @@ result <- dbFetch(qry)
 dbClearResult(qry)
 
 # View(result)
-result$runid <- factor(result$runid)
-result$trialid <- factor(result$trialid)
-result$recordedsamples <- factor(result$recordedsamples)
+# result$runid <- factor(result$runid)
+# result$trialid <- factor(result$trialid)
+# result$recordedsamples <- factor(result$recordedsamples)
 
 suppressWarnings(with_tl_entry <- result %>%
   filter(!is.na(recordedsamples)) %>%
@@ -71,9 +71,9 @@ calc_stats <- function (data) {
 if (nrow(with_tl_entry) > 0) {
   res <- dbSendStatement(rebenchdb, "DELETE FROM Timeline WHERE runid = $1 AND trialid = $2 AND criterion = $3")
   for (i in seq(nrow(with_tl_entry))) {
-    suppressWarnings(current_row <- unname(as.vector(with_tl_entry[i, ])))
-    if (!is.na(current_row[1])) {
-      dbBind(res, current_row)
+    current_row <- with_tl_entry[i, ]
+    if (!is.na(current_row$runid)) {
+      dbBind(res, list(current_row$runid, current_row$trialid, current_row$criterion))
     }
   }
   dbClearResult(res);
