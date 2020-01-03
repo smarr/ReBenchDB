@@ -6,13 +6,20 @@ node_js:
   - 13.5.0
 
 env:
-  - RDB_DB=travis_ci_test RDB_USER=postgres RDB_PASS= DEBUG=true
+  - RDB_DB=travis_ci_test RDB_USER=postgres RDB_PASS= DEBUG=true R_LIBS_USER=~/R/Library
 
 services:
   - postgresql
 
+addons:
+  apt:
+    packages:
+      - r-base
+
 before_script:
   - psql -c 'create database travis_ci_test;' -U postgres
+  - mkdir -p $R_LIBS_USER
+  - Rscript src/stats/install.R
 
 script:
   - npm test
