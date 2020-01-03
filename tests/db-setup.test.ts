@@ -1,7 +1,7 @@
 import { BenchmarkData } from '../src/api';
 import { loadScheme, Database } from '../src/db';
 import { readFileSync } from 'fs';
-import { getConfig, wrapInTransaction, prepareDbForTesting, rollback } from './db-testing';
+import { getConfig, wrapInTransaction, prepareDbForTesting, rollback, getTempDatabaseName } from './db-testing';
 
 // create database test_rdb;
 const testDbConfig = getConfig();
@@ -20,7 +20,7 @@ describe('Test Setup', () => {
 });
 
 describe('Setup of PostgreSQL DB', () => {
-  jest.setTimeout(120 * 1000);
+  jest.setTimeout(300 * 1000);
 
   it('should load the database scheme without error', async () => {
     const createTablesSql = loadScheme();
@@ -40,10 +40,9 @@ describe('Setup of PostgreSQL DB', () => {
   });
 });
 
-describe('Recording a ReBench execution', () => {
+describe('Recording a ReBench execution data fragments', () => {
   let db: Database;
   let basicTestData: BenchmarkData;
-  let largeTestData: BenchmarkData;
 
   beforeAll(async () => {
     db = new Database(testDbConfig);
@@ -51,8 +50,6 @@ describe('Recording a ReBench execution', () => {
 
     basicTestData = JSON.parse(
       readFileSync(`${__dirname}/small-payload.json`).toString());
-    largeTestData = JSON.parse(
-      readFileSync(`${__dirname}/large-payload.json`).toString());
   });
 
   afterEach(async () => {
@@ -151,7 +148,6 @@ describe('Recording a ReBench execution', () => {
     expect(env.id).toEqual(result.envid);
   });
 
-
   it('should accept experiment information', async () => {
     const e = basicTestData.env;
     const env = await db.recordEnvironment(e);
@@ -170,35 +166,87 @@ describe('Recording a ReBench execution', () => {
     expect(criterion.id).toBeGreaterThanOrEqual(0);
   });
 
+  afterAll(async () => {
+    await db.client.query('ROLLBACK');
+    await (<any> db.client).end();
+  });
+});
+
+
+describe('Recording a ReBench execution from payload files', () => {
+  let db: Database;
+  let dbMain: Database;
+  let smallTestData: BenchmarkData;
+  let largeTestData: BenchmarkData;
+  const tmpCfg = Object.assign({}, testDbConfig);
+  tmpCfg.database = getTempDatabaseName();
+
+  beforeAll(async () => {
+    // to create and delete a test database
+    dbMain = new Database(testDbConfig);
+    await dbMain.client.query(`CREATE DATABASE ${tmpCfg.database}`);
+
+    // the test database and we
+    // we do not use transactions in these tests, because we need to be able
+    // to access the database from R
+    db = new Database(tmpCfg, 25);
+    await db.initializeDatabase();
+
+    smallTestData = JSON.parse(
+      readFileSync(`${__dirname}/small-payload.json`).toString());
+    largeTestData = JSON.parse(
+      readFileSync(`${__dirname}/large-payload.json`).toString());
+  });
+
+  afterAll(async () => {
+    await (<any> db.client).end();
+    await dbMain.client.query(`DROP DATABASE ${tmpCfg.database}`);
+    await (<any> dbMain.client).end();
+  });
+
   it('should accept all data (small-payload), and have the measurements persisted', async () => {
-    const recMs = await db.recordData(basicTestData);
+    const recMs = await db.recordData(smallTestData);
     const measurements = await db.client.query('SELECT * from Measurement');
     expect(recMs).toEqual(3);
     expect(measurements.rowCount).toEqual(3);
+    await db.awaitQuiescentTimelineUpdater();
+
+    const timeline = await db.client.query('SELECT * from Timeline');
+    expect(timeline.rowCount).toEqual(1);
   });
 
   it('data recording should be idempotent (small-payload)', async () => {
-    let recMs = await db.recordData(basicTestData);
-    let measurements = await db.client.query('SELECT * from Measurement');
-    expect(recMs).toEqual(3);
-    expect(measurements.rowCount).toEqual(3);
+    // check that the data from the previous test is there
+    let trails = await db.client.query('SELECT * from Trial');
+    expect(trails.rowCount).toEqual(1);
+    let exps = await db.client.query('SELECT * from Experiment');
+    expect(exps.rowCount).toEqual(1);
 
-    recMs = await db.recordData(basicTestData);
-    measurements = await db.client.query('SELECT * from Measurement');
+    // Do recordData a second time
+    const recMs = await db.recordData(smallTestData);
+
+    // don't need to wait for db.awaitQuiescentTimelineUpdater()
+    // because this should not record anything
+
+    const measurements = await db.client.query('SELECT * from Measurement');
     expect(recMs).toEqual(0);
     expect(measurements.rowCount).toEqual(3);
+
+    trails = await db.client.query('SELECT * from Trial');
+    expect(trails.rowCount).toEqual(1);
+    exps = await db.client.query('SELECT * from Experiment');
+    expect(exps.rowCount).toEqual(1);
   });
 
   it('should accept all data (large-payload), and have the measurements persisted', async () => {
     const recMs = await db.recordData(largeTestData);
     const measurements = await db.client.query('SELECT count(*) as cnt from Measurement');
 
-    expect(459928).toEqual(recMs);
-    expect(459928).toEqual(parseInt(measurements.rows[0].cnt));
-  });
+    await db.awaitQuiescentTimelineUpdater();
 
-  afterAll(async () => {
-    await db.client.query('ROLLBACK');
-    await (<any> db.client).end();
+    expect(459928).toEqual(recMs);
+    expect(459928 + 3).toEqual(parseInt(measurements.rows[0].cnt));
+    const timeline = await db.client.query('SELECT * from Timeline');
+    expect(timeline.rowCount).toEqual(461);
   });
 });

@@ -1,6 +1,9 @@
+import { execFile } from 'child_process';
 import { readFileSync, existsSync } from 'fs';
 import { BenchmarkData, Executor, Suite, Benchmark, RunId, Source, Environment, Criterion } from './api';
 import { Pool, PoolConfig, PoolClient } from 'pg';
+import { SingleRequestOnly } from './single-requester';
+import { startRequest, completeRequest } from './perf-tracker';
 
 export function loadScheme() {
   let schema = `${__dirname}/../src/db/db.sql`;
@@ -13,6 +16,10 @@ export function loadScheme() {
 
 export class Database {
   public client: Pool | PoolClient;
+  private readonly dbConfig: PoolConfig;
+
+  /** Number of bootstrap samples to take for timeline. */
+  private readonly numReplicates: number;
 
   private readonly executors: Map<string, any>;
   private readonly suites: Map<string, any>;
@@ -24,6 +31,8 @@ export class Database {
   private readonly exps: Map<string, any>;
   private readonly criteria: Map<string, any>;
   private readonly projects: Map<string, any>;
+
+  private readonly timelineUpdater: SingleRequestOnly;
 
   private readonly queries = {
     fetchExecutorByName: 'SELECT * from Executor WHERE name = $1',
@@ -113,7 +122,10 @@ export class Database {
 
   private static readonly batchN = 50;
 
-  constructor(config: PoolConfig) {
+  constructor(config: PoolConfig, numReplicates = 1000) {
+    console.assert(config !== undefined);
+    this.dbConfig = config;
+    this.numReplicates = numReplicates;
     this.client = new Pool(config);
     this.executors = new Map();
     this.suites = new Map();
@@ -130,6 +142,8 @@ export class Database {
       `INSERT INTO Measurement
          (runId, trialId, invocation, iteration, criterion, value)
        VALUES ` + this.generateBatchInsert(Database.batchN, 6);
+
+    this.timelineUpdater = new SingleRequestOnly(async () => { return this.performTimelineUpdate(); });
   }
 
   private generateBatchInsert(numTuples: number, sizeTuples: number) {
@@ -395,6 +409,10 @@ export class Database {
       }
     }
 
+    if (recordedMeasurements > 0) {
+      this.generateTimeline();
+    }
+
     return recordedMeasurements;
   }
 
@@ -414,6 +432,50 @@ export class Database {
     const q = this.queries.insertMeasurement;
     q.values = values; // [runId, trialId, invocation, iteration, critId, value];
     return await this.client.query(this.queries.insertMeasurement);
+  }
+
+  private generateTimeline() {
+    this.timelineUpdater.trigger();
+  }
+
+  public async awaitQuiescentTimelineUpdater() {
+    await this.timelineUpdater.awaitQuiescence();
+  }
+
+  private async performTimelineUpdate() {
+    const prom = new Promise((resolve, reject) => {
+      let timelineR = `${__dirname}/stats/timeline.R`;
+      let workDir = `${__dirname}/stats/`;
+      if (!existsSync(timelineR)) {
+        timelineR = `${__dirname}/../src/stats/timeline.R`;
+        workDir = `${__dirname}/../src/stats/`;
+      }
+
+      const dbArgs = <string[]> [
+        this.dbConfig.database, this.dbConfig.user, this.dbConfig.password,
+        this.numReplicates];
+      const start = startRequest();
+      execFile(timelineR, dbArgs, { cwd: workDir },
+        async (errorCode, stdout, stderr) => {
+          function handleResult() {
+            if (errorCode) {
+              console.log(`timeline.R failed: ${errorCode}
+              Stdout:
+                ${stdout}
+
+              Stderr:
+                ${stderr}`);
+              reject(errorCode);
+            } else {
+              resolve(errorCode);
+            }
+          }
+          completeRequest(start, this, 'generate-timeline')
+            .then(handleResult)
+            .catch(handleResult);
+        });
+    });
+    return prom;
   }
 }
 

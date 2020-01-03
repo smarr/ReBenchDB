@@ -10,6 +10,10 @@ export function getConfig() {
   };
 }
 
+export function getTempDatabaseName() {
+  return 'test_rdb_tmp';
+}
+
 export function wrapInTransaction(sql: string) {
   return `
   begin;

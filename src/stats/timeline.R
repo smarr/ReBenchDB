@@ -5,12 +5,15 @@ if (Sys.getenv("RSTUDIO") == "1" & Sys.getenv("LOGNAME") == "smarr") {
   db_user <- NULL
   db_pass <- NULL
   db_name <- "rdb_sm1"
+  db_name <- "test_rdb_tmp"
   setwd("/Users/smarr/Projects/ReBenchDB/src/stats")
+  num_replicates <- 1000
 } else {
   args <- commandArgs(trailingOnly = TRUE)
   db_name <- args[1]
   db_user <- args[2]
   db_pass <- args[3]
+  num_replicates <- as.numeric(args[4])
 }
 
 source("../views/rebenchdb.R", chdir = TRUE)
@@ -44,10 +47,10 @@ result$runid <- factor(result$runid)
 result$trialid <- factor(result$trialid)
 result$recordedsamples <- factor(result$recordedsamples)
 
-with_tl_entry <- result %>%
+suppressWarnings(with_tl_entry <- result %>%
   filter(!is.na(recordedsamples)) %>%
   group_by(runid, trialid, criterion) %>%
-  summarise()
+  summarise())
 
 calc_stats <- function (data) {
   res <- data %>%
@@ -60,15 +63,15 @@ calc_stats <- function (data) {
       median = median(value),
       numsamples = length(value),
 
-      bci95low = get_bca(value)$lower,
-      bci95up = get_bca(value)$upper)
+      bci95low = get_bca(value, num_replicates)$lower,
+      bci95up = get_bca(value, num_replicates)$upper)
   res
 }
 
 if (nrow(with_tl_entry) > 0) {
   res <- dbSendStatement(rebenchdb, "DELETE FROM Timeline WHERE runid = $1 AND trialid = $2 AND criterion = $3")
   for (i in seq(nrow(with_tl_entry))) {
-    current_row <- unname(as.vector(with_tl_entry[i, ]))
+    suppressWarnings(current_row <- unname(as.vector(with_tl_entry[i, ])))
     if (!is.na(current_row[1])) {
       dbBind(res, current_row)
     }
