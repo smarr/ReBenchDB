@@ -67,6 +67,7 @@ export class Database {
       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
 
     fetchProjectByName: 'SELECT * from Project WHERE name = $1',
+    fetchProjectById: 'SELECT * from Project WHERE id = $1',
     insertProject: 'INSERT INTO Project (name) VALUES ($1) RETURNING *',
 
     fetchExpByProjectIdName: 'SELECT * from Experiment WHERE projectId = $1 AND name = $2',
@@ -279,6 +280,16 @@ export class Database {
     return this.recordCached(this.projects, projectName,
       this.queries.fetchProjectByName, [projectName],
       this.queries.insertProject, [projectName]);
+  }
+
+  public async getProject(projectId) {
+    let result = await this.client.query(this.queries.fetchProjectById, [projectId]);
+
+    if (result.rowCount !== 1) {
+      return undefined;
+    } else {
+      return result.rows[0];
+    }
   }
 
   public async recordExperiment(data: BenchmarkData) {

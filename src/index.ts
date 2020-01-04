@@ -10,7 +10,7 @@ import ajv from 'ajv';
 
 import { version } from '../package.json';
 import { initPerfTracker, startRequest, completeRequest } from './perf-tracker';
-import { dashResults, dashStatistics, dashChanges, dashCompare, dashProjects } from './dashboard';
+import { dashResults, dashStatistics, dashChanges, dashCompare, dashProjects, dashBenchmarksForProject, dashTimelineForProject } from './dashboard';
 import { processTemplate } from './templates';
 
 console.log('Starting ReBenchDB Version ' + version);
@@ -38,6 +38,13 @@ router.get('/', async ctx => {
   ctx.type = 'html';
 });
 
+router.get('/timeline/:projectId', async ctx => {
+  ctx.body = processTemplate(
+    'timeline.html',
+    {project: await db.getProject(ctx.params.projectId)});
+  ctx.type = 'html';
+});
+
 router.get(`/rebenchdb/dash/projects`, async ctx => {
   ctx.body = await dashProjects(db);
   ctx.type = 'application/json';
@@ -51,6 +58,16 @@ router.get('/rebenchdb/dash/:projectId/results', async ctx => {
   ctx.type = 'application/json';
 
   await completeRequest(start, db, 'get-results');
+});
+
+router.get('/rebenchdb/dash/:projectId/benchmarks', async ctx => {
+  ctx.body = await dashBenchmarksForProject(db, ctx.params.projectId);
+  ctx.type = 'application/json';
+});
+
+router.get('/rebenchdb/dash/:projectId/timeline', async ctx => {
+  ctx.body = await dashTimelineForProject(db, ctx.params.projectId);
+  ctx.type = 'application/json';
 });
 
 router.get('/rebenchdb/stats', async ctx => {

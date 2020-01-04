@@ -149,3 +149,64 @@ export function dashCompare(base: string, change: string, project: string, dbCon
 
   return data;
 }
+
+export async function dashBenchmarksForProject(db: Database, projectId: number) {
+  const result = await db.client.query(`
+    SELECT DISTINCT p.name, env.hostname, r.cmdline, b.name as benchmark, b.id as benchId, s.name as suiteName, s.id as suiteId, exe.name as execName, exe.id as execId FROM Project p
+      JOIN Experiment exp    ON exp.projectId = p.id
+      JOIN Trial t           ON t.expId = exp.id
+      JOIN Source src        ON t.sourceId = src.id
+      JOIN Environment env   ON t.envId = env.id
+      JOIN Measurement m     ON m.trialId = t.id
+      JOIN Run r             ON m.runId = r.id
+      JOIN Benchmark b       ON r.benchmarkId = b.id
+      JOIN Suite s           ON r.suiteId = s.id
+      JOIN Executor exe      ON r.execId = exe.id
+      WHERE p.id = $1
+    ORDER BY suiteName, execName, benchmark, hostname`,
+    [projectId]);
+  return { benchmarks: result.rows };
+}
+
+export async function dashTimelineForProject(db: Database, projectId: number) {
+  const timelineP = db.client.query(`
+  SELECT tl.*, src.id as sourceId, b.id as benchmarkId, exe.id as execId, s.id as suiteId, hostname FROM Timeline tl
+    JOIN Run r          ON tl.runId = r.id
+    JOIN Benchmark b    ON r.benchmarkId = b.id
+    JOIN Suite s        ON r.suiteId = s.id
+    JOIN Executor exe   ON r.execId = exe.id
+    JOIN Trial t        ON trialId = t.id
+    JOIN Environment env ON t.envId = env.id
+    JOIN Experiment exp ON expId = exp.id
+      JOIN Source src     ON sourceId = src.id
+      JOIN Criterion      ON criterion = criterion.id
+      JOIN Project p      ON exp.projectId = p.id
+
+    WHERE
+      criterion.name = 'total' AND
+      p.id = $1
+    ORDER BY
+      s.name, exe.name, b.name, hostname, startTime`,
+    [projectId]);
+
+  const timelineDetailsP = db.client.query(`
+      SELECT DISTINCT src.*, t.id as trialId, t.manualRun, t.startTime, t.userName, exp.name as expName, exp.description as expDesc  FROM Timeline tl
+      JOIN Run r          ON tl.runId = r.id
+      JOIN Benchmark b    ON r.benchmarkId = b.id
+      JOIN Suite s        ON r.suiteId = s.id
+      JOIN Executor exe   ON r.execId = exe.id
+      JOIN Trial t        ON trialId = t.id
+      JOIN Experiment exp ON expId = exp.id
+        JOIN Source src     ON sourceId = src.id
+        JOIN Criterion      ON criterion = criterion.id
+        JOIN Project p      ON exp.projectId = p.id
+
+      WHERE
+        criterion.name = 'total' AND
+        p.id = $1`,
+      [projectId]);
+  return {
+    timeline: (await timelineP).rows,
+    details: (await timelineDetailsP).rows
+  };
+}
