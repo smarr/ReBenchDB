@@ -96,6 +96,13 @@ router.get('/compare/:project/:baseline/:change', async ctx => {
   await completeRequest(start, db, 'change');
 });
 
+router.get('/admin/perform-timeline-update', async ctx => {
+  await db.performTimelineUpdate();
+  ctx.body = 'ok';
+  ctx.type = 'text';
+  ctx.status = 200;
+});
+
 if (DEV) {
   router.get('/static/:filename', async ctx => {
     console.log(`serve ${ctx.params.filename}`);

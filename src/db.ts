@@ -457,13 +457,13 @@ export class Database {
     await this.timelineUpdater.getQuiescencePromise();
   }
 
-  private async performTimelineUpdate() {
+  public performTimelineUpdate() {
     const prom = new Promise((resolve, reject) => {
       let timelineR = `${__dirname}/stats/timeline.R`;
       let workDir = `${__dirname}/stats/`;
       if (!existsSync(timelineR)) {
-        timelineR = `${__dirname}/../src/stats/timeline.R`;
-        workDir = `${__dirname}/../src/stats/`;
+        timelineR = `${__dirname}/../../src/stats/timeline.R`;
+        workDir = `${__dirname}/../../src/stats/`;
       }
 
       const dbArgs = <string[]>[
