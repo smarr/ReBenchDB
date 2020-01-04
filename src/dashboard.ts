@@ -204,7 +204,7 @@ export async function dashTimelineForProject(db: Database, projectId: number) {
       WHERE
         criterion.name = 'total' AND
         p.id = $1`,
-      [projectId]);
+    [projectId]);
   return {
     timeline: (await timelineP).rows,
     details: (await timelineDetailsP).rows
