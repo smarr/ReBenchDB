@@ -121,7 +121,7 @@ router.get('/rebenchdb/dash/:projectId/data-overview', async (ctx) => {
   ctx.type = 'application/json';
 });
 
-router.get('/compare/:project/:baseline/:change', async (ctx) => {
+router.get('/compare/:project/:baseline([a-f0-9]+)/:change([a-f0-9]+)', async (ctx) => {
   const start = startRequest();
 
   const data = await dashCompare(
@@ -149,7 +149,7 @@ router.get('/admin/perform-timeline-update', async (ctx) => {
 });
 
 router.post(
-  '/admin/refresh/:project/:baseline/:change',
+  '/admin/refresh/:project/:baseline([a-f0-9]+)/:change([a-f0-9]+)',
   koaBody({ urlencoded: true }),
   async (ctx) => {
     ctx.type = 'text';
