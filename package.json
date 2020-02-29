@@ -52,6 +52,7 @@
     "verifyformat": "tsfmt --verify",
     "verify": "npm run lint && npm run verifyformat",
     "lint": "tslint -c tslint.json --project tsconfig.json",
+    "update": "git pull && npm install . && pm2 restart 0",
     "watch": "tsc -w",
     "test": "jest"
   }
