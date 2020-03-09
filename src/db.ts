@@ -454,11 +454,11 @@ export class Database {
 
     const criteria = await this.resolveCriteria(data.criteria);
 
-    return {env, exp, trial, criteria};
+    return { env, exp, trial, criteria };
   }
 
   public async recordData(data: BenchmarkData, suppressTimeline = false): Promise<number> {
-    const {trial, criteria} = await this.recordMetaData(data);
+    const { trial, criteria } = await this.recordMetaData(data);
 
     let recordedMeasurements = 0;
 

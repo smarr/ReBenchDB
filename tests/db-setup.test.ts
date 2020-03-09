@@ -255,7 +255,7 @@ describe('Recording a ReBench execution from payload files', () => {
     await db.recordData(smallTestData);
 
     // obtain the bits, this should match what `recordData` does above
-    const {trial, criteria} = await db.recordMetaData(smallTestData);
+    const { trial, criteria } = await db.recordMetaData(smallTestData);
 
     // now, manually do the recording
     const r = smallTestData.data[0];
