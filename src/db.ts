@@ -5,6 +5,10 @@ import { Pool, PoolConfig, PoolClient } from 'pg';
 import { SingleRequestOnly } from './single-requester';
 import { startRequest, completeRequest } from './perf-tracker';
 
+function isUniqueViolationError(err) {
+  return err.code === '23505';
+}
+
 export function loadScheme() {
   let schema = `${__dirname}/../src/db/db.sql`;
   if (!existsSync(schema)) {
@@ -372,6 +376,26 @@ export class Database {
     return false;
   }
 
+  private async recordMeasurementsFromBatch(batchedValues: any[]) {
+    let recordedMeasurements = 0;
+
+    while (batchedValues.length > 0) {
+      const rest = batchedValues.splice(6 * 1); // there are 6 parameters, i.e., values
+      try {
+        await this.recordMeasurement(batchedValues);
+        recordedMeasurements += 1;
+      } catch (err) {
+        // looks like we already have this data
+        if (!isUniqueViolationError(err)) {
+          throw err;
+        }
+      }
+      batchedValues = rest;
+    }
+
+    return recordedMeasurements;
+  }
+
   public async recordMeasurements(r: Run, run: any, trial: any, criteria: Map<any, any>, availableMs: any) {
     let recordedMeasurements = 0;
     let batchedMs = 0;
@@ -387,10 +411,19 @@ export class Database {
           continue;
         }
         batchedMs += 1;
-        recordedMeasurements += 1;
         batchedValues = batchedValues.concat(values);
         if (batchedMs === Database.batchN) {
-          await this.recordMeasurementBatchedN(batchedValues);
+          try {
+            await this.recordMeasurementBatchedN(batchedValues);
+            recordedMeasurements += batchedMs;
+          } catch (err) {
+            // we may have concurrent inserts, or partially inserted data, where a request aborted
+            if (isUniqueViolationError(err)) {
+              recordedMeasurements += await this.recordMeasurementsFromBatch(batchedValues);
+            } else {
+              throw err;
+            }
+          }
           batchedValues = [];
           batchedMs = 0;
         }
@@ -399,25 +432,33 @@ export class Database {
 
     while (batchedValues.length >= 6 * 10) {
       const rest = batchedValues.splice(6 * 10); // there are 6 parameters, i.e., values
-      await this.recordMeasurementBatched10(batchedValues);
+      try {
+        await this.recordMeasurementBatched10(batchedValues);
+        recordedMeasurements += 10;
+      } catch (err) {
+        if (isUniqueViolationError(err)) {
+          recordedMeasurements += await this.recordMeasurementsFromBatch(batchedValues);
+        }
+      }
       batchedValues = rest;
     }
 
-    while (batchedValues.length > 0) {
-      const rest = batchedValues.splice(6 * 1); // there are 6 parameters, i.e., values
-      await this.recordMeasurement(batchedValues);
-      batchedValues = rest;
-    }
-
+    recordedMeasurements += await this.recordMeasurementsFromBatch(batchedValues);
     return recordedMeasurements;
   }
 
-  public async recordData(data: BenchmarkData, suppressTimeline = false): Promise<number> {
+  public async recordMetaData(data: BenchmarkData) {
     const env = await this.recordEnvironment(data.env);
     const exp = await this.recordExperiment(data);
     const trial = await this.recordTrial(data, env, exp);
 
     const criteria = await this.resolveCriteria(data.criteria);
+
+    return {env, exp, trial, criteria};
+  }
+
+  public async recordData(data: BenchmarkData, suppressTimeline = false): Promise<number> {
+    const {trial, criteria} = await this.recordMetaData(data);
 
     let recordedMeasurements = 0;
 

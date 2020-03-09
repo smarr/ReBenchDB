@@ -249,4 +249,23 @@ describe('Recording a ReBench execution from payload files', () => {
     const timeline = await db.client.query('SELECT * from Timeline');
     expect(timeline.rowCount).toEqual(462);
   });
+
+  it('should not fail if some data was already recorded in database', async () => {
+    // make sure everything is in the database
+    await db.recordData(smallTestData);
+
+    // obtain the bits, this should match what `recordData` does above
+    const {trial, criteria} = await db.recordMetaData(smallTestData);
+
+    // now, manually do the recording
+    const r = smallTestData.data[0];
+
+    // and pretend there's no data yet
+    const availableMs = {};
+
+    const run = await db.recordRun(r.runId);
+
+    const recordedMeasurements = await db.recordMeasurements(r, run, trial, criteria, availableMs);
+    expect(recordedMeasurements).toEqual(0);
+  });
 });
