@@ -1,6 +1,6 @@
 import { execFile } from 'child_process';
 import { readFileSync, existsSync } from 'fs';
-import { BenchmarkData, Executor, Suite, Benchmark, RunId, Source, Environment, Criterion } from './api';
+import { BenchmarkData, Executor, Suite, Benchmark, RunId, Source, Environment, Criterion, Run } from './api';
 import { Pool, PoolConfig, PoolClient } from 'pg';
 import { SingleRequestOnly } from './single-requester';
 import { startRequest, completeRequest } from './perf-tracker';
@@ -372,6 +372,46 @@ export class Database {
     return false;
   }
 
+  public async recordMeasurements(r: Run, run: any, trial: any, criteria: Map<any, any>, availableMs: any) {
+    let recordedMeasurements = 0;
+    let batchedMs = 0;
+    let batchedValues: any[] = [];
+
+    for (const d of r.d) {
+      for (const m of d.m) {
+        // batched inserts are much faster
+        // so let's do this
+        const values = [run.id, trial.id, d.in, d.it, criteria.get(m.c).id, m.v];
+        if (this.alreadyRecorded(availableMs, values)) {
+          // then,just skip this one.
+          continue;
+        }
+        batchedMs += 1;
+        recordedMeasurements += 1;
+        batchedValues = batchedValues.concat(values);
+        if (batchedMs === Database.batchN) {
+          await this.recordMeasurementBatchedN(batchedValues);
+          batchedValues = [];
+          batchedMs = 0;
+        }
+      }
+    }
+
+    while (batchedValues.length >= 6 * 10) {
+      const rest = batchedValues.splice(6 * 10); // there are 6 parameters, i.e., values
+      await this.recordMeasurementBatched10(batchedValues);
+      batchedValues = rest;
+    }
+
+    while (batchedValues.length > 0) {
+      const rest = batchedValues.splice(6 * 1); // there are 6 parameters, i.e., values
+      await this.recordMeasurement(batchedValues);
+      batchedValues = rest;
+    }
+
+    return recordedMeasurements;
+  }
+
   public async recordData(data: BenchmarkData, suppressTimeline = false): Promise<number> {
     const env = await this.recordEnvironment(data.env);
     const exp = await this.recordExperiment(data);
@@ -382,44 +422,9 @@ export class Database {
     let recordedMeasurements = 0;
 
     for (const r of data.data) {
-      let batchedMs = 0;
-      let batchedValues: any[] = [];
-
       const run = await this.recordRun(r.runId);
-
       const availableMs = await this.retrieveAvailableMeasurements(trial.id);
-
-      for (const d of r.d) {
-        for (const m of d.m) {
-          // batched inserts are much faster
-          // so let's do this
-          const values = [run.id, trial.id, d.in, d.it, criteria.get(m.c).id, m.v];
-          if (this.alreadyRecorded(availableMs, values)) {
-            // then,just skip this one.
-            continue;
-          }
-          batchedMs += 1;
-          recordedMeasurements += 1;
-          batchedValues = batchedValues.concat(values);
-          if (batchedMs === Database.batchN) {
-            await this.recordMeasurementBatchedN(batchedValues);
-            batchedValues = [];
-            batchedMs = 0;
-          }
-        }
-      }
-
-      while (batchedValues.length >= 6 * 10) {
-        const rest = batchedValues.splice(6 * 10); // there are 6 parameters, i.e., values
-        await this.recordMeasurementBatched10(batchedValues);
-        batchedValues = rest;
-      }
-
-      while (batchedValues.length > 0) {
-        const rest = batchedValues.splice(6 * 1); // there are 6 parameters, i.e., values
-        await this.recordMeasurement(batchedValues);
-        batchedValues = rest;
-      }
+      recordedMeasurements += await this.recordMeasurements(r, run, trial, criteria, availableMs);
     }
 
     if (recordedMeasurements > 0 && this.timelineEnabled && !suppressTimeline) {
