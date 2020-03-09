@@ -1,0 +1,4 @@
+ALTER TABLE Run ALTER COLUMN warmup TYPE int;
+ALTER TABLE Run ALTER COLUMN maxInvocationTime TYPE int;
+ALTER TABLE Run ALTER COLUMN minIterationTime TYPE int;
+ALTER TABLE Timeline ALTER COLUMN numSamples TYPE int;

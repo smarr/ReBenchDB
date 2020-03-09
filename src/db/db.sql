@@ -161,9 +161,9 @@ CREATE TABLE Run (
   cores varchar,
   inputSize varchar,
   extraArgs varchar,
-  maxInvocationTime smallint,
-  minIterationTime smallint,
-  warmup smallint,
+  maxInvocationTime int,
+  minIterationTime int,
+  warmup int,
 
   foreign key (execId) references Executor (id),
   foreign key (benchmarkId) references Benchmark (id),
@@ -192,7 +192,7 @@ CREATE TABLE Timeline (
   trialId smallint,
   criterion smallint,
 
-  numSamples smallint,
+  numSamples int,
 
   minVal float4,
   maxVal float4,
