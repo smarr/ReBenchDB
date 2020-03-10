@@ -87,5 +87,5 @@ export function startRequest(): number {
 export async function completeRequest(reqStart: number, db: Database, request: string) {
   const time = performance.now() - reqStart;
   iterations[request] += 1;
-  await db.recordData(constructData(time, iterations[request], request), true);
+  await db.recordAllData(constructData(time, iterations[request], request), true);
 }

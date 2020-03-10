@@ -457,7 +457,7 @@ export class Database {
     return { env, exp, trial, criteria };
   }
 
-  public async recordData(data: BenchmarkData, suppressTimeline = false): Promise<number> {
+  public async recordAllData(data: BenchmarkData, suppressTimeline = false): Promise<number> {
     const { trial, criteria } = await this.recordMetaData(data);
 
     let recordedMeasurements = 0;
@@ -473,6 +473,16 @@ export class Database {
     }
 
     return recordedMeasurements;
+  }
+
+  public async recordMetaDataAndRuns(data: BenchmarkData): Promise<number> {
+    await this.recordMetaData(data);
+
+    for (const r of data.data) {
+      await this.recordRun(r.runId);
+    }
+
+    return data.data.length;
   }
 
   public async recordMeasurementBatched10(values: any[]) {

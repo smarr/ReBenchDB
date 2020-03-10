@@ -205,7 +205,9 @@ describe('Recording a ReBench execution from payload files', () => {
   });
 
   it('should accept all data (small-payload), and have the measurements persisted', async () => {
-    const recMs = await db.recordData(smallTestData);
+    await db.recordMetaDataAndRuns(smallTestData);
+    const recMs = await db.recordAllData(smallTestData);
+
     const measurements = await db.client.query('SELECT * from Measurement');
     expect(recMs).toEqual(3);
     expect(measurements.rowCount).toEqual(3);
@@ -223,7 +225,8 @@ describe('Recording a ReBench execution from payload files', () => {
     expect(exps.rowCount).toEqual(2); // performance tracking and the actual experiment
 
     // Do recordData a second time
-    const recMs = await db.recordData(smallTestData);
+    await db.recordMetaDataAndRuns(smallTestData);
+    const recMs = await db.recordAllData(smallTestData);
 
     // don't need to wait for db.awaitQuiescentTimelineUpdater()
     // because this should not record anything
@@ -239,7 +242,9 @@ describe('Recording a ReBench execution from payload files', () => {
   });
 
   it('should accept all data (large-payload), and have the measurements persisted', async () => {
-    const recMs = await db.recordData(largeTestData);
+    await db.recordMetaDataAndRuns(largeTestData);
+    const recMs = await db.recordAllData(largeTestData);
+
     const measurements = await db.client.query('SELECT count(*) as cnt from Measurement');
 
     await db.awaitQuiescentTimelineUpdater();
@@ -252,7 +257,8 @@ describe('Recording a ReBench execution from payload files', () => {
 
   it('should not fail if some data was already recorded in database', async () => {
     // make sure everything is in the database
-    await db.recordData(smallTestData);
+    await db.recordMetaDataAndRuns(smallTestData);
+    await db.recordAllData(smallTestData);
 
     // obtain the bits, this should match what `recordData` does above
     const { trial, criteria } = await db.recordMetaData(smallTestData);

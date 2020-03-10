@@ -162,8 +162,15 @@ router.put('/rebenchdb/results', koaBody({ jsonLimit: '500mb' }), async ctx => {
   }
 
   try {
-    const recordedMeasurements = await db.recordData(data);
-    ctx.body = `Data recorded, ${recordedMeasurements} measurements stored.`;
+    const recordedRuns = await db.recordMetaDataAndRuns(data);
+    db.recordAllData(data)
+      .then(recordedMeasurements => console.log(`/rebenchdb/results: stored ${recordedMeasurements} measurements`))
+      .catch(e => {
+        console.error(`/rebenchdb/results failed to store measurements: ${e}`);
+        console.error(e.stack);
+      });
+
+    ctx.body = `Meta data for ${recordedRuns} stored. Storing of measurements is ongoing`;
     ctx.status = 200;
   } catch (e) {
     ctx.status = 500;
