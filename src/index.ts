@@ -151,7 +151,7 @@ ${validateFn.errors}`;
 
 // curl -X PUT -H "Content-Type: application/json" -d '{"foo":"bar","baz":3}' http://localhost:33333/rebenchdb/results
 // DEBUG: koaBody({includeUnparsed: true})
-router.put('/rebenchdb/results', koaBody({ jsonLimit: '100mb' }), async ctx => {
+router.put('/rebenchdb/results', koaBody({ jsonLimit: '500mb' }), async ctx => {
   const start = startRequest();
 
   const data: BenchmarkData = await ctx.request.body;
