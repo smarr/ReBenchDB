@@ -73,7 +73,7 @@ function renderProject(project, $) {
   const allResults = renderAllResults(project, $);
 
   const result = `<div class="card">
-    <h5 class="card-header">${project.name}</h5>
+    <h5 class="card-header"><a href="/project/${project.id}">${project.name}</a></h5>
     <div class="card-body">
       ${changes}
       ${allResults}

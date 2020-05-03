@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>ReBench: {{project.name}}</title>
+  <script src="/static/render.js"></script>
+  <script src="/static/plots.js"></script>
+
+  {{{headerHtml}}}
+
+  <script>
+    //@ts-check
+    const dataOverviewP = fetch(`/rebenchdb/dash/{{project.id}}/data-overview`);
+
+    $(document).ready(async () => {
+      const dataOverviewResponse = await dataOverviewP;
+      const data = (await dataOverviewResponse.json()).data;
+      renderProjectDataOverview(data, $);
+    });
+  </script>
+</head>
+<body>
+
+  <div class="jumbotron">
+    <h1 class="display-4">ReBench: {{project.name}}</h1>
+    {{#project.description}}
+    <h2 class="display-5">{{project.description}}</h2>
+    {{/project.description}}
+  </div>
+
+  <div id="data-overview"></div>
+</body>
+</html>

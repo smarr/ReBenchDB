@@ -45,6 +45,13 @@ router.get('/timeline/:projectId', async ctx => {
   ctx.type = 'html';
 });
 
+router.get('/project/:projectId', async ctx => {
+  ctx.body = processTemplate(
+    'project.html',
+    { project: await db.getProject(ctx.params.projectId) });
+  ctx.type = 'html';
+});
+
 router.get(`/rebenchdb/dash/projects`, async ctx => {
   ctx.body = await dashProjects(db);
   ctx.type = 'application/json';
