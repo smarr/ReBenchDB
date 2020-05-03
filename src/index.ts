@@ -10,7 +10,7 @@ import ajv from 'ajv';
 
 import { version } from '../package.json';
 import { initPerfTracker, startRequest, completeRequest } from './perf-tracker';
-import { dashResults, dashStatistics, dashChanges, dashCompare, dashProjects, dashBenchmarksForProject, dashTimelineForProject } from './dashboard';
+import { dashResults, dashStatistics, dashChanges, dashCompare, dashProjects, dashBenchmarksForProject, dashTimelineForProject, dashDataOverview } from './dashboard';
 import { processTemplate } from './templates';
 
 console.log('Starting ReBenchDB Version ' + version);
@@ -85,6 +85,11 @@ router.get('/rebenchdb/stats', async ctx => {
 
 router.get('/rebenchdb/dash/:projectId/changes', async ctx => {
   ctx.body = await dashChanges(ctx.params.projectId, db);
+  ctx.type = 'application/json';
+});
+
+router.get('/rebenchdb/dash/:projectId/data-overview', async ctx => {
+  ctx.body = await dashDataOverview(ctx.params.projectId, db);
   ctx.type = 'application/json';
 });
 

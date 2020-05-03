@@ -1,6 +1,75 @@
 //@ts-check
 'use strict';
 
+function filterCommitMessage(msg) {
+  let result = msg.replace(/Signed-off-by:.*?\n/g, '');
+  return result;
+}
+
+function shortCommitId(commitId) {
+  return commitId.substr(0, 6);
+}
+
+function shortenCommitIds(commitIds) {
+  const ids = commitIds.split(' ');
+  const shortIds = ids.map(shortCommitId);
+  return shortIds.join(' ');
+}
+
+function formatDateWithTime(dateStr) {
+  const date = new Date(dateStr);
+  const month = new String(date.getMonth() + 1).padStart(2, '0');
+  const day = new String(date.getDate()).padStart(2, '0');
+  const hours = new String(date.getHours()).padStart(2, '0');
+  const minutes = new String(date.getMinutes()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day} ${hours}:${minutes}`;
+}
+
+function expandMessage(event) {
+  const elem = event.target;
+  elem.parentElement.innerText = elem.dataset.fulltext;
+  event.preventDefault();
+}
+
+function formatCommitMessages(messages) {
+  messages = filterCommitMessage(messages);
+  const newLineIdx = messages.indexOf('\n');
+  if (newLineIdx > -1) {
+    const firstLine = messages.substr(0, newLineIdx);
+    return `${firstLine} <a href="#" onclick="expandMessage(event)" data-fulltext="${messages.replace('"', "\x22")}">&hellip;</a>`;
+  } else {
+    return messages;
+  }
+}
+
+function renderProjectDataOverview(data, $) {
+  const tBody = $('#data-overview');
+
+  let hasDesc = false;
+
+  for (const row of data) {
+    if (row.description) {
+      hasDesc = true;
+    }
+
+    tBody.append(`
+      <tr>
+        <td>${row.name}</td>
+        <td class="desc">${row.description == null ? '' : row.description}</td>
+        <td>${row.minstarttime == null ? '' : formatDateWithTime(row.minstarttime)} ${row.maxendtime == null ? '' : formatDateWithTime(row.maxendtime)}</td>
+        <td>${row.users}</td>
+        <td>${shortenCommitIds(row.commitids)} <p>${formatCommitMessages(row.commitmsgs)}</p></td>
+        <td>${row.hostnames}</td>
+        <td class="num-col">${row.runs}</td>
+        <td class="num-col"><a href="/rebenchdb/data/${row.expid}">${row.measurements}</a></td>
+      </tr>`);
+  }
+
+  if (!hasDesc) {
+    $('.desc').css('display', 'none');
+  }
+}
+
 function renderChanges(project, $) {
   if (!project.showchanges) {
     return '';
@@ -33,7 +102,7 @@ async function renderChangeDetails(changesDetailsResponse, projectId, $) {
   const p1change = $(`#p${projectId}-change`);
   for (const change of details.changes) {
     // strip out some metadata to be nicer to view.
-    const msg = change.commitmessage.replace(/Signed-off-by:.*?\n/, '');
+    const msg = filterCommitMessage(change.commitmessage);
 
     const option = `<a class="list-group-item list-group-item-action list-min-padding"
       data-toggle="list" data-hash="${change.commitid}" href="">
