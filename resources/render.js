@@ -61,7 +61,7 @@ function renderProjectDataOverview(data, $) {
         <td>${shortenCommitIds(row.commitids)} <p>${formatCommitMessages(row.commitmsgs)}</p></td>
         <td>${row.hostnames}</td>
         <td class="num-col">${row.runs}</td>
-        <td class="num-col"><a href="/rebenchdb/data/${row.expid}">${row.measurements}</a></td>
+        <td class="num-col"><a href="/rebenchdb/get-exp-data/${row.expid}">${row.measurements}</a></td>
       </tr>`);
   }
 

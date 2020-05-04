@@ -48,7 +48,7 @@
     "nodemon": "DEV=true nodemon ./dist/src/index.js",
     "compile": "tsc && npm run prep-resources && npm run prep-knitr-reports",
     "prep-resources": "(cd tests; bzip2 -d -f -k large-payload.json.bz2)",
-    "prep-knitr-reports": "mkdir -p tmp/interm tmp/knit resources/reports",
+    "prep-knitr-reports": "mkdir -p tmp/interm tmp/knit resources/reports resources/exp-data",
     "format": "tsfmt -r",
     "verifyformat": "tsfmt --verify",
     "verify": "npm run lint && npm run verifyformat",

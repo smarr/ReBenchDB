@@ -182,6 +182,97 @@ export function dashCompare(base: string, change: string, project: string, dbCon
   return data;
 }
 
+const expDataPreparation = new Map();
+
+export async function dashGetExpData(expId: number, dbConfig, db: Database) {
+  const result = await db.client.query(`
+      SELECT
+        exp.name as expName,
+        exp.description as expDesc,
+        p.id as pId,
+        p.name as pName,
+        p.description as pDesc
+      FROM
+        Experiment exp
+      JOIN Project p ON exp.projectId = p.id
+
+      WHERE exp.id = $1`,
+    [expId]);
+
+  let data: any;
+  if (!result || result.rows.length !== 1) {
+    data = {
+      project: '',
+      generationFailed: true,
+      stdout: 'Experiment was not found'
+    };
+  } else {
+    data = {
+      project: result.rows[0].pname,
+      expName: result.rows[0].expname,
+      expDesc: result.rows[0].expDesc,
+      projectId: result.rows[0].pid,
+      projectDesc: result.rows[0].pdesc
+    };
+  }
+
+  const expDataId = `${data.project}-${expId}`;
+  const expDataFile = `${__dirname}/../../resources/exp-data/${expDataId}.qs`;
+
+  if (existsSync(expDataFile)) {
+    data.preparingData = false;
+    data.downloadUrl = `/static/exp-data/${expDataId}.qs`;
+  } else {
+    data.currentTime = new Date().toISOString();
+
+    const prevPrepDetails = expDataPreparation.get(expDataId);
+
+    // no previous attempt to prepare data
+    if (!prevPrepDetails) {
+      const start = startRequest();
+
+      data.preparingData = true;
+      // start preparing data
+      const args = [
+        expId,
+        `${__dirname}/../../src/views/`, // R ReBenchDB library directory
+        dbConfig.user,
+        dbConfig.password,
+        dbConfig.database,
+        expDataFile
+      ];
+
+      console.log(`Prepare Data for Download: ${__dirname}/../../src/stats/get-exp-data.R ${args.join(' ')}`);
+
+      execFile(`${__dirname}/../../src/stats/get-exp-data.R`, args,
+        async (error, stdout, stderr) => {
+          if (error) {
+            console.error(`Data preparation failed: ${error}`);
+          }
+          expDataPreparation.set(expDataId, {
+            error, stdout, stderr,
+            inProgress: false
+          });
+
+          await completeRequest(start, db, 'prep-exp-data');
+        });
+      expDataPreparation.set(expDataId, {
+        inProgress: true
+      });
+    } else if (prevPrepDetails.error) {
+      // if previous attempt failed
+      data.generationFailed = true;
+      data.stdout = prevPrepDetails.stdout;
+      data.stderr = prevPrepDetails.stderr;
+      data.preparingData = false;
+    } else {
+      data.preparingData = true;
+    }
+  }
+
+  return data;
+}
+
 export async function dashBenchmarksForProject(db: Database, projectId: number) {
   const result = await db.client.query(`
     SELECT DISTINCT p.name, env.hostname, r.cmdline, b.name as benchmark, b.id as benchId, s.name as suiteName, s.id as suiteId, exe.name as execName, exe.id as execId FROM Project p
