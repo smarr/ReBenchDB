@@ -11,26 +11,43 @@ connect_to_rebenchdb <- function(dbname, user, pass) {
     password = pass)
 }
 
-get_measures_for_comparison <- function(rebenchdb, hash_1, hash_2) {
-  qry <- dbSendQuery(rebenchdb, "
+main_data_select <- "
     SELECT expId, runId, trialId, substring(commitId, 1, 6) as commitid,
       benchmark.name as bench, executor.name as exe, suite.name as suite,
       cmdline, varValue, cores, inputSize, extraArgs,
       invocation, iteration, warmup,
       criterion.name as criterion, criterion.unit as unit,
-      value
+      value "
+
+main_data_from <- "
     FROM Measurement
-        JOIN Trial ON trialId = Trial.id
+      JOIN Trial ON trialId = Trial.id
       JOIN Experiment ON expId = Experiment.id
       JOIN Source ON source.id = sourceId
       JOIN Criterion ON criterion = criterion.id
       JOIN Run ON runId = run.id
       JOIN Suite ON suiteId = suite.id
       JOIN Benchmark ON benchmarkId = benchmark.id
-      JOIN Executor ON execId = executor.id
-    WHERE criterion.name = 'total' AND (commitId = $1 OR commitid = $2)
-    ORDER BY expId, runId, invocation, iteration, criterion")
+      JOIN Executor ON execId = executor.id "
+
+get_measures_for_comparison <- function(rebenchdb, hash_1, hash_2) {
+  qry <- dbSendQuery(rebenchdb,
+            paste0(main_data_select, main_data_from,
+                   "WHERE criterion.name = 'total' AND (commitId = $1 OR commitid = $2)
+                    ORDER BY expId, runId, invocation, iteration, criterion"))
   dbBind(qry, list(hash_1, hash_2))
+  result <- dbFetch(qry)
+  dbClearResult(qry)
+
+  factorize_result(result)
+}
+
+get_measures_for_experiment <- function(rebenchdb, exp_id) {
+  qry <- dbSendQuery(rebenchdb,
+            paste0(main_data_select, main_data_from,
+                   "WHERE Experiment.id = $1
+                    ORDER BY runId, trialId, cmdline, invocation, iteration, criterion"))
+  dbBind(qry, list(exp_id))
   result <- dbFetch(qry)
   dbClearResult(qry)
 

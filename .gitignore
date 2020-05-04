@@ -5,3 +5,7 @@ resources/reports
 tmp/knit
 tmp/interm
 /tests/large-payload.json
+.Rhistory
+.Rproj.user
+*.Rproj
+/resources/exp-data

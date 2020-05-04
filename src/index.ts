@@ -10,7 +10,7 @@ import ajv from 'ajv';
 
 import { version } from '../package.json';
 import { initPerfTracker, startRequest, completeRequest } from './perf-tracker';
-import { dashResults, dashStatistics, dashChanges, dashCompare, dashProjects, dashBenchmarksForProject, dashTimelineForProject } from './dashboard';
+import { dashResults, dashStatistics, dashChanges, dashCompare, dashProjects, dashBenchmarksForProject, dashTimelineForProject, dashDataOverview, dashGetExpData } from './dashboard';
 import { processTemplate } from './templates';
 
 console.log('Starting ReBenchDB Version ' + version);
@@ -44,6 +44,31 @@ router.get('/timeline/:projectId', async ctx => {
     { project: await db.getProject(ctx.params.projectId) });
   ctx.type = 'html';
 });
+
+router.get('/project/:projectId', async ctx => {
+  ctx.body = processTemplate(
+    'project.html',
+    { project: await db.getProject(ctx.params.projectId) });
+  ctx.type = 'html';
+});
+
+router.get('/rebenchdb/get-exp-data/:expId', async ctx => {
+  const start = startRequest();
+
+  const data = await dashGetExpData(ctx.params.expId, dbConfig, db);
+
+  if (data.preparingData) {
+    ctx.body = processTemplate('get-exp-data.html', data);
+    ctx.type = 'html';
+    ctx.set('Cache-Control', 'no-cache');
+  } else {
+    console.log(data.downloadUrl);
+    ctx.redirect(data.downloadUrl);
+  }
+
+  await completeRequest(start, db, 'get-exp-data');
+});
+
 
 router.get(`/rebenchdb/dash/projects`, async ctx => {
   ctx.body = await dashProjects(db);
@@ -81,6 +106,11 @@ router.get('/rebenchdb/dash/:projectId/changes', async ctx => {
   ctx.type = 'application/json';
 });
 
+router.get('/rebenchdb/dash/:projectId/data-overview', async ctx => {
+  ctx.body = await dashDataOverview(ctx.params.projectId, db);
+  ctx.type = 'application/json';
+});
+
 router.get('/compare/:project/:baseline/:change', async ctx => {
   const start = startRequest();
 
@@ -111,6 +141,14 @@ if (DEV) {
       ctx.type = 'css';
     } else if (ctx.params.filename.endsWith('.js')) {
       ctx.type = 'application/javascript';
+    }
+  });
+
+  router.get('/static/exp-data/:filename', async ctx => {
+    console.log(`serve ${ctx.params.filename}`);
+    ctx.body = readFileSync(`${__dirname}/../../resources/exp-data/${ctx.params.filename}`);
+    if (ctx.params.filename.endsWith('.qs')) {
+      ctx.type = 'application/octet-stream';
     }
   });
 

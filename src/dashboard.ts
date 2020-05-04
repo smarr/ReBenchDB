@@ -69,6 +69,38 @@ export async function dashChanges(projectId, db) {
   return { changes: result.rows };
 }
 
+export async function dashDataOverview(projectId, db) {
+  const result = await db.client.query(`
+      SELECT
+        exp.id as expId, exp.name, exp.description,
+        min(t.startTime) as minStartTime,
+        max(t.endTime) as maxEndTime, ARRAY_TO_STRING(ARRAY_AGG(DISTINCT t.username), ', ') as users,
+        ARRAY_TO_STRING(ARRAY_AGG(DISTINCT src.commitId), ' ') as commitIds, ARRAY_TO_STRING(ARRAY_AGG(DISTINCT src.commitMessage), '\n\n') as commitMsgs,
+        ARRAY_TO_STRING(ARRAY_AGG(DISTINCT env.hostName), ', ') as hostNames,
+
+        -- Accessing measurements and timeline should give the same results,
+        -- but the counting in measurements is of course a lot slower
+        --	count(m.*) as measurements,
+        --	count(DISTINCT m.runId) as runs
+        SUM(tl.numSamples) as measurements,
+        count(DISTINCT tl.runId) as runs
+      FROM experiment exp
+      JOIN Trial t         ON exp.id = t.expId
+      JOIN Source src      ON t.sourceId = src.id
+      JOIN Environment env ON env.id = t.envId
+
+      --JOIN Measurement m   ON m.trialId = t.id
+      JOIN Timeline tl     ON tl.trialId = t.id
+
+      WHERE exp.projectId = $1
+
+      GROUP BY exp.name, exp.description, exp.id
+      ORDER BY minStartTime DESC;`,
+    [projectId]);
+  return { data: result.rows };
+}
+
+
 const reportGeneration = new Map();
 
 export function dashCompare(base: string, change: string, project: string, dbConfig, db: Database) {
@@ -144,6 +176,97 @@ export function dashCompare(base: string, change: string, project: string, dbCon
       data.generatingReport = false;
     } else {
       data.generatingReport = true;
+    }
+  }
+
+  return data;
+}
+
+const expDataPreparation = new Map();
+
+export async function dashGetExpData(expId: number, dbConfig, db: Database) {
+  const result = await db.client.query(`
+      SELECT
+        exp.name as expName,
+        exp.description as expDesc,
+        p.id as pId,
+        p.name as pName,
+        p.description as pDesc
+      FROM
+        Experiment exp
+      JOIN Project p ON exp.projectId = p.id
+
+      WHERE exp.id = $1`,
+    [expId]);
+
+  let data: any;
+  if (!result || result.rows.length !== 1) {
+    data = {
+      project: '',
+      generationFailed: true,
+      stdout: 'Experiment was not found'
+    };
+  } else {
+    data = {
+      project: result.rows[0].pname,
+      expName: result.rows[0].expname,
+      expDesc: result.rows[0].expDesc,
+      projectId: result.rows[0].pid,
+      projectDesc: result.rows[0].pdesc
+    };
+  }
+
+  const expDataId = `${data.project}-${expId}`;
+  const expDataFile = `${__dirname}/../../resources/exp-data/${expDataId}.qs`;
+
+  if (existsSync(expDataFile)) {
+    data.preparingData = false;
+    data.downloadUrl = `/static/exp-data/${expDataId}.qs`;
+  } else {
+    data.currentTime = new Date().toISOString();
+
+    const prevPrepDetails = expDataPreparation.get(expDataId);
+
+    // no previous attempt to prepare data
+    if (!prevPrepDetails) {
+      const start = startRequest();
+
+      data.preparingData = true;
+      // start preparing data
+      const args = [
+        expId,
+        `${__dirname}/../../src/views/`, // R ReBenchDB library directory
+        dbConfig.user,
+        dbConfig.password,
+        dbConfig.database,
+        expDataFile
+      ];
+
+      console.log(`Prepare Data for Download: ${__dirname}/../../src/stats/get-exp-data.R ${args.join(' ')}`);
+
+      execFile(`${__dirname}/../../src/stats/get-exp-data.R`, args,
+        async (error, stdout, stderr) => {
+          if (error) {
+            console.error(`Data preparation failed: ${error}`);
+          }
+          expDataPreparation.set(expDataId, {
+            error, stdout, stderr,
+            inProgress: false
+          });
+
+          await completeRequest(start, db, 'prep-exp-data');
+        });
+      expDataPreparation.set(expDataId, {
+        inProgress: true
+      });
+    } else if (prevPrepDetails.error) {
+      // if previous attempt failed
+      data.generationFailed = true;
+      data.stdout = prevPrepDetails.stdout;
+      data.stderr = prevPrepDetails.stderr;
+      data.preparingData = false;
+    } else {
+      data.preparingData = true;
     }
   }
 

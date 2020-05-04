@@ -8,7 +8,9 @@ const iterations = {
   'put-results': 0,
   'change': 0,
   'generate-report': 0,
-  'generate-timeline': 0
+  'generate-timeline': 0,
+  'prep-exp-data': 0,
+  'get-exp-data': 0
 };
 
 const descriptions = {
@@ -16,7 +18,9 @@ const descriptions = {
   'put-results': 'Time of PUT /rebenchdb/results',
   'change': 'Time of GET /compare/:project/:baseline/:change',
   'generate-report': 'Time of Running R Reporting for /compare/*',
-  'generate-timeline': 'Time of Running R stats to generate timeline data'
+  'generate-timeline': 'Time of Running R stats to generate timeline data',
+  'prep-exp-data': 'Prepare experiment data for download',
+  'get-exp-data': 'Starting to prepare experiment data'
 };
 
 export function initPerfTracker() {

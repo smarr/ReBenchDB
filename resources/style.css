@@ -122,3 +122,7 @@ table.benchmark-details tr th:nth-child(6) {
 .card-columns {
   column-count: 2;
 }
+
+.num-col {
+  text-align: right;
+}
