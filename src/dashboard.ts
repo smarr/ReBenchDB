@@ -280,8 +280,8 @@ export async function dashBenchmarksForProject(db: Database, projectId: number) 
       JOIN Trial t           ON t.expId = exp.id
       JOIN Source src        ON t.sourceId = src.id
       JOIN Environment env   ON t.envId = env.id
-      JOIN Measurement m     ON m.trialId = t.id
-      JOIN Run r             ON m.runId = r.id
+      JOIN Timeline tl       ON tl.trialId = t.id
+      JOIN Run r             ON tl.runId = r.id
       JOIN Benchmark b       ON r.benchmarkId = b.id
       JOIN Suite s           ON r.suiteId = s.id
       JOIN Executor exe      ON r.execId = exe.id
