@@ -49,24 +49,29 @@ warmup <- result %>%
          !grepl("interp", exe, fixed = TRUE))
 
 peak <- result %>%
-  group_by(commitid, exe, suite, bench) %>%
+  group_by(commitid, exe, suite, bench,
+           varvalue, cores, inputsize, extraargs) %>%
   filter(is.na(warmup) | iteration >= warmup)
 
 
 base <- peak %>%
   filter(commitid == baseline_hash6) %>%
-  group_by(exe, suite, bench) %>%
+  group_by(exe, suite, bench,
+           varvalue, cores, inputsize, extraargs) %>%
   summarise(base_mean = mean(value),
             base_median = median(value))
 
 norm <- peak %>%
-  left_join(base, by = c("exe", "suite", "bench")) %>%
-  group_by(exe, suite, bench) %>%
+  left_join(base, by = c("exe", "suite", "bench",
+                         "varvalue", "cores", "inputsize", "extraargs")) %>%
+  group_by(exe, suite, bench,
+           varvalue, cores, inputsize, extraargs) %>%
   transform(ratio_mean = value / base_mean,
             ratio_median = value / base_median)
 
 stats <- norm %>%
-  group_by(commitid, exe, suite, bench) %>%
+  group_by(commitid, exe, suite, bench,
+           varvalue, cores, inputsize, extraargs) %>%
   filter(is.na(warmup) | iteration >= warmup) %>%
   summarise(
     unit = unit[1],
@@ -131,7 +136,8 @@ stats_all <- stats_suite %>%
 ```{r summary-suites, fig.height=2.5, fig.width=4.5, timeit=TRUE}
 data_chg <- stats %>%
   filter(commitid == change_hash6) %>%
-  select(commitid, exe, suite, bench, ratio) %>%
+  select(commitid, exe, suite, bench, ratio,
+         varvalue, cores, inputsize, extraargs) %>%
   droplevels()
 
 data_chg_slow <- data_chg %>%
