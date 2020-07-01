@@ -96,6 +96,14 @@ stats <- norm %>%
     change_l = ratioLower - 1,
     change_u = ratioUpper - 1)
 
+not_in_both <- stats %>%
+  filter(is.na(ratio)) %>%
+  droplevels()
+
+stats <- stats %>%
+  filter(!is.na(ratio)) %>%
+  droplevels()
+
 geometric.mean <- function(x) { exp(mean(log(x))) }
 
 ## Are we faster/slower? have a rough 5% boundary for all the noise
@@ -112,6 +120,7 @@ slower_category <- function(data) {
 
 stats_suite <- stats %>%
   filter(commitid == change_hash6) %>% # need to remove it so that statistics are accurate, or put it into the group
+  filter(!is.na(ratio)) %>%            # filter out the benchmarks not in both data sets
   group_by(exe, suite) %>%
   summarise(
     unit = unit[1],
@@ -159,6 +168,15 @@ compare_runtime_ratio_of_suites_plot(
   <dd class="col-sm-8">`r round(stats_all$geomean, 3)` (min. `r r2(stats_all$min)`, max. `r r2(stats_all$max)`)</dd>
 </dl>
 
+```{r data-set-changes, results='asis'}
+if (nrow(not_in_both) > 0) {
+  library(knitr)
+  cp("<h3>Changes in Benchmark Set</h3>")
+
+  kable(not_in_both %>% select(commitid, exe, suite, bench,
+                               varvalue, cores, inputsize, extraargs), format = "html")
+}
+```
 
 ## Benchmark Performance
 
