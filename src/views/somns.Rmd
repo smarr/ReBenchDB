@@ -15,6 +15,7 @@ params:
   db_pass: null
   db_name: rdb_sm1
   lib_dir: "."
+  extraCmd: "" # any other command as ; separated list
 ---
 
 ```{r setup, include=FALSE, echo=FALSE, warning=FALSE}
@@ -34,12 +35,18 @@ change_color <- params$change_color
 color <- setNames(c(baseline_color, change_color), c(baseline_hash6, change_hash6))
 
 library(dplyr)
+library(stringr)
 
+cmds <- str_split(params$extraCmd, ";")[[1]]
 
-# load_and_install_if_necessary("psych")   # uses only geometric.mean
-rebenchdb <- connect_to_rebenchdb(params$db_name, params$db_user, params$db_pass)
-result <- get_measures_for_comparison(rebenchdb, baseline_hash, change_hash)
-disconnect_rebenchdb(rebenchdb)
+if (cmds[1] == "from-file") {
+  result <- rbind(load_data_file(cmds[2]), load_data_file(cmds[3]))
+} else {
+  # load_and_install_if_necessary("psych")   # uses only geometric.mean
+  rebenchdb <- connect_to_rebenchdb(params$db_name, params$db_user, params$db_pass)
+  result <- get_measures_for_comparison(rebenchdb, baseline_hash, change_hash)
+  disconnect_rebenchdb(rebenchdb)  
+}
 ```
 
 

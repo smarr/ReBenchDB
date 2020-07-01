@@ -2,6 +2,31 @@
 ## Exposes standardized data sets for access by reports.
 library(RPostgres)
 library(DBI)
+library(qs)
+
+load_data_file <- function(filename) {
+  qread(filename)  
+}
+
+load_data_url <- function(url) {
+  # url <- "https://rebench.stefan-marr.de/rebenchdb/get-exp-data/37"
+  safe_name <- str_replace_all(url, "[:/.]", "-")
+  cache_file <- paste0(str_replace_all(safe_name, "-+", "-"), ".qs")
+  
+  if(!file.exists(cache_file)) {
+    download.file(url=url, destfile=cache_file)
+  }
+  
+  tryCatch(
+    qread(cache_file),
+    error = function(c) {
+      file.remove(cache_file)
+      Sys.sleep(10)
+      load_data(url)
+    }
+  )
+}
+
 
 connect_to_rebenchdb <- function(dbname, user, pass) {
   DBI::dbConnect(
