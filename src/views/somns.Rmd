@@ -234,6 +234,13 @@ for (e in levels(norm$exe)) {
         filter(bench == b) %>%
         droplevels()
       
+      stats_b <- stats %>%
+        ungroup() %>%
+        filter(bench == b, suite == s, exe == e, commitid == change_hash6) %>%
+        droplevels()
+      
+      if (nrow(stats_b) > 0) {
+      
       cp('<tr>')
       
       cp('<th scope="row">',  b, '</th>')
@@ -243,9 +250,7 @@ for (e in levels(norm$exe)) {
       print(p)
       cp('</td>')
       
-      stats_b <- stats %>%
-        filter(bench == b, suite == s, exe == e, commitid == change_hash6) %>%
-        droplevels()
+      
       
       cp('<td class="stats-samples">', stats_b$samples, '</td>')
       cp('<td><span class="stats-mean" title="mean">', r2(stats_b$mean), '</span><span class="stats-sd" title="standard deviation">', r2(stats_b$sd), '</span></td>')
@@ -253,6 +258,11 @@ for (e in levels(norm$exe)) {
       cp('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span><span class="stats-change-l" title="lower bound of 95% bootstrap confidence interval">', pro(stats_b$change_l), '</span><span class="stats-change-u" title="upper bound of 95% bootstrap confidence interval">', pro(stats_b$change_u), '</span></td>')
 
       cp('</tr>')
+      } else {
+        cp('<tr>')
+        cp('<th scope="row">',  b, '</th><td colspan="4">missing in one of the data sets</td>')
+        cp('</tr>')
+      }
     }
     
     cp('</table>')
