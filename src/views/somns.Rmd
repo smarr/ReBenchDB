@@ -117,11 +117,11 @@ geometric.mean <- function(x) { exp(mean(log(x))) }
 slower_category <- function(data) {
   m <- geometric.mean(data)
   if (m > 1.05) {
-    return(TRUE)
+    return("slower")
   } else if (m < 0.95) {
-    return(FALSE)
+    return("faster")
   } else {
-    return(NA)
+    return("indeterminate")
   }
 }
 
@@ -136,6 +136,8 @@ stats_suite <- stats %>%
     geomean = geometric.mean(ratio),
     num_benchmarks = length(ratio),
     slower = slower_category(ratio))
+
+stats_suite$slower <- factor(stats_suite$slower)
 
 stats_all <- stats_suite %>%
   ungroup() %>%

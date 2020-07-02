@@ -51,7 +51,7 @@ compare_runtime_ratio_of_suites_plot <- function (
     coord_cartesian(xlim=c(0.5, 2.5)) +
     theme_simple(8) +
     scale_color_manual(values = scale_color) +
-    scale_fill_manual(breaks=c(TRUE, FALSE, NA),
+    scale_fill_manual(breaks=c("slower", "faster", "indeterminate"),
                       values=c(fast_color, slow_color, NA)) +
     theme(legend.position = "none")
 }
