@@ -54,7 +54,8 @@ if (cmds[1] == "from-file") {
 ```{r comp, timeit=TRUE}
 warmup <- result %>%
   filter(!grepl("startup", suite, fixed = TRUE),
-         !grepl("interp", exe, fixed = TRUE))
+         !grepl("interp", exe, fixed = TRUE)) %>%
+  droplevels()
 
 peak <- result %>%
   group_by(commitid, exe, suite, bench,
@@ -206,16 +207,8 @@ if (nrow(not_in_both) > 0) {
 
 ```{r suites, results='asis', echo=FALSE, dev='svg', fig.keep='all', fig.height=0.3, fig.width=3, timeit=TRUE}
 
-for (e in levels(norm$exe)) {
-  data_e <- norm %>%
-    filter(exe == e) %>%
-    droplevels()
-
-  for (s in levels(data_e$suite)) {
-    data_s <- data_e %>%
-      filter(suite == s) %>%
-      droplevels()
-
+for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>% droplevels()
+  for (s in levels(data_e$suite)) {   data_s <- data_e %>% filter(suite == s) %>% droplevels()
     cp("<h3>", s, "</h3>")
     cp('<div class="title-executor">Executor: ', e, "</div>")
 
@@ -230,40 +223,46 @@ for (e in levels(norm$exe)) {
 </tr></thead>')
     
     
-    for (b in levels(data_s$bench)) {
-      data_b <- data_s %>%
-        filter(bench == b) %>%
-        droplevels()
+    for (b in levels(data_s$bench)) { data_b <- data_s %>% filter(bench == b) %>% droplevels()
+      for (v in levels(data_b$varvalue)) {   data_v  <- data_b %>% filter(varvalue == v)   %>% droplevels()
+      for (c in levels(data_v$cores)) {      data_c  <- data_v %>% filter(cores == c)      %>% droplevels()
+      for (i in levels(data_c$inputsize)) {  data_i  <- data_c %>% filter(inputsize == i)  %>% droplevels()
+      for (ea in levels(data_i$extraargs)) { data_ea <- data_i %>% filter(extraargs == ea) %>% droplevels()
       
-      stats_b <- stats %>%
-        ungroup() %>%
-        filter(bench == b, suite == s, exe == e, commitid == change_hash6) %>%
-        droplevels()
+        args <- ""
+        if (length(levels(data_b$varvalue))  > 1) { args <- paste0(args, v) }
+        if (length(levels(data_v$cores))     > 1) { args <- paste0(args, c) }
+        if (length(levels(data_c$inputsize)) > 1) { args <- paste0(args, i) }
+        if (length(levels(data_i$extraargs)) > 1) { args <- paste0(args, ea) }
+        if (nchar(args) > 0) {
+          args <- paste0('<span class="all-args">', args, '</span>')
+        }
       
-      if (nrow(stats_b) > 0) {
-      
-      cp('<tr>')
-      
-      cp('<th scope="row">',  b, '</th>')
-      
-      cp('<td>')
-      p <- small_inline_comparison(data_b)
-      print(p)
-      cp('</td>')
-      
-      
-      
-      cp('<td class="stats-samples">', stats_b$samples, '</td>')
-      cp('<td><span class="stats-mean" title="mean">', r2(stats_b$mean), '</span><span class="stats-sd" title="standard deviation">', r2(stats_b$sd), '</span></td>')
-      cp('<td><span class="stats-median" title="median">', r2(stats_b$median), '</span><span class="stats-min" title="minimum">', r2(stats_b$min), '</span><span class="stats-max" title="maximum">', r2(stats_b$max),'</span></td>')
-      cp('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span><span class="stats-change-l" title="lower bound of 95% bootstrap confidence interval">', pro(stats_b$change_l), '</span><span class="stats-change-u" title="upper bound of 95% bootstrap confidence interval">', pro(stats_b$change_u), '</span></td>')
-
-      cp('</tr>')
-      } else {
-        cp('<tr>')
-        cp('<th scope="row">',  b, '</th><td colspan="4">missing in one of the data sets</td>')
-        cp('</tr>')
-      }
+        stats_b <- stats %>%
+          ungroup() %>%
+          filter(bench == b, suite == s, exe == e, varvalue == v, cores == c, inputsize == i, extraargs == ea, commitid == change_hash6) %>%
+          droplevels()
+        
+        if (nrow(stats_b) > 0) {
+          cp('<tr>')
+          cp('<th scope="row">',  b, args, '</th>')
+          cp('<td>')
+          p <- small_inline_comparison(data_b)
+          print(p)
+          cp('</td>')
+          
+          cp('<td class="stats-samples">', stats_b$samples, '</td>')
+          cp('<td><span class="stats-mean" title="mean">', r2(stats_b$mean), '</span><span class="stats-sd" title="standard deviation">', r2(stats_b$sd), '</span></td>')
+          cp('<td><span class="stats-median" title="median">', r2(stats_b$median), '</span><span class="stats-min" title="minimum">', r2(stats_b$min), '</span><span class="stats-max" title="maximum">', r2(stats_b$max),'</span></td>')
+          cp('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span><span class="stats-change-l" title="lower bound of 95% bootstrap confidence interval">', pro(stats_b$change_l), '</span><span class="stats-change-u" title="upper bound of 95% bootstrap confidence interval">', pro(stats_b$change_u), '</span></td>')
+    
+          cp('</tr>')
+        } else {
+          cp('<tr>')
+          cp('<th scope="row">',  b, '</th><td colspan="4">missing in one of the data sets</td>')
+          cp('</tr>')
+        }
+      } } } }
     }
     
     cp('</table>')
@@ -279,24 +278,35 @@ This section excludes all interpreter-only and startup benchmarks.
 # b <- "Mandelbrot"
 
 for (e in levels(warmup$exe)) {
-  data_e <- warmup %>%
-    filter(exe == e) %>%
-    droplevels()
-  
+  data_e <- warmup %>% filter(exe == e) %>% droplevels()
+
   for (s in levels(data_e$suite)) {
-    data_s <- data_e %>%
-      filter(suite == s) %>%
-      droplevels()
-    
+    data_s <- data_e %>% filter(suite == s) %>% droplevels()
+
     for (b in levels(data_s$bench)) {
-      data_b <- data_s %>%
-        filter(bench == b) %>%
-        droplevels()
+      data_b <- data_s %>% filter(bench == b) %>% droplevels()
       
-      cp('<div><span class="warmup-benchmark">', b, '</span><span class="warmup-suite">', s, '</span><span class="warmup-exe">', e, '</span>')
-      cp('<div class="warmup-plot">')
-      warmup_plot(data_b, b, s, e)
-      cp('</div></div>')
+      for (v in levels(data_b$varvalue)) {         data_v  <- data_b %>% filter(varvalue == v)   %>% droplevels()
+        for (c in levels(data_v$cores)) {          data_c  <- data_v %>% filter(cores == c)      %>% droplevels()
+          for (i in levels(data_c$inputsize)) {    data_i  <- data_c %>% filter(inputsize == i)  %>% droplevels()
+            for (ea in levels(data_i$extraargs)) { data_ea <- data_i %>% filter(extraargs == ea) %>% droplevels()
+              cp('<div><span class="warmup-benchmark">', b, '</span><span class="warmup-suite">', s, '</span><span class="warmup-exe">', e, '</span>')
+              args <- ""
+              if (length(levels(data_b$varvalue))  > 1) { args <- paste0(args, v) }
+              if (length(levels(data_v$cores))     > 1) { args <- paste0(args, c) }
+              if (length(levels(data_c$inputsize)) > 1) { args <- paste0(args, i) }
+              if (length(levels(data_i$extraargs)) > 1) { args <- paste0(args, ea) }
+              if (nchar(args) > 0) {
+                cp('<span class="all-args">', args, '</span>')
+              }
+
+              cp('<div class="warmup-plot">')
+              warmup_plot(data_ea, b, s, e)
+              cp('</div></div>')        
+            }
+          }
+        }
+      }
     }
   }
 }
