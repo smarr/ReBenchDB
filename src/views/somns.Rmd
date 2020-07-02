@@ -41,6 +41,7 @@ cmds <- str_split(params$extraCmd, ";")[[1]]
 
 if (cmds[1] == "from-file") {
   result <- rbind(load_data_file(cmds[2]), load_data_file(cmds[3]))
+  result <- factorize_result(result)
 } else {
   # load_and_install_if_necessary("psych")   # uses only geometric.mean
   rebenchdb <- connect_to_rebenchdb(params$db_name, params$db_user, params$db_pass)

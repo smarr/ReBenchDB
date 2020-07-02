@@ -92,13 +92,13 @@ factorize_result <- function(result) {
   result$suite <- factor(result$suite)
   result$exe <- factor(result$exe)
   result$cmdline <- factor(result$cmdline)
-  result$varvalue <- factor(result$varvalue)
+  result$varvalue <- forcats::fct_explicit_na(factor(result$varvalue))
   result$cores <- factor(result$cores)
-  result$inputsize <- factor(result$inputsize)
-  result$extraargs <- factor(result$extraargs)
+  result$inputsize <- forcats::fct_explicit_na(factor(result$inputsize))
+  result$extraargs <- forcats::fct_explicit_na(factor(result$extraargs))
   result$criterion <- factor(result$criterion)
   result$unit <- factor(result$unit)
-
+  
   result
 }
 
