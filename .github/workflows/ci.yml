@@ -9,6 +9,9 @@ env:
   DEBUG:    true
   DB_HOST:  localhost
   DB_PORT:  5432  # defined below in the services.postgres.ports (the first one)
+  LANG:     en_US.UTF-8
+  LANGUAGE: en_US.UTF-8
+  LC_ALL:   en_US.UTF-8
 
 jobs:
   build-and-test:
