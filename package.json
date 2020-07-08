@@ -16,20 +16,20 @@
     "pg": "8.0.3"
   },
   "devDependencies": {
-    "@types/jest": "26.0.3",
-    "@types/mustache": "4.0.1",
+    "@types/jest": "26.0.4",
     "@types/koa": "2.11.3",
-    "@types/koa-router": "7.4.0",
+    "@types/koa-router": "7.4.1",
+    "@types/mustache": "4.0.1",
     "@types/pg": "7.14.3",
+    "ajv": "6.12.3",
+    "jest": "26.1.0",
     "nodemon": "2.0.4",
     "source-map-support": "0.5.19",
-    "jest": "26.1.0",
     "ts-jest": "26.1.1",
     "tslint": "6.1.2",
     "typescript": "3.9.6",
     "typescript-formatter": "7.2.2",
-    "typescript-json-schema": "0.42.0",
-    "ajv": "6.12.2"
+    "typescript-json-schema": "0.42.0"
   },
   "jest": {
     "preset": "ts-jest",
