@@ -69,7 +69,7 @@ jobs:
         with:
          # npm cache files are stored in `~/.npm` on Linux/macOS
          path: ~/.npm
-         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('package.json') }}
+         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('package.json', 'package-lock.json') }}
          restore-keys: |
            ${{ runner.os }}-${{ env.cache-name }}-
            ${{ runner.os }}-
@@ -78,9 +78,9 @@ jobs:
         run: |
           Rscript src/stats/install.R
 
-      - name: NPM Install
+      - name: NPM CI
         run: |
-          npm install
+          npm ci
 
       - name: Run Tests
         run: |
