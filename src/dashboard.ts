@@ -103,6 +103,37 @@ export async function dashDataOverview(projectId, db) {
 
 const reportGeneration = new Map();
 
+const robustPath = __dirname.includes('dist/')
+  ? function(path) { return `${__dirname}/../../src/${path}`; }
+  : function(path) { return `${__dirname}/${path}`; };
+
+export function startReportGeneration(base: string, change: string, outputFile: string, dbConfig, callback, extraCmd = '') {
+  const args = [
+    robustPath(`views/somns.Rmd`),
+    outputFile,
+    // paths created in package.json
+    // output dir implicit, from cwd
+    '.',
+    robustPath(`../tmp/interm`),
+    robustPath(`../tmp/knit`),
+    base,
+    change,
+    '#729fcf',
+    '#e9b96e',
+    dbConfig.database,
+    dbConfig.user,
+    dbConfig.password,
+    // R ReBenchDB library directory
+    robustPath(`views/`),
+    extraCmd
+  ];
+
+  const cmd = robustPath(`views/knitr.R`);
+  console.log(`Generate Report: ${cmd} '${args.join("' '")}'`);
+
+  execFile(cmd, args, { cwd: robustPath(`../resources/reports/`) }, callback);
+}
+
 export function dashCompare(base: string, change: string, project: string, dbConfig, db: Database) {
   const baselineHash6 = base.substr(0, 6);
   const changeHash6 = change.substr(0, 6);
@@ -131,29 +162,7 @@ export function dashCompare(base: string, change: string, project: string, dbCon
       const start = startRequest();
 
       data.generatingReport = true;
-      // start generating a report
-      const args = [
-        `${__dirname}/../../src/views/somns.Rmd`,
-        `${reportId}.html`,
-        // paths created in package.json
-        // output dir implicit, from cwd
-        '.',
-        `${__dirname}/../../tmp/interm`,
-        `${__dirname}/../../tmp/knit`,
-        base,
-        change,
-        '#729fcf',
-        '#e9b96e',
-        dbConfig.database,
-        dbConfig.user,
-        dbConfig.password,
-        // R ReBenchDB library directory
-        `${__dirname}/../../src/views/`
-      ];
-
-      console.log(`Generate Report: ${__dirname}/../../src/views/knitr.R ${args.join(' ')}`);
-
-      execFile(`${__dirname}/../../src/views/knitr.R`, args, { cwd: `${__dirname}/../../resources/reports/` },
+      startReportGeneration(base, change, `${reportId}.html`, dbConfig,
         async (error, stdout, stderr) => {
           if (error) {
             console.error(`Report generation error: ${error}`);

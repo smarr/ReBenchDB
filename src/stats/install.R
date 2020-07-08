@@ -9,6 +9,11 @@ load_and_install_if_necessary <- function(package_name) {
 }
 
 load_and_install_if_necessary("dplyr")
+load_and_install_if_necessary("stringr")
+load_and_install_if_necessary("qs")
+load_and_install_if_necessary("rmarkdown")
+load_and_install_if_necessary("forcats")
+load_and_install_if_necessary("knitr")
 load_and_install_if_necessary("ggplot2")
 load_and_install_if_necessary("boot")
 load_and_install_if_necessary("ggstance")

@@ -15,14 +15,18 @@ params:
   db_pass: null
   db_name: rdb_sm1
   lib_dir: "."
+  extraCmd: "" # any other command as ; separated list
 ---
 
 ```{r setup, include=FALSE, echo=FALSE, warning=FALSE}
 source(paste0(params$lib_dir, "/common.R"), chdir=TRUE)
 enable_chunk_timing()
+options(warn=1)
 ```
 
 ```{r load-db, include=FALSE, echo=FALSE, warning=FALSE, timeit=TRUE}
+# from-file: baseline_hash <- "7f7bf31c928147db34ea619ba0a897237cca8297"
+# from-file: change_hash <- "08a38cd7501acca82312722889b830b4f3a4865f"
 baseline_hash <- params$baseline
 change_hash <- params$change
 baseline_hash6 <- substr(baseline_hash, 1, 6)
@@ -34,39 +38,53 @@ change_color <- params$change_color
 color <- setNames(c(baseline_color, change_color), c(baseline_hash6, change_hash6))
 
 library(dplyr)
+library(stringr)
 
+cmds <- str_split(params$extraCmd, ";")[[1]]
 
-# load_and_install_if_necessary("psych")   # uses only geometric.mean
-rebenchdb <- connect_to_rebenchdb(params$db_name, params$db_user, params$db_pass)
-result <- get_measures_for_comparison(rebenchdb, baseline_hash, change_hash)
-disconnect_rebenchdb(rebenchdb)
+if (cmds[1] == "from-file") {
+  # manual from-file: result <- rbind(load_data_file("~/Projects/tmp/SOMns-136.qs"), load_data_file("~/Projects/tmp/SOMns-141.qs"))
+  result <- rbind(load_data_file(cmds[2]), load_data_file(cmds[3]))
+  result <- factorize_result(result)
+} else {
+  # load_and_install_if_necessary("psych")   # uses only geometric.mean
+  rebenchdb <- connect_to_rebenchdb(params$db_name, params$db_user, params$db_pass)
+  result <- get_measures_for_comparison(rebenchdb, baseline_hash, change_hash)
+  disconnect_rebenchdb(rebenchdb)  
+}
 ```
 
 
 ```{r comp, timeit=TRUE}
 warmup <- result %>%
   filter(!grepl("startup", suite, fixed = TRUE),
-         !grepl("interp", exe, fixed = TRUE))
+         !grepl("interp", exe, fixed = TRUE)) %>%
+  droplevels()
 
 peak <- result %>%
-  group_by(commitid, exe, suite, bench) %>%
+  group_by(commitid, exe, suite, bench,
+           varvalue, cores, inputsize, extraargs) %>%
   filter(is.na(warmup) | iteration >= warmup)
 
 
 base <- peak %>%
   filter(commitid == baseline_hash6) %>%
-  group_by(exe, suite, bench) %>%
+  group_by(exe, suite, bench,
+           varvalue, cores, inputsize, extraargs) %>%
   summarise(base_mean = mean(value),
             base_median = median(value))
 
 norm <- peak %>%
-  left_join(base, by = c("exe", "suite", "bench")) %>%
-  group_by(exe, suite, bench) %>%
+  left_join(base, by = c("exe", "suite", "bench",
+                         "varvalue", "cores", "inputsize", "extraargs")) %>%
+  group_by(exe, suite, bench,
+           varvalue, cores, inputsize, extraargs) %>%
   transform(ratio_mean = value / base_mean,
             ratio_median = value / base_median)
 
 stats <- norm %>%
-  group_by(commitid, exe, suite, bench) %>%
+  group_by(commitid, exe, suite, bench,
+           varvalue, cores, inputsize, extraargs) %>%
   filter(is.na(warmup) | iteration >= warmup) %>%
   summarise(
     unit = unit[1],
@@ -91,22 +109,31 @@ stats <- norm %>%
     change_l = ratioLower - 1,
     change_u = ratioUpper - 1)
 
+not_in_both <- stats %>%
+  filter(is.na(ratio)) %>%
+  droplevels()
+
+stats <- stats %>%
+  filter(!is.na(ratio)) %>%
+  droplevels()
+
 geometric.mean <- function(x) { exp(mean(log(x))) }
 
 ## Are we faster/slower? have a rough 5% boundary for all the noise
 slower_category <- function(data) {
   m <- geometric.mean(data)
   if (m > 1.05) {
-    return(TRUE)
+    return("slower")
   } else if (m < 0.95) {
-    return(FALSE)
+    return("faster")
   } else {
-    return(NA)
+    return("indeterminate")
   }
 }
 
 stats_suite <- stats %>%
   filter(commitid == change_hash6) %>% # need to remove it so that statistics are accurate, or put it into the group
+  filter(!is.na(ratio)) %>%            # filter out the benchmarks not in both data sets
   group_by(exe, suite) %>%
   summarise(
     unit = unit[1],
@@ -115,6 +142,8 @@ stats_suite <- stats %>%
     geomean = geometric.mean(ratio),
     num_benchmarks = length(ratio),
     slower = slower_category(ratio))
+
+stats_suite$slower <- factor(stats_suite$slower)
 
 stats_all <- stats_suite %>%
   ungroup() %>%
@@ -131,7 +160,8 @@ stats_all <- stats_suite %>%
 ```{r summary-suites, fig.height=2.5, fig.width=4.5, timeit=TRUE}
 data_chg <- stats %>%
   filter(commitid == change_hash6) %>%
-  select(commitid, exe, suite, bench, ratio) %>%
+  select(commitid, exe, suite, bench, ratio,
+         varvalue, cores, inputsize, extraargs) %>%
   droplevels()
 
 data_chg_slow <- data_chg %>%
@@ -153,6 +183,15 @@ compare_runtime_ratio_of_suites_plot(
   <dd class="col-sm-8">`r round(stats_all$geomean, 3)` (min. `r r2(stats_all$min)`, max. `r r2(stats_all$max)`)</dd>
 </dl>
 
+```{r data-set-changes, results='asis'}
+if (nrow(not_in_both) > 0) {
+  library(knitr)
+  cp("<h3>Changes in Benchmark Set</h3>")
+
+  kable(not_in_both %>% select(commitid, exe, suite, bench,
+                               varvalue, cores, inputsize, extraargs), format = "html")
+}
+```
 
 ## Benchmark Performance
 
@@ -172,16 +211,8 @@ compare_runtime_ratio_of_suites_plot(
 
 ```{r suites, results='asis', echo=FALSE, dev='svg', fig.keep='all', fig.height=0.3, fig.width=3, timeit=TRUE}
 
-for (e in levels(norm$exe)) {
-  data_e <- norm %>%
-    filter(exe == e) %>%
-    droplevels()
-
-  for (s in levels(data_e$suite)) {
-    data_s <- data_e %>%
-      filter(suite == s) %>%
-      droplevels()
-
+for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>% droplevels()
+  for (s in levels(data_e$suite)) {   data_s <- data_e %>% filter(suite == s) %>% droplevels()
     cp("<h3>", s, "</h3>")
     cp('<div class="title-executor">Executor: ', e, "</div>")
 
@@ -196,30 +227,46 @@ for (e in levels(norm$exe)) {
 </tr></thead>')
     
     
-    for (b in levels(data_s$bench)) {
-      data_b <- data_s %>%
-        filter(bench == b) %>%
-        droplevels()
+    for (b in levels(data_s$bench)) { data_b <- data_s %>% filter(bench == b) %>% droplevels()
+      for (v in levels(data_b$varvalue)) {   data_v  <- data_b %>% filter(varvalue == v)   %>% droplevels()
+      for (c in levels(data_v$cores)) {      data_c  <- data_v %>% filter(cores == c)      %>% droplevels()
+      for (i in levels(data_c$inputsize)) {  data_i  <- data_c %>% filter(inputsize == i)  %>% droplevels()
+      for (ea in levels(data_i$extraargs)) { data_ea <- data_i %>% filter(extraargs == ea) %>% droplevels()
       
-      cp('<tr>')
+        args <- ""
+        if (length(levels(data_b$varvalue))  > 1) { args <- paste0(args, v) }
+        if (length(levels(data_v$cores))     > 1) { args <- paste0(args, c) }
+        if (length(levels(data_c$inputsize)) > 1) { args <- paste0(args, i) }
+        if (length(levels(data_i$extraargs)) > 1) { args <- paste0(args, ea) }
+        if (nchar(args) > 0) {
+          args <- paste0('<span class="all-args">', args, '</span>')
+        }
       
-      cp('<th scope="row">',  b, '</th>')
-      
-      cp('<td>')
-      p <- small_inline_comparison(data_b)
-      print(p)
-      cp('</td>')
-      
-      stats_b <- stats %>%
-        filter(bench == b, suite == s, exe == e, commitid == change_hash6) %>%
-        droplevels()
-      
-      cp('<td class="stats-samples">', stats_b$samples, '</td>')
-      cp('<td><span class="stats-mean" title="mean">', r2(stats_b$mean), '</span><span class="stats-sd" title="standard deviation">', r2(stats_b$sd), '</span></td>')
-      cp('<td><span class="stats-median" title="median">', r2(stats_b$median), '</span><span class="stats-min" title="minimum">', r2(stats_b$min), '</span><span class="stats-max" title="maximum">', r2(stats_b$max),'</span></td>')
-      cp('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span><span class="stats-change-l" title="lower bound of 95% bootstrap confidence interval">', pro(stats_b$change_l), '</span><span class="stats-change-u" title="upper bound of 95% bootstrap confidence interval">', pro(stats_b$change_u), '</span></td>')
-
-      cp('</tr>')
+        stats_b <- stats %>%
+          ungroup() %>%
+          filter(bench == b, suite == s, exe == e, varvalue == v, cores == c, inputsize == i, extraargs == ea, commitid == change_hash6) %>%
+          droplevels()
+        
+        if (nrow(stats_b) > 0) {
+          cp('<tr>')
+          cp('<th scope="row">',  b, args, '</th>')
+          cp('<td>')
+          p <- small_inline_comparison(data_b)
+          print(p)
+          cp('</td>')
+          
+          cp('<td class="stats-samples">', stats_b$samples, '</td>')
+          cp('<td><span class="stats-mean" title="mean">', r2(stats_b$mean), '</span><span class="stats-sd" title="standard deviation">', r2(stats_b$sd), '</span></td>')
+          cp('<td><span class="stats-median" title="median">', r2(stats_b$median), '</span><span class="stats-min" title="minimum">', r2(stats_b$min), '</span><span class="stats-max" title="maximum">', r2(stats_b$max),'</span></td>')
+          cp('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span><span class="stats-change-l" title="lower bound of 95% bootstrap confidence interval">', pro(stats_b$change_l), '</span><span class="stats-change-u" title="upper bound of 95% bootstrap confidence interval">', pro(stats_b$change_u), '</span></td>')
+    
+          cp('</tr>')
+        } else {
+          cp('<tr>')
+          cp('<th scope="row">',  b, '</th><td colspan="4">missing in one of the data sets</td>')
+          cp('</tr>')
+        }
+      } } } }
     }
     
     cp('</table>')
@@ -235,24 +282,35 @@ This section excludes all interpreter-only and startup benchmarks.
 # b <- "Mandelbrot"
 
 for (e in levels(warmup$exe)) {
-  data_e <- warmup %>%
-    filter(exe == e) %>%
-    droplevels()
-  
+  data_e <- warmup %>% filter(exe == e) %>% droplevels()
+
   for (s in levels(data_e$suite)) {
-    data_s <- data_e %>%
-      filter(suite == s) %>%
-      droplevels()
-    
+    data_s <- data_e %>% filter(suite == s) %>% droplevels()
+
     for (b in levels(data_s$bench)) {
-      data_b <- data_s %>%
-        filter(bench == b) %>%
-        droplevels()
+      data_b <- data_s %>% filter(bench == b) %>% droplevels()
       
-      cp('<div><span class="warmup-benchmark">', b, '</span><span class="warmup-suite">', s, '</span><span class="warmup-exe">', e, '</span>')
-      cp('<div class="warmup-plot">')
-      warmup_plot(data_b, b, s, e)
-      cp('</div></div>')
+      for (v in levels(data_b$varvalue)) {         data_v  <- data_b %>% filter(varvalue == v)   %>% droplevels()
+        for (c in levels(data_v$cores)) {          data_c  <- data_v %>% filter(cores == c)      %>% droplevels()
+          for (i in levels(data_c$inputsize)) {    data_i  <- data_c %>% filter(inputsize == i)  %>% droplevels()
+            for (ea in levels(data_i$extraargs)) { data_ea <- data_i %>% filter(extraargs == ea) %>% droplevels()
+              cp('<div><span class="warmup-benchmark">', b, '</span><span class="warmup-suite">', s, '</span><span class="warmup-exe">', e, '</span>')
+              args <- ""
+              if (length(levels(data_b$varvalue))  > 1) { args <- paste0(args, v) }
+              if (length(levels(data_v$cores))     > 1) { args <- paste0(args, c) }
+              if (length(levels(data_c$inputsize)) > 1) { args <- paste0(args, i) }
+              if (length(levels(data_i$extraargs)) > 1) { args <- paste0(args, ea) }
+              if (nchar(args) > 0) {
+                cp('<span class="all-args">', args, '</span>')
+              }
+
+              cp('<div class="warmup-plot">')
+              warmup_plot(data_ea, b, s, e)
+              cp('</div></div>')        
+            }
+          }
+        }
+      }
     }
   }
 }

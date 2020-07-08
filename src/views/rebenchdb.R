@@ -2,10 +2,39 @@
 ## Exposes standardized data sets for access by reports.
 library(RPostgres)
 library(DBI)
+library(qs)
+
+load_data_file <- function(filename) {
+  qread(filename)  
+}
+
+load_data_url <- function(url) {
+  # url <- "https://rebench.stefan-marr.de/rebenchdb/get-exp-data/37"
+  safe_name <- str_replace_all(url, "[:/.]", "-")
+  cache_file <- paste0(str_replace_all(safe_name, "-+", "-"), ".qs")
+  
+  if(!file.exists(cache_file)) {
+    download.file(url=url, destfile=cache_file)
+  }
+  
+  tryCatch(
+    qread(cache_file),
+    error = function(c) {
+      file.remove(cache_file)
+      Sys.sleep(10)
+      load_data(url)
+    }
+  )
+}
+
 
 connect_to_rebenchdb <- function(dbname, user, pass) {
+  host <- if (Sys.getenv("DB_HOST") == "") { NULL } else { Sys.getenv("DB_HOST") }
+  port <- if (Sys.getenv("DB_PORT") == "") { NULL } else { Sys.getenv("DB_PORT") }
   DBI::dbConnect(
     RPostgres::Postgres(),
+    host = host,
+    port = port,
     dbname = dbname,
     user = user,
     password = pass)
@@ -63,13 +92,13 @@ factorize_result <- function(result) {
   result$suite <- factor(result$suite)
   result$exe <- factor(result$exe)
   result$cmdline <- factor(result$cmdline)
-  result$varvalue <- factor(result$varvalue)
+  result$varvalue <- forcats::fct_explicit_na(factor(result$varvalue))
   result$cores <- factor(result$cores)
-  result$inputsize <- factor(result$inputsize)
-  result$extraargs <- factor(result$extraargs)
+  result$inputsize <- forcats::fct_explicit_na(factor(result$inputsize))
+  result$extraargs <- forcats::fct_explicit_na(factor(result$extraargs))
   result$criterion <- factor(result$criterion)
   result$unit <- factor(result$unit)
-
+  
   result
 }
 

@@ -18,6 +18,7 @@ render(args[1], "html_fragment", args[2],
          db_name = args[10],
          db_user = args[11],
          db_pass = args[12],
-         lib_dir = args[13]
+         lib_dir = args[13],
+         extraCmd = args[14]
        ),
        runtime = "static", clean = TRUE)
