@@ -17,11 +17,12 @@ describe('Knitr Report Generation', () => {
         startReportGeneration(baseHash, changeHash, outputFile, {},
           async (error, _stdout, _stderr) => {
             if (error) { reject(error); return; }
-            resolve();
+            resolve(true);
           }, extraCmd);
       });
 
-      await reportP;
+      const aTrue = await reportP;
+      expect(aTrue).toBe(true);
     }, 60000);
 
     it('Should indicate differences in the benchmark sets', () => {

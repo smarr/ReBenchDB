@@ -150,7 +150,7 @@ describe('Recording a ReBench execution data fragments', () => {
 
   it('should accept experiment information', async () => {
     const e = basicTestData.env;
-    const env = await db.recordEnvironment(e);
+    await db.recordEnvironment(e);
 
     const result = await db.recordExperiment(basicTestData);
     expect(result.name).toEqual(basicTestData.experimentName);

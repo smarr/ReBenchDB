@@ -1,4 +1,6 @@
 //@ts-check
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-undef */
 'use strict';
 
 function renderResultsPlot(timeSeries, projectId, $) {

@@ -1,6 +1,6 @@
 import { Database } from '../src/db';
 
-export function getConfig() {
+export function getConfig(): { user, password, host, database, port } {
   return {
     user: process.env.RDB_USER || '',
     password: process.env.RDB_PASS || '',
@@ -10,11 +10,11 @@ export function getConfig() {
   };
 }
 
-export function getTempDatabaseName() {
+export function getTempDatabaseName(): string {
   return 'test_rdb_tmp';
 }
 
-export function wrapInTransaction(sql: string) {
+export function wrapInTransaction(sql: string): string {
   return `
   begin;
   ${sql};
@@ -24,7 +24,7 @@ export function wrapInTransaction(sql: string) {
   `;
 }
 
-export async function prepareDbForTesting(db: Database) {
+export async function prepareDbForTesting(db: Database): Promise<void> {
   await db.activateTransactionSupport();
 
   await db.client.query('BEGIN');
@@ -33,7 +33,7 @@ export async function prepareDbForTesting(db: Database) {
   await db.client.query('SAVEPOINT freshDB');
 }
 
-export async function rollback(db: Database) {
+export async function rollback(db: Database): Promise<void> {
   db.clearCache();
   await db.client.query('ROLLBACK TO SAVEPOINT freshDB');
 }

@@ -1,4 +1,6 @@
 //@ts-check
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-undef */
 'use strict';
 
 function filterCommitMessage(msg) {
@@ -77,8 +79,8 @@ function renderChanges(project, $) {
 
   const changesP = fetch(`/rebenchdb/dash/${project.id}/changes`);
   changesP.then(
-    async (changesDetailsResponse) => await renderChangeDetails
-        (changesDetailsResponse, project.id, $));
+    async (changesDetailsResponse) => await renderChangeDetails(
+      changesDetailsResponse, project.id, $));
 
   const changes = `
     <h5>Changes</h5>
