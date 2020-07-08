@@ -129,7 +129,7 @@ export function startReportGeneration(base: string, change: string, outputFile: 
   ];
 
   const cmd = robustPath(`views/knitr.R`);
-  console.log(`Generate Report: ${cmd} ${args.join("' '")}`);
+  console.log(`Generate Report: ${cmd} '${args.join("' '")}'`);
 
   execFile(cmd, args, { cwd: robustPath(`../resources/reports/`) }, callback);
 }
