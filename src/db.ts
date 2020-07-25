@@ -1,7 +1,7 @@
 import { execFile } from 'child_process';
 import { readFileSync, existsSync } from 'fs';
 import { BenchmarkData, Executor, Suite, Benchmark, RunId, Source, Environment, Criterion, Run } from './api';
-import { Pool, PoolConfig, PoolClient } from 'pg';
+import { Pool, PoolConfig, PoolClient, QueryResult } from 'pg';
 import { SingleRequestOnly } from './single-requester';
 import { startRequest, completeRequest } from './perf-tracker';
 
@@ -9,7 +9,15 @@ function isUniqueViolationError(err) {
   return err.code === '23505';
 }
 
-export function loadScheme() {
+export interface DatabaseConfig {
+  user: string;
+  password: string;
+  host: string;
+  database: string;
+  port: number;
+}
+
+export function loadScheme(): string {
   let schema = `${__dirname}/../src/db/db.sql`;
   if (!existsSync(schema)) {
     schema = `${__dirname}/../../src/db/db.sql`;
@@ -154,9 +162,9 @@ export class Database {
   }
 
   private generateBatchInsert(numTuples: number, sizeTuples: number) {
-    let nums: string[] = [];
+    const nums: string[] = [];
     for (let i = 0; i < numTuples; i += 1) {
-      let tupleNums: number[] = [];
+      const tupleNums: number[] = [];
       for (let j = 1; j <= sizeTuples; j += 1) {
         tupleNums.push(i * sizeTuples + j);
       }
@@ -165,7 +173,7 @@ export class Database {
     return nums.join(',\n');
   }
 
-  public clearCache() {
+  public clearCache(): void {
     this.executors.clear();
     this.suites.clear();
     this.benchmarks.clear();
@@ -185,14 +193,14 @@ export class Database {
     return result.rowCount <= 0;
   }
 
-  public async initializeDatabase() {
+  public async initializeDatabase(): Promise<void> {
     if (await this.needsTables()) {
       const schema = loadScheme();
-      return await this.client.query(schema);
+      await this.client.query(schema);
     }
   }
 
-  public async activateTransactionSupport() {
+  public async activateTransactionSupport(): Promise<void> {
     this.client = <PoolClient> await this.client.connect();
   }
 
@@ -215,22 +223,22 @@ export class Database {
     return this.recordCached(cache, item.name, fetchQ, [item.name], insertQ, [item.name, item.desc]);
   }
 
-  public async recordExecutor(e: Executor) {
+  public async recordExecutor(e: Executor): Promise<any> {
     return this.recordNameDesc(e, this.executors,
       this.queries.fetchExecutorByName, this.queries.insertExecutor);
   }
 
-  public async recordSuite(s: Suite) {
+  public async recordSuite(s: Suite): Promise<any> {
     return this.recordNameDesc(s, this.suites,
       this.queries.fetchSuiteByName, this.queries.insertSuite);
   }
 
-  public async recordBenchmark(b: Benchmark) {
+  public async recordBenchmark(b: Benchmark): Promise<any> {
     return this.recordNameDesc(b, this.benchmarks,
       this.queries.fetchBenchmarkByName, this.queries.insertBenchmark);
   }
 
-  public async recordRun(run: RunId) {
+  public async recordRun(run: RunId): Promise<any> {
     if (this.runs.has(run.cmdline)) {
       return this.runs.get(run.cmdline);
     }
@@ -248,7 +256,7 @@ export class Database {
       run.benchmark.runDetails.warmup]);
   }
 
-  public async recordSource(s: Source) {
+  public async recordSource(s: Source): Promise<any> {
     return this.recordCached(this.sources, s.commitId,
       this.queries.fetchSourceByCommitId, [s.commitId],
       this.queries.insertSource,
@@ -256,14 +264,14 @@ export class Database {
       s.authorName, s.authorEmail, s.committerName, s.committerEmail]);
   }
 
-  public async recordEnvironment(e: Environment) {
+  public async recordEnvironment(e: Environment): Promise<any> {
     return this.recordCached(this.envs, e.hostName,
       this.queries.fetchEnvByHostName, [e.hostName],
       this.queries.insertEnv, [
       e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed]);
   }
 
-  public async recordTrial(data: BenchmarkData, env, exp) {
+  public async recordTrial(data: BenchmarkData, env: any, exp: any): Promise<any> {
     const e = data.env;
     const cacheKey = `${e.userName}-${env.id}-${data.startTime}`;
 
@@ -280,14 +288,14 @@ export class Database {
       [e.manualRun, data.startTime, exp.id, e.userName, env.id, source.id]);
   }
 
-  public async recordProject(projectName) {
+  public async recordProject(projectName: string): Promise<any> {
     return this.recordCached(this.projects, projectName,
       this.queries.fetchProjectByName, [projectName],
       this.queries.insertProject, [projectName]);
   }
 
-  public async getProject(projectId) {
-    let result = await this.client.query(this.queries.fetchProjectById, [projectId]);
+  public async getProject(projectId: number): Promise<any> {
+    const result = await this.client.query(this.queries.fetchProjectById, [projectId]);
 
     if (result.rowCount !== 1) {
       return undefined;
@@ -296,7 +304,7 @@ export class Database {
     }
   }
 
-  public async recordExperiment(data: BenchmarkData) {
+  public async recordExperiment(data: BenchmarkData): Promise<any> {
     const cacheKey = `${data.projectName}::${data.experimentName}`;
 
     if (this.exps.has(cacheKey)) {
@@ -317,7 +325,7 @@ export class Database {
     }
   }
 
-  public async recordCriterion(c: Criterion) {
+  public async recordCriterion(c: Criterion): Promise<any> {
     const cacheKey = `${c.c}::${c.u}`;
 
     if (this.criteria.has(cacheKey)) {
@@ -396,7 +404,7 @@ export class Database {
     return recordedMeasurements;
   }
 
-  public async recordMeasurements(r: Run, run: any, trial: any, criteria: Map<any, any>, availableMs: any) {
+  public async recordMeasurements(r: Run, run: any, trial: any, criteria: Map<any, any>, availableMs: any): Promise<number> {
     let recordedMeasurements = 0;
     let batchedMs = 0;
     let batchedValues: any[] = [];
@@ -447,7 +455,7 @@ export class Database {
     return recordedMeasurements;
   }
 
-  public async recordMetaData(data: BenchmarkData) {
+  public async recordMetaData(data: BenchmarkData): Promise<{ env, exp, trial, criteria }> {
     const env = await this.recordEnvironment(data.env);
     const exp = await this.recordExperiment(data);
     const trial = await this.recordTrial(data, env, exp);
@@ -485,19 +493,19 @@ export class Database {
     return data.data.length;
   }
 
-  public async recordMeasurementBatched10(values: any[]) {
+  public async recordMeasurementBatched10(values: any[]): Promise<QueryResult<any>> {
     const q = this.queries.insertMeasurementBatched10;
     q.values = values; // [runId, trialId, invocation, iteration, critId, value];
     return await this.client.query(q);
   }
 
-  public async recordMeasurementBatchedN(values: any[]) {
+  public async recordMeasurementBatchedN(values: any[]): Promise<QueryResult<any>> {
     const q = this.queries.insertMeasurementBatchedN;
     q.values = values; // [runId, trialId, invocation, iteration, critId, value];
     return await this.client.query(q);
   }
 
-  public async recordMeasurement(values: any[]) {
+  public async recordMeasurement(values: any[]): Promise<QueryResult<any>> {
     const q = this.queries.insertMeasurement;
     q.values = values; // [runId, trialId, invocation, iteration, critId, value];
     // console.log('rec Measure');
@@ -509,11 +517,11 @@ export class Database {
     this.timelineUpdater.trigger();
   }
 
-  public async awaitQuiescentTimelineUpdater() {
+  public async awaitQuiescentTimelineUpdater(): Promise<void> {
     await this.timelineUpdater.getQuiescencePromise();
   }
 
-  public performTimelineUpdate() {
+  public performTimelineUpdate(): Promise<any> {
     const prom = new Promise((resolve, reject) => {
       let timelineR = `${__dirname}/stats/timeline.R`;
       let workDir = `${__dirname}/stats/`;

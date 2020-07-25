@@ -49,7 +49,7 @@ describe('Test Dashboard with basic test data loaded', () => {
     db = new Database(testDbConfig);
     await prepareDbForTesting(db);
 
-    let basicTestData: BenchmarkData = JSON.parse(
+    const basicTestData: BenchmarkData = JSON.parse(
       readFileSync(`${__dirname}/small-payload.json`).toString());
     await db.recordMetaDataAndRuns(basicTestData);
     await db.recordAllData(basicTestData);

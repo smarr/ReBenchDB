@@ -30,7 +30,7 @@ export class SingleRequestOnly {
     });
   }
 
-  public trigger() {
+  public trigger(): void {
     if (this.requestInProgress) {
       this.rerunRequested = true;
       return;
@@ -80,7 +80,7 @@ export class SingleRequestOnly {
       });
   }
 
-  public getQuiescencePromise() {
+  public getQuiescencePromise(): Promise<any> | undefined {
     return this.quiescencePromise;
   }
 }

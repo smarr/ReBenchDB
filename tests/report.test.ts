@@ -1,5 +1,6 @@
 import { readFileSync, unlinkSync } from 'fs';
 import { startReportGeneration } from '../src/dashboard';
+import { DatabaseConfig } from '../src/db';
 
 describe('Knitr Report Generation', () => {
   describe('Report with varying set of benchmarks', () => {
@@ -14,14 +15,15 @@ describe('Knitr Report Generation', () => {
       const extraCmd = `from-file;${baseFile};${changeFile}`;
 
       const reportP = new Promise((resolve, reject) => {
-        startReportGeneration(baseHash, changeHash, outputFile, {},
+        startReportGeneration(baseHash, changeHash, outputFile, {} as DatabaseConfig,
           async (error, _stdout, _stderr) => {
             if (error) { reject(error); return; }
-            resolve();
+            resolve(true);
           }, extraCmd);
       });
 
-      await reportP;
+      const aTrue = await reportP;
+      expect(aTrue).toBe(true);
     }, 60000);
 
     it('Should indicate differences in the benchmark sets', () => {

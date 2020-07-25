@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from 'fs';
-import { execFile } from 'child_process';
-import { Database } from './db';
+import { execFile, ChildProcess, ExecException } from 'child_process';
+import { Database, DatabaseConfig } from './db';
 import { startRequest, completeRequest } from './perf-tracker';
 
 /**
@@ -10,12 +10,12 @@ JOIN Measurement m ON  m.expId = exp.id
 WHERE repoURL = 'https://github.com/smarr/ReBenchDB'
  */
 
-export async function dashProjects(db: Database) {
+export async function dashProjects(db: Database): Promise<{ projects: any[] }> {
   const result = await db.client.query(`SELECT * from Project`);
   return { projects: result.rows };
 }
 
-export async function dashResults(projectId, db: Database) {
+export async function dashResults(projectId: number, db: Database): Promise<{ timeSeries: any[] }> {
   const result = await db.client.query(`SELECT trialId, iteration, value, criterion, b.name as benchmark
       FROM Measurement m
           JOIN Trial t ON  m.trialId = t.id
@@ -31,7 +31,7 @@ export async function dashResults(projectId, db: Database) {
   return { timeSeries };
 }
 
-export async function dashStatistics(db: Database) {
+export async function dashStatistics(db: Database): Promise<{ stats: any[] }> {
   const result = await db.client.query(`
     SELECT * FROM (
       SELECT 'Experiments' as table, count(*) as cnt FROM experiment
@@ -56,7 +56,7 @@ export async function dashStatistics(db: Database) {
   return { stats: result.rows };
 }
 
-export async function dashChanges(projectId, db) {
+export async function dashChanges(projectId: number, db: Database): Promise<{ changes: any[] }> {
   const result = await db.client.query(`
       SELECT commitId, branchOrTag, projectId, repoURL, commitMessage FROM experiment
         JOIN Trial ON expId = experiment.id
@@ -69,7 +69,7 @@ export async function dashChanges(projectId, db) {
   return { changes: result.rows };
 }
 
-export async function dashDataOverview(projectId, db) {
+export async function dashDataOverview(projectId: number, db: Database): Promise<{ data: any[] }> {
   const result = await db.client.query(`
       SELECT
         exp.id as expId, exp.name, exp.description,
@@ -107,7 +107,7 @@ const robustPath = __dirname.includes('dist/')
   ? function(path) { return `${__dirname}/../../src/${path}`; }
   : function(path) { return `${__dirname}/${path}`; };
 
-export function startReportGeneration(base: string, change: string, outputFile: string, dbConfig, callback, extraCmd = '') {
+export function startReportGeneration(base: string, change: string, outputFile: string, dbConfig: DatabaseConfig, callback: (error: ExecException | null, stdout: string, stderr: string) => void, extraCmd = ''): ChildProcess {
   const args = [
     robustPath(`views/somns.Rmd`),
     outputFile,
@@ -131,10 +131,10 @@ export function startReportGeneration(base: string, change: string, outputFile: 
   const cmd = robustPath(`views/knitr.R`);
   console.log(`Generate Report: ${cmd} '${args.join("' '")}'`);
 
-  execFile(cmd, args, { cwd: robustPath(`../resources/reports/`) }, callback);
+  return execFile(cmd, args, { cwd: robustPath(`../resources/reports/`) }, callback);
 }
 
-export function dashCompare(base: string, change: string, project: string, dbConfig, db: Database) {
+export function dashCompare(base: string, change: string, project: string, dbConfig: DatabaseConfig, db: Database): any {
   const baselineHash6 = base.substr(0, 6);
   const changeHash6 = change.substr(0, 6);
 
@@ -142,7 +142,7 @@ export function dashCompare(base: string, change: string, project: string, dbCon
 
   const reportFile = `${__dirname}/../../resources/reports/${reportId}.html`;
 
-  let data: any = {
+  const data: any = {
     project,
     baselineHash6,
     changeHash6,
@@ -193,7 +193,7 @@ export function dashCompare(base: string, change: string, project: string, dbCon
 
 const expDataPreparation = new Map();
 
-export async function dashGetExpData(expId: number, dbConfig, db: Database) {
+export async function dashGetExpData(expId: number, dbConfig: DatabaseConfig, db: Database): Promise<any> {
   const result = await db.client.query(`
       SELECT
         exp.name as expName,
@@ -242,8 +242,8 @@ export async function dashGetExpData(expId: number, dbConfig, db: Database) {
 
       data.preparingData = true;
       // start preparing data
-      const args = [
-        expId,
+      const args: ReadonlyArray<string> = [
+        expId.toString(),
         `${__dirname}/../../src/views/`, // R ReBenchDB library directory
         dbConfig.user,
         dbConfig.password,
@@ -282,7 +282,7 @@ export async function dashGetExpData(expId: number, dbConfig, db: Database) {
   return data;
 }
 
-export async function dashBenchmarksForProject(db: Database, projectId: number) {
+export async function dashBenchmarksForProject(db: Database, projectId: number): Promise<{ benchmarks }> {
   const result = await db.client.query(`
     SELECT DISTINCT p.name, env.hostname, r.cmdline, b.name as benchmark, b.id as benchId, s.name as suiteName, s.id as suiteId, exe.name as execName, exe.id as execId FROM Project p
       JOIN Experiment exp    ON exp.projectId = p.id
@@ -300,7 +300,7 @@ export async function dashBenchmarksForProject(db: Database, projectId: number) 
   return { benchmarks: result.rows };
 }
 
-export async function dashTimelineForProject(db: Database, projectId: number) {
+export async function dashTimelineForProject(db: Database, projectId: number): Promise<{ timeline, details }> {
   const timelineP = db.client.query(`
   SELECT tl.*, src.id as sourceId, b.id as benchmarkId, exe.id as execId, s.id as suiteId, hostname FROM Timeline tl
     JOIN Run r          ON tl.runId = r.id

@@ -9,3 +9,5 @@ tmp/interm
 .Rproj.user
 *.Rproj
 /resources/exp-data
+/src/views/somns.html
+/src/views/test.html

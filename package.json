@@ -16,20 +16,23 @@
     "pg": "8.0.3"
   },
   "devDependencies": {
-    "@types/jest": "26.0.3",
-    "@types/mustache": "4.0.1",
+    "@types/jest": "26.0.4",
     "@types/koa": "2.11.3",
-    "@types/koa-router": "7.4.0",
+    "@types/koa-router": "7.4.1",
+    "@types/mustache": "4.0.1",
     "@types/pg": "7.14.3",
+    "@typescript-eslint/eslint-plugin": "3.6.0",
+    "@typescript-eslint/parser": "3.6.0",
+    "ajv": "6.12.3",
+    "eslint": "7.4.0",
+    "eslint-plugin-jest": "23.18.0",
+    "jest": "26.1.0",
     "nodemon": "2.0.4",
     "source-map-support": "0.5.19",
-    "jest": "26.1.0",
     "ts-jest": "26.1.1",
-    "tslint": "6.1.2",
     "typescript": "3.9.6",
     "typescript-formatter": "7.2.2",
-    "typescript-json-schema": "0.42.0",
-    "ajv": "6.12.2"
+    "typescript-json-schema": "0.42.0"
   },
   "jest": {
     "preset": "ts-jest",
@@ -52,7 +55,7 @@
     "format": "tsfmt -r",
     "verifyformat": "tsfmt --verify",
     "verify": "npm run lint && npm run verifyformat",
-    "lint": "tslint -c tslint.json --project tsconfig.json",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "update": "git pull && npm install . && pm2 restart 0",
     "watch": "tsc -w",
     "test": "jest"
