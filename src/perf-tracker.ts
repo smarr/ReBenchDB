@@ -64,7 +64,8 @@ function constructData(time: number, it: number, benchmark: string) {
     env: {
       hostName: 'self',
       cpu: '', memory: 0, clockSpeed: 0, osType: '', userName: '', software: [],
-      manualRun: false
+      manualRun: false,
+      denoise: {}
     },
     source: {
       repoURL: 'https://github.com/smarr/ReBenchDB',

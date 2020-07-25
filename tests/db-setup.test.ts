@@ -148,6 +148,32 @@ describe('Recording a ReBench execution data fragments', () => {
     expect(env.id).toEqual(result.envid);
   });
 
+  it('should accept trial denoise info', async () => {
+    const testData: BenchmarkData = JSON.parse(
+      readFileSync(`${__dirname}/small-payload.json`).toString());
+
+    const e = testData.env;
+
+    // add denoise details to test data
+    e.denoise = {
+      "scaling_governor": "performance",
+      "no_turbo": true,
+      "perf_event_max_sample_rate": 1,
+      "can_set_nice": true,
+      "shielding": true
+    };
+
+    const env = await db.recordEnvironment(e);
+    const exp = await db.recordExperiment(testData);
+
+    const result = await db.recordTrial(testData, env, exp);
+    expect(e.userName).toEqual(result.username);
+    expect(e.manualRun).toEqual(result.manualrun);
+    expect(env.id).toEqual(result.envid);
+    expect(e.denoise.scaling_governor).toEqual("performance");
+    expect(e.denoise).toEqual(result.denoise);
+  });
+
   it('should accept experiment information', async () => {
     const e = basicTestData.env;
     await db.recordEnvironment(e);
