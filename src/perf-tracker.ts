@@ -23,7 +23,7 @@ const descriptions = {
   'get-exp-data': 'Starting to prepare experiment data'
 };
 
-export function initPerfTracker() {
+export function initPerfTracker(): void {
   startTime = new Date().toISOString();
 }
 
@@ -88,7 +88,7 @@ export function startRequest(): number {
   return performance.now();
 }
 
-export async function completeRequest(reqStart: number, db: Database, request: string) {
+export async function completeRequest(reqStart: number, db: Database, request: string): Promise<void> {
   const time = performance.now() - reqStart;
   iterations[request] += 1;
   await db.recordAllData(constructData(time, iterations[request], request), true);

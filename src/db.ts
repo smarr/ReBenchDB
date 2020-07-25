@@ -288,13 +288,13 @@ export class Database {
       [e.manualRun, data.startTime, exp.id, e.userName, env.id, source.id]);
   }
 
-  public async recordProject(projectName): Promise<any> {
+  public async recordProject(projectName: string): Promise<any> {
     return this.recordCached(this.projects, projectName,
       this.queries.fetchProjectByName, [projectName],
       this.queries.insertProject, [projectName]);
   }
 
-  public async getProject(projectId): Promise<any> {
+  public async getProject(projectId: number): Promise<any> {
     const result = await this.client.query(this.queries.fetchProjectById, [projectId]);
 
     if (result.rowCount !== 1) {

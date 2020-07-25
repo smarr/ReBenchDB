@@ -99,7 +99,7 @@ export interface BenchmarkData {
 
   startTime: string;
   endTime?: string | null;
-  projectName: string | null; // TODO: remove the null support and make it mandatory
+  projectName: string;
 }
 
 export interface Criterion {
