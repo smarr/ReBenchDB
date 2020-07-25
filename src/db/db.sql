@@ -119,6 +119,9 @@ CREATE TABLE Trial (
   envId smallint,
   sourceId smallint,
 
+  -- details on system settings that influence noise level for measurements
+  denoise jsonb,
+
   -- can only be supplied when everything is done
   -- but we may want to start storing data before
   endTime timestamp with time zone NULL,

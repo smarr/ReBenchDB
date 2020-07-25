@@ -86,6 +86,11 @@ export interface Environment {
    * possibly on a developer machine, instead of the usual benchmark server.
    */
   manualRun: boolean;
+
+  /**
+   * Settings reported by `rebench-denoise`.
+   */
+  denoise?: Record<string, string | boolean | number>;
 }
 
 export interface BenchmarkData {

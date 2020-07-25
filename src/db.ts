@@ -75,8 +75,8 @@ export class Database {
     insertEnv: `INSERT INTO Environment (hostname, osType, memory, cpu, clockSpeed) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
 
     fetchTrialByUserEnvStart: 'SELECT * from Trial WHERE username = $1 AND envId = $2 AND startTime = $3',
-    insertTrial: `INSERT INTO Trial (manualRun, startTime, expId, username, envId, sourceId)
-      VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+    insertTrial: `INSERT INTO Trial (manualRun, startTime, expId, username, envId, sourceId, denoise)
+      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
 
     fetchProjectByName: 'SELECT * from Project WHERE name = $1',
     fetchProjectById: 'SELECT * from Project WHERE id = $1',
@@ -285,7 +285,7 @@ export class Database {
       this.queries.fetchTrialByUserEnvStart,
       [e.userName, env.id, data.startTime],
       this.queries.insertTrial,
-      [e.manualRun, data.startTime, exp.id, e.userName, env.id, source.id]);
+      [e.manualRun, data.startTime, exp.id, e.userName, env.id, source.id, e.denoise]);
   }
 
   public async recordProject(projectName: string): Promise<any> {
