@@ -72,7 +72,8 @@ base <- peak %>%
   group_by(exe, suite, bench,
            varvalue, cores, inputsize, extraargs) %>%
   summarise(base_mean = mean(value),
-            base_median = median(value))
+            base_median = median(value),
+            .groups = "drop")
 
 norm <- peak %>%
   left_join(base, by = c("exe", "suite", "bench",
@@ -107,7 +108,8 @@ stats <- norm %>%
             
     change_m = ratio - 1,
     change_l = ratioLower - 1,
-    change_u = ratioUpper - 1)
+    change_u = ratioUpper - 1,
+    .groups = "drop")
 
 not_in_both <- stats %>%
   filter(is.na(ratio)) %>%
@@ -141,18 +143,19 @@ stats_suite <- stats %>%
     max = max(ratio),
     geomean = geometric.mean(ratio),
     num_benchmarks = length(ratio),
-    slower = slower_category(ratio))
+    slower = slower_category(ratio),
+    .groups = "drop")
 
 stats_suite$slower <- factor(stats_suite$slower)
 
 stats_all <- stats_suite %>%
-  ungroup() %>%
   summarise(
     unit = unit[1],
     min = min(geomean),
     max = max(geomean),
     geomean = geometric.mean(geomean),
-    num_benchmarks = sum(num_benchmarks))
+    num_benchmarks = sum(num_benchmarks),
+    .groups = "drop")
 ```
 
 ## Summary Over All Benchmarks

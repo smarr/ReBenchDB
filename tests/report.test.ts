@@ -31,6 +31,12 @@ describe('Knitr Report Generation', () => {
       expect(content).toEqual(expect.stringContaining('Changes in Benchmark Set'));
     });
 
+    it('Should not have any output that indicates warnings', () => {
+      const content: string = readFileSync(`${__dirname}/../resources/reports/${outputFile}`, 'utf8');
+      // warning output is inside <code> blocks
+      expect(content).toEqual(expect.not.stringContaining('<code>'));
+    })
+
     afterAll(async () => {
       unlinkSync(`${__dirname}/../resources/reports/${outputFile}`);
     });

@@ -6,7 +6,8 @@ warmup_plot <- function (data_b, b, s, e) {
   ## First take the medians over the values for each commitid separately
   medians <- data_b %>%
     group_by(commitid) %>%
-    summarise(median = median(value))
+    summarise(median = median(value),
+    .groups = "drop")
 
   # use the highest one with a little margin as an upper bound
   upperBound <- 2 * max(medians$median)
