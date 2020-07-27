@@ -15,8 +15,8 @@ export async function dashProjects(db: Database): Promise<{ projects: any[] }> {
   return { projects: result.rows };
 }
 
-export async function dashResults(projectId: number, db: Database): Promise<{ timeSeries: any[] }> {
-  const result = await db.client.query(`SELECT trialId, iteration, value, criterion, b.name as benchmark
+export async function dashResults(projectId: number, db: Database): Promise<{ timeSeries: Record<string, number[]> }> {
+  const result = await db.client.query(`SELECT value, b.name as benchmark
       FROM Measurement m
           JOIN Trial t ON  m.trialId = t.id
           JOIN Experiment e ON t.expId = e.id
@@ -24,9 +24,15 @@ export async function dashResults(projectId: number, db: Database): Promise<{ ti
           JOIN Benchmark b ON r.benchmarkId = b.id
       WHERE projectId = $1
       ORDER BY t.startTime, m.iteration`, [projectId]);
-  const timeSeries: any[] = [];
+  // dropped to avoid getting too much data:
+  //           trialId, iteration, c.unit,
+  //           JOIN Criterion c ON criterion = c.id
+  const timeSeries: Record<string, number[]> = {};
   for (const r of result.rows) {
-    timeSeries.push(r.value);
+    if (!(r.benchmark in timeSeries)) {
+      timeSeries[r.benchmark] = [];
+    }
+    timeSeries[r.benchmark].push(r.value);
   }
   return { timeSeries };
 }

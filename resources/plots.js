@@ -3,7 +3,28 @@
 /* eslint-disable no-undef */
 'use strict';
 
-function renderResultsPlot(timeSeries, projectId, $) {
+function simpleSlug(str) {
+  return str.replace(/[\W_]+/g,"");
+}
+
+function renderResultsPlots(timeSeries, projectId, $) {
+  let plotDivs = '';
+  for (const series in timeSeries) {
+    const slug = simpleSlug(series);
+    plotDivs += `<h6>${series}</h6><div id="p${projectId}-results-${slug}"></div>`
+  }
+
+  $(`#p${projectId}-results`).append(plotDivs);
+
+  for (const series in timeSeries) {
+    const slug = simpleSlug(series);
+    const id = `p${projectId}-results-${slug}`;
+    renderResultsPlot(timeSeries[series], id, $);
+  }
+}
+
+
+function renderResultsPlot(timeSeries, divId, $) {
   const index = [];
 
   const trace1 = {
@@ -36,7 +57,7 @@ function renderResultsPlot(timeSeries, projectId, $) {
   }
   trace1.x = index;
 
-  Plotly.newPlot(`p${projectId}-results`, data, layout);
+  Plotly.newPlot(divId, data, layout);
 }
 
 function renderTimelinePlot(key, results) {
