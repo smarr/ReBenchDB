@@ -133,7 +133,7 @@ function renderAllResults(project, $) {
   resultsP.then(
     async (resultsResponse) => {
       const results = await resultsResponse.json();
-      renderResultsPlot(results.timeSeries, project.id, $);
+      renderResultsPlots(results.timeSeries, project.id, $);
     });
 
   return `<div id="p${project.id}-results"></div>`;

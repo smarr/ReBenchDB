@@ -25,7 +25,7 @@ describe('Test Dashboard on empty DB', () => {
 
   it('Should get empty results request', async () => {
     const result = await dashResults(0, db);
-    expect(result.timeSeries).toHaveLength(0);
+    expect(result.timeSeries).toEqual({});
   });
 
   it('Should get empty statistics', async () => {
@@ -69,8 +69,8 @@ describe('Test Dashboard with basic test data loaded', () => {
 
   it('Should get results, but does not have any values', async () => {
     const results = (await dashResults(1, db)).timeSeries;
-    expect(results).toHaveLength(3);
-    expect(results[0]).toBeCloseTo(383.82, 2);
+    expect(results['NBody']).toHaveLength(3);
+    expect(results['NBody'][0]).toBeCloseTo(383.82, 2);
   });
 
   it('Should get statistics', async () => {
