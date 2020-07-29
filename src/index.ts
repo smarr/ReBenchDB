@@ -86,8 +86,12 @@ router.get('/rebenchdb/dash/:projectId/results', async ctx => {
 });
 
 router.get('/rebenchdb/dash/:projectId/benchmarks', async ctx => {
+  const start = startRequest();
+
   ctx.body = await dashBenchmarksForProject(db, ctx.params.projectId);
   ctx.type = 'application/json';
+
+  await completeRequest(start, db, 'project-benchmarks');
 });
 
 router.get('/rebenchdb/dash/:projectId/timeline', async ctx => {
