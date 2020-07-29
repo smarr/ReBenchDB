@@ -16,7 +16,7 @@ describe('Test Dashboard on empty DB', () => {
 
   afterAll(async () => {
     await db.client.query('ROLLBACK');
-    await (<any> db.client).end();
+    await db.close();
   });
 
   afterEach(async () => {
@@ -57,7 +57,7 @@ describe('Test Dashboard with basic test data loaded', () => {
 
   afterAll(async () => {
     await db.client.query('ROLLBACK');
-    await (<any> db.client).end();
+    await db.close();
   });
 
   it('Should get a project', async () => {

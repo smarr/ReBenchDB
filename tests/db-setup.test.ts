@@ -36,7 +36,7 @@ describe('Setup of PostgreSQL DB', () => {
     expect(selectCommand.command).toEqual('SELECT');
     expect(selectCommand.rowCount).toEqual(0);
 
-    await (<any> db.client).end();
+    await db.close();
   });
 });
 
@@ -194,7 +194,7 @@ describe('Recording a ReBench execution data fragments', () => {
 
   afterAll(async () => {
     await db.client.query('ROLLBACK');
-    await (<any> db.client).end();
+    await db.close();
   });
 });
 
@@ -225,9 +225,9 @@ describe('Recording a ReBench execution from payload files', () => {
   });
 
   afterAll(async () => {
-    await (<any> db.client).end();
+    await db.close();
     await dbMain.client.query(`DROP DATABASE ${tmpCfg.database}`);
-    await (<any> dbMain.client).end();
+    await dbMain.close();
   });
 
   it('should accept all data (small-payload), and have the measurements persisted', async () => {

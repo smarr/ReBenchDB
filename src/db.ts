@@ -200,6 +200,10 @@ export class Database {
     }
   }
 
+  public async close(): Promise<void> {
+    await (<any> this.client).end();
+  }
+
   public async activateTransactionSupport(): Promise<void> {
     this.client = <PoolClient> await this.client.connect();
   }
