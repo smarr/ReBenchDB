@@ -1,5 +1,8 @@
 import { TestDatabase, createAndInitializeDB } from './db-testing';
-import { dashStatistics, dashResults, dashChanges, dashProjects, dashDataOverview, dashBenchmarksForProject } from '../src/dashboard';
+import {
+  dashStatistics, dashResults, dashChanges, dashProjects, dashDataOverview,
+  dashBenchmarksForProject
+} from '../src/dashboard';
 import { BenchmarkData } from '../src/api';
 import { readFileSync } from 'fs';
 
@@ -84,14 +87,16 @@ describe('Test Dashboard with basic test data loaded', () => {
   it('Should get change', async () => {
     const result = (await dashChanges(1, db)).changes;
     expect(result).toHaveLength(1);
-    expect(result[0].commitid).toEqual('58666d1c84c652306f930daa72e7a47c58478e86');
+    expect(result[0].commitid).toEqual(
+      '58666d1c84c652306f930daa72e7a47c58478e86');
   });
 
   it('Should get available data for DataOverview', async () => {
     await db.awaitQuiescentTimelineUpdater();
     const data = (await dashDataOverview(1, db)).data;
     expect(data).toHaveLength(1);
-    expect(data[0].commitids).toEqual("58666d1c84c652306f930daa72e7a47c58478e86");
+    expect(data[0].commitids).toEqual(
+      '58666d1c84c652306f930daa72e7a47c58478e86');
     expect(data[0].expid).toEqual(1);
     expect(data[0].name).toEqual("Small Test Case");
   });

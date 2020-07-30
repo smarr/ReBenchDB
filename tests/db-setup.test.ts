@@ -221,7 +221,8 @@ describe('Recording a ReBench execution from payload files', () => {
     await db.close();
   });
 
-  it('should accept all data (small-payload), and have the measurements persisted', async () => {
+  it(`should accept all data (small-payload),
+      and have the measurements persisted`, async () => {
     await db.recordMetaDataAndRuns(smallTestData);
     const recMs = await db.recordAllData(smallTestData);
 
@@ -237,9 +238,13 @@ describe('Recording a ReBench execution from payload files', () => {
   it('data recording should be idempotent (small-payload)', async () => {
     // check that the data from the previous test is there
     let trials = await db.client.query('SELECT * from Trial');
-    expect(trials.rowCount).toEqual(2); // performance tracking and the actual trial
+
+    // performance tracking and the actual trial
+    expect(trials.rowCount).toEqual(2);
     let exps = await db.client.query('SELECT * from Experiment');
-    expect(exps.rowCount).toEqual(2); // performance tracking and the actual experiment
+
+    // performance tracking and the actual experiment
+    expect(exps.rowCount).toEqual(2);
 
     // Do recordData a second time
     await db.recordMetaDataAndRuns(smallTestData);
@@ -253,16 +258,22 @@ describe('Recording a ReBench execution from payload files', () => {
     expect(measurements.rowCount).toEqual(4);
 
     trials = await db.client.query('SELECT * from Trial');
-    expect(trials.rowCount).toEqual(2);  // performance tracking and the actual trial
+
+    // performance tracking and the actual trial
+    expect(trials.rowCount).toEqual(2);
     exps = await db.client.query('SELECT * from Experiment');
-    expect(exps.rowCount).toEqual(2);  // performance tracking and the actual experiment
+
+    // performance tracking and the actual experiment
+    expect(exps.rowCount).toEqual(2);
   });
 
-  it('should accept all data (large-payload), and have the measurements persisted', async () => {
+  it(`should accept all data (large-payload),
+      and have the measurements persisted`, async () => {
     await db.recordMetaDataAndRuns(largeTestData);
     const recMs = await db.recordAllData(largeTestData);
 
-    const measurements = await db.client.query('SELECT count(*) as cnt from Measurement');
+    const measurements = await db.client.query(
+      'SELECT count(*) as cnt from Measurement');
 
     await db.awaitQuiescentTimelineUpdater();
 
@@ -272,23 +283,25 @@ describe('Recording a ReBench execution from payload files', () => {
     expect(timeline.rowCount).toEqual(462);
   }, 200 * 1000);
 
-  it('should not fail if some data was already recorded in database', async () => {
-    // make sure everything is in the database
-    await db.recordMetaDataAndRuns(smallTestData);
-    await db.recordAllData(smallTestData);
+  it('should not fail if some data was already recorded in database',
+    async () => {
+      // make sure everything is in the database
+      await db.recordMetaDataAndRuns(smallTestData);
+      await db.recordAllData(smallTestData);
 
-    // obtain the bits, this should match what `recordData` does above
-    const { trial, criteria } = await db.recordMetaData(smallTestData);
+      // obtain the bits, this should match what `recordData` does above
+      const { trial, criteria } = await db.recordMetaData(smallTestData);
 
-    // now, manually do the recording
-    const r = smallTestData.data[0];
+      // now, manually do the recording
+      const r = smallTestData.data[0];
 
-    // and pretend there's no data yet
-    const availableMs = {};
+      // and pretend there's no data yet
+      const availableMs = {};
 
-    const run = await db.recordRun(r.runId);
+      const run = await db.recordRun(r.runId);
 
-    const recordedMeasurements = await db.recordMeasurements(r, run, trial, criteria, availableMs);
-    expect(recordedMeasurements).toEqual(0);
-  });
+      const recordedMeasurements = await db.recordMeasurements(
+        r, run, trial, criteria, availableMs);
+      expect(recordedMeasurements).toEqual(0);
+    });
 });

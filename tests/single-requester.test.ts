@@ -16,21 +16,23 @@ describe('Basic functionality of SingleRequestOnly', () => {
     expect(sro.getQuiescencePromise()).toBeUndefined();
   });
 
-  it('should execute the request once only even if triggered twice in a row', async () => {
-    let executed = 0;
-    const sro = new SingleRequestOnly(async () => { executed += 1; });
+  it('should execute the request once only even if triggered twice in a row',
+    async () => {
+      let executed = 0;
+      const sro = new SingleRequestOnly(async () => { executed += 1; });
 
-    // Since the request is executed asynchronously, we do execute it only once
-    sro.trigger();
-    sro.trigger();
+      // Since the request is executed asynchronously,
+      // we do execute it only once
+      sro.trigger();
+      sro.trigger();
 
-    const promise = sro.getQuiescencePromise();
-    expect(promise).not.toBeUndefined();
+      const promise = sro.getQuiescencePromise();
+      expect(promise).not.toBeUndefined();
 
-    await promise;
+      await promise;
 
-    expect(executed).toEqual(1);
-    expect(sro.getQuiescencePromise()).toBeUndefined();
-  });
+      expect(executed).toEqual(1);
+      expect(sro.getQuiescencePromise()).toBeUndefined();
+    });
 
 });

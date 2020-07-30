@@ -57,7 +57,8 @@ function constructData(time: number, it: number, benchmark: string) {
           },
           desc: descriptions[benchmark]
         },
-        cmdline: benchmark, location: '', varValue: null, cores: null, inputSize: null, extraArgs: null
+        cmdline: benchmark, location: '', varValue: null, cores: null,
+        inputSize: null, extraArgs: null
       }
     }],
     criteria: [
@@ -91,8 +92,10 @@ export function startRequest(): number {
   return performance.now();
 }
 
-export async function completeRequest(reqStart: number, db: Database, request: string): Promise<void> {
+export async function completeRequest(reqStart: number, db: Database,
+  request: string): Promise<void> {
   const time = performance.now() - reqStart;
   iterations[request] += 1;
-  await db.recordAllData(constructData(time, iterations[request], request), true);
+  await db.recordAllData(
+    constructData(time, iterations[request], request), true);
 }

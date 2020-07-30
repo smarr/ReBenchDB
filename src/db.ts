@@ -1,6 +1,9 @@
 import { execFile } from 'child_process';
 import { readFileSync, existsSync } from 'fs';
-import { BenchmarkData, Executor, Suite, Benchmark, RunId, Source, Environment, Criterion, Run } from './api';
+import {
+  BenchmarkData, Executor, Suite, Benchmark, RunId, Source, Environment,
+  Criterion, Run
+} from './api';
 import { Pool, PoolConfig, PoolClient, QueryResult } from 'pg';
 import { SingleRequestOnly } from './single-requester';
 import { startRequest, completeRequest } from './perf-tracker';
@@ -49,13 +52,16 @@ export class Database {
 
   private readonly queries = {
     fetchExecutorByName: 'SELECT * from Executor WHERE name = $1',
-    insertExecutor: 'INSERT INTO Executor (name, description) VALUES ($1, $2) RETURNING *',
+    insertExecutor: `INSERT INTO Executor (name, description)
+                     VALUES ($1, $2) RETURNING *`,
 
     fetchSuiteByName: 'SELECT * from Suite WHERE name = $1',
-    insertSuite: 'INSERT INTO Suite (name, description) VALUES ($1, $2) RETURNING *',
+    insertSuite: `INSERT INTO Suite (name, description)
+                  VALUES ($1, $2) RETURNING *`,
 
     fetchBenchmarkByName: 'SELECT * from Benchmark WHERE name = $1',
-    insertBenchmark: 'INSERT INTO Benchmark (name, description) VALUES ($1, $2) RETURNING *',
+    insertBenchmark: `INSERT INTO Benchmark (name, description)
+                      VALUES ($1, $2) RETURNING *`,
 
     fetchRunByCmd: 'SELECT * from Run WHERE cmdline = $1',
     insertRun: `INSERT INTO Run (
@@ -72,19 +78,25 @@ export class Database {
         authorName, authorEmail, committerName, committerEmail)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
     fetchEnvByHostName: 'SELECT * from Environment WHERE hostname =  $1',
-    insertEnv: `INSERT INTO Environment (hostname, osType, memory, cpu, clockSpeed) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    insertEnv: `INSERT INTO Environment (
+                  hostname, osType, memory, cpu, clockSpeed)
+                VALUES ($1, $2, $3, $4, $5) RETURNING *`,
 
-    fetchTrialByUserEnvStart: 'SELECT * from Trial WHERE username = $1 AND envId = $2 AND startTime = $3',
-    insertTrial: `INSERT INTO Trial (manualRun, startTime, expId, username, envId, sourceId, denoise)
-      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+    fetchTrialByUserEnvStart: `SELECT * FROM Trial
+                               WHERE username = $1 AND envId = $2 AND
+                                     startTime = $3`,
+    insertTrial: `INSERT INTO Trial (manualRun, startTime, expId, username,
+                                     envId, sourceId, denoise)
+                  VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
 
     fetchProjectByName: 'SELECT * from Project WHERE name = $1',
     fetchProjectById: 'SELECT * from Project WHERE id = $1',
     insertProject: 'INSERT INTO Project (name) VALUES ($1) RETURNING *',
 
-    fetchExpByProjectIdName: 'SELECT * from Experiment WHERE projectId = $1 AND name = $2',
+    fetchExpByProjectIdName: `SELECT * FROM Experiment
+                              WHERE projectId = $1 AND name = $2`,
     insertExp: `INSERT INTO Experiment (name, projectId, description)
-      VALUES ($1, $2, $3) RETURNING *`,
+                VALUES ($1, $2, $3) RETURNING *`,
 
     insertMeasurement: {
       name: 'insertMeasurement',
@@ -128,15 +140,18 @@ export class Database {
       GROUP BY runId, criterion, invocation
       ORDER BY runId, inv, ite, criterion`,
 
-    fetchCriterionByNameUnit: 'SELECT * from Criterion WHERE name = $1 AND unit = $2',
-    insertCriterion: 'INSERT INTO Criterion (name, unit) VALUES ($1, $2) RETURNING *',
+    fetchCriterionByNameUnit: `SELECT * FROM Criterion
+                               WHERE name = $1 AND unit = $2`,
+    insertCriterion: `INSERT INTO Criterion (name, unit)
+                      VALUES ($1, $2) RETURNING *`,
     fetchUnit: 'SELECT * from Unit WHERE name = $1',
     insertUnit: 'INSERT INTO Unit (name) VALUES ($1)'
   };
 
   private static readonly batchN = 50;
 
-  constructor(config: PoolConfig, numReplicates: number = 1000, timelineEnabled: boolean = false) {
+  constructor(config: PoolConfig, numReplicates = 1000,
+    timelineEnabled = false) {
     console.assert(config !== undefined);
     this.dbConfig = config;
     this.numReplicates = numReplicates;
@@ -158,7 +173,8 @@ export class Database {
          (runId, trialId, invocation, iteration, criterion, value)
        VALUES ` + this.generateBatchInsert(Database.batchN, 6);
 
-    this.timelineUpdater = new SingleRequestOnly(async () => { return this.performTimelineUpdate(); });
+    this.timelineUpdater = new SingleRequestOnly(
+      async () => { return this.performTimelineUpdate(); });
   }
 
   private generateBatchInsert(numTuples: number, sizeTuples: number) {
@@ -209,7 +225,8 @@ export class Database {
     this.client = <PoolClient> await this.client.connect();
   }
 
-  private async recordCached(cache, cacheKey, fetchQ, qVals, insertQ, insertVals) {
+  private async recordCached(
+    cache, cacheKey, fetchQ, qVals, insertQ, insertVals) {
     if (cache.has(cacheKey)) {
       return cache.get(cacheKey);
     }
@@ -225,7 +242,8 @@ export class Database {
   }
 
   private async recordNameDesc(item, cache, fetchQ, insertQ) {
-    return this.recordCached(cache, item.name, fetchQ, [item.name], insertQ, [item.name, item.desc]);
+    return this.recordCached(
+      cache, item.name, fetchQ, [item.name], insertQ, [item.name, item.desc]);
   }
 
   public async recordExecutor(e: Executor): Promise<any> {
@@ -254,7 +272,8 @@ export class Database {
 
     return this.recordCached(this.runs, run.cmdline,
       this.queries.fetchRunByCmd, [run.cmdline],
-      this.queries.insertRun, [run.cmdline, benchmark.id, exec.id, suite.id, run.location,
+      this.queries.insertRun, [
+      run.cmdline, benchmark.id, exec.id, suite.id, run.location,
       run.cores, run.inputSize, run.varValue, run.extraArgs,
       run.benchmark.runDetails.maxInvocationTime,
       run.benchmark.runDetails.minIterationTime,
@@ -276,7 +295,8 @@ export class Database {
       e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed]);
   }
 
-  public async recordTrial(data: BenchmarkData, env: any, exp: any): Promise<any> {
+  public async recordTrial(data: BenchmarkData, env: any, exp: any):
+    Promise<any> {
     const e = data.env;
     const cacheKey = `${e.userName}-${env.id}-${data.startTime}`;
 
@@ -290,7 +310,8 @@ export class Database {
       this.queries.fetchTrialByUserEnvStart,
       [e.userName, env.id, data.startTime],
       this.queries.insertTrial,
-      [e.manualRun, data.startTime, exp.id, e.userName, env.id, source.id, e.denoise]);
+      [e.manualRun, data.startTime, exp.id, e.userName, env.id, source.id,
+      e.denoise]);
   }
 
   public async recordProject(projectName: string): Promise<any> {
@@ -300,7 +321,8 @@ export class Database {
   }
 
   public async getProject(projectId: number): Promise<any> {
-    const result = await this.client.query(this.queries.fetchProjectById, [projectId]);
+    const result = await this.client.query(
+      this.queries.fetchProjectById, [projectId]);
 
     if (result.rowCount !== 1) {
       return undefined;
@@ -320,7 +342,8 @@ export class Database {
 
     return this.recordCached(this.exps, cacheKey,
       this.queries.fetchExpByProjectIdName, [project.id, data.experimentName],
-      this.queries.insertExp, [data.experimentName, project.id, data.experimentDesc]);
+      this.queries.insertExp,
+      [data.experimentName, project.id, data.experimentDesc]);
   }
 
   private async recordUnit(unitName: string) {
@@ -352,7 +375,8 @@ export class Database {
   }
 
   private async retrieveAvailableMeasurements(trialId) {
-    const results = await this.client.query(this.queries.fetchMaxMeasurements, [trialId]);
+    const results = await this.client.query(
+      this.queries.fetchMaxMeasurements, [trialId]);
     const measurements = {};
     for (const r of results.rows) {
       // runid, criterion, inv, ite
@@ -368,14 +392,17 @@ export class Database {
 
       const crit = run[r.criterion];
 
-      console.assert(!(r.inv in crit), `${r.runid}, ${r.criterion}, ${r.inv} in ${JSON.stringify(crit)}`);
+      console.assert(
+        !(r.inv in crit),
+        `${r.runid}, ${r.criterion}, ${r.inv} in ${JSON.stringify(crit)}`);
       crit[r.inv] = r.ite;
     }
 
     return measurements;
   }
 
-  private alreadyRecorded(measurements, [runId, _expId, inv, ite, critId, _val]: any[]) {
+  private alreadyRecorded(measurements, [runId, _expId, inv, ite, critId, _val]:
+    any[]) {
     if (runId in measurements) {
       const run = measurements[runId];
       if (critId in run) {
@@ -393,7 +420,8 @@ export class Database {
     let recordedMeasurements = 0;
 
     while (batchedValues.length > 0) {
-      const rest = batchedValues.splice(6 * 1); // there are 6 parameters, i.e., values
+      // there are 6 parameters, i.e., values
+      const rest = batchedValues.splice(6 * 1);
       try {
         await this.recordMeasurement(batchedValues);
         recordedMeasurements += 1;
@@ -409,7 +437,8 @@ export class Database {
     return recordedMeasurements;
   }
 
-  public async recordMeasurements(r: Run, run: any, trial: any, criteria: Map<any, any>, availableMs: any): Promise<number> {
+  public async recordMeasurements(r: Run, run: any, trial: any,
+    criteria: Map<any, any>, availableMs: any): Promise<number> {
     let recordedMeasurements = 0;
     let batchedMs = 0;
     let batchedValues: any[] = [];
@@ -418,7 +447,8 @@ export class Database {
       for (const m of d.m) {
         // batched inserts are much faster
         // so let's do this
-        const values = [run.id, trial.id, d.in, d.it, criteria.get(m.c).id, m.v];
+        const values = [
+          run.id, trial.id, d.in, d.it, criteria.get(m.c).id, m.v];
         if (this.alreadyRecorded(availableMs, values)) {
           // then,just skip this one.
           continue;
@@ -430,9 +460,11 @@ export class Database {
             await this.recordMeasurementBatchedN(batchedValues);
             recordedMeasurements += batchedMs;
           } catch (err) {
-            // we may have concurrent inserts, or partially inserted data, where a request aborted
+            // we may have concurrent inserts, or partially inserted data,
+            // where a request aborted
             if (isUniqueViolationError(err)) {
-              recordedMeasurements += await this.recordMeasurementsFromBatch(batchedValues);
+              recordedMeasurements += await this.recordMeasurementsFromBatch(
+                batchedValues);
             } else {
               throw err;
             }
@@ -444,23 +476,27 @@ export class Database {
     }
 
     while (batchedValues.length >= 6 * 10) {
-      const rest = batchedValues.splice(6 * 10); // there are 6 parameters, i.e., values
+      // there are 6 parameters, i.e., values
+      const rest = batchedValues.splice(6 * 10);
       try {
         await this.recordMeasurementBatched10(batchedValues);
         recordedMeasurements += 10;
       } catch (err) {
         if (isUniqueViolationError(err)) {
-          recordedMeasurements += await this.recordMeasurementsFromBatch(batchedValues);
+          recordedMeasurements += await this.recordMeasurementsFromBatch(
+            batchedValues);
         }
       }
       batchedValues = rest;
     }
 
-    recordedMeasurements += await this.recordMeasurementsFromBatch(batchedValues);
+    recordedMeasurements += await this.recordMeasurementsFromBatch(
+      batchedValues);
     return recordedMeasurements;
   }
 
-  public async recordMetaData(data: BenchmarkData): Promise<{ env, exp, trial, criteria }> {
+  public async recordMetaData(data: BenchmarkData):
+    Promise<{ env, exp, trial, criteria }> {
     const env = await this.recordEnvironment(data.env);
     const exp = await this.recordExperiment(data);
     const trial = await this.recordTrial(data, env, exp);
@@ -470,7 +506,8 @@ export class Database {
     return { env, exp, trial, criteria };
   }
 
-  public async recordAllData(data: BenchmarkData, suppressTimeline = false): Promise<number> {
+  public async recordAllData(data: BenchmarkData, suppressTimeline = false):
+    Promise<number> {
     const { trial, criteria } = await this.recordMetaData(data);
 
     let recordedMeasurements = 0;
@@ -478,7 +515,8 @@ export class Database {
     for (const r of data.data) {
       const run = await this.recordRun(r.runId);
       const availableMs = await this.retrieveAvailableMeasurements(trial.id);
-      recordedMeasurements += await this.recordMeasurements(r, run, trial, criteria, availableMs);
+      recordedMeasurements += await this.recordMeasurements(
+        r, run, trial, criteria, availableMs);
     }
 
     if (recordedMeasurements > 0 && this.timelineEnabled && !suppressTimeline) {
@@ -498,23 +536,26 @@ export class Database {
     return data.data.length;
   }
 
-  public async recordMeasurementBatched10(values: any[]): Promise<QueryResult<any>> {
+  public async recordMeasurementBatched10(values: any[]):
+    Promise<QueryResult<any>> {
     const q = this.queries.insertMeasurementBatched10;
-    q.values = values; // [runId, trialId, invocation, iteration, critId, value];
+    // [runId, trialId, invocation, iteration, critId, value];
+    q.values = values;
     return await this.client.query(q);
   }
 
-  public async recordMeasurementBatchedN(values: any[]): Promise<QueryResult<any>> {
+  public async recordMeasurementBatchedN(values: any[]):
+    Promise<QueryResult<any>> {
     const q = this.queries.insertMeasurementBatchedN;
-    q.values = values; // [runId, trialId, invocation, iteration, critId, value];
+    // [runId, trialId, invocation, iteration, critId, value];
+    q.values = values;
     return await this.client.query(q);
   }
 
   public async recordMeasurement(values: any[]): Promise<QueryResult<any>> {
     const q = this.queries.insertMeasurement;
-    q.values = values; // [runId, trialId, invocation, iteration, critId, value];
-    // console.log('rec Measure');
-    // console.log(q);
+    // [runId, trialId, invocation, iteration, critId, value];
+    q.values = values;
     return await this.client.query(this.queries.insertMeasurement);
   }
 

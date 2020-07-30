@@ -11,7 +11,8 @@ function renderResultsPlots(timeSeries, projectId, $) {
   let plotDivs = '';
   for (const series in timeSeries) {
     const slug = simpleSlug(series);
-    plotDivs += `<h6>${series}</h6><div id="p${projectId}-results-${slug}"></div>`
+    plotDivs +=
+      `<h6>${series}</h6><div id="p${projectId}-results-${slug}"></div>`;
   }
 
   $(`#p${projectId}-results`).append(plotDivs);

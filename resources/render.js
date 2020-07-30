@@ -38,7 +38,8 @@ function formatCommitMessages(messages) {
   const newLineIdx = messages.indexOf('\n');
   if (newLineIdx > -1) {
     const firstLine = messages.substr(0, newLineIdx);
-    return `${firstLine} <a href="#" onclick="expandMessage(event)" data-fulltext="${messages.replace('"', "\x22")}">&hellip;</a>`;
+    return `${firstLine} <a href="#" onclick="expandMessage(event)"` +
+        ` data-fulltext="${messages.replace('"', "\x22")}">&hellip;</a>`;
   } else {
     return messages;
   }
@@ -58,12 +59,18 @@ function renderProjectDataOverview(data, $) {
       <tr>
         <td>${row.name}</td>
         <td class="desc">${row.description == null ? '' : row.description}</td>
-        <td>${row.minstarttime == null ? '' : formatDateWithTime(row.minstarttime)} ${row.maxendtime == null ? '' : formatDateWithTime(row.maxendtime)}</td>
+        <td>${
+          row.minstarttime == null ? '' : formatDateWithTime(row.minstarttime)
+        } ${
+          row.maxendtime == null ? '' : formatDateWithTime(row.maxendtime)}</td>
         <td>${row.users}</td>
-        <td>${shortenCommitIds(row.commitids)} <p>${formatCommitMessages(row.commitmsgs)}</p></td>
+        <td>${
+          shortenCommitIds(row.commitids)
+        } <p>${formatCommitMessages(row.commitmsgs)}</p></td>
         <td>${row.hostnames}</td>
         <td class="num-col">${row.runs}</td>
-        <td class="num-col"><a href="/rebenchdb/get-exp-data/${row.expid}">${row.measurements}</a></td>
+        <td class="num-col"><a href="/rebenchdb/get-exp-data/${
+          row.expid}">${row.measurements}</a></td>
       </tr>`);
   }
 
@@ -93,7 +100,8 @@ function renderChanges(project, $) {
       </div>
     </div></div>
 
-    <button type="button" class="btn btn-primary" id="p${project.id}-compare">Compare</button>`;
+    <button type="button" class="btn btn-primary" id="p${
+      project.id}-compare">Compare</button>`;
   return changes;
 }
 
@@ -106,7 +114,8 @@ async function renderChangeDetails(changesDetailsResponse, projectId, $) {
     // strip out some metadata to be nicer to view.
     const msg = filterCommitMessage(change.commitmessage);
 
-    const option = `<a class="list-group-item list-group-item-action list-min-padding"
+    const option =
+    `<a class="list-group-item list-group-item-action list-min-padding"
       data-toggle="list" data-hash="${change.commitid}" href="">
         ${change.commitid.substr(0,  6)} ${change.branchortag}<br>
         <div style="font-size: 80%; line-height: 1">${msg}</div>
@@ -144,7 +153,8 @@ function renderProject(project, $) {
   const allResults = renderAllResults(project, $);
 
   const result = `<div class="card">
-    <h5 class="card-header"><a href="/project/${project.id}">${project.name}</a></h5>
+    <h5 class="card-header"><a href="/project/${
+      project.id}">${project.name}</a></h5>
     <div class="card-body">
       ${changes}
       ${allResults}
@@ -161,7 +171,8 @@ async function populateStatistics(statsP, $) {
   for (const t of stats.stats) {
     table.append(`<tr><td>${t.table}</td><td>${t.cnt}</td></tr>`);
   }
-  table.append(`<tr class="table-info"><td>Version</td><td>${stats.version}</td></tr>`);
+  table.append(
+    `<tr class="table-info"><td>Version</td><td>${stats.version}</td></tr>`);
 }
 
 function renderBenchmarks(benchmarks, $) {
@@ -202,7 +213,10 @@ function renderBenchmark(benchmark) {
         <p class="card-text"><small class="text-muted">
         ${benchmark.execname}, ${benchmark.hostname}<br/>
         <code>${cmdline}</code></small></p>
-        <div class="timeline-plot" id="plot-${benchmark.benchid}-${benchmark.suiteid}-${benchmark.execid}-${benchmark.hostname}" class="card-img-top"></div>
+        <div class="timeline-plot" id="plot-${
+          benchmark.benchid}-${benchmark.suiteid}-${
+            benchmark.execid}-${
+              benchmark.hostname}" class="card-img-top"></div>
       </div>
     </div>`;
 
@@ -220,7 +234,8 @@ function renderTimelinePlots(data, $) {
   }
 
   for (const result of data.timeline) {
-    const key = `plot-${result.benchmarkid}-${result.suiteid}-${result.execid}-${result.hostname}`;
+    const key = `plot-${result.benchmarkid}-${
+      result.suiteid}-${result.execid}-${result.hostname}`;
     if (!benchmarks.has(key)) {
       benchmarks.set(key, []);
     }
