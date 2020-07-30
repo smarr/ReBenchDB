@@ -20,8 +20,6 @@ module.exports = {
     '@typescript-eslint/explicit-module-boundary-types': [
       'error',
       { allowArgumentsExplicitlyTypedAsAny: true }
-    ],
-    // TODO: make all tests work and avoid skipping them
-    'jest/no-disabled-tests': 'off'
+    ]
   }
 };

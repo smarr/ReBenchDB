@@ -1,10 +1,7 @@
 import { BenchmarkData } from '../src/api';
-import { loadScheme, Database } from '../src/db';
+import { loadScheme } from '../src/db';
 import { readFileSync } from 'fs';
-import { getConfig, wrapInTransaction, prepareDbForTesting, rollback, getTempDatabaseName } from './db-testing';
-
-// create database test_rdb;
-const testDbConfig = getConfig();
+import { TestDatabase, createAndInitializeDB, createDB } from './db-testing';
 
 const numTxStatements = 3;
 
@@ -20,40 +17,49 @@ describe('Test Setup', () => {
 });
 
 describe('Setup of PostgreSQL DB', () => {
-  jest.setTimeout(200 * 1000);
+  let db: TestDatabase;
+
+  beforeAll(async () => {
+    db = await createDB('db_setup_init', 1000, false, false);
+  });
+
+  afterAll(async () => {
+    await db.close();
+  });
 
   it('should load the database scheme without error', async () => {
     const createTablesSql = loadScheme();
-    const db = new Database(testDbConfig);
 
-    const sql = wrapInTransaction(createTablesSql);
+    const testSql = createTablesSql + `
+        SELECT * FROM Measurement;`;
 
-    const result = await db.client.query(sql);
+    const result = await db.client.query(testSql);
     const len = (<any> result).length;
     expect(len).toBeGreaterThan(numTxStatements);
 
-    const selectCommand = result[len - 2];
+    const selectCommand = result[len - 1];
     expect(selectCommand.command).toEqual('SELECT');
     expect(selectCommand.rowCount).toEqual(0);
-
-    await db.close();
   });
 });
 
 describe('Recording a ReBench execution data fragments', () => {
-  let db: Database;
+  let db: TestDatabase;
   let basicTestData: BenchmarkData;
 
   beforeAll(async () => {
-    db = new Database(testDbConfig);
-    await prepareDbForTesting(db);
+    db = await createAndInitializeDB('db_setup');
 
     basicTestData = JSON.parse(
       readFileSync(`${__dirname}/small-payload.json`).toString());
   });
 
+  afterAll(async () => {
+    await db.close();
+  });
+
   afterEach(async () => {
-    await rollback(db);
+    await db.rollback();
   });
 
   it('should accept executor information', async () => {
@@ -191,32 +197,19 @@ describe('Recording a ReBench execution data fragments', () => {
     expect(typeof criterion.id).toEqual('number');
     expect(criterion.id).toBeGreaterThanOrEqual(0);
   });
-
-  afterAll(async () => {
-    await db.client.query('ROLLBACK');
-    await db.close();
-  });
 });
 
 
 describe('Recording a ReBench execution from payload files', () => {
-  let db: Database;
-  let dbMain: Database;
+  let db: TestDatabase;
   let smallTestData: BenchmarkData;
   let largeTestData: BenchmarkData;
-  const tmpCfg = Object.assign({}, testDbConfig);
-  tmpCfg.database = getTempDatabaseName();
 
   beforeAll(async () => {
-    // to create and delete a test database
-    dbMain = new Database(testDbConfig);
-    await dbMain.client.query(`CREATE DATABASE ${tmpCfg.database}`);
-
     // the test database and we
     // we do not use transactions in these tests, because we need to be able
     // to access the database from R
-    db = new Database(tmpCfg, 25, true);
-    await db.initializeDatabase();
+    db = await createAndInitializeDB('db_setup_timeline', 25, true, false);
 
     smallTestData = JSON.parse(
       readFileSync(`${__dirname}/small-payload.json`).toString());
@@ -226,8 +219,6 @@ describe('Recording a ReBench execution from payload files', () => {
 
   afterAll(async () => {
     await db.close();
-    await dbMain.client.query(`DROP DATABASE ${tmpCfg.database}`);
-    await dbMain.close();
   });
 
   it('should accept all data (small-payload), and have the measurements persisted', async () => {

@@ -28,7 +28,7 @@ export function loadScheme(): string {
 
 export class Database {
   public client: Pool | PoolClient;
-  private readonly dbConfig: PoolConfig;
+  protected readonly dbConfig: PoolConfig;
   private readonly timelineEnabled: boolean;
 
   /** Number of bootstrap samples to take for timeline. */
@@ -136,7 +136,7 @@ export class Database {
 
   private static readonly batchN = 50;
 
-  constructor(config: PoolConfig, numReplicates = 1000, timelineEnabled = false) {
+  constructor(config: PoolConfig, numReplicates: number = 1000, timelineEnabled: boolean = false) {
     console.assert(config !== undefined);
     this.dbConfig = config;
     this.numReplicates = numReplicates;
@@ -202,6 +202,7 @@ export class Database {
 
   public async close(): Promise<void> {
     await (<any> this.client).end();
+    (<any> this).client = null;
   }
 
   public async activateTransactionSupport(): Promise<void> {
