@@ -270,7 +270,7 @@ describe('Recording a ReBench execution from payload files', () => {
     expect(parseInt(measurements.rows[0].cnt)).toEqual(459928 + 4);
     const timeline = await db.client.query('SELECT * from Timeline');
     expect(timeline.rowCount).toEqual(462);
-  });
+  }, 200 * 1000);
 
   it('should not fail if some data was already recorded in database', async () => {
     // make sure everything is in the database
