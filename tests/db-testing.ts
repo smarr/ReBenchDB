@@ -38,19 +38,25 @@ export class TestDatabase extends Database {
 
   private async release(): Promise<void> {
     const mainDB = getMainDB();
-    let query = `DROP DATABASE IF EXISTS ${this.dbConfig.database};`;
-    if (this.usesTransactions) {
-      query += 'COMMIT;'
-    }
-
+    const query = `DROP DATABASE IF EXISTS ${this.dbConfig.database};`;
     await mainDB.client.query(query);
   }
 
   public async close(): Promise<void> {
-    this.rollback();
-
-    await super.close();
-    await this.release();
+    try {
+      await this.rollback();
+    } finally {
+      try {
+        await super.close();
+      } finally {
+        try {
+          await this.release();
+        } catch (e) {
+          console.log(`Closing of ${this.dbConfig.database} failed`);
+          console.log(e);
+        }
+      }
+    }
   }
 }
 
