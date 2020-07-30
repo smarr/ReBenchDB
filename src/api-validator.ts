@@ -1,6 +1,8 @@
 import Ajv from 'ajv';
 import { existsSync } from 'fs';
-import { getProgramFromFiles, generateSchema, CompilerOptions, PartialArgs } from 'typescript-json-schema';
+import {
+  getProgramFromFiles, generateSchema, CompilerOptions, PartialArgs
+} from 'typescript-json-schema';
 
 export function createValidator(): Ajv.ValidateFunction {
   const compilerOptions: CompilerOptions = {

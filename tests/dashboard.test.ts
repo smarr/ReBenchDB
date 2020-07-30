@@ -1,26 +1,24 @@
-import { Database } from '../src/db';
-import { getConfig, prepareDbForTesting, rollback } from './db-testing';
-import { dashStatistics, dashResults, dashChanges, dashProjects, dashDataOverview, dashBenchmarksForProject } from '../src/dashboard';
+import { TestDatabase, createAndInitializeDB } from './db-testing';
+import {
+  dashStatistics, dashResults, dashChanges, dashProjects, dashDataOverview,
+  dashBenchmarksForProject
+} from '../src/dashboard';
 import { BenchmarkData } from '../src/api';
 import { readFileSync } from 'fs';
 
-const testDbConfig = getConfig();
-
 describe('Test Dashboard on empty DB', () => {
-  let db: Database;
+  let db: TestDatabase;
 
   beforeAll(async () => {
-    db = new Database(testDbConfig);
-    await prepareDbForTesting(db);
+    db = await createAndInitializeDB('dash_empty');
   });
 
   afterAll(async () => {
-    await db.client.query('ROLLBACK');
-    await (<any> db.client).end();
+    await db.close();
   });
 
   afterEach(async () => {
-    await rollback(db);
+    await db.rollback();
   });
 
   it('Should get empty results request', async () => {
@@ -43,11 +41,12 @@ describe('Test Dashboard on empty DB', () => {
 });
 
 describe('Test Dashboard with basic test data loaded', () => {
-  let db: Database;
+  let db: TestDatabase;
+
+  // switch suites to use a template database
 
   beforeAll(async () => {
-    db = new Database(testDbConfig);
-    await prepareDbForTesting(db);
+    db = await createAndInitializeDB('dash_basic', 25, true, false);
 
     const basicTestData: BenchmarkData = JSON.parse(
       readFileSync(`${__dirname}/small-payload.json`).toString());
@@ -56,8 +55,7 @@ describe('Test Dashboard with basic test data loaded', () => {
   });
 
   afterAll(async () => {
-    await db.client.query('ROLLBACK');
-    await (<any> db.client).end();
+    await db.close();
   });
 
   it('Should get a project', async () => {
@@ -89,19 +87,26 @@ describe('Test Dashboard with basic test data loaded', () => {
   it('Should get change', async () => {
     const result = (await dashChanges(1, db)).changes;
     expect(result).toHaveLength(1);
-    expect(result[0].commitid).toEqual('58666d1c84c652306f930daa72e7a47c58478e86');
+    expect(result[0].commitid).toEqual(
+      '58666d1c84c652306f930daa72e7a47c58478e86');
   });
 
-  // TODO: need to await timeline initialization
-  it.skip('Should get available data for DataOverview', async () => {
+  it('Should get available data for DataOverview', async () => {
+    await db.awaitQuiescentTimelineUpdater();
     const data = (await dashDataOverview(1, db)).data;
-    expect(data).toEqual([]);
+    expect(data).toHaveLength(1);
+    expect(data[0].commitids).toEqual(
+      '58666d1c84c652306f930daa72e7a47c58478e86');
+    expect(data[0].expid).toEqual(1);
+    expect(data[0].name).toEqual("Small Test Case");
   });
 
-  // TODO: need to await timeline initialization
-  it.skip('Should get benchmarks for project', async () => {
+  it('Should get benchmarks for project', async () => {
+    await db.awaitQuiescentTimelineUpdater();
     const data = (await dashBenchmarksForProject(db, 1)).benchmarks;
-    expect(data).toEqual([]);
+    expect(data).toHaveLength(1);
+    expect(data[0].benchid).toEqual(1);
+    expect(data[0].benchmark).toEqual("NBody");
   });
 
   // dashTimelineForProject

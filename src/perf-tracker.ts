@@ -10,7 +10,8 @@ const iterations = {
   'generate-report': 0,
   'generate-timeline': 0,
   'prep-exp-data': 0,
-  'get-exp-data': 0
+  'get-exp-data': 0,
+  'project-benchmarks': 0
 };
 
 const descriptions = {
@@ -20,7 +21,8 @@ const descriptions = {
   'generate-report': 'Time of Running R Reporting for /compare/*',
   'generate-timeline': 'Time of Running R stats to generate timeline data',
   'prep-exp-data': 'Prepare experiment data for download',
-  'get-exp-data': 'Starting to prepare experiment data'
+  'get-exp-data': 'Starting to prepare experiment data',
+  'project-benchmarks': 'Time of GET /rebenchdb/dash/:projectId/benchmarks'
 };
 
 export function initPerfTracker(): void {
@@ -55,7 +57,8 @@ function constructData(time: number, it: number, benchmark: string) {
           },
           desc: descriptions[benchmark]
         },
-        cmdline: benchmark, location: '', varValue: null, cores: null, inputSize: null, extraArgs: null
+        cmdline: benchmark, location: '', varValue: null, cores: null,
+        inputSize: null, extraArgs: null
       }
     }],
     criteria: [
@@ -89,8 +92,10 @@ export function startRequest(): number {
   return performance.now();
 }
 
-export async function completeRequest(reqStart: number, db: Database, request: string): Promise<void> {
+export async function completeRequest(reqStart: number, db: Database,
+  request: string): Promise<void> {
   const time = performance.now() - reqStart;
   iterations[request] += 1;
-  await db.recordAllData(constructData(time, iterations[request], request), true);
+  await db.recordAllData(
+    constructData(time, iterations[request], request), true);
 }

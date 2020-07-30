@@ -10,7 +10,11 @@ import ajv from 'ajv';
 
 import { version } from '../package.json';
 import { initPerfTracker, startRequest, completeRequest } from './perf-tracker';
-import { dashResults, dashStatistics, dashChanges, dashCompare, dashProjects, dashBenchmarksForProject, dashTimelineForProject, dashDataOverview, dashGetExpData } from './dashboard';
+import {
+  dashResults, dashStatistics, dashChanges, dashCompare, dashProjects,
+  dashBenchmarksForProject, dashTimelineForProject, dashDataOverview,
+  dashGetExpData
+} from './dashboard';
 import { processTemplate } from './templates';
 
 console.log('Starting ReBenchDB Version ' + version);
@@ -86,8 +90,12 @@ router.get('/rebenchdb/dash/:projectId/results', async ctx => {
 });
 
 router.get('/rebenchdb/dash/:projectId/benchmarks', async ctx => {
+  const start = startRequest();
+
   ctx.body = await dashBenchmarksForProject(db, ctx.params.projectId);
   ctx.type = 'application/json';
+
+  await completeRequest(start, db, 'project-benchmarks');
 });
 
 router.get('/rebenchdb/dash/:projectId/timeline', async ctx => {
@@ -136,7 +144,9 @@ router.get('/admin/perform-timeline-update', async ctx => {
 if (DEV) {
   router.get('/static/:filename', async ctx => {
     console.log(`serve ${ctx.params.filename}`);
-    ctx.body = readFileSync(`${__dirname}/../../resources/${ctx.params.filename}`);
+    // TODO: robustPath?
+    ctx.body = readFileSync(
+      `${__dirname}/../../resources/${ctx.params.filename}`);
     if (ctx.params.filename.endsWith('.css')) {
       ctx.type = 'css';
     } else if (ctx.params.filename.endsWith('.js')) {
@@ -146,7 +156,8 @@ if (DEV) {
 
   router.get('/static/exp-data/:filename', async ctx => {
     console.log(`serve ${ctx.params.filename}`);
-    ctx.body = readFileSync(`${__dirname}/../../resources/exp-data/${ctx.params.filename}`);
+    ctx.body = readFileSync(
+      `${__dirname}/../../resources/exp-data/${ctx.params.filename}`);
     if (ctx.params.filename.endsWith('.qs')) {
       ctx.type = 'application/octet-stream';
     }
@@ -154,7 +165,9 @@ if (DEV) {
 
   router.get('/static/reports/:change/figure-html/:filename', async ctx => {
     console.log(`serve ${ctx.params.filename}`);
-    ctx.body = readFileSync(`${__dirname}/../../resources/reports/${ctx.params.change}/figure-html/${ctx.params.filename}`);
+    ctx.body = readFileSync(
+      `${__dirname}/../../resources/reports/${ctx.params.change
+      }/figure-html/${ctx.params.filename}`);
     if (ctx.params.filename.endsWith('.svg')) {
       ctx.type = 'svg';
     } else if (ctx.params.filename.endsWith('.css')) {
@@ -172,7 +185,9 @@ router.get('/status', async ctx => {
   ctx.type = 'text';
 });
 
-const validateFn: ajv.ValidateFunction = DEBUG ? createValidator() : <any> undefined;
+const validateFn: ajv.ValidateFunction =
+  DEBUG ? createValidator()
+    : <any> undefined;
 
 function validateSchema(data: BenchmarkData, ctx: Router.IRouterContext) {
   const result = validateFn(data);
@@ -187,7 +202,8 @@ ${validateFn.errors}`;
   }
 }
 
-// curl -X PUT -H "Content-Type: application/json" -d '{"foo":"bar","baz":3}' http://localhost:33333/rebenchdb/results
+// curl -X PUT -H "Content-Type: application/json" -d '{"foo":"bar","baz":3}'
+//  http://localhost:33333/rebenchdb/results
 // DEBUG: koaBody({includeUnparsed: true})
 router.put('/rebenchdb/results', koaBody({ jsonLimit: '500mb' }), async ctx => {
   const start = startRequest();
@@ -202,13 +218,15 @@ router.put('/rebenchdb/results', koaBody({ jsonLimit: '500mb' }), async ctx => {
   try {
     const recordedRuns = await db.recordMetaDataAndRuns(data);
     db.recordAllData(data)
-      .then(recordedMeasurements => console.log(`/rebenchdb/results: stored ${recordedMeasurements} measurements`))
+      .then(recordedMeasurements => console.log(
+        `/rebenchdb/results: stored ${recordedMeasurements} measurements`))
       .catch(e => {
         console.error(`/rebenchdb/results failed to store measurements: ${e}`);
         console.error(e.stack);
       });
 
-    ctx.body = `Meta data for ${recordedRuns} stored. Storing of measurements is ongoing`;
+    ctx.body = `Meta data for ${recordedRuns
+      } stored. Storing of measurements is ongoing`;
     ctx.status = 200;
   } catch (e) {
     ctx.status = 500;

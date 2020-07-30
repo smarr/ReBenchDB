@@ -1,10 +1,7 @@
 import { BenchmarkData } from '../src/api';
-import { loadScheme, Database } from '../src/db';
+import { loadScheme } from '../src/db';
 import { readFileSync } from 'fs';
-import { getConfig, wrapInTransaction, prepareDbForTesting, rollback, getTempDatabaseName } from './db-testing';
-
-// create database test_rdb;
-const testDbConfig = getConfig();
+import { TestDatabase, createAndInitializeDB, createDB } from './db-testing';
 
 const numTxStatements = 3;
 
@@ -20,40 +17,49 @@ describe('Test Setup', () => {
 });
 
 describe('Setup of PostgreSQL DB', () => {
-  jest.setTimeout(200 * 1000);
+  let db: TestDatabase;
+
+  beforeAll(async () => {
+    db = await createDB('db_setup_init', 1000, false, false);
+  });
+
+  afterAll(async () => {
+    await db.close();
+  });
 
   it('should load the database scheme without error', async () => {
     const createTablesSql = loadScheme();
-    const db = new Database(testDbConfig);
 
-    const sql = wrapInTransaction(createTablesSql);
+    const testSql = createTablesSql + `
+        SELECT * FROM Measurement;`;
 
-    const result = await db.client.query(sql);
+    const result = await db.client.query(testSql);
     const len = (<any> result).length;
     expect(len).toBeGreaterThan(numTxStatements);
 
-    const selectCommand = result[len - 2];
+    const selectCommand = result[len - 1];
     expect(selectCommand.command).toEqual('SELECT');
     expect(selectCommand.rowCount).toEqual(0);
-
-    await (<any> db.client).end();
   });
 });
 
 describe('Recording a ReBench execution data fragments', () => {
-  let db: Database;
+  let db: TestDatabase;
   let basicTestData: BenchmarkData;
 
   beforeAll(async () => {
-    db = new Database(testDbConfig);
-    await prepareDbForTesting(db);
+    db = await createAndInitializeDB('db_setup');
 
     basicTestData = JSON.parse(
       readFileSync(`${__dirname}/small-payload.json`).toString());
   });
 
+  afterAll(async () => {
+    await db.close();
+  });
+
   afterEach(async () => {
-    await rollback(db);
+    await db.rollback();
   });
 
   it('should accept executor information', async () => {
@@ -191,32 +197,19 @@ describe('Recording a ReBench execution data fragments', () => {
     expect(typeof criterion.id).toEqual('number');
     expect(criterion.id).toBeGreaterThanOrEqual(0);
   });
-
-  afterAll(async () => {
-    await db.client.query('ROLLBACK');
-    await (<any> db.client).end();
-  });
 });
 
 
 describe('Recording a ReBench execution from payload files', () => {
-  let db: Database;
-  let dbMain: Database;
+  let db: TestDatabase;
   let smallTestData: BenchmarkData;
   let largeTestData: BenchmarkData;
-  const tmpCfg = Object.assign({}, testDbConfig);
-  tmpCfg.database = getTempDatabaseName();
 
   beforeAll(async () => {
-    // to create and delete a test database
-    dbMain = new Database(testDbConfig);
-    await dbMain.client.query(`CREATE DATABASE ${tmpCfg.database}`);
-
     // the test database and we
     // we do not use transactions in these tests, because we need to be able
     // to access the database from R
-    db = new Database(tmpCfg, 25, true);
-    await db.initializeDatabase();
+    db = await createAndInitializeDB('db_setup_timeline', 25, true, false);
 
     smallTestData = JSON.parse(
       readFileSync(`${__dirname}/small-payload.json`).toString());
@@ -225,12 +218,11 @@ describe('Recording a ReBench execution from payload files', () => {
   });
 
   afterAll(async () => {
-    await (<any> db.client).end();
-    await dbMain.client.query(`DROP DATABASE ${tmpCfg.database}`);
-    await (<any> dbMain.client).end();
+    await db.close();
   });
 
-  it('should accept all data (small-payload), and have the measurements persisted', async () => {
+  it(`should accept all data (small-payload),
+      and have the measurements persisted`, async () => {
     await db.recordMetaDataAndRuns(smallTestData);
     const recMs = await db.recordAllData(smallTestData);
 
@@ -246,9 +238,13 @@ describe('Recording a ReBench execution from payload files', () => {
   it('data recording should be idempotent (small-payload)', async () => {
     // check that the data from the previous test is there
     let trials = await db.client.query('SELECT * from Trial');
-    expect(trials.rowCount).toEqual(2); // performance tracking and the actual trial
+
+    // performance tracking and the actual trial
+    expect(trials.rowCount).toEqual(2);
     let exps = await db.client.query('SELECT * from Experiment');
-    expect(exps.rowCount).toEqual(2); // performance tracking and the actual experiment
+
+    // performance tracking and the actual experiment
+    expect(exps.rowCount).toEqual(2);
 
     // Do recordData a second time
     await db.recordMetaDataAndRuns(smallTestData);
@@ -262,16 +258,22 @@ describe('Recording a ReBench execution from payload files', () => {
     expect(measurements.rowCount).toEqual(4);
 
     trials = await db.client.query('SELECT * from Trial');
-    expect(trials.rowCount).toEqual(2);  // performance tracking and the actual trial
+
+    // performance tracking and the actual trial
+    expect(trials.rowCount).toEqual(2);
     exps = await db.client.query('SELECT * from Experiment');
-    expect(exps.rowCount).toEqual(2);  // performance tracking and the actual experiment
+
+    // performance tracking and the actual experiment
+    expect(exps.rowCount).toEqual(2);
   });
 
-  it('should accept all data (large-payload), and have the measurements persisted', async () => {
+  it(`should accept all data (large-payload),
+      and have the measurements persisted`, async () => {
     await db.recordMetaDataAndRuns(largeTestData);
     const recMs = await db.recordAllData(largeTestData);
 
-    const measurements = await db.client.query('SELECT count(*) as cnt from Measurement');
+    const measurements = await db.client.query(
+      'SELECT count(*) as cnt from Measurement');
 
     await db.awaitQuiescentTimelineUpdater();
 
@@ -279,25 +281,27 @@ describe('Recording a ReBench execution from payload files', () => {
     expect(parseInt(measurements.rows[0].cnt)).toEqual(459928 + 4);
     const timeline = await db.client.query('SELECT * from Timeline');
     expect(timeline.rowCount).toEqual(462);
-  });
+  }, 200 * 1000);
 
-  it('should not fail if some data was already recorded in database', async () => {
-    // make sure everything is in the database
-    await db.recordMetaDataAndRuns(smallTestData);
-    await db.recordAllData(smallTestData);
+  it('should not fail if some data was already recorded in database',
+    async () => {
+      // make sure everything is in the database
+      await db.recordMetaDataAndRuns(smallTestData);
+      await db.recordAllData(smallTestData);
 
-    // obtain the bits, this should match what `recordData` does above
-    const { trial, criteria } = await db.recordMetaData(smallTestData);
+      // obtain the bits, this should match what `recordData` does above
+      const { trial, criteria } = await db.recordMetaData(smallTestData);
 
-    // now, manually do the recording
-    const r = smallTestData.data[0];
+      // now, manually do the recording
+      const r = smallTestData.data[0];
 
-    // and pretend there's no data yet
-    const availableMs = {};
+      // and pretend there's no data yet
+      const availableMs = {};
 
-    const run = await db.recordRun(r.runId);
+      const run = await db.recordRun(r.runId);
 
-    const recordedMeasurements = await db.recordMeasurements(r, run, trial, criteria, availableMs);
-    expect(recordedMeasurements).toEqual(0);
-  });
+      const recordedMeasurements = await db.recordMeasurements(
+        r, run, trial, criteria, availableMs);
+      expect(recordedMeasurements).toEqual(0);
+    });
 });
