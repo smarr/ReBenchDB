@@ -1,7 +1,7 @@
 import { TestDatabase, createAndInitializeDB } from './db-testing';
 import {
   dashStatistics, dashResults, dashChanges, dashProjects, dashDataOverview,
-  dashBenchmarksForProject
+  dashBenchmarksForProject, dashTimelineForProject
 } from '../src/dashboard';
 import { BenchmarkData } from '../src/api';
 import { readFileSync } from 'fs';
@@ -15,10 +15,6 @@ describe('Test Dashboard on empty DB', () => {
 
   afterAll(async () => {
     await db.close();
-  });
-
-  afterEach(async () => {
-    await db.rollback();
   });
 
   it('Should get empty results request', async () => {
@@ -109,8 +105,25 @@ describe('Test Dashboard with basic test data loaded', () => {
     expect(data[0].benchmark).toEqual("NBody");
   });
 
-  // dashTimelineForProject
+  it('Should get stats for the timeline', async () => {
+    await db.awaitQuiescentTimelineUpdater();
+    const { timeline, details } = (await dashTimelineForProject(db, 1));
 
+    expect(timeline).toHaveLength(1);
+    expect(details).toHaveLength(1);
+
+    expect(timeline[0].mean).toEqual(433.04468);
+    expect(timeline[0].maxval).toEqual(482.53);
+    expect(timeline[0].minval).toEqual(383.821);
+    expect(timeline[0].numsamples).toEqual(3);
+    expect(timeline[0].runid).toEqual(1);
+    expect(timeline[0].trialid).toEqual(1);
+
+    expect(details[0].trialid).toEqual(1);
+    expect(details[0].id).toEqual(1);
+    expect(details[0].username).toEqual("smarr");
+    expect(details[0].expname).toEqual("Small Test Case");
+  });
 
   // dashCompare
   // dashGetExpData
