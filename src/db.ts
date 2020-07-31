@@ -142,6 +142,10 @@ export class Database {
       GROUP BY runId, criterion, invocation
       ORDER BY runId, inv, ite, criterion`,
 
+    insertTimelineJob: `INSERT INTO TimelineCalcJob
+                          (trialId, runId, criterion)
+                        VALUES ($1, $2, $3)`,
+
     fetchCriterionByNameUnit: `SELECT * FROM Criterion
                                WHERE name = $1 AND unit = $2`,
     insertCriterion: `INSERT INTO Criterion (name, unit)
@@ -445,6 +449,7 @@ export class Database {
     let recordedMeasurements = 0;
     let batchedMs = 0;
     let batchedValues: any[] = [];
+    const updateJobs = new TimelineUpdates(this);
 
     for (const d of r.d) {
       for (const m of d.m) {
@@ -456,6 +461,8 @@ export class Database {
           // then,just skip this one.
           continue;
         }
+
+        updateJobs.recorded(values[1], values[0], values[4]);
         batchedMs += 1;
         batchedValues = batchedValues.concat(values);
         if (batchedMs === Database.batchN) {
@@ -495,6 +502,8 @@ export class Database {
 
     recordedMeasurements += await this.recordMeasurementsFromBatch(
       batchedValues);
+
+    await updateJobs.submitUpdateJobs();
     return recordedMeasurements;
   }
 
@@ -560,6 +569,10 @@ export class Database {
     return (await this.client.query(this.queries.insertMeasurement)).rowCount;
   }
 
+  public async recordTimelineJob(values: number[]): Promise<void> {
+    await this.client.query(this.queries.insertTimelineJob, values);
+  }
+
   private generateTimeline() {
     this.timelineUpdater.trigger();
   }
@@ -602,5 +615,28 @@ export class Database {
         });
     });
     return prom;
+  }
+}
+
+class TimelineUpdates {
+  private jobs: Map<string, number[]>;
+  private db: Database;
+
+  constructor(db: Database) {
+    this.jobs = new Map();
+    this.db = db;
+  }
+
+  public recorded(trialId: number, runId: number, criterionId: number) {
+    const id = `${trialId}-${runId}-${criterionId}`;
+    if (!this.jobs.has(id)) {
+      this.jobs.set(id, [trialId, runId, criterionId]);
+    }
+  }
+
+  public async submitUpdateJobs() {
+    for (const job of this.jobs.values()) {
+      await this.db.recordTimelineJob(job);
+    }
   }
 }

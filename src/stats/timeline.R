@@ -23,34 +23,25 @@ suppressMessages(library(dplyr))
 
 rebenchdb <- connect_to_rebenchdb(db_name, db_user, db_pass)
 
+dbBegin(rebenchdb)
 qry <- dbSendQuery(rebenchdb, "
-WITH incompleteTimeline
-AS (
-	-- find the trial/run/criterion combinations that have more samples than recorded in the timeline
-	SELECT m.trialId as trialId, m.runId as runId, m.criterion as criterion, COUNT(m.*) as actualRowCnt, t.numSamples as recordedSamples
-		FROM Measurement m
-			JOIN Run r ON m.runId = r.id
-			LEFT JOIN Timeline t ON m.trialId = t.trialId AND m.runId = t.runId AND m.criterion = t.criterion
-		-- Don't load warmup data, already discard it in the database
-		WHERE iteration >= warmup OR warmup IS NULL
-		GROUP BY m.trialId, m.runId, m.criterion, t.numSamples
-		HAVING COUNT(m.*) > t.numSamples OR t.numSamples IS NULL
-)
-SELECT m.runId, m.trialId, m.criterion, value, recordedSamples
+SELECT DISTINCT m.runId, m.trialId, m.criterion, m.value
 	FROM Measurement m
-	JOIN incompleteTimeline itl ON itl.trialId = m.trialId AND itl.runId = m.runId AND itl.criterion = m.criterion")
+	JOIN TimelineCalcJob tcj ON
+	  tcj.trialId = m.trialId AND
+	  tcj.runId = m.runId AND
+	  tcj.criterion = m.criterion
+", immediate = TRUE)
 result <- dbFetch(qry)
 dbClearResult(qry)
+dbExecute(rebenchdb, "TRUNCATE TimelineCalcJob")
+dbCommit(rebenchdb)
+
 
 # View(result)
 # result$runid <- factor(result$runid)
 # result$trialid <- factor(result$trialid)
 # result$recordedsamples <- factor(result$recordedsamples)
-
-suppressWarnings(with_tl_entry <- result %>%
-  filter(!is.na(recordedsamples)) %>%
-  group_by(runid, trialid, criterion) %>%
-  summarise())
 
 calc_stats <- function (data) {
   res <- data %>%
@@ -64,23 +55,29 @@ calc_stats <- function (data) {
       numsamples = length(value),
 
       bci95low = get_bca(value, num_replicates)$lower,
-      bci95up = get_bca(value, num_replicates)$upper)
+      bci95up = get_bca(value, num_replicates)$upper,
+      .groups = "drop")
   res
-}
-
-if (nrow(with_tl_entry) > 0) {
-  res <- dbSendStatement(rebenchdb, "DELETE FROM Timeline WHERE runid = $1 AND trialid = $2 AND criterion = $3")
-  for (i in seq(nrow(with_tl_entry))) {
-    current_row <- with_tl_entry[i, ]
-    if (!is.na(current_row$runid)) {
-      dbBind(res, list(current_row$runid, current_row$trialid, current_row$criterion))
-    }
-  }
-  dbClearResult(res);
 }
 
 stats <- result %>%
   calc_stats()
-dbAppendTable(rebenchdb, "timeline", stats)
+
+# dbAppendTable(rebenchdb, "timeline", stats)
+query <- "INSERT INTO timeline
+  (runid, trialid, criterion, minval, maxval, sdval, mean, median, numsamples, bci95low, bci95up)
+VALUES
+  ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+ON CONFLICT (runid, trialid, criterion) DO UPDATE
+SET
+	minval = EXCLUDED.minval,
+	maxval = EXCLUDED.maxval,
+	sdval  = EXCLUDED.sdval,
+	mean   = EXCLUDED.mean,
+	median = EXCLUDED.median,
+	numsamples = EXCLUDED.numsamples,
+	bci95low = EXCLUDED.bci95low,
+	bci95up = EXCLUDED.bci95up;"
+dbExecute(rebenchdb, query, params = unname(as.list(stats)))
 
 dbDisconnect(rebenchdb)
