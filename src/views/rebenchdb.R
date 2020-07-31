@@ -2,7 +2,7 @@
 ## Exposes standardized data sets for access by reports.
 library(RPostgres)
 library(DBI)
-library(qs)
+suppressMessages(library(qs))
 
 load_data_file <- function(filename) {
   qread(filename)  

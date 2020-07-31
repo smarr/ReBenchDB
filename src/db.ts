@@ -4,7 +4,7 @@ import {
   BenchmarkData, Executor, Suite, Benchmark, RunId, Source, Environment,
   Criterion, Run
 } from './api';
-import { Pool, PoolConfig, PoolClient, QueryResult } from 'pg';
+import { Pool, PoolConfig, PoolClient } from 'pg';
 import { SingleRequestOnly } from './single-requester';
 import { startRequest, completeRequest } from './perf-tracker';
 
@@ -102,7 +102,8 @@ export class Database {
       name: 'insertMeasurement',
       text: `INSERT INTO Measurement
           (runId, trialId, invocation, iteration, criterion, value)
-        VALUES ($1, $2, $3, $4, $5, $6)`,
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT DO NOTHING`,
       values: <any[]>[]
     },
 
@@ -120,7 +121,8 @@ export class Database {
           ($37, $38, $39, $40, $41, $42),
           ($43, $44, $45, $46, $47, $48),
           ($49, $50, $51, $52, $53, $54),
-          ($55, $56, $57, $58, $59, $60)`,
+          ($55, $56, $57, $58, $59, $60)
+          ON CONFLICT DO NOTHING`,
       values: <any[]>[]
     },
 
@@ -139,6 +141,10 @@ export class Database {
       WHERE trialId = $1
       GROUP BY runId, criterion, invocation
       ORDER BY runId, inv, ite, criterion`,
+
+    insertTimelineJob: `INSERT INTO TimelineCalcJob
+                          (trialId, runId, criterion)
+                        VALUES ($1, $2, $3)`,
 
     fetchCriterionByNameUnit: `SELECT * FROM Criterion
                                WHERE name = $1 AND unit = $2`,
@@ -171,7 +177,8 @@ export class Database {
     this.queries.insertMeasurementBatchedN.text =
       `INSERT INTO Measurement
          (runId, trialId, invocation, iteration, criterion, value)
-       VALUES ` + this.generateBatchInsert(Database.batchN, 6);
+       VALUES ${this.generateBatchInsert(Database.batchN, 6)}
+       ON CONFLICT DO NOTHING`;
 
     this.timelineUpdater = new SingleRequestOnly(
       async () => { return this.performTimelineUpdate(); });
@@ -423,8 +430,8 @@ export class Database {
       // there are 6 parameters, i.e., values
       const rest = batchedValues.splice(6 * 1);
       try {
-        await this.recordMeasurement(batchedValues);
-        recordedMeasurements += 1;
+        const result = await this.recordMeasurement(batchedValues);
+        recordedMeasurements += result;
       } catch (err) {
         // looks like we already have this data
         if (!isUniqueViolationError(err)) {
@@ -442,6 +449,7 @@ export class Database {
     let recordedMeasurements = 0;
     let batchedMs = 0;
     let batchedValues: any[] = [];
+    const updateJobs = new TimelineUpdates(this);
 
     for (const d of r.d) {
       for (const m of d.m) {
@@ -453,12 +461,14 @@ export class Database {
           // then,just skip this one.
           continue;
         }
+
+        updateJobs.recorded(values[1], values[0], values[4]);
         batchedMs += 1;
         batchedValues = batchedValues.concat(values);
         if (batchedMs === Database.batchN) {
           try {
-            await this.recordMeasurementBatchedN(batchedValues);
-            recordedMeasurements += batchedMs;
+            const result = await this.recordMeasurementBatchedN(batchedValues);
+            recordedMeasurements += result;
           } catch (err) {
             // we may have concurrent inserts, or partially inserted data,
             // where a request aborted
@@ -479,8 +489,8 @@ export class Database {
       // there are 6 parameters, i.e., values
       const rest = batchedValues.splice(6 * 10);
       try {
-        await this.recordMeasurementBatched10(batchedValues);
-        recordedMeasurements += 10;
+        const result = await this.recordMeasurementBatched10(batchedValues);
+        recordedMeasurements += result;
       } catch (err) {
         if (isUniqueViolationError(err)) {
           recordedMeasurements += await this.recordMeasurementsFromBatch(
@@ -492,6 +502,8 @@ export class Database {
 
     recordedMeasurements += await this.recordMeasurementsFromBatch(
       batchedValues);
+
+    await updateJobs.submitUpdateJobs();
     return recordedMeasurements;
   }
 
@@ -536,27 +548,29 @@ export class Database {
     return data.data.length;
   }
 
-  public async recordMeasurementBatched10(values: any[]):
-    Promise<QueryResult<any>> {
+  public async recordMeasurementBatched10(values: any[]): Promise<number> {
     const q = this.queries.insertMeasurementBatched10;
     // [runId, trialId, invocation, iteration, critId, value];
     q.values = values;
-    return await this.client.query(q);
+    return (await this.client.query(q)).rowCount;
   }
 
-  public async recordMeasurementBatchedN(values: any[]):
-    Promise<QueryResult<any>> {
+  public async recordMeasurementBatchedN(values: any[]): Promise<number> {
     const q = this.queries.insertMeasurementBatchedN;
     // [runId, trialId, invocation, iteration, critId, value];
     q.values = values;
-    return await this.client.query(q);
+    return (await this.client.query(q)).rowCount;
   }
 
-  public async recordMeasurement(values: any[]): Promise<QueryResult<any>> {
+  public async recordMeasurement(values: any[]): Promise<number> {
     const q = this.queries.insertMeasurement;
     // [runId, trialId, invocation, iteration, critId, value];
     q.values = values;
-    return await this.client.query(this.queries.insertMeasurement);
+    return (await this.client.query(this.queries.insertMeasurement)).rowCount;
+  }
+
+  public async recordTimelineJob(values: number[]): Promise<void> {
+    await this.client.query(this.queries.insertTimelineJob, values);
   }
 
   private generateTimeline() {
@@ -604,4 +618,25 @@ export class Database {
   }
 }
 
+class TimelineUpdates {
+  private jobs: Map<string, number[]>;
+  private db: Database;
 
+  constructor(db: Database) {
+    this.jobs = new Map();
+    this.db = db;
+  }
+
+  public recorded(trialId: number, runId: number, criterionId: number) {
+    const id = `${trialId}-${runId}-${criterionId}`;
+    if (!this.jobs.has(id)) {
+      this.jobs.set(id, [trialId, runId, criterionId]);
+    }
+  }
+
+  public async submitUpdateJobs() {
+    for (const job of this.jobs.values()) {
+      await this.db.recordTimelineJob(job);
+    }
+  }
+}
