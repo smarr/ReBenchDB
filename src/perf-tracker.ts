@@ -66,7 +66,8 @@ function constructData(time: number, it: number, benchmark: string) {
     ],
     env: {
       hostName: 'self',
-      cpu: '', memory: 0, clockSpeed: 0, osType: '', userName: '', software: [],
+      cpu: '', memory: 0, clockSpeed: 0, osType: 'nodejs',
+      userName: 'rebench-perf-tracking', software: [],
       manualRun: false,
       denoise: {}
     },
