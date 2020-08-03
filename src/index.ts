@@ -215,6 +215,13 @@ router.put('/rebenchdb/results', koaBody({ jsonLimit: '500mb' }), async ctx => {
     validateSchema(data, ctx);
   }
 
+  if (!data.startTime) {
+    ctx.body = `Request misses a startTime setting,
+                which is needed to store results correctly.`;
+    ctx.status = 400;
+    return;
+  }
+
   try {
     const recordedRuns = await db.recordMetaDataAndRuns(data);
     db.recordAllData(data)
