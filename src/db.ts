@@ -1,8 +1,9 @@
 import { execFile } from 'child_process';
 import { readFileSync, existsSync } from 'fs';
 import {
-  BenchmarkData, Executor, Suite, Benchmark, RunId, Source, Environment,
-  Criterion, Run
+  BenchmarkData, Executor as ApiExecutor, Suite as ApiSuite,
+  Benchmark as ApiBenchmark, RunId as ApiRunId, Source as ApiSource,
+  Environment as ApiEnvironment, Criterion as ApiCriterion, Run as ApiRun
 } from './api';
 import { Pool, PoolConfig, PoolClient } from 'pg';
 import { SingleRequestOnly } from './single-requester';
@@ -29,6 +30,128 @@ export function loadScheme(): string {
   return readFileSync(schema).toString();
 }
 
+export interface Executor {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export interface Suite {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export interface Benchmark {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export interface SoftwareVersionInfo {
+  id: number;
+  name: string;
+  version: string;
+}
+
+export interface Environment {
+  id: number;
+  hostname: string;
+  ostype: string;
+  memory: number;
+  cpu: string;
+  clockspeed: number;
+  note: string;
+}
+
+export interface Unit {
+  name: string;
+  description: string;
+  lessisbetter: boolean;
+}
+
+export interface Criterion {
+  id: number;
+  name: string;
+  unit: string;
+}
+
+export interface Project {
+  id: number;
+  name: string;
+  description: string;
+  logo: string;
+  showchanges: boolean;
+  allresults: boolean;
+}
+
+export interface Source {
+  id: number;
+  repourl: string;
+  branchortag: string;
+  commitid: string;
+  commitmessage: string;
+  authorname: string;
+  authoremail: string;
+  committereame: string;
+  committeremail: string;
+}
+
+export interface Experiment {
+  id: number;
+
+  name: string;
+  projectid: number;
+
+  description: string;
+}
+
+export interface Trial {
+  id: number;
+  manualrun: boolean;
+  starttime: string;
+
+  expid: number;
+
+  username: string;
+  envid: number;
+  sourceid: number;
+
+  denoise: string;
+  endTime: string;
+}
+
+export interface SoftwareUse {
+  envid: string;
+  softid: string;
+}
+
+export interface Run {
+  id: number;
+  benchmarkid: number;
+  suiteid: number;
+  execid: number;
+  cmdline: string;
+  location: string;
+  varvalue: string;
+  cores: string;
+  inputsize: string;
+  extraargs: string;
+  maxinvocationtime: number;
+  miniterationtime: number;
+  warmup: number;
+}
+
+export interface Measurement {
+  runid: number;
+  trialid: number;
+  criterion: number;
+  invocation: number;
+  iteration: number;
+
+  value: number;
+}
+
 export class Database {
   public client: Pool | PoolClient;
   protected readonly dbConfig: PoolConfig;
@@ -37,16 +160,16 @@ export class Database {
   /** Number of bootstrap samples to take for timeline. */
   private readonly numReplicates: number;
 
-  private readonly executors: Map<string, any>;
-  private readonly suites: Map<string, any>;
-  private readonly benchmarks: Map<string, any>;
-  private readonly runs: Map<string, any>;
-  private readonly sources: Map<string, any>;
-  private readonly envs: Map<string, any>;
-  private readonly trials: Map<string, any>;
-  private readonly exps: Map<string, any>;
-  private readonly criteria: Map<string, any>;
-  private readonly projects: Map<string, any>;
+  private readonly executors: Map<string, Executor>;
+  private readonly suites: Map<string, Suite>;
+  private readonly benchmarks: Map<string, Benchmark>;
+  private readonly runs: Map<string, Run>;
+  private readonly sources: Map<string, Source>;
+  private readonly envs: Map<string, Environment>;
+  private readonly trials: Map<string, Trial>;
+  private readonly exps: Map<string, Experiment>;
+  private readonly criteria: Map<string, Criterion>;
+  private readonly projects: Map<string, Project>;
 
   private readonly timelineUpdater: SingleRequestOnly;
 
@@ -253,24 +376,24 @@ export class Database {
       cache, item.name, fetchQ, [item.name], insertQ, [item.name, item.desc]);
   }
 
-  public async recordExecutor(e: Executor): Promise<any> {
+  public async recordExecutor(e: ApiExecutor): Promise<Executor> {
     return this.recordNameDesc(e, this.executors,
       this.queries.fetchExecutorByName, this.queries.insertExecutor);
   }
 
-  public async recordSuite(s: Suite): Promise<any> {
+  public async recordSuite(s: ApiSuite): Promise<Suite> {
     return this.recordNameDesc(s, this.suites,
       this.queries.fetchSuiteByName, this.queries.insertSuite);
   }
 
-  public async recordBenchmark(b: Benchmark): Promise<any> {
+  public async recordBenchmark(b: ApiBenchmark): Promise<Benchmark> {
     return this.recordNameDesc(b, this.benchmarks,
       this.queries.fetchBenchmarkByName, this.queries.insertBenchmark);
   }
 
-  public async recordRun(run: RunId): Promise<any> {
+  public async recordRun(run: ApiRunId): Promise<Run> {
     if (this.runs.has(run.cmdline)) {
-      return this.runs.get(run.cmdline);
+      return <Run> this.runs.get(run.cmdline);
     }
 
     const exec = await this.recordExecutor(run.benchmark.suite.executor);
@@ -287,7 +410,7 @@ export class Database {
       run.benchmark.runDetails.warmup]);
   }
 
-  public async recordSource(s: Source): Promise<any> {
+  public async recordSource(s: ApiSource): Promise<Source> {
     return this.recordCached(this.sources, s.commitId,
       this.queries.fetchSourceByCommitId, [s.commitId],
       this.queries.insertSource,
@@ -295,20 +418,20 @@ export class Database {
       s.authorName, s.authorEmail, s.committerName, s.committerEmail]);
   }
 
-  public async recordEnvironment(e: Environment): Promise<any> {
+  public async recordEnvironment(e: ApiEnvironment): Promise<Environment> {
     return this.recordCached(this.envs, e.hostName,
       this.queries.fetchEnvByHostName, [e.hostName],
       this.queries.insertEnv, [
       e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed]);
   }
 
-  public async recordTrial(data: BenchmarkData, env: any, exp: any):
-    Promise<any> {
+  public async recordTrial(data: BenchmarkData, env: Environment,
+    exp: Experiment): Promise<Trial> {
     const e = data.env;
     const cacheKey = `${e.userName}-${env.id}-${data.startTime}`;
 
     if (this.trials.has(cacheKey)) {
-      return this.trials.get(cacheKey);
+      return <Trial> this.trials.get(cacheKey);
     }
 
     const source = await this.recordSource(data.source);
@@ -321,13 +444,13 @@ export class Database {
       e.denoise]);
   }
 
-  public async recordProject(projectName: string): Promise<any> {
+  public async recordProject(projectName: string): Promise<Project> {
     return this.recordCached(this.projects, projectName,
       this.queries.fetchProjectByName, [projectName],
       this.queries.insertProject, [projectName]);
   }
 
-  public async getProject(projectId: number): Promise<any> {
+  public async getProject(projectId: number): Promise<Project | undefined> {
     const result = await this.client.query(
       this.queries.fetchProjectById, [projectId]);
 
@@ -338,11 +461,11 @@ export class Database {
     }
   }
 
-  public async recordExperiment(data: BenchmarkData): Promise<any> {
+  public async recordExperiment(data: BenchmarkData): Promise<Experiment> {
     const cacheKey = `${data.projectName}::${data.experimentName}`;
 
     if (this.exps.has(cacheKey)) {
-      return this.exps.get(cacheKey);
+      return <Experiment> this.exps.get(cacheKey);
     }
 
     const project = await this.recordProject(data.projectName);
@@ -360,11 +483,11 @@ export class Database {
     }
   }
 
-  public async recordCriterion(c: Criterion): Promise<any> {
+  public async recordCriterion(c: ApiCriterion): Promise<Criterion> {
     const cacheKey = `${c.c}::${c.u}`;
 
     if (this.criteria.has(cacheKey)) {
-      return this.criteria.get(cacheKey);
+      return <Criterion> this.criteria.get(cacheKey);
     }
 
     await this.recordUnit(c.u);
@@ -373,15 +496,16 @@ export class Database {
       this.queries.insertCriterion, [c.c, c.u]);
   }
 
-  private async resolveCriteria(data: Criterion[]) {
-    const criteria = new Map();
+  private async resolveCriteria(data: ApiCriterion[]):
+    Promise<Map<number, Criterion>> {
+    const criteria: Map<number, Criterion> = new Map();
     for (const c of data) {
       criteria.set(c.i, await this.recordCriterion(c));
     }
     return criteria;
   }
 
-  private async retrieveAvailableMeasurements(trialId) {
+  private async retrieveAvailableMeasurements(trialId: number) {
     const results = await this.client.query(
       this.queries.fetchMaxMeasurements, [trialId]);
     const measurements = {};
@@ -444,7 +568,7 @@ export class Database {
     return recordedMeasurements;
   }
 
-  public async recordMeasurements(r: Run, run: any, trial: any,
+  public async recordMeasurements(r: ApiRun, run: any, trial: any,
     criteria: Map<any, any>, availableMs: any): Promise<number> {
     let recordedMeasurements = 0;
     let batchedMs = 0;
@@ -508,7 +632,10 @@ export class Database {
   }
 
   public async recordMetaData(data: BenchmarkData):
-    Promise<{ env, exp, trial, criteria }> {
+    Promise<{
+      env: Environment, exp: Experiment, trial: Trial,
+      criteria: Map<number, Criterion>
+    }> {
     const env = await this.recordEnvironment(data.env);
     const exp = await this.recordExperiment(data);
     const trial = await this.recordTrial(data, env, exp);
