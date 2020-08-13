@@ -1,10 +1,13 @@
-import { readFileSync, unlinkSync } from 'fs';
-import { startReportGeneration } from '../src/dashboard';
+import { readFileSync, unlinkSync, rmdirSync, existsSync } from 'fs';
+import {
+  startReportGeneration, getSummaryPlotFileName, getOutputImageFolder
+} from '../src/dashboard';
 import { DatabaseConfig } from '../src/db';
 
 describe('Knitr Report Generation', () => {
   describe('Report with varying set of benchmarks', () => {
-    const outputFile = `report.test.ts.html`;
+    const outputFileWithoutExtension = `report.test.ts`;
+    const outputFile = `${outputFileWithoutExtension}.html`;
 
     it('Should successful execute generation', async () => {
       const baseHash = '5964b7';
@@ -14,17 +17,11 @@ describe('Knitr Report Generation', () => {
 
       const extraCmd = `from-file;${baseFile};${changeFile}`;
 
-      const reportP = new Promise((resolve, reject) => {
-        startReportGeneration(baseHash, changeHash, outputFile,
-          {} as DatabaseConfig,
-          async (error, _stdout, _stderr) => {
-            if (error) { reject(error); return; }
-            resolve(true);
-          }, extraCmd);
-      });
 
-      const aTrue = await reportP;
-      expect(aTrue).toBe(true);
+      const output = await startReportGeneration(
+        baseHash, changeHash, outputFile, {} as DatabaseConfig, extraCmd);
+
+      expect(output.code).toBe(0);
     }, 60000);
 
     it('Should indicate differences in the benchmark sets', () => {
@@ -39,10 +36,20 @@ describe('Knitr Report Generation', () => {
         `${__dirname}/../resources/reports/${outputFile}`, 'utf8');
       // warning output is inside <code> blocks
       expect(content).toEqual(expect.not.stringContaining('<code>'));
-    })
+    });
+
+    it('Should have generated a summare plot', () => {
+      const plotFile = getSummaryPlotFileName(outputFile);
+      const plotPath = `${__dirname}/../resources/reports/${plotFile}`;
+      console.log(plotPath);
+      expect(existsSync(plotPath)).toBeTruthy();
+    });
 
     afterAll(async () => {
       unlinkSync(`${__dirname}/../resources/reports/${outputFile}`);
+      const imageFolder =
+        `${__dirname}/../resources/reports/${getOutputImageFolder(outputFile)}`;
+      rmdirSync(imageFolder, { recursive: true });
     });
   });
 });

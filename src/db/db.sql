@@ -70,7 +70,10 @@ CREATE TABLE Project (
   description text,
   logo varchar,
   showChanges bool DEFAULT true,
-  allResults bool DEFAULT false
+  allResults bool DEFAULT false,
+
+  -- the bases for comparisons that we generate when a experiment is completed
+  baseBranch varchar
 );
 
 -- Identifies the specific state of the source, the code, on which

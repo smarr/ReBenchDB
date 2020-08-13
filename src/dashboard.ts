@@ -1,7 +1,13 @@
 import { readFileSync, existsSync } from 'fs';
-import { execFile, ChildProcess, ExecException } from 'child_process';
+import { execFile, ChildProcessPromise } from 'promisify-child-process';
 import { Database, DatabaseConfig } from './db';
 import { startRequest, completeRequest } from './perf-tracker';
+import { BenchmarkCompletion } from './api';
+import { GitHub } from './github';
+import { robustPath, siteConfig } from './util';
+
+
+const reportOutputFolder = robustPath(`../resources/reports/`);
 
 /**
  * SELECT exp.id, exp.startTime, m.iteration, m.value FROM Source s
@@ -122,14 +128,9 @@ export async function dashDataOverview(projectId: number, db: Database):
 
 const reportGeneration = new Map();
 
-const robustPath = __dirname.includes('dist/')
-  ? function(path) { return `${__dirname}/../../src/${path}`; }
-  : function(path) { return `${__dirname}/${path}`; };
-
 export function startReportGeneration(base: string, change: string,
-  outputFile: string, dbConfig: DatabaseConfig,
-  callback: (error: ExecException | null, stdout: string, stderr: string)
-    => void, extraCmd = ''): ChildProcess {
+  outputFile: string, dbConfig: DatabaseConfig, extraCmd = ''):
+  ChildProcessPromise {
   const args = [
     robustPath(`views/somns.Rmd`),
     outputFile,
@@ -153,8 +154,15 @@ export function startReportGeneration(base: string, change: string,
   const cmd = robustPath(`views/knitr.R`);
   console.log(`Generate Report: ${cmd} '${args.join(`' '`)}'`);
 
-  return execFile(
-    cmd, args, { cwd: robustPath(`../resources/reports/`) }, callback);
+  return execFile(cmd, args, { cwd: reportOutputFolder });
+}
+
+export function getSummaryPlotFileName(outputFile: string): string {
+  return getOutputImageFolder(outputFile) + '/figure-html/summary-suites-1.png'
+}
+
+export function getOutputImageFolder(outputFile: string): string {
+  return outputFile.replace('.html', '_files');
 }
 
 export function dashCompare(base: string, change: string, project: string,
@@ -163,13 +171,14 @@ export function dashCompare(base: string, change: string, project: string,
   const changeHash6 = change.substr(0, 6);
 
   const reportId = `${project}-${baselineHash6}-${changeHash6}`;
-
-  const reportFile = `${__dirname}/../../resources/reports/${reportId}.html`;
+  const reportFile = `${reportOutputFolder}/${reportId}.html`;
 
   const data: any = {
     project,
     baselineHash6,
     changeHash6,
+    reportId,
+    completionPromise: Promise.resolve()
   };
 
   if (existsSync(reportFile)) {
@@ -186,21 +195,32 @@ export function dashCompare(base: string, change: string, project: string,
       const start = startRequest();
 
       data.generatingReport = true;
-      startReportGeneration(base, change, `${reportId}.html`, dbConfig,
-        async (error, stdout, stderr) => {
-          if (error) {
-            console.error(`Report generation error: ${error}`);
-          }
-          reportGeneration.set(reportId, {
-            error, stdout, stderr,
-            inProgress: false
-          });
 
-          await completeRequest(start, db, 'generate-report');
-        });
+      // we are going to set of the report generation
+      // let's indicate that, before we do it
       reportGeneration.set(reportId, {
         inProgress: true
       });
+
+      const p = startReportGeneration(
+        base, change, `${reportId}.html`, dbConfig);
+      const pp = p.then(async result => {
+        reportGeneration.set(reportId, {
+          stdout: result.stdout, stderr: result.stderr,
+          inProgress: false
+        });
+        await completeRequest(start, db, 'generate-report');
+      }).
+        catch(async e => {
+          const { stdout, stderr } = e;
+          console.error(`Report generation error: ${e}`);
+          reportGeneration.set(reportId, {
+            e, stdout, stderr,
+            inProgress: false
+          });
+          await completeRequest(start, db, 'generate-report');
+        });
+      data.completionPromise = pp;
     } else if (prevGenerationDetails.error) {
       // if previous attempt failed
       data.generationFailed = true;
@@ -255,7 +275,7 @@ export async function dashGetExpData(expId: number, dbConfig: DatabaseConfig,
 
   if (existsSync(expDataFile)) {
     data.preparingData = false;
-    data.downloadUrl = `/static/exp-data/${expDataId}.qs`;
+    data.downloadUrl = `${siteConfig.staticUrl}/exp-data/${expDataId}.qs`;
   } else {
     data.currentTime = new Date().toISOString();
 
@@ -267,7 +287,7 @@ export async function dashGetExpData(expId: number, dbConfig: DatabaseConfig,
 
       data.preparingData = true;
       // start preparing data
-      const args: ReadonlyArray<string> = [
+      const args: string[] = [
         expId.toString(),
         `${__dirname}/../../src/views/`, // R ReBenchDB library directory
         dbConfig.user,
@@ -280,21 +300,29 @@ export async function dashGetExpData(expId: number, dbConfig: DatabaseConfig,
         `Prepare Data for Download: ${
         __dirname}/../../src/stats/get-exp-data.R ${args.join(' ')}`);
 
-      execFile(`${__dirname}/../../src/stats/get-exp-data.R`, args,
-        async (error, stdout, stderr) => {
-          if (error) {
-            console.error(`Data preparation failed: ${error}`);
-          }
-          expDataPreparation.set(expDataId, {
-            error, stdout, stderr,
-            inProgress: false
-          });
-
-          await completeRequest(start, db, 'prep-exp-data');
-        });
       expDataPreparation.set(expDataId, {
         inProgress: true
       });
+
+      execFile(`${__dirname}/../../src/stats/get-exp-data.R`, args)
+        .then(async output => {
+          expDataPreparation.set(expDataId, {
+            stdout: output.stdout,
+            stderr: output.stderr,
+            inProgress: false
+          });
+          await completeRequest(start, db, 'prep-exp-data');
+        })
+        .catch(async error => {
+          console.error(`Data preparation failed: ${error}`);
+          expDataPreparation.set(expDataId, {
+            error,
+            stdout: error.stdout,
+            stderr: error.stderr,
+            inProgress: false
+          });
+        })
+        .finally(async () => await completeRequest(start, db, 'prep-exp-data'));
     } else if (prevPrepDetails.error) {
       // if previous attempt failed
       data.generationFailed = true;
@@ -377,4 +405,63 @@ export async function dashTimelineForProject(db: Database, projectId: number):
     timeline: (await timelineP).rows,
     details: (await timelineDetailsP).rows
   };
+}
+
+export async function reportCompletion(dbConfig: DatabaseConfig, db: Database,
+  github: GitHub, data: BenchmarkCompletion): Promise<void> {
+  await db.reportCompletion(data);
+
+  const baseline = await db.getBaselineCommit(data.projectName);
+  const change = await db.getSourceByNames(
+    data.projectName, data.experimentName);
+
+  const baselineSha = baseline?.commitid;
+  const changeSha = change?.commitid;
+
+  if (!baselineSha || !changeSha) {
+    throw new Error(
+      `While reporting compilation for experiment ${data.projectName}
+      ${data.experimentName}, ReBenchDB failed to a suitable comparison.
+      The baseline commit is: ${baselineSha}
+      The change commit is: ${changeSha}
+      Neither should be missing`);
+  }
+
+  const details = github.getOwnerRepoFromUrl(change?.repourl);
+  if (!details) {
+    throw new Error(
+      `The repository URL does not seem to be for GitHub.
+       Result notifications are currently only supported for GitHub.
+       Repo URL: ${change?.repourl}`);
+  }
+
+  const { reportId, completionPromise } = dashCompare(
+    baselineSha, changeSha, data.projectName, dbConfig, db);
+
+  completionPromise
+    .then(() => {
+      const plotFile = getSummaryPlotFileName(reportId + '.html');
+      const summaryPlot = `${siteConfig.staticUrl}/reports/${plotFile}`;
+      const msg = `#### Performance changes from ${baselineSha} to ${changeSha}
+
+![Summary Over All Benchmarks](${siteConfig.publicUrl}/${
+        summaryPlot})
+Summary Over All Benchmarks
+
+[Full Report](${siteConfig.publicUrl}/compare/${data.projectName}/${
+        baselineSha}/${changeSha})`;
+
+      // - post comment
+      github.postCommitComment(details.owner, details.repo, changeSha, msg);
+    })
+    .catch((e: any) => {
+      const msg = `ReBench execution completed.
+
+      See [full report](${siteConfig.publicUrl}/compare/${data.projectName}/${
+        baselineSha}/${changeSha}) for results.
+
+      <!-- Error occured: ${e} -->
+      `;
+      github.postCommitComment(details.owner, details.repo, changeSha, msg);
+    });
 }

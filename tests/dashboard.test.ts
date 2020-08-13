@@ -38,14 +38,31 @@ describe('Test Dashboard on empty DB', () => {
 
 describe('Test Dashboard with basic test data loaded', () => {
   let db: TestDatabase;
+  let projectName: string;
+  let baseBranch: string;
+  let expName2: string;
 
   // switch suites to use a template database
 
   beforeAll(async () => {
     db = await createAndInitializeDB('dash_basic', 25, true, false);
 
-    const basicTestData: BenchmarkData = JSON.parse(
-      readFileSync(`${__dirname}/small-payload.json`).toString());
+    const data = readFileSync(`${__dirname}/small-payload.json`).toString();
+    const basicTestData: BenchmarkData = JSON.parse(data);
+    projectName = basicTestData.projectName;
+
+    await db.recordMetaDataAndRuns(basicTestData);
+    await db.recordAllData(basicTestData);
+    baseBranch = basicTestData.source.branchOrTag;
+    db.setProjectBaseBranch(projectName, basicTestData.source.branchOrTag);
+
+    // have a second experiment in the database
+    basicTestData.experimentName += ' 2';
+    expName2 = basicTestData.experimentName;
+    basicTestData.startTime = '2019-12-14T22:49:56';
+    basicTestData.source.branchOrTag = 'exp2';
+    basicTestData.source.commitId = '2222222222222222222222222222222222222222';
+
     await db.recordMetaDataAndRuns(basicTestData);
     await db.recordAllData(basicTestData);
   });
@@ -61,9 +78,9 @@ describe('Test Dashboard with basic test data loaded', () => {
     expect(projects[0].id).toEqual(1);
   });
 
-  it('Should get results, but does not have any values', async () => {
+  it('Should get results', async () => {
     const results = (await dashResults(1, db)).timeSeries;
-    expect(results['NBody']).toHaveLength(3);
+    expect(results['NBody']).toHaveLength(2 * 3);
     expect(results['NBody'][0]).toBeCloseTo(383.82, 2);
   });
 
@@ -73,28 +90,39 @@ describe('Test Dashboard with basic test data loaded', () => {
 
     for (const table of result) {
       if (table.table === 'Measurements') {
-        expect(table.cnt).toEqual('3');
+        expect(table.cnt).toEqual('6');
+      } else if (table.table === 'Experiments' || table.table === 'Trials') {
+        expect(table.cnt).toEqual('2');
       } else {
-        expect(table.cnt).toEqual('1');
+        expect({ name: table.table, cnt: table.cnt }).toEqual(
+          { name: table.table, cnt: '1' });
       }
     }
   });
 
-  it('Should get change', async () => {
+  it('Should get changes', async () => {
     const result = (await dashChanges(1, db)).changes;
-    expect(result).toHaveLength(1);
+    expect(result).toHaveLength(2);
     expect(result[0].commitid).toEqual(
+      '2222222222222222222222222222222222222222');
+    expect(result[1].commitid).toEqual(
       '58666d1c84c652306f930daa72e7a47c58478e86');
   });
 
   it('Should get available data for DataOverview', async () => {
     await db.awaitQuiescentTimelineUpdater();
     const data = (await dashDataOverview(1, db)).data;
-    expect(data).toHaveLength(1);
+    expect(data).toHaveLength(2);
+
     expect(data[0].commitids).toEqual(
+      '2222222222222222222222222222222222222222');
+    expect(data[0].expid).toEqual(2);
+    expect(data[0].name).toEqual(expName2);
+
+    expect(data[1].commitids).toEqual(
       '58666d1c84c652306f930daa72e7a47c58478e86');
-    expect(data[0].expid).toEqual(1);
-    expect(data[0].name).toEqual('Small Test Case');
+    expect(data[1].expid).toEqual(1);
+    expect(data[1].name).toEqual('Small Test Case');
   });
 
   it('Should get benchmarks for project', async () => {
@@ -109,8 +137,8 @@ describe('Test Dashboard with basic test data loaded', () => {
     await db.awaitQuiescentTimelineUpdater();
     const { timeline, details } = (await dashTimelineForProject(db, 1));
 
-    expect(timeline).toHaveLength(1);
-    expect(details).toHaveLength(1);
+    expect(timeline).toHaveLength(2);
+    expect(details).toHaveLength(2);
 
     expect(timeline[0].mean).toEqual(433.04468);
     expect(timeline[0].maxval).toEqual(482.53);
@@ -125,6 +153,22 @@ describe('Test Dashboard with basic test data loaded', () => {
     expect(details[0].expname).toEqual('Small Test Case');
   });
 
+  it('Should determine a baseline commit for comparison', async () => {
+    const baseline = await db.getBaselineCommit(projectName);
+    expect(baseline?.branchortag).toEqual(baseBranch);
+    expect(
+      baseline?.commitid).toEqual('58666d1c84c652306f930daa72e7a47c58478e86');
+  });
+
+  it('Should determine a changed commit for comparison', async () => {
+    const source = await db.getSourceByNames(
+      projectName, expName2);
+    expect(
+      source?.commitid).toEqual('2222222222222222222222222222222222222222');
+    expect(source?.branchortag).toEqual('exp2');
+  });
+
+  // TODO
   // dashCompare
   // dashGetExpData
 
