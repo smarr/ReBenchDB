@@ -39,7 +39,7 @@ function formatCommitMessages(messages) {
   if (newLineIdx > -1) {
     const firstLine = messages.substr(0, newLineIdx);
     return `${firstLine} <a href="#" onclick="expandMessage(event)"` +
-        ` data-fulltext="${messages.replace('"', "\x22")}">&hellip;</a>`;
+        ` data-fulltext="${messages.replace('"', '\x22')}">&hellip;</a>`;
   } else {
     return messages;
   }

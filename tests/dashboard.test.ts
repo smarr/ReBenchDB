@@ -94,7 +94,7 @@ describe('Test Dashboard with basic test data loaded', () => {
     expect(data[0].commitids).toEqual(
       '58666d1c84c652306f930daa72e7a47c58478e86');
     expect(data[0].expid).toEqual(1);
-    expect(data[0].name).toEqual("Small Test Case");
+    expect(data[0].name).toEqual('Small Test Case');
   });
 
   it('Should get benchmarks for project', async () => {
@@ -102,7 +102,7 @@ describe('Test Dashboard with basic test data loaded', () => {
     const data = (await dashBenchmarksForProject(db, 1)).benchmarks;
     expect(data).toHaveLength(1);
     expect(data[0].benchid).toEqual(1);
-    expect(data[0].benchmark).toEqual("NBody");
+    expect(data[0].benchmark).toEqual('NBody');
   });
 
   it('Should get stats for the timeline', async () => {
@@ -121,8 +121,8 @@ describe('Test Dashboard with basic test data loaded', () => {
 
     expect(details[0].trialid).toEqual(1);
     expect(details[0].id).toEqual(1);
-    expect(details[0].username).toEqual("smarr");
-    expect(details[0].expname).toEqual("Small Test Case");
+    expect(details[0].username).toEqual('smarr');
+    expect(details[0].expname).toEqual('Small Test Case');
   });
 
   // dashCompare
