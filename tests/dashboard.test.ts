@@ -41,6 +41,8 @@ describe('Test Dashboard with basic test data loaded', () => {
   let projectName: string;
   let baseBranch: string;
   let expName2: string;
+  let expNameMerge: string;
+  let numExperiments: number;
 
   // switch suites to use a template database
 
@@ -65,6 +67,18 @@ describe('Test Dashboard with basic test data loaded', () => {
 
     await db.recordMetaDataAndRuns(basicTestData);
     await db.recordAllData(basicTestData);
+
+    // have a merge in the database
+    basicTestData.experimentName += ' 3';
+    expNameMerge = basicTestData.experimentName;
+    basicTestData.startTime = '2019-12-15T22:49:56';
+    basicTestData.source.branchOrTag = baseBranch;
+    basicTestData.source.commitId = '3333333333333333333333333333333333333333';
+
+    numExperiments = 3;
+
+    await db.recordMetaDataAndRuns(basicTestData);
+    await db.recordAllData(basicTestData);
   });
 
   afterAll(async () => {
@@ -80,8 +94,8 @@ describe('Test Dashboard with basic test data loaded', () => {
 
   it('Should get results', async () => {
     const results = (await dashResults(1, db)).timeSeries;
-    expect(results['NBody']).toHaveLength(2 * 3);
-    expect(results['NBody'][0]).toBeCloseTo(383.82, 2);
+    expect(results['NBody']).toHaveLength(numExperiments * 3);
+    expect(results['NBody'][0]).toBeCloseTo(432.783, 2);
   });
 
   it('Should get statistics', async () => {
@@ -90,9 +104,9 @@ describe('Test Dashboard with basic test data loaded', () => {
 
     for (const table of result) {
       if (table.table === 'Measurements') {
-        expect(table.cnt).toEqual('6');
+        expect(table.cnt).toEqual('' + (3 * numExperiments));
       } else if (table.table === 'Experiments' || table.table === 'Trials') {
-        expect(table.cnt).toEqual('2');
+        expect(table.cnt).toEqual('' + numExperiments);
       } else {
         expect({ name: table.table, cnt: table.cnt }).toEqual(
           { name: table.table, cnt: '1' });
@@ -102,27 +116,35 @@ describe('Test Dashboard with basic test data loaded', () => {
 
   it('Should get changes', async () => {
     const result = (await dashChanges(1, db)).changes;
-    expect(result).toHaveLength(2);
+    expect(result).toHaveLength(3);
     expect(result[0].commitid).toEqual(
-      '2222222222222222222222222222222222222222');
+      '3333333333333333333333333333333333333333');
     expect(result[1].commitid).toEqual(
+      '2222222222222222222222222222222222222222');
+    expect(result[2].commitid).toEqual(
       '58666d1c84c652306f930daa72e7a47c58478e86');
   });
 
   it('Should get available data for DataOverview', async () => {
     await db.awaitQuiescentTimelineUpdater();
     const data = (await dashDataOverview(1, db)).data;
-    expect(data).toHaveLength(2);
+    expect(data).toHaveLength(numExperiments);
 
     expect(data[0].commitids).toEqual(
-      '2222222222222222222222222222222222222222');
-    expect(data[0].expid).toEqual(2);
-    expect(data[0].name).toEqual(expName2);
+      '3333333333333333333333333333333333333333');
+    expect(data[0].expid).toEqual(3);
+    expect(data[0].name).toEqual(expNameMerge);
+
 
     expect(data[1].commitids).toEqual(
+      '2222222222222222222222222222222222222222');
+    expect(data[1].expid).toEqual(2);
+    expect(data[1].name).toEqual(expName2);
+
+    expect(data[2].commitids).toEqual(
       '58666d1c84c652306f930daa72e7a47c58478e86');
-    expect(data[1].expid).toEqual(1);
-    expect(data[1].name).toEqual('Small Test Case');
+    expect(data[2].expid).toEqual(1);
+    expect(data[2].name).toEqual('Small Test Case');
   });
 
   it('Should get benchmarks for project', async () => {
@@ -137,8 +159,8 @@ describe('Test Dashboard with basic test data loaded', () => {
     await db.awaitQuiescentTimelineUpdater();
     const { timeline, details } = (await dashTimelineForProject(db, 1));
 
-    expect(timeline).toHaveLength(2);
-    expect(details).toHaveLength(2);
+    expect(timeline).toHaveLength(numExperiments);
+    expect(details).toHaveLength(numExperiments);
 
     expect(timeline[0].mean).toEqual(433.04468);
     expect(timeline[0].maxval).toEqual(482.53);
@@ -154,7 +176,8 @@ describe('Test Dashboard with basic test data loaded', () => {
   });
 
   it('Should determine a baseline commit for comparison', async () => {
-    const baseline = await db.getBaselineCommit(projectName);
+    const baseline = await db.getBaselineCommit(
+      projectName, '3333333333333333333333333333333333333333');
     expect(baseline?.branchortag).toEqual(baseBranch);
     expect(
       baseline?.commitid).toEqual('58666d1c84c652306f930daa72e7a47c58478e86');

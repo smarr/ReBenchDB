@@ -482,7 +482,7 @@ export class Database {
     return result.rowCount === 1;
   }
 
-  public async getBaselineCommit(projectName: string):
+  public async getBaselineCommit(projectName: string, currentCommitId: string):
     Promise<Baseline | undefined> {
     const result = await this.client.query(`
       SELECT DISTINCT s.*, min(t.startTime) as firstStart
@@ -492,10 +492,11 @@ export class Database {
           JOIN Project p ON p.id = e.projectId
         WHERE p.name = $1 AND
           s.branchOrTag = p.baseBranch AND
+          s.commitId <> $2 AND
           p.baseBranch IS NOT NULL
         GROUP BY e.id, s.id
         ORDER BY firstStart DESC
-        LIMIT 1`, [projectName]);
+        LIMIT 1`, [projectName, currentCommitId]);
 
     if (result.rowCount < 1) {
       return undefined

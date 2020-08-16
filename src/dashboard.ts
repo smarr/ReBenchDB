@@ -411,20 +411,28 @@ export async function reportCompletion(dbConfig: DatabaseConfig, db: Database,
   github: GitHub, data: BenchmarkCompletion): Promise<void> {
   await db.reportCompletion(data);
 
-  const baseline = await db.getBaselineCommit(data.projectName);
   const change = await db.getSourceByNames(
     data.projectName, data.experimentName);
-
-  const baselineSha = baseline?.commitid;
   const changeSha = change?.commitid;
 
-  if (!baselineSha || !changeSha) {
+  if (!changeSha) {
     throw new Error(
-      `While reporting compilation for experiment ${data.projectName}
-      ${data.experimentName}, ReBenchDB failed to a suitable comparison.
-      The baseline commit is: ${baselineSha}
-      The change commit is: ${changeSha}
-      Neither should be missing`);
+      `ReBenchDB failed to identify the change commit that's to be used for the
+       comparison. There's likely an issue with
+       project (${data.projectName}) or
+       experiment (${data.experimentName}) name.`);
+  }
+
+  const baseline = await db.getBaselineCommit(data.projectName, changeSha);
+  const baselineSha = baseline?.commitid;
+
+  if (!baselineSha) {
+    throw new Error(
+      `ReBenchDB failed to identify the baseline commit that's to be used for
+       the comparison. There may be an issue with
+       project (${data.projectName}) or
+       experiment (${data.experimentName}) name.
+       The identified change commit is is ${changeSha}.`);
   }
 
   const details = github.getOwnerRepoFromUrl(change?.repourl);
