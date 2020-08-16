@@ -450,7 +450,7 @@ export async function reportCompletion(dbConfig: DatabaseConfig, db: Database,
     .then(() => {
       const plotFile = getSummaryPlotFileName(reportId + '.html');
       const summaryPlot = `${siteConfig.staticUrl}/reports/${plotFile}`;
-      const msg = `#### Performance changes from ${baselineSha} to ${changeSha}
+      const msg = `#### Performance changes for ${baselineSha}...${changeSha}
 
 ![Summary Over All Benchmarks](${siteConfig.publicUrl}/${
         summaryPlot})
