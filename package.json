@@ -13,7 +13,10 @@
     "koa-body": "4.1.1",
     "koa-router": "8.0.8",
     "mustache": "4.0.1",
-    "pg": "8.0.3"
+    "@octokit/rest": "18.0.3",
+    "@octokit/auth-app": "2.4.14",
+    "pg": "8.0.3",
+    "promisify-child-process": "4.1.1"
   },
   "devDependencies": {
     "@types/jest": "26.0.4",
@@ -23,6 +26,7 @@
     "@types/pg": "7.14.3",
     "@typescript-eslint/eslint-plugin": "3.6.0",
     "@typescript-eslint/parser": "3.6.0",
+    "@octokit/types": "5.4.0",
     "ajv": "6.12.3",
     "eslint": "7.4.0",
     "eslint-plugin-jest": "23.18.0",

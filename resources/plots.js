@@ -4,7 +4,7 @@
 'use strict';
 
 function simpleSlug(str) {
-  return str.replace(/[\W_]+/g,"");
+  return str.replace(/[\W_]+/g, '');
 }
 
 function renderResultsPlots(timeSeries, projectId, $) {

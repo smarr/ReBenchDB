@@ -3,7 +3,8 @@ import { readFileSync, existsSync } from 'fs';
 import {
   BenchmarkData, Executor as ApiExecutor, Suite as ApiSuite,
   Benchmark as ApiBenchmark, RunId as ApiRunId, Source as ApiSource,
-  Environment as ApiEnvironment, Criterion as ApiCriterion, Run as ApiRun
+  Environment as ApiEnvironment, Criterion as ApiCriterion, Run as ApiRun,
+  BenchmarkCompletion
 } from './api';
 import { Pool, PoolConfig, PoolClient } from 'pg';
 import { SingleRequestOnly } from './single-requester';
@@ -83,6 +84,7 @@ export interface Project {
   logo: string;
   showchanges: boolean;
   allresults: boolean;
+  basebranch: string;
 }
 
 export interface Source {
@@ -152,6 +154,10 @@ export interface Measurement {
   value: number;
 }
 
+export interface Baseline extends Source {
+  firststart: string;
+}
+
 export class Database {
   public client: Pool | PoolClient;
   protected readonly dbConfig: PoolConfig;
@@ -211,11 +217,17 @@ export class Database {
     insertTrial: `INSERT INTO Trial (manualRun, startTime, expId, username,
                                      envId, sourceId, denoise)
                   VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+    updateTrialEndTime: `UPDATE Trial t
+                         SET endTime = $2
+                         WHERE expId = $1 AND endTime IS NULL`,
 
     fetchProjectByName: 'SELECT * from Project WHERE name = $1',
     fetchProjectById: 'SELECT * from Project WHERE id = $1',
     insertProject: 'INSERT INTO Project (name) VALUES ($1) RETURNING *',
 
+    fetchExpByNames: `SELECT e.* FROM Experiment e
+                        JOIN Project p ON p.id = e.projectId
+                        WHERE p.name = $1 AND e.name = $2`,
     fetchExpByProjectIdName: `SELECT * FROM Experiment
                               WHERE projectId = $1 AND name = $2`,
     insertExp: `INSERT INTO Experiment (name, projectId, description)
@@ -461,6 +473,55 @@ export class Database {
     }
   }
 
+  public async setProjectBaseBranch(projectName: string, baseBranch: string):
+    Promise<boolean> {
+    const result = await this.client.query(`
+      UPDATE Project
+        SET baseBranch = $2
+        WHERE name = $1`, [projectName, baseBranch]);
+    return result.rowCount === 1;
+  }
+
+  public async getBaselineCommit(projectName: string, currentCommitId: string):
+    Promise<Baseline | undefined> {
+    const result = await this.client.query(`
+      SELECT DISTINCT s.*, min(t.startTime) as firstStart
+        FROM Source s
+          JOIN Trial t ON s.id = t.sourceId
+          JOIN Experiment e ON e.id = t.expId
+          JOIN Project p ON p.id = e.projectId
+        WHERE p.name = $1 AND
+          s.branchOrTag = p.baseBranch AND
+          s.commitId <> $2 AND
+          p.baseBranch IS NOT NULL
+        GROUP BY e.id, s.id
+        ORDER BY firstStart DESC
+        LIMIT 1`, [projectName, currentCommitId]);
+
+    if (result.rowCount < 1) {
+      return undefined
+    } else {
+      return result.rows[0];
+    }
+  }
+
+  public async getSourceByNames(projectName: string, experimentName: string):
+    Promise<Source | undefined> {
+    const result = await this.client.query(`
+      SELECT DISTINCT s.*
+        FROM Source s
+          JOIN Trial t ON s.id = t.sourceId
+          JOIN Experiment e ON e.id = t.expId
+          JOIN Project p ON p.id = e.projectId
+        WHERE p.name = $1 AND e.name = $2`, [projectName, experimentName]);
+
+    if (result.rowCount < 1) {
+      return undefined;
+    } else {
+      return result.rows[0];
+    }
+  }
+
   public async recordExperiment(data: BenchmarkData): Promise<Experiment> {
     const cacheKey = `${data.projectName}::${data.experimentName}`;
 
@@ -474,6 +535,46 @@ export class Database {
       this.queries.fetchExpByProjectIdName, [project.id, data.experimentName],
       this.queries.insertExp,
       [data.experimentName, project.id, data.experimentDesc]);
+  }
+
+  public async getExperimentByNames(
+    projectName: string, experimentName: string):
+    Promise<Experiment | undefined> {
+    const cacheKey = `${projectName}::${experimentName}`;
+    if (this.exps.has(cacheKey)) {
+      return this.exps.get(cacheKey);
+    }
+
+    const result = await this.client.query(
+      this.queries.fetchExpByNames, [projectName, experimentName]);
+    if (result.rowCount < 1) {
+      return undefined;
+    }
+    return result.rows[0];
+  }
+
+  public async recordExperimentCompletion(expId: number, endTime: string):
+    Promise<void> {
+    await this.client.query(
+      this.queries.updateTrialEndTime, [expId, endTime]);
+  }
+
+  public async reportCompletion(data: BenchmarkCompletion):
+    Promise<Experiment> {
+    const exp = await this.getExperimentByNames(
+      data.projectName, data.experimentName);
+    if (exp === undefined) {
+      throw new Error(
+        `Could not record completion, no experiment found for ${
+        data.projectName} ${data.experimentName}`);
+    }
+
+    if (!data.endTime) {
+      throw new Error(`Could not record completion without endTime`);
+    }
+
+    await this.recordExperimentCompletion(exp.id, data.endTime);
+    return exp;
   }
 
   private async recordUnit(unitName: string) {

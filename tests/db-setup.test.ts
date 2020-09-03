@@ -162,11 +162,11 @@ describe('Recording a ReBench execution data fragments', () => {
 
     // add denoise details to test data
     e.denoise = {
-      "scaling_governor": "performance",
-      "no_turbo": true,
-      "perf_event_max_sample_rate": 1,
-      "can_set_nice": true,
-      "shielding": true
+      'scaling_governor': 'performance',
+      'no_turbo': true,
+      'perf_event_max_sample_rate': 1,
+      'can_set_nice': true,
+      'shielding': true
     };
 
     const env = await db.recordEnvironment(e);
@@ -176,7 +176,7 @@ describe('Recording a ReBench execution data fragments', () => {
     expect(e.userName).toEqual(result.username);
     expect(e.manualRun).toEqual(result.manualrun);
     expect(env.id).toEqual(result.envid);
-    expect(e.denoise.scaling_governor).toEqual("performance");
+    expect(e.denoise.scaling_governor).toEqual('performance');
     expect(e.denoise).toEqual(result.denoise);
   });
 
@@ -198,7 +198,6 @@ describe('Recording a ReBench execution data fragments', () => {
     expect(criterion.id).toBeGreaterThanOrEqual(0);
   });
 });
-
 
 describe('Recording a ReBench execution from payload files', () => {
   let db: TestDatabase;

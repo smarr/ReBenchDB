@@ -13,7 +13,7 @@ export class TestDatabase extends Database {
 
   public async prepareForTesting(): Promise<void> {
     if (this.preparedForTesting) {
-      throw new Error("This is only to be executed once");
+      throw new Error('This is only to be executed once');
     }
 
     if (this.usesTransactions) {
@@ -59,8 +59,6 @@ export class TestDatabase extends Database {
     }
   }
 }
-
-
 
 export async function createAndInitializeDB(testSuite: string,
   numReplicates = 1000, timelineEnabled = false,

@@ -107,6 +107,12 @@ export interface BenchmarkData {
   projectName: string;
 }
 
+export interface BenchmarkCompletion {
+  projectName: string;
+  experimentName: string;
+  endTime?: string | null;
+}
+
 export interface Criterion {
   /** Id used to identify a criterion tuple. */
   i: number;

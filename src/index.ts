@@ -4,7 +4,7 @@ import Koa from 'koa';
 import koaBody from 'koa-body';
 import Router from 'koa-router';
 import { Database } from './db';
-import { BenchmarkData } from './api';
+import { BenchmarkData, BenchmarkCompletion } from './api';
 import { createValidator } from './api-validator';
 import ajv from 'ajv';
 
@@ -13,19 +13,14 @@ import { initPerfTracker, startRequest, completeRequest } from './perf-tracker';
 import {
   dashResults, dashStatistics, dashChanges, dashCompare, dashProjects,
   dashBenchmarksForProject, dashTimelineForProject, dashDataOverview,
-  dashGetExpData
+  dashGetExpData,
+  reportCompletion
 } from './dashboard';
 import { processTemplate } from './templates';
+import { dbConfig, siteConfig } from './util';
+import { GitHub } from './github';
 
 console.log('Starting ReBenchDB Version ' + version);
-
-const dbConfig = {
-  user: process.env.RDB_USER || '',
-  password: process.env.RDB_PASS || '',
-  host: process.env.RDB_HOST || 'localhost',
-  database: process.env.RDB_DB || 'test_rdb3',
-  port: 5432
-};
 
 const port = process.env.PORT || 33333;
 
@@ -142,7 +137,7 @@ router.get('/admin/perform-timeline-update', async ctx => {
 });
 
 if (DEV) {
-  router.get('/static/:filename', async ctx => {
+  router.get(`${siteConfig.staticUrl}/:filename`, async ctx => {
     console.log(`serve ${ctx.params.filename}`);
     // TODO: robustPath?
     ctx.body = readFileSync(
@@ -154,7 +149,7 @@ if (DEV) {
     }
   });
 
-  router.get('/static/exp-data/:filename', async ctx => {
+  router.get(`${siteConfig.staticUrl}/exp-data/:filename`, async ctx => {
     console.log(`serve ${ctx.params.filename}`);
     ctx.body = readFileSync(
       `${__dirname}/../../resources/exp-data/${ctx.params.filename}`);
@@ -163,17 +158,18 @@ if (DEV) {
     }
   });
 
-  router.get('/static/reports/:change/figure-html/:filename', async ctx => {
-    console.log(`serve ${ctx.params.filename}`);
-    ctx.body = readFileSync(
-      `${__dirname}/../../resources/reports/${ctx.params.change
-      }/figure-html/${ctx.params.filename}`);
-    if (ctx.params.filename.endsWith('.svg')) {
-      ctx.type = 'svg';
-    } else if (ctx.params.filename.endsWith('.css')) {
-      ctx.type = 'application/javascript';
-    }
-  });
+  router.get(`${siteConfig.reportsUrl}/:change/figure-html/:filename`,
+    async ctx => {
+      console.log(`serve ${ctx.params.filename}`);
+      ctx.body = readFileSync(
+        `${__dirname}/../../resources/reports/${ctx.params.change
+        }/figure-html/${ctx.params.filename}`);
+      if (ctx.params.filename.endsWith('.svg')) {
+        ctx.type = 'svg';
+      } else if (ctx.params.filename.endsWith('.css')) {
+        ctx.type = 'application/javascript';
+      }
+    });
 }
 
 
@@ -234,7 +230,7 @@ router.put('/rebenchdb/results', koaBody({ jsonLimit: '500mb' }), async ctx => {
 
     ctx.body = `Meta data for ${recordedRuns
       } stored. Storing of measurements is ongoing`;
-    ctx.status = 200;
+    ctx.status = 201;
   } catch (e) {
     ctx.status = 500;
     ctx.body = `${e.stack}`;
@@ -242,6 +238,40 @@ router.put('/rebenchdb/results', koaBody({ jsonLimit: '500mb' }), async ctx => {
   }
 
   await completeRequest(start, db, 'put-results');
+});
+
+const github = new GitHub(
+  siteConfig.appId, readFileSync(siteConfig.githubPrivateKey).toString());
+
+// curl -X PUT -H "Content-Type: application/json" \
+// -d '{"endTime":"bar","experimentName": \
+// "CI Benchmark Run Pipeline ID 7204","projectName": "SOMns"}' \
+//  https://rebench.stefan-marr.de/rebenchdb/completion
+router.put('/rebenchdb/completion', koaBody(), async ctx => {
+  const data: BenchmarkCompletion = await ctx.request.body;
+  ctx.type = 'text';
+
+  if (!data.experimentName || !data.projectName) {
+    ctx.body = 'Completion request misses mandatory fields. ' +
+      'In needs to have experimentName, and projectName';
+    ctx.status = 400;
+    return;
+  }
+
+  try {
+    await reportCompletion(dbConfig, db, github, data);
+    console.log(
+      `/rebenchdb/completion: ${data.projectName}` +
+      `${data.experimentName} was completed`);
+    ctx.status = 201;
+    ctx.body = `Completion recorded of ${
+      data.projectName} ${data.experimentName}`;
+  } catch (e) {
+    ctx.status = 500;
+    ctx.body = `Failed to record completion: ${e}\n${e.stack}`;
+    console.error(`/rebenchdb/completion failed to record completion: ${e}`);
+    console.log(e.stack);
+  }
 });
 
 app.use(router.routes());

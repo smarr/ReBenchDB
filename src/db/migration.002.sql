@@ -21,3 +21,6 @@ CREATE TABLE TimelineCalcJob (
 );
 
 ALTER SEQUENCE TimelineJobId OWNED BY TimelineCalcJob.timelineJobId;
+
+-- add the things needed for experiment comparisons
+ALTER TABLE Project ADD COLUMN baseBranch varchar;
