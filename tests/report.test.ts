@@ -58,6 +58,14 @@ describe('Knitr Report Generation', () => {
       expect(existsSync(plotPath)).toBeTruthy();
     });
 
+    it('Should not include the cross comparison', () => {
+      const content: string = readFileSync(
+        `${__dirname}/../resources/reports/${outputFile}`,
+        'utf8'
+      );
+      expect(content).not.toEqual(expect.stringContaining('Cross Comparison'));
+    });
+
     afterAll(async () => {
       unlinkSync(`${reportFolder}/${outputFile}`);
       const imageFolder = `${reportFolder}/${getOutputImageFolder(outputFile)}`;
@@ -101,6 +109,44 @@ describe('Knitr Report Generation', () => {
       expect(content).not.toEqual(
         expect.stringContaining('Summary Over All Benchmarks')
       );
+    });
+
+    afterAll(async () => {
+      unlinkSync(`${reportFolder}/${outputFile}`);
+      const imageFolder = `${reportFolder}/${getOutputImageFolder(outputFile)}`;
+      rmdirSync(imageFolder, { recursive: true });
+    });
+  });
+
+  describe('Report comparing two executables', () => {
+    const outputFileWithoutExtension = `report.test.ts`;
+    const outputFile = `${outputFileWithoutExtension}.html`;
+
+    it('Should successful execute generation', async () => {
+      const baseHash = '8ed27e';
+      const changeHash = 'f7408d';
+      const baseFile = `${__dirname}/data/rpython-all-base.qs`;
+      const changeFile = `${__dirname}/data/rpython-all-change.qs`;
+
+      const extraCmd = `from-file;${baseFile};${changeFile}`;
+
+      const output = await startReportGeneration(
+        baseHash,
+        changeHash,
+        outputFile,
+        {} as DatabaseConfig,
+        extraCmd
+      );
+
+      expect(output.code).toBe(0);
+    }, 120000);
+
+    it('Should include the cross comparison', () => {
+      const content: string = readFileSync(
+        `${reportFolder}/${outputFile}`,
+        'utf8'
+      );
+      expect(content).toEqual(expect.stringContaining('Cross Comparison'));
     });
 
     afterAll(async () => {
