@@ -6,7 +6,7 @@ import Router from 'koa-router';
 import { Database } from './db';
 import { BenchmarkData, BenchmarkCompletion } from './api';
 import { createValidator } from './api-validator';
-import ajv from 'ajv';
+import { ValidateFunction } from 'ajv';
 
 import { version } from '../package.json';
 import { initPerfTracker, startRequest, completeRequest } from './perf-tracker';
@@ -40,21 +40,21 @@ router.get('/', async ctx => {
 router.get('/timeline/:projectId', async ctx => {
   ctx.body = processTemplate(
     'timeline.html',
-    { project: await db.getProject(ctx.params.projectId) });
+    { project: await db.getProject(Number(ctx.params.projectId)) });
   ctx.type = 'html';
 });
 
 router.get('/project/:projectId', async ctx => {
   ctx.body = processTemplate(
     'project.html',
-    { project: await db.getProject(ctx.params.projectId) });
+    { project: await db.getProject(Number(ctx.params.projectId)) });
   ctx.type = 'html';
 });
 
 router.get('/rebenchdb/get-exp-data/:expId', async ctx => {
   const start = startRequest();
 
-  const data = await dashGetExpData(ctx.params.expId, dbConfig, db);
+  const data = await dashGetExpData(Number(ctx.params.expId), dbConfig, db);
 
   if (data.preparingData) {
     ctx.body = processTemplate('get-exp-data.html', data);
@@ -78,7 +78,7 @@ router.get(`/rebenchdb/dash/projects`, async ctx => {
 router.get('/rebenchdb/dash/:projectId/results', async ctx => {
   const start = startRequest();
 
-  ctx.body = await dashResults(ctx.params.projectId, db);
+  ctx.body = await dashResults(Number(ctx.params.projectId), db);
   ctx.type = 'application/json';
 
   await completeRequest(start, db, 'get-results');
@@ -87,14 +87,14 @@ router.get('/rebenchdb/dash/:projectId/results', async ctx => {
 router.get('/rebenchdb/dash/:projectId/benchmarks', async ctx => {
   const start = startRequest();
 
-  ctx.body = await dashBenchmarksForProject(db, ctx.params.projectId);
+  ctx.body = await dashBenchmarksForProject(db, Number(ctx.params.projectId));
   ctx.type = 'application/json';
 
   await completeRequest(start, db, 'project-benchmarks');
 });
 
 router.get('/rebenchdb/dash/:projectId/timeline', async ctx => {
-  ctx.body = await dashTimelineForProject(db, ctx.params.projectId);
+  ctx.body = await dashTimelineForProject(db, Number(ctx.params.projectId));
   ctx.type = 'application/json';
 });
 
@@ -105,12 +105,12 @@ router.get('/rebenchdb/stats', async ctx => {
 });
 
 router.get('/rebenchdb/dash/:projectId/changes', async ctx => {
-  ctx.body = await dashChanges(ctx.params.projectId, db);
+  ctx.body = await dashChanges(Number(ctx.params.projectId), db);
   ctx.type = 'application/json';
 });
 
 router.get('/rebenchdb/dash/:projectId/data-overview', async ctx => {
-  ctx.body = await dashDataOverview(ctx.params.projectId, db);
+  ctx.body = await dashDataOverview(Number(ctx.params.projectId), db);
   ctx.type = 'application/json';
 });
 
@@ -181,7 +181,7 @@ router.get('/status', async ctx => {
   ctx.type = 'text';
 });
 
-const validateFn: ajv.ValidateFunction =
+const validateFn: ValidateFunction =
   DEBUG ? createValidator()
     : <any> undefined;
 

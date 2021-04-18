@@ -1,9 +1,9 @@
 import { readFileSync } from 'fs';
-import Ajv from 'ajv';
+import { ValidateFunction } from 'ajv';
 import { createValidator } from '../src/api-validator';
 
 describe('Ensure Test Payloads conform to API', () => {
-  let validateFn: Ajv.ValidateFunction;
+  let validateFn: ValidateFunction;
 
   beforeAll(() => {
     validateFn = createValidator();

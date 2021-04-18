@@ -1,10 +1,10 @@
-import Ajv from 'ajv';
+import Ajv, { ValidateFunction } from 'ajv';
 import { existsSync } from 'fs';
 import {
   getProgramFromFiles, generateSchema, CompilerOptions, PartialArgs
 } from 'typescript-json-schema';
 
-export function createValidator(): Ajv.ValidateFunction {
+export function createValidator(): ValidateFunction {
   const compilerOptions: CompilerOptions = {
     strictNullChecks: true,
   };
