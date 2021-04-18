@@ -4,11 +4,13 @@ module.exports = {
   plugins: [
     '@typescript-eslint',
     'jest',
+    'prettier'
   ],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:jest/recommended',
+    'prettier'
   ],
   env: {
     browser: true,
@@ -22,6 +24,8 @@ module.exports = {
     '@typescript-eslint/explicit-module-boundary-types': [
       'error',
       { allowArgumentsExplicitlyTypedAsAny: true }
-    ]
+    ],
+    'jest/no-conditional-expect': 'off',
+    'prettier/prettier': 2
   }
 };

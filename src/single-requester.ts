@@ -12,7 +12,7 @@ export class SingleRequestOnly {
   private rerunRequested: boolean;
 
   private quiescencePromise?: Promise<any>;
-  private resolve?: () => void;
+  private resolve?: (value: any) => void;
   private reject?: () => void;
 
   constructor(request: () => Promise<any>) {
@@ -61,7 +61,7 @@ export class SingleRequestOnly {
         if (failed) {
           this.reject();
         } else {
-          this.resolve();
+          this.resolve(null);
         }
       }
       this.resolve = undefined;

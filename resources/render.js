@@ -38,8 +38,10 @@ function formatCommitMessages(messages) {
   const newLineIdx = messages.indexOf('\n');
   if (newLineIdx > -1) {
     const firstLine = messages.substr(0, newLineIdx);
-    return `${firstLine} <a href="#" onclick="expandMessage(event)"` +
-        ` data-fulltext="${messages.replace('"', '\x22')}">&hellip;</a>`;
+    return (
+      `${firstLine} <a href="#" onclick="expandMessage(event)"` +
+      ` data-fulltext="${messages.replace('"', '\x22')}">&hellip;</a>`
+    );
   } else {
     return messages;
   }
@@ -62,15 +64,17 @@ function renderProjectDataOverview(data, $) {
         <td>${
           row.minstarttime == null ? '' : formatDateWithTime(row.minstarttime)
         } ${
-          row.maxendtime == null ? '' : formatDateWithTime(row.maxendtime)}</td>
+      row.maxendtime == null ? '' : formatDateWithTime(row.maxendtime)
+    }</td>
         <td>${row.users}</td>
-        <td>${
-          shortenCommitIds(row.commitids)
-        } <p>${formatCommitMessages(row.commitmsgs)}</p></td>
+        <td>${shortenCommitIds(row.commitids)} <p>${formatCommitMessages(
+      row.commitmsgs
+    )}</p></td>
         <td>${row.hostnames}</td>
         <td class="num-col">${row.runs}</td>
-        <td class="num-col"><a href="/rebenchdb/get-exp-data/${
-          row.expid}">${row.measurements}</a></td>
+        <td class="num-col"><a href="/rebenchdb/get-exp-data/${row.expid}">${
+      row.measurements
+    }</a></td>
       </tr>`);
   }
 
@@ -86,8 +90,9 @@ function renderChanges(project, $) {
 
   const changesP = fetch(`/rebenchdb/dash/${project.id}/changes`);
   changesP.then(
-    async (changesDetailsResponse) => await renderChangeDetails(
-      changesDetailsResponse, project.id, $));
+    async (changesDetailsResponse) =>
+      await renderChangeDetails(changesDetailsResponse, project.id, $)
+  );
 
   const changes = `
     <h5>Changes</h5>
@@ -100,8 +105,8 @@ function renderChanges(project, $) {
       </div>
     </div></div>
 
-    <button type="button" class="btn btn-primary" id="p${
-      project.id}-compare">Compare</button>`;
+    <button type="button" class="btn btn-primary"
+      id="p${project.id}-compare">Compare</button>`;
   return changes;
 }
 
@@ -114,10 +119,10 @@ async function renderChangeDetails(changesDetailsResponse, projectId, $) {
     // strip out some metadata to be nicer to view.
     const msg = filterCommitMessage(change.commitmessage);
 
-    const option =
-    `<a class="list-group-item list-group-item-action list-min-padding"
+    const option = `<a class="list-group-item list-group-item-action
+      list-min-padding"
       data-toggle="list" data-hash="${change.commitid}" href="">
-        ${change.commitid.substr(0,  6)} ${change.branchortag}<br>
+        ${change.commitid.substr(0, 6)} ${change.branchortag}<br>
         <div style="font-size: 80%; line-height: 1">${msg}</div>
       </a>`;
 
@@ -139,11 +144,10 @@ function renderAllResults(project, $) {
   }
 
   const resultsP = fetch(`/rebenchdb/dash/${project.id}/results`);
-  resultsP.then(
-    async (resultsResponse) => {
-      const results = await resultsResponse.json();
-      renderResultsPlots(results.timeSeries, project.id, $);
-    });
+  resultsP.then(async (resultsResponse) => {
+    const results = await resultsResponse.json();
+    renderResultsPlots(results.timeSeries, project.id, $);
+  });
 
   return `<div id="p${project.id}-results"></div>`;
 }
@@ -153,8 +157,8 @@ function renderProject(project, $) {
   const allResults = renderAllResults(project, $);
 
   const result = `<div class="card">
-    <h5 class="card-header"><a href="/project/${
-      project.id}">${project.name}</a></h5>
+    <h5 class="card-header"><a
+      href="/project/${project.id}">${project.name}</a></h5>
     <div class="card-body">
       ${changes}
       ${allResults}
@@ -172,7 +176,8 @@ async function populateStatistics(statsP, $) {
     table.append(`<tr><td>${t.table}</td><td>${t.cnt}</td></tr>`);
   }
   table.append(
-    `<tr class="table-info"><td>Version</td><td>${stats.version}</td></tr>`);
+    `<tr class="table-info"><td>Version</td><td>${stats.version}</td></tr>`
+  );
 }
 
 function renderBenchmarks(benchmarks, $) {
@@ -206,6 +211,9 @@ function renderBenchmark(benchmark) {
   const pathRegex = /^(.*?)((?:\/\w+)\s.*$)/;
   const cmdline = benchmark.cmdline.replace(pathRegex, '.$2');
 
+  const plotId =
+    `${benchmark.benchid}-${benchmark.suiteid}` +
+    `-${benchmark.execid}-${benchmark.hostname}`;
   const result = `
     <div class="card">
       <div class="card-body">
@@ -213,10 +221,9 @@ function renderBenchmark(benchmark) {
         <p class="card-text"><small class="text-muted">
         ${benchmark.execname}, ${benchmark.hostname}<br/>
         <code>${cmdline}</code></small></p>
-        <div class="timeline-plot" id="plot-${
-          benchmark.benchid}-${benchmark.suiteid}-${
-            benchmark.execid}-${
-              benchmark.hostname}" class="card-img-top"></div>
+        <div class="timeline-plot"
+          id="plot-${plotId}"
+          class="card-img-top"></div>
       </div>
     </div>`;
 
@@ -234,8 +241,9 @@ function renderTimelinePlots(data, $) {
   }
 
   for (const result of data.timeline) {
-    const key = `plot-${result.benchmarkid}-${
-      result.suiteid}-${result.execid}-${result.hostname}`;
+    const key =
+      `plot-${result.benchmarkid}-${result.suiteid}` +
+      `-${result.execid}-${result.hostname}`;
     if (!benchmarks.has(key)) {
       benchmarks.set(key, []);
     }
@@ -256,14 +264,18 @@ function renderTimelinePlots(data, $) {
 
   // and force render first 6
   let delay = 0;
-  $('.timeline-plot').slice(0, 5).each(function () {
-    triggerRendering($(this), benchmarks, delay);
-    delay += 1;
-  });
+  $('.timeline-plot')
+    .slice(0, 5)
+    .each(function () {
+      triggerRendering($(this), benchmarks, delay);
+      delay += 1;
+    });
 }
 
 function triggerRendering(elem, benchmarks, delay) {
   const id = elem.prop('id');
   const results = benchmarks.get(id);
-  setTimeout(() => {renderTimelinePlot(id, results);}, 130 * delay);
+  setTimeout(() => {
+    renderTimelinePlot(id, results);
+  }, 130 * delay);
 }

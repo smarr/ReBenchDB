@@ -1,9 +1,15 @@
 import { execFile } from 'child_process';
 import { readFileSync, existsSync } from 'fs';
 import {
-  BenchmarkData, Executor as ApiExecutor, Suite as ApiSuite,
-  Benchmark as ApiBenchmark, RunId as ApiRunId, Source as ApiSource,
-  Environment as ApiEnvironment, Criterion as ApiCriterion, Run as ApiRun,
+  BenchmarkData,
+  Executor as ApiExecutor,
+  Suite as ApiSuite,
+  Benchmark as ApiBenchmark,
+  RunId as ApiRunId,
+  Source as ApiSource,
+  Environment as ApiEnvironment,
+  Criterion as ApiCriterion,
+  Run as ApiRun,
   BenchmarkCompletion
 } from './api';
 import { Pool, PoolConfig, PoolClient } from 'pg';
@@ -291,8 +297,11 @@ export class Database {
 
   private static readonly batchN = 50;
 
-  constructor(config: PoolConfig, numReplicates = 1000,
-    timelineEnabled = false) {
+  constructor(
+    config: PoolConfig,
+    numReplicates = 1000,
+    timelineEnabled = false
+  ) {
     console.assert(config !== undefined);
     this.dbConfig = config;
     this.numReplicates = numReplicates;
@@ -309,14 +318,14 @@ export class Database {
     this.criteria = new Map();
     this.projects = new Map();
 
-    this.queries.insertMeasurementBatchedN.text =
-      `INSERT INTO Measurement
+    this.queries.insertMeasurementBatchedN.text = `INSERT INTO Measurement
          (runId, trialId, invocation, iteration, criterion, value)
        VALUES ${this.generateBatchInsert(Database.batchN, 6)}
        ON CONFLICT DO NOTHING`;
 
-    this.timelineUpdater = new SingleRequestOnly(
-      async () => { return this.performTimelineUpdate(); });
+    this.timelineUpdater = new SingleRequestOnly(async () => {
+      return this.performTimelineUpdate();
+    });
   }
 
   private generateBatchInsert(numTuples: number, sizeTuples: number) {
@@ -359,16 +368,22 @@ export class Database {
   }
 
   public async close(): Promise<void> {
-    await (<any> this.client).end();
-    (<any> this).client = null;
+    await (<any>this.client).end();
+    (<any>this).client = null;
   }
 
   public async activateTransactionSupport(): Promise<void> {
-    this.client = <PoolClient> await this.client.connect();
+    this.client = <PoolClient>await this.client.connect();
   }
 
   private async recordCached(
-    cache, cacheKey, fetchQ, qVals, insertQ, insertVals) {
+    cache,
+    cacheKey,
+    fetchQ,
+    qVals,
+    insertQ,
+    insertVals
+  ) {
     if (cache.has(cacheKey)) {
       return cache.get(cacheKey);
     }
@@ -384,87 +399,149 @@ export class Database {
   }
 
   private async recordNameDesc(item, cache, fetchQ, insertQ) {
-    return this.recordCached(
-      cache, item.name, fetchQ, [item.name], insertQ, [item.name, item.desc]);
+    return this.recordCached(cache, item.name, fetchQ, [item.name], insertQ, [
+      item.name,
+      item.desc
+    ]);
   }
 
   public async recordExecutor(e: ApiExecutor): Promise<Executor> {
-    return this.recordNameDesc(e, this.executors,
-      this.queries.fetchExecutorByName, this.queries.insertExecutor);
+    return this.recordNameDesc(
+      e,
+      this.executors,
+      this.queries.fetchExecutorByName,
+      this.queries.insertExecutor
+    );
   }
 
   public async recordSuite(s: ApiSuite): Promise<Suite> {
-    return this.recordNameDesc(s, this.suites,
-      this.queries.fetchSuiteByName, this.queries.insertSuite);
+    return this.recordNameDesc(
+      s,
+      this.suites,
+      this.queries.fetchSuiteByName,
+      this.queries.insertSuite
+    );
   }
 
   public async recordBenchmark(b: ApiBenchmark): Promise<Benchmark> {
-    return this.recordNameDesc(b, this.benchmarks,
-      this.queries.fetchBenchmarkByName, this.queries.insertBenchmark);
+    return this.recordNameDesc(
+      b,
+      this.benchmarks,
+      this.queries.fetchBenchmarkByName,
+      this.queries.insertBenchmark
+    );
   }
 
   public async recordRun(run: ApiRunId): Promise<Run> {
     if (this.runs.has(run.cmdline)) {
-      return <Run> this.runs.get(run.cmdline);
+      return <Run>this.runs.get(run.cmdline);
     }
 
     const exec = await this.recordExecutor(run.benchmark.suite.executor);
     const suite = await this.recordSuite(run.benchmark.suite);
     const benchmark = await this.recordBenchmark(run.benchmark);
 
-    return this.recordCached(this.runs, run.cmdline,
-      this.queries.fetchRunByCmd, [run.cmdline],
-      this.queries.insertRun, [
-      run.cmdline, benchmark.id, exec.id, suite.id, run.location,
-      run.cores, run.inputSize, run.varValue, run.extraArgs,
-      run.benchmark.runDetails.maxInvocationTime,
-      run.benchmark.runDetails.minIterationTime,
-      run.benchmark.runDetails.warmup]);
+    return this.recordCached(
+      this.runs,
+      run.cmdline,
+      this.queries.fetchRunByCmd,
+      [run.cmdline],
+      this.queries.insertRun,
+      [
+        run.cmdline,
+        benchmark.id,
+        exec.id,
+        suite.id,
+        run.location,
+        run.cores,
+        run.inputSize,
+        run.varValue,
+        run.extraArgs,
+        run.benchmark.runDetails.maxInvocationTime,
+        run.benchmark.runDetails.minIterationTime,
+        run.benchmark.runDetails.warmup
+      ]
+    );
   }
 
   public async recordSource(s: ApiSource): Promise<Source> {
-    return this.recordCached(this.sources, s.commitId,
-      this.queries.fetchSourceByCommitId, [s.commitId],
+    return this.recordCached(
+      this.sources,
+      s.commitId,
+      this.queries.fetchSourceByCommitId,
+      [s.commitId],
       this.queries.insertSource,
-      [s.repoURL, s.branchOrTag, s.commitId, s.commitMsg,
-      s.authorName, s.authorEmail, s.committerName, s.committerEmail]);
+      [
+        s.repoURL,
+        s.branchOrTag,
+        s.commitId,
+        s.commitMsg,
+        s.authorName,
+        s.authorEmail,
+        s.committerName,
+        s.committerEmail
+      ]
+    );
   }
 
   public async recordEnvironment(e: ApiEnvironment): Promise<Environment> {
-    return this.recordCached(this.envs, e.hostName,
-      this.queries.fetchEnvByHostName, [e.hostName],
-      this.queries.insertEnv, [
-      e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed]);
+    return this.recordCached(
+      this.envs,
+      e.hostName,
+      this.queries.fetchEnvByHostName,
+      [e.hostName],
+      this.queries.insertEnv,
+      [e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed]
+    );
   }
 
-  public async recordTrial(data: BenchmarkData, env: Environment,
-    exp: Experiment): Promise<Trial> {
+  public async recordTrial(
+    data: BenchmarkData,
+    env: Environment,
+    exp: Experiment
+  ): Promise<Trial> {
     const e = data.env;
     const cacheKey = `${e.userName}-${env.id}-${data.startTime}`;
 
     if (this.trials.has(cacheKey)) {
-      return <Trial> this.trials.get(cacheKey);
+      return <Trial>this.trials.get(cacheKey);
     }
 
     const source = await this.recordSource(data.source);
 
-    return this.recordCached(this.trials, cacheKey,
+    return this.recordCached(
+      this.trials,
+      cacheKey,
       this.queries.fetchTrialByUserEnvStart,
       [e.userName, env.id, data.startTime],
       this.queries.insertTrial,
-      [e.manualRun, data.startTime, exp.id, e.userName, env.id, source.id,
-      e.denoise]);
+      [
+        e.manualRun,
+        data.startTime,
+        exp.id,
+        e.userName,
+        env.id,
+        source.id,
+        e.denoise
+      ]
+    );
   }
 
   public async recordProject(projectName: string): Promise<Project> {
-    return this.recordCached(this.projects, projectName,
-      this.queries.fetchProjectByName, [projectName],
-      this.queries.insertProject, [projectName]);
+    return this.recordCached(
+      this.projects,
+      projectName,
+      this.queries.fetchProjectByName,
+      [projectName],
+      this.queries.insertProject,
+      [projectName]
+    );
   }
 
   public async getProject(projectId: number): Promise<Project | undefined> {
-    const result = await this.client.query(
-      this.queries.fetchProjectById, [projectId]);
+    const result = await this.client.query(this.queries.fetchProjectById, [
+      projectId
+    ]);
 
     if (result.rowCount !== 1) {
       return undefined;
@@ -473,18 +550,26 @@ export class Database {
     }
   }
 
-  public async setProjectBaseBranch(projectName: string, baseBranch: string):
-    Promise<boolean> {
-    const result = await this.client.query(`
+  public async setProjectBaseBranch(
+    projectName: string,
+    baseBranch: string
+  ): Promise<boolean> {
+    const result = await this.client.query(
+      `
       UPDATE Project
         SET baseBranch = $2
-        WHERE name = $1`, [projectName, baseBranch]);
+        WHERE name = $1`,
+      [projectName, baseBranch]
+    );
     return result.rowCount === 1;
   }
 
-  public async getBaselineCommit(projectName: string, currentCommitId: string):
-    Promise<Baseline | undefined> {
-    const result = await this.client.query(`
+  public async getBaselineCommit(
+    projectName: string,
+    currentCommitId: string
+  ): Promise<Baseline | undefined> {
+    const result = await this.client.query(
+      `
       SELECT DISTINCT s.*, min(t.startTime) as firstStart
         FROM Source s
           JOIN Trial t ON s.id = t.sourceId
@@ -496,24 +581,31 @@ export class Database {
           p.baseBranch IS NOT NULL
         GROUP BY e.id, s.id
         ORDER BY firstStart DESC
-        LIMIT 1`, [projectName, currentCommitId]);
+        LIMIT 1`,
+      [projectName, currentCommitId]
+    );
 
     if (result.rowCount < 1) {
-      return undefined
+      return undefined;
     } else {
       return result.rows[0];
     }
   }
 
-  public async getSourceByNames(projectName: string, experimentName: string):
-    Promise<Source | undefined> {
-    const result = await this.client.query(`
+  public async getSourceByNames(
+    projectName: string,
+    experimentName: string
+  ): Promise<Source | undefined> {
+    const result = await this.client.query(
+      `
       SELECT DISTINCT s.*
         FROM Source s
           JOIN Trial t ON s.id = t.sourceId
           JOIN Experiment e ON e.id = t.expId
           JOIN Project p ON p.id = e.projectId
-        WHERE p.name = $1 AND e.name = $2`, [projectName, experimentName]);
+        WHERE p.name = $1 AND e.name = $2`,
+      [projectName, experimentName]
+    );
 
     if (result.rowCount < 1) {
       return undefined;
@@ -526,47 +618,59 @@ export class Database {
     const cacheKey = `${data.projectName}::${data.experimentName}`;
 
     if (this.exps.has(cacheKey)) {
-      return <Experiment> this.exps.get(cacheKey);
+      return <Experiment>this.exps.get(cacheKey);
     }
 
     const project = await this.recordProject(data.projectName);
 
-    return this.recordCached(this.exps, cacheKey,
-      this.queries.fetchExpByProjectIdName, [project.id, data.experimentName],
+    return this.recordCached(
+      this.exps,
+      cacheKey,
+      this.queries.fetchExpByProjectIdName,
+      [project.id, data.experimentName],
       this.queries.insertExp,
-      [data.experimentName, project.id, data.experimentDesc]);
+      [data.experimentName, project.id, data.experimentDesc]
+    );
   }
 
   public async getExperimentByNames(
-    projectName: string, experimentName: string):
-    Promise<Experiment | undefined> {
+    projectName: string,
+    experimentName: string
+  ): Promise<Experiment | undefined> {
     const cacheKey = `${projectName}::${experimentName}`;
     if (this.exps.has(cacheKey)) {
       return this.exps.get(cacheKey);
     }
 
-    const result = await this.client.query(
-      this.queries.fetchExpByNames, [projectName, experimentName]);
+    const result = await this.client.query(this.queries.fetchExpByNames, [
+      projectName,
+      experimentName
+    ]);
     if (result.rowCount < 1) {
       return undefined;
     }
     return result.rows[0];
   }
 
-  public async recordExperimentCompletion(expId: number, endTime: string):
-    Promise<void> {
-    await this.client.query(
-      this.queries.updateTrialEndTime, [expId, endTime]);
+  public async recordExperimentCompletion(
+    expId: number,
+    endTime: string
+  ): Promise<void> {
+    await this.client.query(this.queries.updateTrialEndTime, [expId, endTime]);
   }
 
-  public async reportCompletion(data: BenchmarkCompletion):
-    Promise<Experiment> {
+  public async reportCompletion(
+    data: BenchmarkCompletion
+  ): Promise<Experiment> {
     const exp = await this.getExperimentByNames(
-      data.projectName, data.experimentName);
+      data.projectName,
+      data.experimentName
+    );
     if (exp === undefined) {
       throw new Error(
-        `Could not record completion, no experiment found for ${
-        data.projectName} ${data.experimentName}`);
+        `Could not record completion, no experiment found for ` +
+          `${data.projectName} ${data.experimentName}`
+      );
     }
 
     if (!data.endTime) {
@@ -588,17 +692,23 @@ export class Database {
     const cacheKey = `${c.c}::${c.u}`;
 
     if (this.criteria.has(cacheKey)) {
-      return <Criterion> this.criteria.get(cacheKey);
+      return <Criterion>this.criteria.get(cacheKey);
     }
 
     await this.recordUnit(c.u);
-    return this.recordCached(this.criteria, cacheKey,
-      this.queries.fetchCriterionByNameUnit, [c.c, c.u],
-      this.queries.insertCriterion, [c.c, c.u]);
+    return this.recordCached(
+      this.criteria,
+      cacheKey,
+      this.queries.fetchCriterionByNameUnit,
+      [c.c, c.u],
+      this.queries.insertCriterion,
+      [c.c, c.u]
+    );
   }
 
-  private async resolveCriteria(data: ApiCriterion[]):
-    Promise<Map<number, Criterion>> {
+  private async resolveCriteria(
+    data: ApiCriterion[]
+  ): Promise<Map<number, Criterion>> {
     const criteria: Map<number, Criterion> = new Map();
     for (const c of data) {
       criteria.set(c.i, await this.recordCriterion(c));
@@ -607,8 +717,9 @@ export class Database {
   }
 
   private async retrieveAvailableMeasurements(trialId: number) {
-    const results = await this.client.query(
-      this.queries.fetchMaxMeasurements, [trialId]);
+    const results = await this.client.query(this.queries.fetchMaxMeasurements, [
+      trialId
+    ]);
     const measurements = {};
     for (const r of results.rows) {
       // runid, criterion, inv, ite
@@ -626,15 +737,18 @@ export class Database {
 
       console.assert(
         !(r.inv in crit),
-        `${r.runid}, ${r.criterion}, ${r.inv} in ${JSON.stringify(crit)}`);
+        `${r.runid}, ${r.criterion}, ${r.inv} in ${JSON.stringify(crit)}`
+      );
       crit[r.inv] = r.ite;
     }
 
     return measurements;
   }
 
-  private alreadyRecorded(measurements, [runId, _expId, inv, ite, critId, _val]:
-    any[]) {
+  private alreadyRecorded(
+    measurements,
+    [runId, _expId, inv, ite, critId, _val]: any[]
+  ) {
     if (runId in measurements) {
       const run = measurements[runId];
       if (critId in run) {
@@ -669,8 +783,13 @@ export class Database {
     return recordedMeasurements;
   }
 
-  public async recordMeasurements(r: ApiRun, run: any, trial: any,
-    criteria: Map<any, any>, availableMs: any): Promise<number> {
+  public async recordMeasurements(
+    r: ApiRun,
+    run: any,
+    trial: any,
+    criteria: Map<any, any>,
+    availableMs: any
+  ): Promise<number> {
     let recordedMeasurements = 0;
     let batchedMs = 0;
     let batchedValues: any[] = [];
@@ -681,7 +800,13 @@ export class Database {
         // batched inserts are much faster
         // so let's do this
         const values = [
-          run.id, trial.id, d.in, d.it, criteria.get(m.c).id, m.v];
+          run.id,
+          trial.id,
+          d.in,
+          d.it,
+          criteria.get(m.c).id,
+          m.v
+        ];
         if (this.alreadyRecorded(availableMs, values)) {
           // then,just skip this one.
           continue;
@@ -699,7 +824,8 @@ export class Database {
             // where a request aborted
             if (isUniqueViolationError(err)) {
               recordedMeasurements += await this.recordMeasurementsFromBatch(
-                batchedValues);
+                batchedValues
+              );
             } else {
               throw err;
             }
@@ -719,24 +845,29 @@ export class Database {
       } catch (err) {
         if (isUniqueViolationError(err)) {
           recordedMeasurements += await this.recordMeasurementsFromBatch(
-            batchedValues);
+            batchedValues
+          );
         }
       }
       batchedValues = rest;
     }
 
     recordedMeasurements += await this.recordMeasurementsFromBatch(
-      batchedValues);
+      batchedValues
+    );
 
     await updateJobs.submitUpdateJobs();
     return recordedMeasurements;
   }
 
-  public async recordMetaData(data: BenchmarkData):
-    Promise<{
-      env: Environment, exp: Experiment, trial: Trial,
-      criteria: Map<number, Criterion>
-    }> {
+  public async recordMetaData(
+    data: BenchmarkData
+  ): Promise<{
+    env: Environment;
+    exp: Experiment;
+    trial: Trial;
+    criteria: Map<number, Criterion>;
+  }> {
     const env = await this.recordEnvironment(data.env);
     const exp = await this.recordExperiment(data);
     const trial = await this.recordTrial(data, env, exp);
@@ -746,8 +877,10 @@ export class Database {
     return { env, exp, trial, criteria };
   }
 
-  public async recordAllData(data: BenchmarkData, suppressTimeline = false):
-    Promise<number> {
+  public async recordAllData(
+    data: BenchmarkData,
+    suppressTimeline = false
+  ): Promise<number> {
     const { trial, criteria } = await this.recordMetaData(data);
 
     let recordedMeasurements = 0;
@@ -756,7 +889,12 @@ export class Database {
       const run = await this.recordRun(r.runId);
       const availableMs = await this.retrieveAvailableMeasurements(trial.id);
       recordedMeasurements += await this.recordMeasurements(
-        r, run, trial, criteria, availableMs);
+        r,
+        run,
+        trial,
+        criteria,
+        availableMs
+      );
     }
 
     if (recordedMeasurements > 0 && this.timelineEnabled && !suppressTimeline) {
@@ -819,10 +957,16 @@ export class Database {
       }
 
       const dbArgs = <string[]>[
-        this.dbConfig.database, this.dbConfig.user, this.dbConfig.password,
-        this.numReplicates];
+        this.dbConfig.database,
+        this.dbConfig.user,
+        this.dbConfig.password,
+        this.numReplicates
+      ];
       const start = startRequest();
-      execFile(timelineR, dbArgs, { cwd: workDir },
+      execFile(
+        timelineR,
+        dbArgs,
+        { cwd: workDir },
         async (errorCode, stdout, stderr) => {
           function handleResult() {
             if (errorCode) {
@@ -840,7 +984,8 @@ export class Database {
           completeRequest(start, this, 'generate-timeline')
             .then(handleResult)
             .catch(handleResult);
-        });
+        }
+      );
     });
     return prom;
   }
