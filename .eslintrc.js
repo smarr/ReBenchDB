@@ -22,6 +22,7 @@ module.exports = {
     '@typescript-eslint/explicit-module-boundary-types': [
       'error',
       { allowArgumentsExplicitlyTypedAsAny: true }
-    ]
+    ],
+    'jest/no-conditional-expect': 'off'
   }
 };
