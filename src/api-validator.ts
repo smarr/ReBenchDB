@@ -1,12 +1,15 @@
 import Ajv, { ValidateFunction } from 'ajv';
 import { existsSync } from 'fs';
 import {
-  getProgramFromFiles, generateSchema, CompilerOptions, PartialArgs
+  getProgramFromFiles,
+  generateSchema,
+  CompilerOptions,
+  PartialArgs
 } from 'typescript-json-schema';
 
 export function createValidator(): ValidateFunction {
   const compilerOptions: CompilerOptions = {
-    strictNullChecks: true,
+    strictNullChecks: true
   };
 
   const settings: PartialArgs = {
@@ -22,5 +25,5 @@ export function createValidator(): ValidateFunction {
   const schema = generateSchema(program, 'BenchmarkData', settings);
 
   const ajv = new Ajv({ allErrors: true });
-  return ajv.compile(<any> schema);
+  return ajv.compile(<any>schema);
 }

@@ -1,6 +1,10 @@
 export const robustPath = __dirname.includes('dist/')
-  ? function(path) { return `${__dirname}/../../src/${path}`; }
-  : function(path) { return `${__dirname}/${path}`; };
+  ? function (path) {
+      return `${__dirname}/../../src/${path}`;
+    }
+  : function (path) {
+      return `${__dirname}/${path}`;
+    };
 
 export const dbConfig = {
   user: process.env.RDB_USER || '',
@@ -16,5 +20,5 @@ export const siteConfig = {
   publicUrl: process.env.PUBLIC_URL || 'https://rebench.stefan-marr.de',
   appId: parseInt(process.env.GITHUB_APP_ID || '') || 76497,
   githubPrivateKey:
-    process.env.GITHUB_PK || 'rebenchdb.2020-08-11.private-key.pem',
-}
+    process.env.GITHUB_PK || 'rebenchdb.2020-08-11.private-key.pem'
+};

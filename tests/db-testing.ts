@@ -5,8 +5,12 @@ export class TestDatabase extends Database {
   private readonly usesTransactions: boolean;
   private preparedForTesting = false;
 
-  constructor(config: PoolConfig, numReplicates: number,
-    timelineEnabled: boolean, useTransactions: boolean) {
+  constructor(
+    config: PoolConfig,
+    numReplicates: number,
+    timelineEnabled: boolean,
+    useTransactions: boolean
+  ) {
     super(config, numReplicates, timelineEnabled);
     this.usesTransactions = useTransactions;
   }
@@ -60,18 +64,28 @@ export class TestDatabase extends Database {
   }
 }
 
-export async function createAndInitializeDB(testSuite: string,
-  numReplicates = 1000, timelineEnabled = false,
-  useTransactions = true): Promise<TestDatabase> {
+export async function createAndInitializeDB(
+  testSuite: string,
+  numReplicates = 1000,
+  timelineEnabled = false,
+  useTransactions = true
+): Promise<TestDatabase> {
   const testDb = await createDB(
-    testSuite, numReplicates, timelineEnabled, useTransactions);
+    testSuite,
+    numReplicates,
+    timelineEnabled,
+    useTransactions
+  );
   await testDb.prepareForTesting();
   return testDb;
 }
 
-export async function createDB(testSuite: string,
-  numReplicates = 1000, timelineEnabled = false,
-  useTransactions = true): Promise<TestDatabase> {
+export async function createDB(
+  testSuite: string,
+  numReplicates = 1000,
+  timelineEnabled = false,
+  useTransactions = true
+): Promise<TestDatabase> {
   // TODO: use a template database, which may speed up things slightly?
   // https://walrus.ai/blog/2020/04/testing-database-interactions-with-jest/
   // https://www.postgresql.org/docs/current/manage-ag-templatedbs.html

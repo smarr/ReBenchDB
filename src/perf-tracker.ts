@@ -6,7 +6,7 @@ let startTime: string;
 const iterations = {
   'get-results': 0,
   'put-results': 0,
-  'change': 0,
+  change: 0,
   'generate-report': 0,
   'generate-timeline': 0,
   'prep-exp-data': 0,
@@ -17,7 +17,7 @@ const iterations = {
 const descriptions = {
   'get-results': 'Time of GET /rebenchdb/dash/:projectId/results',
   'put-results': 'Time of PUT /rebenchdb/results',
-  'change': 'Time of GET /compare/:project/:baseline/:change',
+  change: 'Time of GET /compare/:project/:baseline/:change',
   'generate-report': 'Time of Running R Reporting for /compare/*',
   'generate-timeline': 'Time of Running R stats to generate timeline data',
   'prep-exp-data': 'Prepare experiment data for download',
@@ -39,35 +39,45 @@ function constructData(time: number, it: number, benchmark: string) {
 
   const data: BenchmarkData = {
     experimentName: 'monitoring',
-    data: [{
-      d: [dataPoint],
-      runId: {
-        benchmark: {
-          name: benchmark,
-          suite: {
-            name: 'ReBenchDB API',
-            desc: 'Performance tracking of the ReBenchDB API',
-            executor: {
-              name: 'Node.js',
-              desc: null
-            }
+    data: [
+      {
+        d: [dataPoint],
+        runId: {
+          benchmark: {
+            name: benchmark,
+            suite: {
+              name: 'ReBenchDB API',
+              desc: 'Performance tracking of the ReBenchDB API',
+              executor: {
+                name: 'Node.js',
+                desc: null
+              }
+            },
+            runDetails: {
+              maxInvocationTime: 0,
+              minIterationTime: 0,
+              warmup: null
+            },
+            desc: descriptions[benchmark]
           },
-          runDetails: {
-            maxInvocationTime: 0, minIterationTime: 0, warmup: null
-          },
-          desc: descriptions[benchmark]
-        },
-        cmdline: benchmark, location: '', varValue: null, cores: null,
-        inputSize: null, extraArgs: null
+          cmdline: benchmark,
+          location: '',
+          varValue: null,
+          cores: null,
+          inputSize: null,
+          extraArgs: null
+        }
       }
-    }],
-    criteria: [
-      { i: 0, c: 'total', u: 'ms' }
     ],
+    criteria: [{ i: 0, c: 'total', u: 'ms' }],
     env: {
       hostName: 'self',
-      cpu: '', memory: 0, clockSpeed: 0, osType: 'nodejs',
-      userName: 'rebench-perf-tracking', software: [],
+      cpu: '',
+      memory: 0,
+      clockSpeed: 0,
+      osType: 'nodejs',
+      userName: 'rebench-perf-tracking',
+      software: [],
       manualRun: false,
       denoise: {}
     },
@@ -93,10 +103,15 @@ export function startRequest(): number {
   return performance.now();
 }
 
-export async function completeRequest(reqStart: number, db: Database,
-  request: string): Promise<void> {
+export async function completeRequest(
+  reqStart: number,
+  db: Database,
+  request: string
+): Promise<void> {
   const time = performance.now() - reqStart;
   iterations[request] += 1;
   await db.recordAllData(
-    constructData(time, iterations[request], request), true);
+    constructData(time, iterations[request], request),
+    true
+  );
 }

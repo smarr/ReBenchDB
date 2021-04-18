@@ -25,10 +25,14 @@ export class GitHub {
     });
   }
 
-  private async getRepoAuthorization(owner: string, repo: string):
-    Promise<Octokit> {
-    const install = await this.globalApp.apps.getRepoInstallation(
-      { owner, repo });
+  private async getRepoAuthorization(
+    owner: string,
+    repo: string
+  ): Promise<Octokit> {
+    const install = await this.globalApp.apps.getRepoInstallation({
+      owner,
+      repo
+    });
 
     const repoAppInstall = new Octokit({
       authStrategy: createAppAuth,
@@ -44,8 +48,11 @@ export class GitHub {
   }
 
   public async postCommitComment(
-    owner: string, repo: string, commitSha: string, message: string):
-    Promise<boolean> {
+    owner: string,
+    repo: string,
+    commitSha: string,
+    message: string
+  ): Promise<boolean> {
     const repoAppInstall = await this.getRepoAuthorization(owner, repo);
 
     const result = await repoAppInstall.repos.createCommitComment({
@@ -62,16 +69,15 @@ export class GitHub {
       return null;
     }
 
-    const githubRepoDetails =
-      /github\.com[:/]([A-Za-z0-9_.-]+)[/]([A-Za-z0-9_.-]+)/;
-    const match = url.match(githubRepoDetails);
+    const githubRepo = /github\.com[:/]([A-Za-z0-9_.-]+)[/]([A-Za-z0-9_.-]+)/;
+    const match = url.match(githubRepo);
     if (!match) {
       return null;
     } else {
       return {
         owner: match[1],
         repo: match[2]
-      }
+      };
     }
   }
 }

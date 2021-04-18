@@ -30,11 +30,13 @@ describe('Setup of PostgreSQL DB', () => {
   it('should load the database scheme without error', async () => {
     const createTablesSql = loadScheme();
 
-    const testSql = createTablesSql + `
+    const testSql =
+      createTablesSql +
+      `
         SELECT * FROM Measurement;`;
 
     const result = await db.client.query(testSql);
-    const len = (<any> result).length;
+    const len = (<any>result).length;
     expect(len).toBeGreaterThan(numTxStatements);
 
     const selectCommand = result[len - 1];
@@ -51,7 +53,8 @@ describe('Recording a ReBench execution data fragments', () => {
     db = await createAndInitializeDB('db_setup');
 
     basicTestData = JSON.parse(
-      readFileSync(`${__dirname}/small-payload.json`).toString());
+      readFileSync(`${__dirname}/small-payload.json`).toString()
+    );
   });
 
   afterAll(async () => {
@@ -156,17 +159,18 @@ describe('Recording a ReBench execution data fragments', () => {
 
   it('should accept trial denoise info', async () => {
     const testData: BenchmarkData = JSON.parse(
-      readFileSync(`${__dirname}/small-payload.json`).toString());
+      readFileSync(`${__dirname}/small-payload.json`).toString()
+    );
 
     const e = testData.env;
 
     // add denoise details to test data
     e.denoise = {
-      'scaling_governor': 'performance',
-      'no_turbo': true,
-      'perf_event_max_sample_rate': 1,
-      'can_set_nice': true,
-      'shielding': true
+      scaling_governor: 'performance',
+      no_turbo: true,
+      perf_event_max_sample_rate: 1,
+      can_set_nice: true,
+      shielding: true
     };
 
     const env = await db.recordEnvironment(e);
@@ -211,9 +215,11 @@ describe('Recording a ReBench execution from payload files', () => {
     db = await createAndInitializeDB('db_setup_timeline', 25, true, false);
 
     smallTestData = JSON.parse(
-      readFileSync(`${__dirname}/small-payload.json`).toString());
+      readFileSync(`${__dirname}/small-payload.json`).toString()
+    );
     largeTestData = JSON.parse(
-      readFileSync(`${__dirname}/large-payload.json`).toString());
+      readFileSync(`${__dirname}/large-payload.json`).toString()
+    );
   });
 
   afterAll(async () => {
@@ -266,41 +272,50 @@ describe('Recording a ReBench execution from payload files', () => {
     expect(exps.rowCount).toEqual(2);
   });
 
-  it(`should accept all data (large-payload),
-      and have the measurements persisted`, async () => {
-    await db.recordMetaDataAndRuns(largeTestData);
-    const recMs = await db.recordAllData(largeTestData);
-
-    const measurements = await db.client.query(
-      'SELECT count(*) as cnt from Measurement');
-
-    await db.awaitQuiescentTimelineUpdater();
-
-    expect(recMs).toEqual(459928);
-    expect(parseInt(measurements.rows[0].cnt)).toEqual(459928 + 4);
-    const timeline = await db.client.query('SELECT * from Timeline');
-    expect(timeline.rowCount).toEqual(462);
-  }, 200 * 1000);
-
-  it('should not fail if some data was already recorded in database',
+  it(
+    `should accept all data (large-payload),
+      and have the measurements persisted`,
     async () => {
-      // make sure everything is in the database
-      await db.recordMetaDataAndRuns(smallTestData);
-      await db.recordAllData(smallTestData);
+      await db.recordMetaDataAndRuns(largeTestData);
+      const recMs = await db.recordAllData(largeTestData);
 
-      // obtain the bits, this should match what `recordData` does above
-      const { trial, criteria } = await db.recordMetaData(smallTestData);
+      const measurements = await db.client.query(
+        'SELECT count(*) as cnt from Measurement'
+      );
 
-      // now, manually do the recording
-      const r = smallTestData.data[0];
+      await db.awaitQuiescentTimelineUpdater();
 
-      // and pretend there's no data yet
-      const availableMs = {};
+      expect(recMs).toEqual(459928);
+      expect(parseInt(measurements.rows[0].cnt)).toEqual(459928 + 4);
+      const timeline = await db.client.query('SELECT * from Timeline');
+      expect(timeline.rowCount).toEqual(462);
+    },
+    200 * 1000
+  );
 
-      const run = await db.recordRun(r.runId);
+  it('should not fail if some data is already in database', async () => {
+    // make sure everything is in the database
+    await db.recordMetaDataAndRuns(smallTestData);
+    await db.recordAllData(smallTestData);
 
-      const recordedMeasurements = await db.recordMeasurements(
-        r, run, trial, criteria, availableMs);
-      expect(recordedMeasurements).toEqual(0);
-    });
+    // obtain the bits, this should match what `recordData` does above
+    const { trial, criteria } = await db.recordMetaData(smallTestData);
+
+    // now, manually do the recording
+    const r = smallTestData.data[0];
+
+    // and pretend there's no data yet
+    const availableMs = {};
+
+    const run = await db.recordRun(r.runId);
+
+    const recordedMeasurements = await db.recordMeasurements(
+      r,
+      run,
+      trial,
+      criteria,
+      availableMs
+    );
+    expect(recordedMeasurements).toEqual(0);
+  });
 });

@@ -15,7 +15,8 @@ describe('Ensure Test Payloads conform to API', () => {
 
   it('should validate small-payload.json', () => {
     const basicTestData = JSON.parse(
-      readFileSync(`${__dirname}/small-payload.json`).toString());
+      readFileSync(`${__dirname}/small-payload.json`).toString()
+    );
 
     const result = validateFn(basicTestData);
     if (!result) {
@@ -26,7 +27,8 @@ describe('Ensure Test Payloads conform to API', () => {
 
   it('should validate large-payload.json', () => {
     const basicTestData = JSON.parse(
-      readFileSync(`${__dirname}/large-payload.json`).toString());
+      readFileSync(`${__dirname}/large-payload.json`).toString()
+    );
 
     const result = validateFn(basicTestData);
     if (!result) {

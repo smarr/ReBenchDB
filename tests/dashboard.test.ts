@@ -1,7 +1,12 @@
 import { TestDatabase, createAndInitializeDB } from './db-testing';
 import {
-  dashStatistics, dashResults, dashChanges, dashProjects, dashDataOverview,
-  dashBenchmarksForProject, dashTimelineForProject
+  dashStatistics,
+  dashResults,
+  dashChanges,
+  dashProjects,
+  dashDataOverview,
+  dashBenchmarksForProject,
+  dashTimelineForProject
 } from '../src/dashboard';
 import { BenchmarkData } from '../src/api';
 import { readFileSync } from 'fs';
@@ -104,12 +109,14 @@ describe('Test Dashboard with basic test data loaded', () => {
 
     for (const table of result) {
       if (table.table === 'Measurements') {
-        expect(table.cnt).toEqual('' + (3 * numExperiments));
+        expect(table.cnt).toEqual('' + 3 * numExperiments);
       } else if (table.table === 'Experiments' || table.table === 'Trials') {
         expect(table.cnt).toEqual('' + numExperiments);
       } else {
-        expect({ name: table.table, cnt: table.cnt }).toEqual(
-          { name: table.table, cnt: '1' });
+        expect({ name: table.table, cnt: table.cnt }).toEqual({
+          name: table.table,
+          cnt: '1'
+        });
       }
     }
   });
@@ -118,11 +125,14 @@ describe('Test Dashboard with basic test data loaded', () => {
     const result = (await dashChanges(1, db)).changes;
     expect(result).toHaveLength(3);
     expect(result[0].commitid).toEqual(
-      '3333333333333333333333333333333333333333');
+      '3333333333333333333333333333333333333333'
+    );
     expect(result[1].commitid).toEqual(
-      '2222222222222222222222222222222222222222');
+      '2222222222222222222222222222222222222222'
+    );
     expect(result[2].commitid).toEqual(
-      '58666d1c84c652306f930daa72e7a47c58478e86');
+      '58666d1c84c652306f930daa72e7a47c58478e86'
+    );
   });
 
   it('Should get available data for DataOverview', async () => {
@@ -131,18 +141,20 @@ describe('Test Dashboard with basic test data loaded', () => {
     expect(data).toHaveLength(numExperiments);
 
     expect(data[0].commitids).toEqual(
-      '3333333333333333333333333333333333333333');
+      '3333333333333333333333333333333333333333'
+    );
     expect(data[0].expid).toEqual(3);
     expect(data[0].name).toEqual(expNameMerge);
 
-
     expect(data[1].commitids).toEqual(
-      '2222222222222222222222222222222222222222');
+      '2222222222222222222222222222222222222222'
+    );
     expect(data[1].expid).toEqual(2);
     expect(data[1].name).toEqual(expName2);
 
     expect(data[2].commitids).toEqual(
-      '58666d1c84c652306f930daa72e7a47c58478e86');
+      '58666d1c84c652306f930daa72e7a47c58478e86'
+    );
     expect(data[2].expid).toEqual(1);
     expect(data[2].name).toEqual('Small Test Case');
   });
@@ -157,7 +169,7 @@ describe('Test Dashboard with basic test data loaded', () => {
 
   it('Should get stats for the timeline', async () => {
     await db.awaitQuiescentTimelineUpdater();
-    const { timeline, details } = (await dashTimelineForProject(db, 1));
+    const { timeline, details } = await dashTimelineForProject(db, 1);
 
     expect(timeline).toHaveLength(numExperiments);
     expect(details).toHaveLength(numExperiments);
@@ -177,22 +189,24 @@ describe('Test Dashboard with basic test data loaded', () => {
 
   it('Should determine a baseline commit for comparison', async () => {
     const baseline = await db.getBaselineCommit(
-      projectName, '3333333333333333333333333333333333333333');
+      projectName,
+      '3333333333333333333333333333333333333333'
+    );
     expect(baseline?.branchortag).toEqual(baseBranch);
-    expect(
-      baseline?.commitid).toEqual('58666d1c84c652306f930daa72e7a47c58478e86');
+    expect(baseline?.commitid).toEqual(
+      '58666d1c84c652306f930daa72e7a47c58478e86'
+    );
   });
 
   it('Should determine a changed commit for comparison', async () => {
-    const source = await db.getSourceByNames(
-      projectName, expName2);
-    expect(
-      source?.commitid).toEqual('2222222222222222222222222222222222222222');
+    const source = await db.getSourceByNames(projectName, expName2);
+    expect(source?.commitid).toEqual(
+      '2222222222222222222222222222222222222222'
+    );
     expect(source?.branchortag).toEqual('exp2');
   });
 
   // TODO
   // dashCompare
   // dashGetExpData
-
 });

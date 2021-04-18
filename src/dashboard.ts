@@ -6,7 +6,6 @@ import { BenchmarkCompletion } from './api';
 import { GitHub } from './github';
 import { robustPath, siteConfig } from './util';
 
-
 const reportOutputFolder = robustPath(`../resources/reports/`);
 
 /**
@@ -21,9 +20,12 @@ export async function dashProjects(db: Database): Promise<{ projects: any[] }> {
   return { projects: result.rows };
 }
 
-export async function dashResults(projectId: number, db: Database):
-  Promise<{ timeSeries: Record<string, number[]> }> {
-  const result = await db.client.query(`SELECT rank_filter.* FROM (
+export async function dashResults(
+  projectId: number,
+  db: Database
+): Promise<{ timeSeries: Record<string, number[]> }> {
+  const result = await db.client.query(
+    `SELECT rank_filter.* FROM (
       SELECT t.startTime, m.iteration, value, b.name as benchmark,
         rank() OVER (
           PARTITION BY b.id
@@ -36,7 +38,9 @@ export async function dashResults(projectId: number, db: Database):
           JOIN Benchmark b ON r.benchmarkId = b.id
         WHERE projectId = $1
         ORDER BY t.startTime, m.iteration
-      ) rank_filter WHERE RANK <= 100`, [projectId]);
+      ) rank_filter WHERE RANK <= 100`,
+    [projectId]
+  );
   // dropped to avoid getting too much data:
   //           trialId, iteration, c.unit,
   //           JOIN Criterion c ON criterion = c.id
@@ -75,9 +79,12 @@ export async function dashStatistics(db: Database): Promise<{ stats: any[] }> {
   return { stats: result.rows };
 }
 
-export async function dashChanges(projectId: number, db: Database):
-  Promise<{ changes: any[] }> {
-  const result = await db.client.query(`
+export async function dashChanges(
+  projectId: number,
+  db: Database
+): Promise<{ changes: any[] }> {
+  const result = await db.client.query(
+    `
       SELECT commitId, branchOrTag, projectId, repoURL, commitMessage
       FROM experiment
         JOIN Trial ON expId = experiment.id
@@ -86,13 +93,17 @@ export async function dashChanges(projectId: number, db: Database):
       WHERE project.id = $1
       GROUP BY commitId, branchOrTag, projectId, repoURL, commitMessage
       ORDER BY max(startTime) DESC`,
-    [projectId]);
+    [projectId]
+  );
   return { changes: result.rows };
 }
 
-export async function dashDataOverview(projectId: number, db: Database):
-  Promise<{ data: any[] }> {
-  const result = await db.client.query(`
+export async function dashDataOverview(
+  projectId: number,
+  db: Database
+): Promise<{ data: any[] }> {
+  const result = await db.client.query(
+    `
       SELECT
         exp.id as expId, exp.name, exp.description,
         min(t.startTime) as minStartTime,
@@ -121,16 +132,20 @@ export async function dashDataOverview(projectId: number, db: Database):
 
       GROUP BY exp.name, exp.description, exp.id
       ORDER BY minStartTime DESC;`,
-    [projectId]);
+    [projectId]
+  );
   return { data: result.rows };
 }
 
-
 const reportGeneration = new Map();
 
-export function startReportGeneration(base: string, change: string,
-  outputFile: string, dbConfig: DatabaseConfig, extraCmd = ''):
-  ChildProcessPromise {
+export function startReportGeneration(
+  base: string,
+  change: string,
+  outputFile: string,
+  dbConfig: DatabaseConfig,
+  extraCmd = ''
+): ChildProcessPromise {
   const args = [
     robustPath(`views/somns.Rmd`),
     outputFile,
@@ -158,15 +173,20 @@ export function startReportGeneration(base: string, change: string,
 }
 
 export function getSummaryPlotFileName(outputFile: string): string {
-  return getOutputImageFolder(outputFile) + '/figure-html/summary-suites-1.png'
+  return getOutputImageFolder(outputFile) + '/figure-html/summary-suites-1.png';
 }
 
 export function getOutputImageFolder(outputFile: string): string {
   return outputFile.replace('.html', '_files');
 }
 
-export function dashCompare(base: string, change: string, project: string,
-  dbConfig: DatabaseConfig, db: Database): any {
+export function dashCompare(
+  base: string,
+  change: string,
+  project: string,
+  dbConfig: DatabaseConfig,
+  db: Database
+): any {
   const baselineHash6 = base.substr(0, 6);
   const changeHash6 = change.substr(0, 6);
 
@@ -203,19 +223,27 @@ export function dashCompare(base: string, change: string, project: string,
       });
 
       const p = startReportGeneration(
-        base, change, `${reportId}.html`, dbConfig);
-      const pp = p.then(async result => {
-        reportGeneration.set(reportId, {
-          stdout: result.stdout, stderr: result.stderr,
-          inProgress: false
-        });
-        await completeRequest(start, db, 'generate-report');
-      }).
-        catch(async e => {
+        base,
+        change,
+        `${reportId}.html`,
+        dbConfig
+      );
+      const pp = p
+        .then(async (result) => {
+          reportGeneration.set(reportId, {
+            stdout: result.stdout,
+            stderr: result.stderr,
+            inProgress: false
+          });
+          await completeRequest(start, db, 'generate-report');
+        })
+        .catch(async (e) => {
           const { stdout, stderr } = e;
           console.error(`Report generation error: ${e}`);
           reportGeneration.set(reportId, {
-            e, stdout, stderr,
+            e,
+            stdout,
+            stderr,
             inProgress: false
           });
           await completeRequest(start, db, 'generate-report');
@@ -237,9 +265,13 @@ export function dashCompare(base: string, change: string, project: string,
 
 const expDataPreparation = new Map();
 
-export async function dashGetExpData(expId: number, dbConfig: DatabaseConfig,
-  db: Database): Promise<any> {
-  const result = await db.client.query(`
+export async function dashGetExpData(
+  expId: number,
+  dbConfig: DatabaseConfig,
+  db: Database
+): Promise<any> {
+  const result = await db.client.query(
+    `
       SELECT
         exp.name as expName,
         exp.description as expDesc,
@@ -251,7 +283,8 @@ export async function dashGetExpData(expId: number, dbConfig: DatabaseConfig,
       JOIN Project p ON exp.projectId = p.id
 
       WHERE exp.id = $1`,
-    [expId]);
+    [expId]
+  );
 
   let data: any;
   if (!result || result.rows.length !== 1) {
@@ -297,15 +330,16 @@ export async function dashGetExpData(expId: number, dbConfig: DatabaseConfig,
       ];
 
       console.log(
-        `Prepare Data for Download: ${
-        __dirname}/../../src/stats/get-exp-data.R ${args.join(' ')}`);
+        `Prepare Data for Download:` +
+          `${__dirname}/../../src/stats/get-exp-data.R ${args.join(' ')}`
+      );
 
       expDataPreparation.set(expDataId, {
         inProgress: true
       });
 
       execFile(`${__dirname}/../../src/stats/get-exp-data.R`, args)
-        .then(async output => {
+        .then(async (output) => {
           expDataPreparation.set(expDataId, {
             stdout: output.stdout,
             stderr: output.stderr,
@@ -313,7 +347,7 @@ export async function dashGetExpData(expId: number, dbConfig: DatabaseConfig,
           });
           await completeRequest(start, db, 'prep-exp-data');
         })
-        .catch(async error => {
+        .catch(async (error) => {
           console.error(`Data preparation failed: ${error}`);
           expDataPreparation.set(expDataId, {
             error,
@@ -337,9 +371,12 @@ export async function dashGetExpData(expId: number, dbConfig: DatabaseConfig,
   return data;
 }
 
-export async function dashBenchmarksForProject(db: Database, projectId: number):
-  Promise<{ benchmarks }> {
-  const result = await db.client.query(`
+export async function dashBenchmarksForProject(
+  db: Database,
+  projectId: number
+): Promise<{ benchmarks }> {
+  const result = await db.client.query(
+    `
     SELECT DISTINCT p.name, env.hostname, r.cmdline, b.name as benchmark,
         b.id as benchId, s.name as suiteName, s.id as suiteId,
         exe.name as execName, exe.id as execId
@@ -355,13 +392,17 @@ export async function dashBenchmarksForProject(db: Database, projectId: number):
       JOIN Executor exe      ON r.execId = exe.id
       WHERE p.id = $1
     ORDER BY suiteName, execName, benchmark, hostname`,
-    [projectId]);
+    [projectId]
+  );
   return { benchmarks: result.rows };
 }
 
-export async function dashTimelineForProject(db: Database, projectId: number):
-  Promise<{ timeline, details }> {
-  const timelineP = db.client.query(`
+export async function dashTimelineForProject(
+  db: Database,
+  projectId: number
+): Promise<{ timeline; details }> {
+  const timelineP = db.client.query(
+    `
   SELECT tl.*, src.id as sourceId, b.id as benchmarkId, exe.id as execId,
       s.id as suiteId, hostname
     FROM Timeline tl
@@ -381,9 +422,11 @@ export async function dashTimelineForProject(db: Database, projectId: number):
       p.id = $1
     ORDER BY
       s.name, exe.name, b.name, hostname, startTime`,
-    [projectId]);
+    [projectId]
+  );
 
-  const timelineDetailsP = db.client.query(`
+  const timelineDetailsP = db.client.query(
+    `
       SELECT DISTINCT src.*, t.id as trialId, t.manualRun, t.startTime,
         t.userName, exp.name as expName, exp.description as expDesc
       FROM Timeline tl
@@ -400,19 +443,26 @@ export async function dashTimelineForProject(db: Database, projectId: number):
       WHERE
         criterion.name = 'total' AND
         p.id = $1`,
-    [projectId]);
+    [projectId]
+  );
   return {
     timeline: (await timelineP).rows,
     details: (await timelineDetailsP).rows
   };
 }
 
-export async function reportCompletion(dbConfig: DatabaseConfig, db: Database,
-  github: GitHub, data: BenchmarkCompletion): Promise<void> {
+export async function reportCompletion(
+  dbConfig: DatabaseConfig,
+  db: Database,
+  github: GitHub,
+  data: BenchmarkCompletion
+): Promise<void> {
   await db.reportCompletion(data);
 
   const change = await db.getSourceByNames(
-    data.projectName, data.experimentName);
+    data.projectName,
+    data.experimentName
+  );
   const changeSha = change?.commitid;
 
   if (!changeSha) {
@@ -420,7 +470,8 @@ export async function reportCompletion(dbConfig: DatabaseConfig, db: Database,
       `ReBenchDB failed to identify the change commit that's to be used for the
        comparison. There's likely an issue with
        project (${data.projectName}) or
-       experiment (${data.experimentName}) name.`);
+       experiment (${data.experimentName}) name.`
+    );
   }
 
   const baseline = await db.getBaselineCommit(data.projectName, changeSha);
@@ -432,7 +483,8 @@ export async function reportCompletion(dbConfig: DatabaseConfig, db: Database,
        the comparison. There may be an issue with
        project (${data.projectName}) or
        experiment (${data.experimentName}) name.
-       The identified change commit is is ${changeSha}.`);
+       The identified change commit is is ${changeSha}.`
+    );
   }
 
   const details = github.getOwnerRepoFromUrl(change?.repourl);
@@ -440,24 +492,32 @@ export async function reportCompletion(dbConfig: DatabaseConfig, db: Database,
     throw new Error(
       `The repository URL does not seem to be for GitHub.
        Result notifications are currently only supported for GitHub.
-       Repo URL: ${change?.repourl}`);
+       Repo URL: ${change?.repourl}`
+    );
   }
 
   const { reportId, completionPromise } = dashCompare(
-    baselineSha, changeSha, data.projectName, dbConfig, db);
+    baselineSha,
+    changeSha,
+    data.projectName,
+    dbConfig,
+    db
+  );
+
+  const reportUrl =
+    siteConfig.staticUrl +
+    `/compare/${data.projectName}/${baselineSha}/${changeSha}`;
 
   completionPromise
     .then(() => {
       const plotFile = getSummaryPlotFileName(reportId + '.html');
-      const summaryPlot = `${siteConfig.staticUrl}/reports/${plotFile}`;
+      const summaryPlot = siteConfig.staticUrl + `/reports/${plotFile}`;
       const msg = `#### Performance changes for ${baselineSha}...${changeSha}
 
-![Summary Over All Benchmarks](${siteConfig.publicUrl}/${
-        summaryPlot})
+![Summary Over All Benchmarks](${siteConfig.publicUrl}/${summaryPlot})
 Summary Over All Benchmarks
 
-[Full Report](${siteConfig.publicUrl}/compare/${data.projectName}/${
-        baselineSha}/${changeSha})`;
+[Full Report](${reportUrl})`;
 
       // - post comment
       github.postCommitComment(details.owner, details.repo, changeSha, msg);
@@ -465,8 +525,7 @@ Summary Over All Benchmarks
     .catch((e: any) => {
       const msg = `ReBench execution completed.
 
-      See [full report](${siteConfig.publicUrl}/compare/${data.projectName}/${
-        baselineSha}/${changeSha}) for results.
+      See [full report](${reportUrl}) for results.
 
       <!-- Error occured: ${e} -->
       `;

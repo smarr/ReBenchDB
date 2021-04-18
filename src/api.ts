@@ -130,7 +130,6 @@ export interface Unit {
   lessIsBetter: boolean;
 }
 
-
 export interface VersionInfo {
   name: string;
   version: string;
