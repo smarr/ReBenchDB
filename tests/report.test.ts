@@ -7,6 +7,8 @@ import {
 import { DatabaseConfig } from '../src/db';
 
 describe('Knitr Report Generation', () => {
+  const reportFolder = `${__dirname}/../resources/reports`;
+
   describe('Report with varying set of benchmarks', () => {
     const outputFileWithoutExtension = `report.test.ts`;
     const outputFile = `${outputFileWithoutExtension}.html`;
@@ -32,7 +34,7 @@ describe('Knitr Report Generation', () => {
 
     it('Should indicate differences in the benchmark sets', () => {
       const content: string = readFileSync(
-        `${__dirname}/../resources/reports/${outputFile}`,
+        `${reportFolder}/${outputFile}`,
         'utf8'
       );
       expect(content).toEqual(
@@ -42,7 +44,7 @@ describe('Knitr Report Generation', () => {
 
     it('Should not have any output that indicates warnings', () => {
       const content: string = readFileSync(
-        `${__dirname}/../resources/reports/${outputFile}`,
+        `${reportFolder}/${outputFile}`,
         'utf8'
       );
       // warning output is inside <code> blocks
@@ -51,15 +53,14 @@ describe('Knitr Report Generation', () => {
 
     it('Should have generated a summare plot', () => {
       const plotFile = getSummaryPlotFileName(outputFile);
-      const plotPath = `${__dirname}/../resources/reports/${plotFile}`;
+      const plotPath = `${reportFolder}/${plotFile}`;
       console.log(plotPath);
       expect(existsSync(plotPath)).toBeTruthy();
     });
 
     afterAll(async () => {
-      const reportPath = `${__dirname}/../resources/reports`;
-      unlinkSync(`${reportPath}/${outputFile}`);
-      const imageFolder = `${reportPath}/${getOutputImageFolder(outputFile)}`;
+      unlinkSync(`${reportFolder}/${outputFile}`);
+      const imageFolder = `${reportFolder}/${getOutputImageFolder(outputFile)}`;
       rmdirSync(imageFolder, { recursive: true });
     });
   });
@@ -89,7 +90,7 @@ describe('Knitr Report Generation', () => {
 
     it('Should indicate problem with data', () => {
       const content: string = readFileSync(
-        `${__dirname}/../resources/reports/${outputFile}`,
+        `${reportFolder}/${outputFile}`,
         'utf8'
       );
       expect(content).toEqual(
@@ -103,10 +104,8 @@ describe('Knitr Report Generation', () => {
     });
 
     afterAll(async () => {
-      unlinkSync(`${__dirname}/../resources/reports/${outputFile}`);
-      const imageFolder = `${__dirname}/../resources/reports/${getOutputImageFolder(
-        outputFile
-      )}`;
+      unlinkSync(`${reportFolder}/${outputFile}`);
+      const imageFolder = `${reportFolder}/${getOutputImageFolder(outputFile)}`;
       rmdirSync(imageFolder, { recursive: true });
     });
   });
