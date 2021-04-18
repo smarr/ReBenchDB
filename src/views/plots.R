@@ -53,7 +53,7 @@ compare_runtime_ratio_of_suites_plot <- function (
     theme_simple(8) +
     scale_color_manual(values = scale_color) +
     scale_fill_manual(breaks=c("slower", "faster", "indeterminate"),
-                      values=c(fast_color, slow_color, NA)) +
+                      values=c(slow_color, fast_color, NA)) +
     theme(legend.position = "none")
 }
 
