@@ -224,6 +224,7 @@ if (nrow(not_in_both) > 0) {
 </dl>
 
 ```{r suites, results='asis', echo=FALSE, dev='svg', fig.keep='all', fig.height=0.3, fig.width=3, timeit=TRUE}
+perf_diff_table <- function(norm, stats) {
 
 for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>% droplevels()
   for (s in levels(data_e$suite)) {   data_s <- data_e %>% filter(suite == s) %>% droplevels()
@@ -286,7 +287,91 @@ for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>
     cp('</table>')
   }
 }
+}
+
+perf_diff_table(norm, stats)
 ```
+
+```{r prep-comparison-data, results='asis', echo=FALSE, dev='svg', fig.keep='all', fig.height=0.3, fig.width=3, timeit=TRUE}
+execs <- levels(peak$exe)
+exec_name <- str_replace_all(execs, c("-jit" = "", "-interp" = ""))
+exec_name <- union(exec_name, exec_name)
+
+exe_type <- function(data) {
+  # print(data)
+  ifelse(grepl("-jit", data), "jit", ifelse(grepl("-interp", data), "interp", "other"))
+}
+
+# The cross comparison is designed for setups where there are two clearly
+# different sets of experiments. The current heuristic assumes that
+# interpreter (-interp) and jit-compiling (-jit) VMs are among the executors,
+# which without these name parts, form a set of two distinct names.
+if (length(exec_name) == 2) {
+  cat("<h2>Cross Comparison</h2>\n")
+  
+  base_exe <- exec_name[[1]]
+  cp("<p>Baseline: ", base_exe, "</p>")
+  
+  peak_comp <- peak %>%
+    transform(exe_type = exe_type(exe))
+  peak_comp$exe_type <- factor(peak_comp$exe_type)
+  
+  base_comp <- peak_comp %>%
+    filter(commitid == change_hash6, grepl(base_exe, exe)) %>%
+    group_by(exe_type, suite, bench,
+             varvalue, cores, inputsize, extraargs,
+             commitid) %>%
+    summarise(base_mean = mean(value),
+              base_median = median(value),
+              .groups = "drop")
+  
+  norm_comp <- peak_comp %>%
+    filter(commitid == change_hash6) %>%
+    left_join(base_comp,
+              by = c("exe_type", "suite", "bench",
+                     "varvalue", "cores", "inputsize", "extraargs",
+                     "commitid")) %>%
+    group_by(exe_type, suite, bench,
+             varvalue, cores, inputsize, extraargs,
+             commitid) %>%
+    transform(ratio_mean = value / base_mean,
+              ratio_median = value / base_median)
+
+  stats_comp <- norm_comp %>%
+    group_by(commitid, exe, suite, bench,
+             varvalue, cores, inputsize, extraargs) %>%
+    filter(is.na(warmup) | iteration >= warmup) %>%
+    summarise(
+      unit = unit[1],
+      min = min(value),
+      max = max(value),
+      sd = sd(value),
+      mean = mean(value),
+      median = median(value),
+      samples = length(value),
+              
+      # mean_ratio_mean = mean(ratio_mean),
+      # median_ratio_median = median(ratio_mean),
+      # mean_ratio_median = mean(ratio_median),
+      lowerBCI95 = get_bca(value, 1000)$lower,
+      upperBCI95 = get_bca(value, 1000)$upper,
+              
+      ratio = median / base_median[1],
+      ratioLower = lowerBCI95 / base_median[1],
+      ratioUpper = upperBCI95 / base_median[1],
+              
+      change_m = ratio - 1,
+      change_l = ratioLower - 1,
+      change_u = ratioUpper - 1,
+      .groups = "drop") %>%
+      ## Drop the things that don't have matching results
+      filter(!is.na(ratio)) %>%
+      droplevels()
+  
+  perf_diff_table(norm_comp %>% filter(!grepl(base_exe, exe)), stats_comp)
+}
+```
+
 
 
 ## Warmup Behavior
