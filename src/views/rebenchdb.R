@@ -92,10 +92,10 @@ factorize_result <- function(result) {
   result$suite <- factor(result$suite)
   result$exe <- factor(result$exe)
   result$cmdline <- factor(result$cmdline)
-  result$varvalue <- forcats::fct_explicit_na(factor(result$varvalue))
+  result$varvalue <- forcats::fct_explicit_na(factor(result$varvalue), na_level = "")
   result$cores <- factor(result$cores)
-  result$inputsize <- forcats::fct_explicit_na(factor(result$inputsize))
-  result$extraargs <- forcats::fct_explicit_na(factor(result$extraargs))
+  result$inputsize <- forcats::fct_explicit_na(factor(result$inputsize), na_level = "")
+  result$extraargs <- forcats::fct_explicit_na(factor(result$extraargs), na_level = "")
   result$criterion <- factor(result$criterion)
   result$unit <- factor(result$unit)
   
