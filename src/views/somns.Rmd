@@ -83,11 +83,8 @@ norm <- peak %>%
   transform(ratio_mean = value / base_mean,
             ratio_median = value / base_median)
 
-stats <- norm %>%
-  group_by(commitid, exe, suite, bench,
-           varvalue, cores, inputsize, extraargs) %>%
-  filter(is.na(warmup) | iteration >= warmup) %>%
-  summarise(
+calculate_stats <- function(data) {
+  data %>% summarise(
     unit = unit[1],
     # min = min(value),
     # max = max(value),
@@ -112,6 +109,14 @@ stats <- norm %>%
     # change_l = ratioLower - 1,
     # change_u = ratioUpper - 1,
     .groups = "drop")
+}
+
+
+stats <- norm %>%
+  group_by(commitid, exe, suite, bench,
+           varvalue, cores, inputsize, extraargs) %>%
+  filter(is.na(warmup) | iteration >= warmup) %>%
+  calculate_stats()
 
 not_in_both <- stats %>%
   filter(is.na(ratio)) %>%
@@ -347,31 +352,7 @@ if (length(exec_name) == 2) {
     group_by(commitid, exe, suite, bench,
              varvalue, cores, inputsize, extraargs) %>%
     filter(is.na(warmup) | iteration >= warmup) %>%
-    summarise(
-      unit = unit[1],
-      # min = min(value),
-      # max = max(value),
-      # sd = sd(value),
-      # mean = mean(value),
-      median = median(value),
-      samples = length(value),
-              
-      # mean_ratio_mean = mean(ratio_mean),
-      # median_ratio_median = median(ratio_mean),
-      # mean_ratio_median = mean(ratio_median),
-      
-      # too detailed, we are not looking at it when reading the reports
-      # lowerBCI95 = get_bca(value, 1000)$lower,
-      # upperBCI95 = get_bca(value, 1000)$upper,
-      #         
-      ratio = median / base_median[1],
-      # ratioLower = lowerBCI95 / base_median[1],
-      # ratioUpper = upperBCI95 / base_median[1],
-      #         
-      change_m = ratio - 1,
-      # change_l = ratioLower - 1,
-      # change_u = ratioUpper - 1,
-      .groups = "drop") %>%
+    calculate_stats() %>%
       ## Drop the things that don't have matching results
       filter(!is.na(ratio)) %>%
       droplevels()
