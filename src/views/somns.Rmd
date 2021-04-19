@@ -89,26 +89,28 @@ stats <- norm %>%
   filter(is.na(warmup) | iteration >= warmup) %>%
   summarise(
     unit = unit[1],
-    min = min(value),
-    max = max(value),
-    sd = sd(value),
-    mean = mean(value),
+    # min = min(value),
+    # max = max(value),
+    # sd = sd(value),
+    # mean = mean(value),
     median = median(value),
     samples = length(value),
 
     # mean_ratio_mean = mean(ratio_mean),
     # median_ratio_median = median(ratio_mean),
     # mean_ratio_median = mean(ratio_median),
-    lowerBCI95 = get_bca(value, 1000)$lower,
-    upperBCI95 = get_bca(value, 1000)$upper,
-
+    
+    # Too detailed, don't use it when looking at reports
+    # lowerBCI95 = get_bca(value, 1000)$lower,
+    # upperBCI95 = get_bca(value, 1000)$upper,
+    # 
     ratio = median / base_median[1],
-    ratioLower = lowerBCI95 / base_median[1],
-    ratioUpper = upperBCI95 / base_median[1],
-
+    # ratioLower = lowerBCI95 / base_median[1],
+    # ratioUpper = upperBCI95 / base_median[1],
+    # 
     change_m = ratio - 1,
-    change_l = ratioLower - 1,
-    change_u = ratioUpper - 1,
+    # change_l = ratioLower - 1,
+    # change_u = ratioUpper - 1,
     .groups = "drop")
 
 not_in_both <- stats %>%
@@ -236,7 +238,6 @@ for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>
 <th scope="col"></th>
 <th scope="col"></th>
 <th scope="col" title="Number of Samples">#M</th>
-<th scope="col">mean in ', levels(data_s$unit), '</th>
 <th scope="col">median in ', levels(data_s$unit), '</th>
 <th scope="col">change in %</th>
 <th scope="col"></th>
@@ -276,9 +277,6 @@ for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>
           cp('</td>')
 
           cp('<td class="stats-samples">', stats_b$samples, '</td>')
-          cp('<td><span class="stats-mean" title="mean">', r2(stats_b$mean), '</span><span class="stats-sd" title="standard deviation">', r2(stats_b$sd), '</span></td>')
-          cp('<td><span class="stats-median" title="median">', r2(stats_b$median), '</span><span class="stats-min" title="minimum">', r2(stats_b$min), '</span><span class="stats-max" title="maximum">', r2(stats_b$max),'</span></td>')
-          cp('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span><span class="stats-change-l" title="lower bound of 95% bootstrap confidence interval">', pro(stats_b$change_l), '</span><span class="stats-change-u" title="upper bound of 95% bootstrap confidence interval">', pro(stats_b$change_u), '</span></td>')
           cp('<td><button type="button" class="btn btn-sm" data-toggle="popover" data-html="true" data-content="<code>', cmdline, '</code>">',
              '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-terminal" viewBox="0 0 16 16">
   <path d="M6 9a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3A.5.5 0 0 1 6 9zM3.854 4.146a.5.5 0 1 0-.708.708L4.793 6.5 3.146 8.146a.5.5 0 1 0 .708.708l2-2a.5.5 0 0 0 0-.708l-2-2z"/>
@@ -286,6 +284,8 @@ for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>
 </svg>',
              '</button></td>')
 
+          cp('<td><span class="stats-median" title="median">', r2(stats_b$median), '</span></td>')
+          cp('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span></td>')
           cp('</tr>')
         } else {
           cp('<tr>')
@@ -354,26 +354,28 @@ if (length(exec_name) == 2) {
     filter(is.na(warmup) | iteration >= warmup) %>%
     summarise(
       unit = unit[1],
-      min = min(value),
-      max = max(value),
-      sd = sd(value),
-      mean = mean(value),
+      # min = min(value),
+      # max = max(value),
+      # sd = sd(value),
+      # mean = mean(value),
       median = median(value),
       samples = length(value),
               
       # mean_ratio_mean = mean(ratio_mean),
       # median_ratio_median = median(ratio_mean),
       # mean_ratio_median = mean(ratio_median),
-      lowerBCI95 = get_bca(value, 1000)$lower,
-      upperBCI95 = get_bca(value, 1000)$upper,
-              
+      
+      # too detailed, we are not looking at it when reading the reports
+      # lowerBCI95 = get_bca(value, 1000)$lower,
+      # upperBCI95 = get_bca(value, 1000)$upper,
+      #         
       ratio = median / base_median[1],
-      ratioLower = lowerBCI95 / base_median[1],
-      ratioUpper = upperBCI95 / base_median[1],
-              
+      # ratioLower = lowerBCI95 / base_median[1],
+      # ratioUpper = upperBCI95 / base_median[1],
+      #         
       change_m = ratio - 1,
-      change_l = ratioLower - 1,
-      change_u = ratioUpper - 1,
+      # change_l = ratioLower - 1,
+      # change_u = ratioUpper - 1,
       .groups = "drop") %>%
       ## Drop the things that don't have matching results
       filter(!is.na(ratio)) %>%
