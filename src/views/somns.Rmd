@@ -27,6 +27,8 @@ options(warn=1)
 ```{r load-db, include=FALSE, echo=FALSE, warning=FALSE, timeit=TRUE}
 # from-file: baseline_hash <- "7f7bf31c928147db34ea619ba0a897237cca8297"
 # from-file: change_hash <- "08a38cd7501acca82312722889b830b4f3a4865f"
+# baseline_hash <- 'd3f598'
+# change_hash <- '493721'
 baseline_hash <- params$baseline
 change_hash <- params$change
 baseline_hash6 <- substr(baseline_hash, 1, 6)
@@ -43,7 +45,7 @@ library(stringr)
 cmds <- str_split(params$extraCmd, ";")[[1]]
 
 if (cmds[1] == "from-file") {
-  # manual from-file: result <- rbind(load_data_file("~/Projects/tmp/SOMns-136.qs"), load_data_file("~/Projects/tmp/SOMns-141.qs"))
+  # manual from-file: result <- rbind(load_data_file("~/Projects/ReBenchDB/tmp/TruffleSOM-380.qs"), load_data_file("~/Projects/ReBenchDB/tmp/TruffleSOM-381.qs"))
   result <- rbind(load_data_file(cmds[2]), load_data_file(cmds[3]))
   result <- factorize_result(result)
 } else {
@@ -232,6 +234,7 @@ if (nrow(not_in_both) > 0) {
 
 ```{r suites, results='asis', echo=FALSE, dev='svg', fig.keep='all', fig.height=0.3, fig.width=3, timeit=TRUE}
 perf_diff_table <- function(norm, stats) {
+# e <- "TruffleSOM-graal-bc" 
 
 for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>% droplevels()
   for (s in levels(data_e$suite)) {   data_s <- data_e %>% filter(suite == s) %>% droplevels()
@@ -367,6 +370,8 @@ if (length(exec_name) == 2) {
 
 This section excludes all interpreter-only and startup benchmarks.
 ```{r warmup-plots, echo=FALSE, results='asis', dev='svg', fig.keep='all', fig.width=6, fig.height=2.5, timeit=TRUE}
+# e <- "TruffleSOM-graal"
+# s <- "micro-steady"
 # b <- "Mandelbrot"
 
 for (e in levels(warmup$exe)) {
