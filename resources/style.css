@@ -79,9 +79,13 @@ table.benchmark-details tr th:nth-child(1) {
   word-break: break-all;
 }
 
-.popover {
+.compare .popover {
   /* allow popovers to use all width, so that command lines fit better */
   max-width: 100%;
+}
+
+table.benchmark-details .btn-sm {
+  padding: 0 !important;
 }
 
 .warmup-benchmark {
