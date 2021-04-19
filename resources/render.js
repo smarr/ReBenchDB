@@ -98,7 +98,8 @@ function renderChanges(project, $) {
     <h5>Changes</h5>
     <div class="container min-padding"><div class="row">
       <div class="col-sm min-padding scroll-list">
-        <div class="list-group baseline" id="p${project.id}-baseline"></div>
+        <div class="list-group baseline" id="p${project.id}-baseline"
+          data-project="${project.name}"></div>
       </div>
       <div class="col-sm min-padding scroll-list">
         <div class="list-group change" id="p${project.id}-change"></div>
@@ -133,9 +134,11 @@ async function renderChangeDetails(changesDetailsResponse, projectId, $) {
 }
 
 function openCompare(projectId, $) {
-  const baseline = $(`#p${projectId}-baseline`).find('.active').data('hash');
+  const baseJQ = $(`#p${projectId}-baseline`);
+  const projectName = baseJQ.data('project');
+  const baseline = baseJQ.find('.active').data('hash');
   const change = $(`#p${projectId}-change`).find('.active').data('hash');
-  window.location.href = `/compare/SOMns/${baseline}/${change}`;
+  window.location.href = `/compare/${projectName}/${baseline}/${change}`;
 }
 
 function renderAllResults(project, $) {
@@ -157,7 +160,7 @@ function renderProject(project, $) {
   const allResults = renderAllResults(project, $);
 
   const result = `<div class="card">
-    <h5 class="card-header"><a
+    <h5 class="card-header" id="${project.name}"><a
       href="/project/${project.id}">${project.name}</a></h5>
     <div class="card-body">
       ${changes}
