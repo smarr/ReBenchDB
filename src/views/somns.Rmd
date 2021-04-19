@@ -260,7 +260,7 @@ for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>
 
         # capture the beginning of the path but leave the last element of it
         # this regex is also used in render.js's renderBenchmark() function
-        cmdline <- str_replace_all(data_i$cmdline[[1]], "^(.*?)((?:\\/\\w+)\\s.*$)", ".\\2")
+        cmdline <- str_replace_all(data_i$cmdline[[1]], "^([^\\s]*)((?:\\/\\w+)\\s.*$)", ".\\2")
         
         stats_b <- stats %>%
           ungroup() %>%
