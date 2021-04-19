@@ -232,7 +232,7 @@ if (nrow(not_in_both) > 0) {
 </div></dd>
 </dl>
 
-```{r suites, results='asis', echo=FALSE, dev='svg', fig.keep='all', fig.height=0.3, fig.width=3, timeit=TRUE}
+```{r suites, results='asis', echo=FALSE, dev='svg', fig.keep='all', fig.height=0.4, fig.width=3.5, timeit=TRUE}
 perf_diff_table <- function(norm, stats) {
 # e <- "TruffleSOM-graal-bc" 
 
