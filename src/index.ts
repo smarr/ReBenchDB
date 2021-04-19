@@ -124,7 +124,7 @@ router.get('/rebenchdb/dash/:projectId/data-overview', async (ctx) => {
 router.get('/compare/:project/:baseline/:change', async (ctx) => {
   const start = startRequest();
 
-  const data = dashCompare(
+  const data = await dashCompare(
     ctx.params.baseline,
     ctx.params.change,
     ctx.params.project,

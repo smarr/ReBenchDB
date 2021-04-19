@@ -208,18 +208,17 @@ export function dashDeleteOldReport(
   }
 }
 
-export function dashCompare(
+export async function dashCompare(
   base: string,
   change: string,
   project: string,
   dbConfig: DatabaseConfig,
   db: Database
-): any {
+): Promise<any> {
   const baselineHash6 = base.substr(0, 6);
   const changeHash6 = change.substr(0, 6);
 
   const reportId = getReportId(project, base, change);
-  const reportFile = getReportFilename(reportId);
 
   const data: any = {
     project,
@@ -231,6 +230,18 @@ export function dashCompare(
     completionPromise: Promise.resolve()
   };
 
+  const exists = await db.revisionsExistInProject(project, base, change);
+  if (!exists) {
+    data.generationFailed = true;
+    data.stdout =
+      `The requested project ${project} does not have data ` +
+      `on the revisions ${base} and ${change}.`;
+    data.stderr = '';
+    data.generatingReport = false;
+    return data;
+  }
+
+  const reportFile = getReportFilename(reportId);
   if (existsSync(reportFile)) {
     data.report = readFileSync(reportFile);
     data.generatingReport = false;
@@ -526,7 +537,7 @@ export async function reportCompletion(
     );
   }
 
-  const { reportId, completionPromise } = dashCompare(
+  const { reportId, completionPromise } = await dashCompare(
     baselineSha,
     changeSha,
     data.projectName,
