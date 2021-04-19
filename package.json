@@ -54,7 +54,7 @@
   "scripts": {
     "postinstall": "npm run compile",
     "start": "node ./dist/src/index.js",
-    "nodemon": "DEV=true nodemon ./dist/src/index.js",
+    "nodemon": "DEV=true nodemon ./dist/src/index.js --watch ./dist/src --watch ./dist/package.json",
     "compile": "tsc && npm run prep-resources && npm run prep-knitr-reports",
     "prep-resources": "(cd tests; bzip2 -d -f -k large-payload.json.bz2)",
     "prep-knitr-reports": "mkdir -p tmp/interm tmp/knit resources/reports resources/exp-data",
