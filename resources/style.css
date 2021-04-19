@@ -84,6 +84,25 @@ table.benchmark-details tr th:nth-child(1) {
   max-width: 100%;
 }
 
+.refresh {
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding: 1ex
+}
+
+.refresh button {
+  margin-right: 1ex
+}
+
+.refresh form {
+  display:inline-block;
+}
+
+.refresh input[name=password] {
+  display: none;
+}
+
 table.benchmark-details .btn-sm {
   padding: 0 !important;
 }

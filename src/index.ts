@@ -20,7 +20,8 @@ import {
   dashTimelineForProject,
   dashDataOverview,
   dashGetExpData,
-  reportCompletion
+  reportCompletion,
+  dashDeleteOldReport
 } from './dashboard';
 import { processTemplate } from './templates';
 import { dbConfig, siteConfig } from './util';
@@ -32,6 +33,9 @@ const port = process.env.PORT || 33333;
 
 const DEBUG = 'DEBUG' in process.env ? process.env.DEBUG === 'true' : false;
 const DEV = 'DEV' in process.env ? process.env.DEV === 'true' : false;
+
+const refreshSecret =
+  'REFRESH_SECRET' in process.env ? process.env.REFRESH_SECRET : undefined;
 
 const app = new Koa();
 const router = new Router();
@@ -143,6 +147,38 @@ router.get('/admin/perform-timeline-update', async (ctx) => {
   ctx.type = 'text';
   ctx.status = 200;
 });
+
+router.post(
+  '/admin/refresh/:project/:baseline/:change',
+  koaBody({ urlencoded: true }),
+  async (ctx) => {
+    ctx.type = 'text';
+
+    if (refreshSecret === undefined) {
+      ctx.body = 'ReBenchDB is not configured to accept refresh requests.';
+      ctx.status = 503;
+      return;
+    }
+
+    if (ctx.request.body.password === refreshSecret) {
+      const project = ctx.params.project;
+      const base = ctx.params.baseline;
+      const change = ctx.params.change;
+      dashDeleteOldReport(project, base, change);
+
+      ctx.body = `Refresh requests accepted for
+        Project:  ${project}
+        Baseline: ${base}
+        Change:   ${change}
+        `;
+      ctx.status = 303;
+      ctx.redirect(`/compare/${project}/${base}/${change}`);
+    } else {
+      ctx.body = 'Incorrect authentication.';
+      ctx.status = 403;
+    }
+  }
+);
 
 if (DEV) {
   router.get(`${siteConfig.staticUrl}/:filename`, async (ctx) => {
@@ -307,6 +343,6 @@ app.use(router.allowedMethods());
 
   initPerfTracker();
 
-  console.log(`Starting server on localhost:${port}`);
+  console.log(`Starting server on http://localhost:${port}`);
   app.listen(port);
 })();

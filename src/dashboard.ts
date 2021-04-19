@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, unlinkSync, rmdirSync } from 'fs';
 import { execFile, ChildProcessPromise } from 'promisify-child-process';
 import { Database, DatabaseConfig } from './db';
 import { startRequest, completeRequest } from './perf-tracker';
@@ -180,6 +180,34 @@ export function getOutputImageFolder(outputFile: string): string {
   return outputFile.replace('.html', '_files');
 }
 
+export function getReportId(
+  project: string,
+  base: string,
+  change: string
+): string {
+  const baselineHash6 = base.substr(0, 6);
+  const changeHash6 = change.substr(0, 6);
+  return `${project}-${baselineHash6}-${changeHash6}`;
+}
+
+export function getReportFilename(reportId: string): string {
+  return `${reportOutputFolder}/${reportId}.html`;
+}
+
+export function dashDeleteOldReport(
+  project: string,
+  base: string,
+  change: string
+): void {
+  const reportId = getReportId(project, base, change);
+  const reportFilename = getReportFilename(reportId);
+  if (existsSync(reportFilename)) {
+    unlinkSync(reportFilename);
+    rmdirSync(getOutputImageFolder(reportFilename), { recursive: true });
+    reportGeneration.delete(reportId);
+  }
+}
+
 export function dashCompare(
   base: string,
   change: string,
@@ -190,11 +218,13 @@ export function dashCompare(
   const baselineHash6 = base.substr(0, 6);
   const changeHash6 = change.substr(0, 6);
 
-  const reportId = `${project}-${baselineHash6}-${changeHash6}`;
-  const reportFile = `${reportOutputFolder}/${reportId}.html`;
+  const reportId = getReportId(project, base, change);
+  const reportFile = getReportFilename(reportId);
 
   const data: any = {
     project,
+    baselineHash: base,
+    changeHash: change,
     baselineHash6,
     changeHash6,
     reportId,
