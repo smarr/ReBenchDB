@@ -57,11 +57,15 @@ compare_runtime_ratio_of_suites_plot <- function (
 }
 
 small_inline_comparison <- function (data) {
-  ggplot(data, aes(ratio_median, bench)) +
+  # small_inline_comparison(data_b)
+  # data <- data_b
+  ggplot(data, aes(x = ratio_median, y = commitid)) +
         geom_vline(aes(xintercept=1), colour="#333333", linetype="solid") +
         geom_boxplot(aes(colour = commitid),
                           outlier.size = 0.9,
-                          outlier.alpha = 0.6) +
+                          outlier.alpha = 0.6,
+                          lwd=0.2) +
+        geom_jitter(aes(colour = commitid, y = commitid), size=0.3, alpha=0.3) +
         scale_x_log10() +
         coord_cartesian(xlim=c(0.5, 5)) +
         theme_simple(5) +
