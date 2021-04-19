@@ -277,7 +277,7 @@ for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>
           cp('<tr>')
           cp('<th scope="row">',  b, args, '</th>')
           cp('<td>')
-          p <- small_inline_comparison(data_b)
+          p <- small_inline_comparison(data_ea)
           print(p)
           cp('</td>')
 
