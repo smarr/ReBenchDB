@@ -27,6 +27,8 @@ options(warn=1)
 ```{r load-db, include=FALSE, echo=FALSE, warning=FALSE, timeit=TRUE}
 # from-file: baseline_hash <- "7f7bf31c928147db34ea619ba0a897237cca8297"
 # from-file: change_hash <- "08a38cd7501acca82312722889b830b4f3a4865f"
+# baseline_hash <- 'd3f598'
+# change_hash <- '493721'
 baseline_hash <- params$baseline
 change_hash <- params$change
 baseline_hash6 <- substr(baseline_hash, 1, 6)
@@ -43,7 +45,7 @@ library(stringr)
 cmds <- str_split(params$extraCmd, ";")[[1]]
 
 if (cmds[1] == "from-file") {
-  # manual from-file: result <- rbind(load_data_file("~/Projects/tmp/SOMns-136.qs"), load_data_file("~/Projects/tmp/SOMns-141.qs"))
+  # manual from-file: result <- rbind(load_data_file("~/Projects/ReBenchDB/tmp/TruffleSOM-380.qs"), load_data_file("~/Projects/ReBenchDB/tmp/TruffleSOM-381.qs"))
   result <- rbind(load_data_file(cmds[2]), load_data_file(cmds[3]))
   result <- factorize_result(result)
 } else {
@@ -83,33 +85,40 @@ norm <- peak %>%
   transform(ratio_mean = value / base_mean,
             ratio_median = value / base_median)
 
-stats <- norm %>%
-  group_by(commitid, exe, suite, bench,
-           varvalue, cores, inputsize, extraargs) %>%
-  filter(is.na(warmup) | iteration >= warmup) %>%
-  summarise(
+calculate_stats <- function(data) {
+  data %>% summarise(
     unit = unit[1],
-    min = min(value),
-    max = max(value),
-    sd = sd(value),
-    mean = mean(value),
+    # min = min(value),
+    # max = max(value),
+    # sd = sd(value),
+    # mean = mean(value),
     median = median(value),
     samples = length(value),
 
     # mean_ratio_mean = mean(ratio_mean),
     # median_ratio_median = median(ratio_mean),
     # mean_ratio_median = mean(ratio_median),
-    lowerBCI95 = get_bca(value, 1000)$lower,
-    upperBCI95 = get_bca(value, 1000)$upper,
-
+    
+    # Too detailed, don't use it when looking at reports
+    # lowerBCI95 = get_bca(value, 1000)$lower,
+    # upperBCI95 = get_bca(value, 1000)$upper,
+    # 
     ratio = median / base_median[1],
-    ratioLower = lowerBCI95 / base_median[1],
-    ratioUpper = upperBCI95 / base_median[1],
-
+    # ratioLower = lowerBCI95 / base_median[1],
+    # ratioUpper = upperBCI95 / base_median[1],
+    # 
     change_m = ratio - 1,
-    change_l = ratioLower - 1,
-    change_u = ratioUpper - 1,
+    # change_l = ratioLower - 1,
+    # change_u = ratioUpper - 1,
     .groups = "drop")
+}
+
+
+stats <- norm %>%
+  group_by(commitid, exe, suite, bench,
+           varvalue, cores, inputsize, extraargs) %>%
+  filter(is.na(warmup) | iteration >= warmup) %>%
+  calculate_stats()
 
 not_in_both <- stats %>%
   filter(is.na(ratio)) %>%
@@ -223,8 +232,9 @@ if (nrow(not_in_both) > 0) {
 </div></dd>
 </dl>
 
-```{r suites, results='asis', echo=FALSE, dev='svg', fig.keep='all', fig.height=0.3, fig.width=3, timeit=TRUE}
+```{r suites, results='asis', echo=FALSE, dev='svg', fig.keep='all', fig.height=0.4, fig.width=3.5, timeit=TRUE}
 perf_diff_table <- function(norm, stats) {
+# e <- "TruffleSOM-graal-bc" 
 
 for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>% droplevels()
   for (s in levels(data_e$suite)) {   data_s <- data_e %>% filter(suite == s) %>% droplevels()
@@ -236,9 +246,9 @@ for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>
 <th scope="col"></th>
 <th scope="col"></th>
 <th scope="col" title="Number of Samples">#M</th>
-<th scope="col">mean in ', levels(data_s$unit), '</th>
 <th scope="col">median in ', levels(data_s$unit), '</th>
 <th scope="col">change in %</th>
+<th scope="col"></th>
 </tr></thead>')
 
 
@@ -257,6 +267,10 @@ for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>
           args <- paste0('<span class="all-args">', args, '</span>')
         }
 
+        # capture the beginning of the path but leave the last element of it
+        # this regex is also used in render.js's renderBenchmark() function
+        cmdline <- str_replace_all(data_i$cmdline[[1]], "^([^\\s]*)((?:\\/\\w+)\\s.*$)", ".\\2")
+        
         stats_b <- stats %>%
           ungroup() %>%
           filter(bench == b, suite == s, exe == e, varvalue == v, cores == c, inputsize == i, extraargs == ea, commitid == change_hash6) %>%
@@ -266,15 +280,15 @@ for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>
           cp('<tr>')
           cp('<th scope="row">',  b, args, '</th>')
           cp('<td>')
-          p <- small_inline_comparison(data_b)
+          p <- small_inline_comparison(data_ea)
           print(p)
           cp('</td>')
 
           cp('<td class="stats-samples">', stats_b$samples, '</td>')
-          cp('<td><span class="stats-mean" title="mean">', r2(stats_b$mean), '</span><span class="stats-sd" title="standard deviation">', r2(stats_b$sd), '</span></td>')
-          cp('<td><span class="stats-median" title="median">', r2(stats_b$median), '</span><span class="stats-min" title="minimum">', r2(stats_b$min), '</span><span class="stats-max" title="maximum">', r2(stats_b$max),'</span></td>')
-          cp('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span><span class="stats-change-l" title="lower bound of 95% bootstrap confidence interval">', pro(stats_b$change_l), '</span><span class="stats-change-u" title="upper bound of 95% bootstrap confidence interval">', pro(stats_b$change_u), '</span></td>')
-
+          cp('<td><span class="stats-median" title="median">', r2(stats_b$median), '</span></td>')
+          cp('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span></td>')
+          cp('<td><button type="button" class="btn btn-sm" data-toggle="popover" data-content="<code>', cmdline, '</code>">',
+             '</button></td>');
           cp('</tr>')
         } else {
           cp('<tr>')
@@ -341,29 +355,7 @@ if (length(exec_name) == 2) {
     group_by(commitid, exe, suite, bench,
              varvalue, cores, inputsize, extraargs) %>%
     filter(is.na(warmup) | iteration >= warmup) %>%
-    summarise(
-      unit = unit[1],
-      min = min(value),
-      max = max(value),
-      sd = sd(value),
-      mean = mean(value),
-      median = median(value),
-      samples = length(value),
-              
-      # mean_ratio_mean = mean(ratio_mean),
-      # median_ratio_median = median(ratio_mean),
-      # mean_ratio_median = mean(ratio_median),
-      lowerBCI95 = get_bca(value, 1000)$lower,
-      upperBCI95 = get_bca(value, 1000)$upper,
-              
-      ratio = median / base_median[1],
-      ratioLower = lowerBCI95 / base_median[1],
-      ratioUpper = upperBCI95 / base_median[1],
-              
-      change_m = ratio - 1,
-      change_l = ratioLower - 1,
-      change_u = ratioUpper - 1,
-      .groups = "drop") %>%
+    calculate_stats() %>%
       ## Drop the things that don't have matching results
       filter(!is.na(ratio)) %>%
       droplevels()
@@ -378,6 +370,8 @@ if (length(exec_name) == 2) {
 
 This section excludes all interpreter-only and startup benchmarks.
 ```{r warmup-plots, echo=FALSE, results='asis', dev='svg', fig.keep='all', fig.width=6, fig.height=2.5, timeit=TRUE}
+# e <- "TruffleSOM-graal"
+# s <- "micro-steady"
 # b <- "Mandelbrot"
 
 for (e in levels(warmup$exe)) {
@@ -414,3 +408,15 @@ for (e in levels(warmup$exe)) {
   }
 }
 ```
+
+<script>
+// initialize the popovers 
+$(function () {
+  const cmdlineButtons = $('[data-toggle="popover"]');
+  cmdlineButtons.popover({html: true, placement: 'top'});
+  cmdlineButtons.html(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-terminal" viewBox="0 0 16 16">
+<path d="M6 9a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3A.5.5 0 0 1 6 9zM3.854 4.146a.5.5 0 1 0-.708.708L4.793 6.5 3.146 8.146a.5.5 0 1 0 .708.708l2-2a.5.5 0 0 0 0-.708l-2-2z"/>
+<path d="M2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2zm12 1a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h12z"/>
+</svg>`);
+})
+</script>

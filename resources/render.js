@@ -208,7 +208,8 @@ function renderBenchmarks(benchmarks, $) {
 
 function renderBenchmark(benchmark) {
   // capture the beginning of the path but leave the last element of it
-  const pathRegex = /^(.*?)((?:\/\w+)\s.*$)/;
+  // this regex is also used in somns.Rmd, the suites part, for creating a table
+  const pathRegex = /^([^\s]*)((?:\/\w+)\s.*$)/;
   const cmdline = benchmark.cmdline.replace(pathRegex, '.$2');
 
   const plotId =

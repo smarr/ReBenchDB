@@ -47,8 +47,8 @@ describe('Knitr Report Generation', () => {
         `${reportFolder}/${outputFile}`,
         'utf8'
       );
-      // warning output is inside <code> blocks
-      expect(content).toEqual(expect.not.stringContaining('<code>'));
+      // warning output is inside <code> blocks, and starts with two hash marks
+      expect(content).toEqual(expect.not.stringContaining('<code>##'));
     });
 
     it('Should have generated a summare plot', () => {
