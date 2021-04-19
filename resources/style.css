@@ -104,6 +104,11 @@ table.benchmark-details tr th:nth-child(6) {
   width: 6em;
 }
 
+.popover {
+  /* allow popovers to use all width, so that command lines fit better */
+  max-width: 100%;
+}
+
 .warmup-benchmark {
   padding-right: 1.5ex;
   font-weight: bold;
