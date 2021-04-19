@@ -292,7 +292,15 @@ export class Database {
     insertCriterion: `INSERT INTO Criterion (name, unit)
                       VALUES ($1, $2) RETURNING *`,
     fetchUnit: 'SELECT * from Unit WHERE name = $1',
-    insertUnit: 'INSERT INTO Unit (name) VALUES ($1)'
+    insertUnit: 'INSERT INTO Unit (name) VALUES ($1)',
+
+    fetchRevsInProject: `SELECT DISTINCT p.id, s.id FROM Project p
+                            JOIN Experiment e ON e.projectId = p.id
+                            JOIN Trial t ON e.id = t.expId
+                            JOIN Source s ON t.sourceId = s.id
+                          WHERE p.name = $1
+                            AND s.commitid = $2
+                            OR s.commitid = $3`
   };
 
   private static readonly batchN = 50;
@@ -374,6 +382,19 @@ export class Database {
 
   public async activateTransactionSupport(): Promise<void> {
     this.client = <PoolClient>await this.client.connect();
+  }
+
+  public async revisionsExistInProject(
+    project: string,
+    base: string,
+    change: string
+  ): Promise<boolean> {
+    const result = await this.client.query(this.queries.fetchRevsInProject, [
+      project,
+      base,
+      change
+    ]);
+    return result.rowCount === 2;
   }
 
   private async recordCached(
