@@ -138,6 +138,10 @@ function openCompare(projectId, $) {
   const projectName = baseJQ.data('project');
   const baseline = baseJQ.find('.active').data('hash');
   const change = $(`#p${projectId}-change`).find('.active').data('hash');
+
+  if (baseline === undefined || change === undefined) {
+    return;
+  }
   window.location.href = `/compare/${projectName}/${baseline}/${change}`;
 }
 
