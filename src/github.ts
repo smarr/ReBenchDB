@@ -19,7 +19,7 @@ export class GitHub {
       authStrategy: createAppAuth,
       auth: {
         type: 'app',
-        id: appId,
+        appId: appId,
         privateKey: privateKey
       }
     });
@@ -38,7 +38,7 @@ export class GitHub {
       authStrategy: createAppAuth,
       auth: {
         type: 'install',
-        id: this.appId,
+        appId: this.appId,
         privateKey: this.privateKey,
         installationId: install.data.id
       }
