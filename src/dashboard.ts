@@ -546,7 +546,7 @@ export async function reportCompletion(
   );
 
   const reportUrl =
-    siteConfig.staticUrl +
+    siteConfig.publicUrl +
     `/compare/${data.projectName}/${baselineSha}/${changeSha}`;
 
   completionPromise
