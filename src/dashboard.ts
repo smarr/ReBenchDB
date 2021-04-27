@@ -230,8 +230,8 @@ export async function dashCompare(
     completionPromise: Promise.resolve()
   };
 
-  const exists = await db.revisionsExistInProject(project, base, change);
-  if (!exists) {
+  const revDetails = await db.revisionsExistInProject(project, base, change);
+  if (!revDetails.dataFound) {
     data.generationFailed = true;
     data.stdout =
       `The requested project ${project} does not have data ` +
@@ -240,6 +240,9 @@ export async function dashCompare(
     data.generatingReport = false;
     return data;
   }
+
+  Object.assign(data, revDetails);
+  data.revDetails = revDetails.dataFound;
 
   const reportFile = getReportFilename(reportId);
   if (existsSync(reportFile)) {

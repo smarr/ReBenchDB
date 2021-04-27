@@ -294,7 +294,11 @@ export class Database {
     fetchUnit: 'SELECT * from Unit WHERE name = $1',
     insertUnit: 'INSERT INTO Unit (name) VALUES ($1)',
 
-    fetchRevsInProject: `SELECT DISTINCT p.id, s.id FROM Project p
+    fetchRevsInProject: `SELECT DISTINCT
+                           p.id, e.name, s.id,
+                           s.commitid, s.repoUrl, s.branchOrTag,
+                           s.commitMessage, s.authorName
+                         FROM Project p
                             JOIN Experiment e ON e.projectId = p.id
                             JOIN Trial t ON e.id = t.expId
                             JOIN Source s ON t.sourceId = s.id
@@ -388,12 +392,42 @@ export class Database {
     project: string,
     base: string,
     change: string
-  ): Promise<boolean> {
+  ): Promise<any> {
     const result = await this.client.query(this.queries.fetchRevsInProject, [
       project,
       base,
       change
     ]);
+
+    if (result.rowCount === 2) {
+      let base;
+      let change;
+      if (result.rows[0].commitid === base) {
+        base = result.rows[0];
+        change = result.rows[1];
+      } else {
+        base = result.rows[1];
+        change = result.rows[0];
+      }
+
+      base.commitmessage = base.commitmessage
+        .replaceAll('\\n', '\n') // resolve new lines
+        .replace(/Signed-off-by:.*/g, '') // remove signed-off-by lines
+        .trim();
+      change.commitmessage = change.commitmessage
+        .replaceAll('\\n', '\n') // resolve new lines
+        .replace(/Signed-off-by:.*/g, '') // remove signed-off-by lines
+        .trim();
+
+      return {
+        dataFound: true,
+        base,
+        change
+      };
+    } else {
+      return { dataFound: false };
+    }
+
     return result.rowCount === 2;
   }
 

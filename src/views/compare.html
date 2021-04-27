@@ -46,7 +46,34 @@
 
 <div class="jumbotron">
   <h2>ReBenchDB for {{project}}</h2>
+  {{#revDetails}}
+  <h3>Comparing <a href="{{base.repourl}}/compare/{{baselineHash}}...{{changeHash}}">{{baselineHash6}} with {{changeHash6}}</a></h3>
+  {{/revDetails}}
+  {{^revDetails}}
   <h3>Comparing {{baselineHash6}} with {{changeHash6}}</h3>
+  {{/revDetails}}
+</div>
+
+<div id="version-details">
+  <h2>Version Details</h2>
+  <dl class="row">
+    <dt class="col-sm-2">Baseline</dt>
+    <dd class="col-sm-9">
+      <a href="{{base.repourl}}/compare/{{baselineHash}}"><span class="baseline-badge">{{baselineHash6}}</span></a> {{base.branchortag}}<br/>
+       {{base.authorname}}
+      <pre>{{base.commitmessage}}</pre>
+
+      {{base.name}}
+    </dd>
+    <dt class="col-sm-2">Change</dt>
+    <dd class="col-sm-9">
+      <a href="{{base.repourl}}/compare/{{changeHash}}"><span class="change-badge">{{changeHash6}}</span></a> {{change.branchortag}}<br/>
+       {{change.authorname}}
+      <pre>{{change.commitmessage}}</pre>
+
+      {{change.name}}
+    </dd>
+  </dl>
 </div>
 
 <div class="refresh">
