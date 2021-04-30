@@ -1,4 +1,4 @@
-import { readFileSync, existsSync, unlinkSync, rmdirSync } from 'fs';
+import { readFileSync, existsSync, unlinkSync, rmSync } from 'fs';
 import { execFile, ChildProcessPromise } from 'promisify-child-process';
 import { Database, DatabaseConfig } from './db';
 import { startRequest, completeRequest } from './perf-tracker';
@@ -199,7 +199,10 @@ export function dashDeleteOldReport(
   const reportFilename = getReportFilename(reportId);
   if (existsSync(reportFilename)) {
     unlinkSync(reportFilename);
-    rmdirSync(getOutputImageFolder(reportFilename), { recursive: true });
+    rmSync(getOutputImageFolder(reportFilename), {
+      recursive: true,
+      force: true
+    });
     reportGeneration.delete(reportId);
   }
 }

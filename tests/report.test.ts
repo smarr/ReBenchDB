@@ -1,4 +1,4 @@
-import { readFileSync, unlinkSync, rmdirSync, existsSync } from 'fs';
+import { readFileSync, unlinkSync, rmSync, existsSync } from 'fs';
 import {
   startReportGeneration,
   getSummaryPlotFileName,
@@ -69,7 +69,7 @@ describe('Report Generation', () => {
     afterAll(async () => {
       unlinkSync(`${reportFolder}/${outputFile}`);
       const imageFolder = `${reportFolder}/${getOutputImageFolder(outputFile)}`;
-      rmdirSync(imageFolder, { recursive: true });
+      rmSync(imageFolder, { recursive: true, force: true });
     });
   });
 
@@ -114,7 +114,7 @@ describe('Report Generation', () => {
     afterAll(async () => {
       unlinkSync(`${reportFolder}/${outputFile}`);
       const imageFolder = `${reportFolder}/${getOutputImageFolder(outputFile)}`;
-      rmdirSync(imageFolder, { recursive: true });
+      rmSync(imageFolder, { recursive: true, force: true });
     });
   });
 
@@ -152,7 +152,7 @@ describe('Report Generation', () => {
     afterAll(async () => {
       unlinkSync(`${reportFolder}/${outputFile}`);
       const imageFolder = `${reportFolder}/${getOutputImageFolder(outputFile)}`;
-      rmdirSync(imageFolder, { recursive: true });
+      rmSync(imageFolder, { recursive: true, force: true });
     });
   });
 });

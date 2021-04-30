@@ -24,6 +24,6 @@ export function createValidator(): ValidateFunction {
   const program = getProgramFromFiles([api], compilerOptions);
   const schema = generateSchema(program, 'BenchmarkData', settings);
 
-  const ajv = new Ajv({ allErrors: true });
+  const ajv = new Ajv({ allErrors: true, allowUnionTypes: true });
   return ajv.compile(<any>schema);
 }
