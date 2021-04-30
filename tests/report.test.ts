@@ -6,7 +6,7 @@ import {
 } from '../src/dashboard';
 import { DatabaseConfig } from '../src/db';
 
-describe('Knitr Report Generation', () => {
+describe('Report Generation', () => {
   const reportFolder = `${__dirname}/../resources/reports`;
 
   describe('Report with varying set of benchmarks', () => {
