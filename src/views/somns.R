@@ -181,7 +181,8 @@ if (nrow(stats %>% filter(commitid == change_hash6)) == 0) {
   out("<h3>Issue with Unexpected Data</h3>",
       "<p>The data provided for baseline and change does not seem to have a common benchmarks/executors.</p>\n",
       "<p>This is known to happen for instance, when benchmarks or parameters are changed, or executors renamed.</p>\n")
-  quit(status = 1)
+  cat("Data provided for baseline and change does not have any common benchmark/executor\n", file = stderr())
+  quit(status = 0)
 }
 
 stats_suite <- stats %>%
