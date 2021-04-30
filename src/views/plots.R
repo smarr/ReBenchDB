@@ -23,7 +23,7 @@ warmup_plot <- function (data_b, b, s, e) {
       linetype = "longdash", colour = "#cccccc") +
     theme_simple(8) +
     theme(legend.position=c(0.92, .92))
-  print(plot)
+  plot
 }
 
 negative_geometric.mean <- function(d) {

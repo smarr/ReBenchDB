@@ -1,4 +1,4 @@
-import { readFileSync, unlinkSync, rmdirSync, existsSync } from 'fs';
+import { readFileSync, unlinkSync, rmSync, existsSync } from 'fs';
 import {
   startReportGeneration,
   getSummaryPlotFileName,
@@ -6,7 +6,7 @@ import {
 } from '../src/dashboard';
 import { DatabaseConfig } from '../src/db';
 
-describe('Knitr Report Generation', () => {
+describe('Report Generation', () => {
   const reportFolder = `${__dirname}/../resources/reports`;
 
   describe('Report with varying set of benchmarks', () => {
@@ -69,7 +69,7 @@ describe('Knitr Report Generation', () => {
     afterAll(async () => {
       unlinkSync(`${reportFolder}/${outputFile}`);
       const imageFolder = `${reportFolder}/${getOutputImageFolder(outputFile)}`;
-      rmdirSync(imageFolder, { recursive: true });
+      rmSync(imageFolder, { recursive: true, force: true });
     });
   });
 
@@ -114,7 +114,7 @@ describe('Knitr Report Generation', () => {
     afterAll(async () => {
       unlinkSync(`${reportFolder}/${outputFile}`);
       const imageFolder = `${reportFolder}/${getOutputImageFolder(outputFile)}`;
-      rmdirSync(imageFolder, { recursive: true });
+      rmSync(imageFolder, { recursive: true, force: true });
     });
   });
 
@@ -152,7 +152,7 @@ describe('Knitr Report Generation', () => {
     afterAll(async () => {
       unlinkSync(`${reportFolder}/${outputFile}`);
       const imageFolder = `${reportFolder}/${getOutputImageFolder(outputFile)}`;
-      rmdirSync(imageFolder, { recursive: true });
+      rmSync(imageFolder, { recursive: true, force: true });
     });
   });
 });

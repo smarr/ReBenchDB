@@ -5,9 +5,6 @@ source("stats.R", chdir = TRUE)
 
 ## Basic Setup and Functionality to be used by Rmarkdown change reports
 
-# Minimize undesirable knitr output
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
-
 # avoid scientific notation for numbers, it's more readable to me
 options(scipen=999)
 
@@ -47,26 +44,19 @@ options(warn = 2, keep.source = TRUE, error =
             }
           }))
 
-enable_chunk_timing <- function() {
-  knitr::knit_hooks$set(timeit = local({
-    now = NULL
-    function(before, options) {
-      if (before) {
-        now <<- Sys.time()
-      } else {
-        res = difftime(Sys.time(), now)
-        now <<- NULL
-        paste0('<br><strong>Run time of ', options$label, ':</strong> ', format(res))
-      }
-    }})
-  )
+timing_data <- NULL
+timing.start <- function() {
+  timing_data <<- Sys.time()
 }
+
+timing.stop <- function() {
+  res = difftime(Sys.time(), timing_data)
+  timing_data <<- NULL
+  res
+}
+
 
 ## Output Formatting
-
-cp <- function(...) {
-  cat(paste0(...))
-}
 
 r2 <- function(val) {
   if (is.na(val)) {

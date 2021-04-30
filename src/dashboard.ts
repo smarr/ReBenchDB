@@ -1,4 +1,4 @@
-import { readFileSync, existsSync, unlinkSync, rmdirSync } from 'fs';
+import { readFileSync, existsSync, unlinkSync, rmSync } from 'fs';
 import { execFile, ChildProcessPromise } from 'promisify-child-process';
 import { Database, DatabaseConfig } from './db';
 import { startRequest, completeRequest } from './perf-tracker';
@@ -147,13 +147,11 @@ export function startReportGeneration(
   extraCmd = ''
 ): ChildProcessPromise {
   const args = [
-    robustPath(`views/somns.Rmd`),
+    robustPath(`views/somns.R`),
     outputFile,
-    // paths created in package.json
-    // output dir implicit, from cwd
-    '.',
-    robustPath(`../tmp/interm`),
-    robustPath(`../tmp/knit`),
+    getOutputImageFolder(outputFile),
+    // R ReBenchDB library directory
+    robustPath(`views/`),
     base,
     change,
     '#729fcf',
@@ -161,19 +159,17 @@ export function startReportGeneration(
     dbConfig.database,
     dbConfig.user,
     dbConfig.password,
-    // R ReBenchDB library directory
-    robustPath(`views/`),
     extraCmd
   ];
 
-  const cmd = robustPath(`views/knitr.R`);
+  const cmd = 'Rscript';
   console.log(`Generate Report: ${cmd} '${args.join(`' '`)}'`);
 
   return execFile(cmd, args, { cwd: reportOutputFolder });
 }
 
 export function getSummaryPlotFileName(outputFile: string): string {
-  return getOutputImageFolder(outputFile) + '/figure-html/summary-suites-1.png';
+  return getOutputImageFolder(outputFile) + '/overview.png';
 }
 
 export function getOutputImageFolder(outputFile: string): string {
@@ -203,7 +199,10 @@ export function dashDeleteOldReport(
   const reportFilename = getReportFilename(reportId);
   if (existsSync(reportFilename)) {
     unlinkSync(reportFilename);
-    rmdirSync(getOutputImageFolder(reportFilename), { recursive: true });
+    rmSync(getOutputImageFolder(reportFilename), {
+      recursive: true,
+      force: true
+    });
     reportGeneration.delete(reportId);
   }
 }

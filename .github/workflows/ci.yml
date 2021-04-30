@@ -40,16 +40,12 @@ jobs:
       - name: Install R
         uses: r-lib/actions/setup-r@v1
         with:
-          r-version: '4.0.2'
-      - name: Install Pandoc
-        uses: r-lib/actions/setup-pandoc@v1
-        with:
-          pandoc-version: '2.7.3'
+          r-version: '4.0.5'
 
       - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: '13'
+          node-version: '15'
 
       - name: Cache R packages
         uses: actions/cache@v2
