@@ -43,6 +43,15 @@ Data is stored in a PostgreSQL database.
 Custom reports are executed via a shell script, though, we use R to create
 reports.
 
+To ensure that the SVG for plots is generated using a font available in most browers,
+the server needs them when generating plots. We currently use Arial as default font.
+
+On Ubuntu, these fonts can be installed with:
+
+```bash
+apt install ttf-mscorefonts-installer
+```
+
 TODO: write a detailed description on what is required to set things up.
 
 ## Support and Contributions
