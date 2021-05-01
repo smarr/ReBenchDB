@@ -86,13 +86,13 @@ small_inline_comparison <- function (data) {
 ##
 theme_simple <- function(font_size = 8) {
   theme_bw() +
-    theme(axis.text.x          = element_text(size = font_size, lineheight=0.7),
+    theme(axis.text.x          = element_text(size = font_size, lineheight=0.7, family="Arial"),
           axis.title.x         = element_blank(),
-          axis.title.y         = element_text(size = font_size),
-          axis.text.y          = element_text(size = font_size),
+          axis.title.y         = element_text(size = font_size, family="Arial"),
+          axis.text.y          = element_text(size = font_size, family="Arial"),
           axis.line            = element_line(colour = "gray"),
-          plot.title           = element_text(size = font_size),
-          legend.text          = element_text(size = font_size),
+          plot.title           = element_text(size = font_size, family="Arial"),
+          legend.text          = element_text(size = font_size, family="Arial"),
           legend.title         = element_blank(),
           legend.background    = element_blank(),
           panel.background     = element_blank(), #element_rect(fill = NA, colour = NA),
@@ -101,7 +101,7 @@ theme_simple <- function(font_size = 8) {
           panel.border         = element_blank(),
           plot.background      = element_blank(), #element_rect(fill = NA, colour = NA)
           strip.background     = element_blank(),
-          strip.text           = element_text(size = font_size),
+          strip.text           = element_text(size = font_size, family="Arial"),
           plot.margin = unit(c(0,0,0,0), "cm"))
 }
 
