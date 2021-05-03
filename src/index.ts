@@ -181,7 +181,7 @@ router.post(
 );
 
 if (DEV) {
-  router.get(`${siteConfig.staticUrl}/:filename`, async (ctx) => {
+  router.get(`${siteConfig.staticUrl}/:filename*`, async (ctx) => {
     console.log(`serve ${ctx.params.filename}`);
     // TODO: robustPath?
     ctx.body = readFileSync(
@@ -191,6 +191,8 @@ if (DEV) {
       ctx.type = 'css';
     } else if (ctx.params.filename.endsWith('.js')) {
       ctx.type = 'application/javascript';
+    } else if (ctx.params.filename.endsWith('.svg')) {
+      ctx.type = 'image/svg+xml';
     }
   });
 
