@@ -312,17 +312,29 @@ for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>
           out('<img src="', output_dir, '/', img_file, '">')
           
           row_count <- row_count + 1
-          out('</td>')
+          out('</td>\n')
 
-          out('<td class="stats-samples">', stats_b$samples, '</td>')
-          out('<td><span class="stats-median" title="median">', r2(stats_b$median), '</span></td>')
-          out('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span></td>')
-          out('<td><button type="button" class="btn btn-sm" data-toggle="popover" data-content="<code>', cmdline, '</code>">',
-             '</button></td>');
-          out('</tr>')
+          out('<td class="stats-samples">', stats_b$samples, '</td>\n')
+          out('<td><span class="stats-median" title="median">', r2(stats_b$median), '</span></td>\n')
+          out('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span></td>\n')
+          out('<td><button type="button" class="btn btn-sm" data-toggle="popover" data-content="<code>', cmdline, '</code>"></button>\n')
+          
+          warmup_ea <- warmup %>%
+            filter(exe == e, suite == s, bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
+            droplevels()
+          
+          if (nrow(warmup_ea) > 0) {
+            img_file <- paste0('warmup-', row_count, '.svg')
+            p <- warmup_plot(warmup_ea, b, s, e)
+            ggsave(img_file, p, "svg", output_dir, width = 6, height = 2.5, units = "in")
+            out('<button type="button" class="btn btn-sm btn-light btn-expand" data-img="', output_dir, '/', img_file, '"></button>\n')
+          }
+          
+          out('</td>');
+          out('</tr>\n')
         } else {
           out('<tr>')
-          out('<th scope="row">',  b, '</th><td colspan="4">missing in one of the data sets</td>')
+          out('<th scope="row">',  b, '</th><td colspan="4">missing in one of the data sets</td>\n')
           out('</tr>')
         }
       } } } }
@@ -390,61 +402,6 @@ if (length(exec_name) == 2) {
       droplevels()
 
   perf_diff_table(norm_comp %>% filter(!grepl(base_exe, exe)), stats_comp)
-}
-
-
-out('<h2>Warmup Behavior</h2>')
-
-out('<p>',
-   'This section excludes all interpreter-only and startup benchmarks.',
-   '</p>')
-
-
-# e <- "TruffleSOM-graal"
-# s <- "micro-steady"
-# b <- "Mandelbrot"
-
-row_count <- 0
-
-for (e in levels(warmup$exe)) {
-  data_e <- warmup %>% filter(exe == e) %>% droplevels()
-
-  for (s in levels(data_e$suite)) {
-    data_s <- data_e %>% filter(suite == s) %>% droplevels()
-
-    for (b in levels(data_s$bench)) {
-      data_b <- data_s %>% filter(bench == b) %>% droplevels()
-
-      for (v in levels(data_b$varvalue)) {         data_v  <- data_b %>% filter(varvalue == v)   %>% droplevels()
-        for (c in levels(data_v$cores)) {          data_c  <- data_v %>% filter(cores == c)      %>% droplevels()
-          for (i in levels(data_c$inputsize)) {    data_i  <- data_c %>% filter(inputsize == i)  %>% droplevels()
-            for (ea in levels(data_i$extraargs)) { data_ea <- data_i %>% filter(extraargs == ea) %>% droplevels()
-              out('<div><span class="warmup-benchmark">', b, '</span><span class="warmup-suite">', s, '</span><span class="warmup-exe">', e, '</span>')
-              args <- ""
-              if (length(levels(data_b$varvalue))  > 1) { args <- paste0(args, v) }
-              if (length(levels(data_v$cores))     > 1) { args <- paste0(args, c) }
-              if (length(levels(data_c$inputsize)) > 1) { args <- paste0(args, i) }
-              if (length(levels(data_i$extraargs)) > 1) { args <- paste0(args, ea) }
-              if (nchar(args) > 0) {
-                out('<span class="all-args">', args, '</span>')
-              }
-
-              out('<div class="warmup-plot">')
-              p <- warmup_plot(data_ea, b, s, e)
-              
-              img_file <- paste0('warmup-', row_count, '.svg')
-              ggsave(img_file, p, "svg", output_dir, width = 6, height = 2.5, units = "in")
-              out('<img src="', output_dir, '/', img_file, '">')
-              
-              row_count <- row_count + 1
-              
-              out('</div></div>')
-            }
-          }
-        }
-      }
-    }
-  }
 }
 
 time <- timing.stop()
