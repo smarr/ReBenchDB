@@ -32,6 +32,15 @@
       });
     }
 
+    function insertWarmupPlot(button) {
+      const jqButton = $(button);
+      let url = jqButton.data('img');
+      const insert = `<tr><td class="warmup-plot" colspan="6">
+          <img src="${url}"></td></tr>`;
+      jqButton.parent().parent().after(insert);
+      jqButton.remove();
+    }
+
     $(document).ready(() => {
       $('#significance')
         .on('input', determineAndDisplaySignificance);
@@ -48,12 +57,16 @@
                             </svg>`);
 
       const expandButtons = $('.btn-expand');
-      expandButtons.click((e) => {
-        let url = $(e.target).data('img');
-        const insert = `<tr><td class="warmup-plot" colspan="6">
-            <img src="${url}"></td></tr>`;
-        $(e.target).parent().parent().after(insert);
-      });
+      expandButtons.click((e) => insertWarmupPlot(e.target));
+
+      const headlinesForTablesWithWarmupPlots = $("table:has(button.btn-expand)").prev().prev();
+      headlinesForTablesWithWarmupPlots.append(
+        `<button type="button" class="btn btn-sm btn-light btn-expand"></button>`);
+      const buttons = headlinesForTablesWithWarmupPlots.find('.btn-expand');
+      buttons.click((e) => {
+        const expandButtons = $(e.target).parent().next().next().find('.btn-expand');
+        expandButtons.each((i, elm) => insertWarmupPlot(elm));
+      })
     });
   </script>
 </head>
