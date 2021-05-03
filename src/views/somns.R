@@ -47,7 +47,7 @@ extra_cmd      <- args[[11]]
 
 # Load Libraries
 source(paste0(lib_dir, "/common.R"), chdir=TRUE)
-library(dplyr)
+suppressMessages(library(dplyr))
 library(stringr)
 options(warn=1)
 
