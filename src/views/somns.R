@@ -1,7 +1,22 @@
 #!/usr/bin/env Rscript
 #
 # SOMns Performance Comparison Report
-args <- commandArgs(trailingOnly = TRUE)
+args <- if (Sys.getenv("RSTUDIO") == "1") {
+ c("test.html",
+   "~/Projects/ReBenchDB/tmp/rstudio/",
+   "~/Projects/ReBenchDB/src/views/",
+   "493721",
+   "d3f598",
+   "#729fcf",
+   "#e9b96e",
+   NA,  # "rdb_sm1"
+   NA,
+   NA,
+   "from-file;~/Projects/ReBenchDB/tmp/TruffleSOM-380.qs;~/Projects/ReBenchDB/tmp/TruffleSOM-381.qs"
+ ) 
+} else {
+  commandArgs(trailingOnly = TRUE)
+}
 
 if (length(args) < 11 | args[[1]] == '--help') {
   cat("Performance Comparison Report
@@ -37,14 +52,6 @@ db_user        <- args[[9]]
 db_pass        <- args[[10]]
 extra_cmd      <- args[[11]]
 
-# baseline_hash <- "b0bd089afdb2f3437c52486630ceb82e96a741d9"
-# change_hash   <- "b3d66873c97cac6d4e2f79e8b6a91e3397161b62"
-# baseline_color <- "#729fcf"
-# change_color   <- "#e9b96e"
-# db_user        <- NULL  # "rdb_sm1"
-# db_pass        <- NULL
-# db_name        <- "rdb_sm1"
-
 # Load Libraries
 source(paste0(lib_dir, "/common.R"), chdir=TRUE)
 suppressMessages(library(dplyr))
@@ -69,8 +76,12 @@ timing.start()
 ## File Output
 output_file_connection <- NULL
 
-out <- function(...) {
-  writeLines(c(...), con = output_file_connection, sep = "")
+if (Sys.getenv("RSTUDIO") == "1") {
+  out <- function(...) { writeLines(c(...), sep = "") }
+} else {
+  out <- function(...) {
+    writeLines(c(...), con = output_file_connection, sep = "")
+  }
 }
 
 ## Create Directories and Open Output File
