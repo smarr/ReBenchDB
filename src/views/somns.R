@@ -56,7 +56,6 @@ extra_cmd      <- args[[11]]
 source(paste0(lib_dir, "/common.R"), chdir=TRUE)
 suppressMessages(library(dplyr))
 library(stringr)
-options(warn=1)
 
 baseline_hash6 <- substr(baseline_hash, 1, 6)
 change_hash6 <- substr(change_hash, 1, 6)
