@@ -314,13 +314,15 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
         droplevels()
     }
     
+    group_size <- (data_ea %>% select(!!group_col) %>% unique() %>% count())$n
+
     if (nrow(stats_b) > 0) {
       out('<tr>')
       out('<th scope="row">',  b, args, '</th>')
       out('<td>')
-      p <- small_inline_comparison(data_ea, !!group_col)
+      p <- small_inline_comparison(data_ea, !!group_col, group_size)
       img_file <- paste0('inline-', row_count, '.svg')
-      ggsave(img_file, p, "svg", output_dir, width = 3.5, height = 0.4, units = "in")
+      ggsave(img_file, p, "svg", output_dir, width = 3.5, height = 0.12 + 0.14 * group_size, units = "in")
       out('<img src="', output_dir, '/', img_file, '">')
       
       row_count <- row_count + 1
@@ -336,7 +338,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
         out('<td></td>',
             '<td></td>',
             '<td></td>',
-            '<td></td>')
+            '<td>')
       }
       
       warmup_ea <- warmup_es %>%
