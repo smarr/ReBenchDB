@@ -402,7 +402,7 @@ row_count <- perf_diff_table(norm, stats, 0)
 restrict_to_change_data <- function(data) {
   data %>%
     ungroup() %>%
-    filter(commitid == change_hash) %>%
+    filter(commitid == change_hash6) %>%
     select(!commitid) %>%
     droplevels()
 }
