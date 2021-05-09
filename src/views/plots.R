@@ -1,10 +1,11 @@
 # Plots
 library(ggplot2)
 
-warmup_plot <- function (data_b, b, s, e) {
+warmup_plot <- function (data_b, group) {
+  group_col <- enquo(group)
   ## First take the medians over the values for each commitid separately
   medians <- data_b %>%
-    group_by(commitid) %>%
+    group_by(!!group_col) %>%
     summarise(median = median(value),
     .groups = "drop")
 
@@ -12,7 +13,7 @@ warmup_plot <- function (data_b, b, s, e) {
   upperBound <- 2 * max(medians$median)
 
   plot <- ggplot(data_b, aes(x=iteration, y=value)) +
-    geom_line(aes(colour = commitid)) +
+    geom_line(aes(colour = !!group_col)) +
     scale_color_manual(values = color) +
     # ggtitle(paste(b, s, e)) +
     ylab(levels(data_b$unit)) +
@@ -56,22 +57,27 @@ compare_runtime_ratio_of_suites_plot <- function (
     theme(legend.position = "none")
 }
 
-small_inline_comparison <- function (data) {
+small_inline_comparison <- function (data, group) {
+  group_col <- enquo(group)
   # small_inline_comparison(data_b)
   # data <- data_b
-  ggplot(data, aes(x = ratio_median, y = commitid)) +
+  group_size <- (data %>% select(!!group_col) %>% unique() %>% count())$n
+  all_colors <- c(baseline_color, change_color, "#8ae234", "#ad7fa8", "#fcaf3e", "#ef2929")[1:group_size]
+  lighter_colors <- c("#97c4f0", "#efd0a7", "#b7f774", "#e0c0e4", "#ffd797", "#f78787")[1:group_size]
+  
+  ggplot(data, aes(x = ratio_median, y = !!group_col)) +
         geom_vline(aes(xintercept=1), colour="#333333", linetype="solid") +
-        geom_boxplot(aes(colour = commitid),
+        geom_boxplot(aes(colour = !!group_col),
                           outlier.size = 0.9,
                           outlier.alpha = 0.6,
                           lwd=0.2) +
-        geom_jitter(aes(colour = commitid, y = commitid), size=0.3, alpha=0.3) +
+        geom_jitter(aes(colour = !!group_col, y = !!group_col), size=0.3, alpha=0.3) +
         scale_x_log10() +
         coord_cartesian(xlim=c(0.5, 5)) +
         theme_simple(5) +
         ylab("") +
-        scale_color_manual(values = color) +
-        scale_fill_manual(values = color) +
+        scale_color_manual(values = all_colors) +
+        scale_fill_manual(values = lighter_colors) +
         theme(legend.position = "none",
               axis.ticks.y=element_blank(),
               axis.text.y=element_blank(),

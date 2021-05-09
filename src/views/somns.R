@@ -267,151 +267,252 @@ if (nrow(not_in_both) > 0) {
 out("<h2>Benchmark Performance</h2>")
 
 
-
-perf_diff_table <- function(norm, stats) {
-# e <- "TruffleSOM-graal-bc"
-
-row_count <- 0
+perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, group) {
+  group_col <- enquo(group)
+  row_count <- start_row_count
   
-for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>% droplevels()
-  for (s in levels(data_e$suite)) {   data_s <- data_e %>% filter(suite == s) %>% droplevels()
-    out("<h3>", s, "</h3>")
-    out('<div class="title-executor">Executor: ', e, "</div>")
-
-    out('<table class="table table-sm benchmark-details">')
-    out('<thead><tr>
+  out('<table class="table table-sm benchmark-details">')
+  out('<thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
 <th scope="col" title="Number of Samples">#M</th>
-<th scope="col">median in ', levels(data_s$unit), '</th>
+<th scope="col">median in ', levels(data_es$unit), '</th>
 <th scope="col">change in %</th>
 <th scope="col"></th>
 </tr></thead>')
-
-    for (b in levels(data_s$bench)) { data_b <- data_s %>% filter(bench == b) %>% droplevels()
-      for (v in levels(data_b$varvalue)) {   data_v  <- data_b %>% filter(varvalue == v)   %>% droplevels()
-      for (c in levels(data_v$cores)) {      data_c  <- data_v %>% filter(cores == c)      %>% droplevels()
-      for (i in levels(data_c$inputsize)) {  data_i  <- data_c %>% filter(inputsize == i)  %>% droplevels()
-      for (ea in levels(data_i$extraargs)) { data_ea <- data_i %>% filter(extraargs == ea) %>% droplevels()
-
-        args <- ""
-        if (length(levels(data_b$varvalue))  > 1) { args <- paste0(args, v) }
-        if (length(levels(data_v$cores))     > 1) { args <- paste0(args, c) }
-        if (length(levels(data_c$inputsize)) > 1) { args <- paste0(args, i) }
-        if (length(levels(data_i$extraargs)) > 1) { args <- paste0(args, ea) }
-        if (nchar(args) > 0) {
-          args <- paste0('<span class="all-args">', args, '</span>')
-        }
-
-        # capture the beginning of the path but leave the last element of it
-        # this regex is also used in render.js's renderBenchmark() function
-        cmdline <- str_replace_all(data_i$cmdline[[1]], "^([^\\s]*)((?:\\/\\w+)\\s.*$)", ".\\2")
-
-        stats_b <- stats %>%
-          ungroup() %>%
-          filter(bench == b, suite == s, exe == e, varvalue == v, cores == c, inputsize == i, extraargs == ea, commitid == change_hash6) %>%
-          droplevels()
-
-        if (nrow(stats_b) > 0) {
-          out('<tr>')
-          out('<th scope="row">',  b, args, '</th>')
-          out('<td>')
-          p <- small_inline_comparison(data_ea)
-          img_file <- paste0('inline-', row_count, '.svg')
-          ggsave(img_file, p, "svg", output_dir, width = 3.5, height = 0.4, units = "in")
-          out('<img src="', output_dir, '/', img_file, '">')
-          
-          row_count <- row_count + 1
-          out('</td>\n')
-
-          out('<td class="stats-samples">', stats_b$samples, '</td>\n')
-          out('<td><span class="stats-median" title="median">', r2(stats_b$median), '</span></td>\n')
-          out('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span></td>\n')
-          out('<td><button type="button" class="btn btn-sm" data-toggle="popover" data-content="<code>', cmdline, '</code>"></button>\n')
-          
-          warmup_ea <- warmup %>%
-            filter(exe == e, suite == s, bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
-            droplevels()
-          
-          if (nrow(warmup_ea) > 0) {
-            img_file <- paste0('warmup-', row_count, '.svg')
-            p <- warmup_plot(warmup_ea, b, s, e)
-            ggsave(img_file, p, "svg", output_dir, width = 6, height = 2.5, units = "in")
-            out('<button type="button" class="btn btn-sm btn-light btn-expand" data-img="', output_dir, '/', img_file, '"></button>\n')
-          }
-          
-          out('</td>');
-          out('</tr>\n')
-        } else {
-          out('<tr>')
-          out('<th scope="row">',  b, '</th><td colspan="4">missing in one of the data sets</td>\n')
-          out('</tr>')
-        }
-      } } } }
+  
+  # b <- "DeltaBlue"
+  # data_ea <- data_b
+  
+  for (b in levels(data_es$bench)) { data_b <- data_es %>% filter(bench == b) %>% droplevels()
+    for (v in levels(data_b$varvalue)) {   data_v  <- data_b %>% filter(varvalue == v)   %>% droplevels()
+    for (c in levels(data_v$cores)) {      data_c  <- data_v %>% filter(cores == c)      %>% droplevels()
+    for (i in levels(data_c$inputsize)) {  data_i  <- data_c %>% filter(inputsize == i)  %>% droplevels()
+    for (ea in levels(data_i$extraargs)) { data_ea <- data_i %>% filter(extraargs == ea) %>% droplevels()
+    
+    args <- ""
+    if (length(levels(data_b$varvalue))  > 1) { args <- paste0(args, v) }
+    if (length(levels(data_v$cores))     > 1) { args <- paste0(args, c) }
+    if (length(levels(data_c$inputsize)) > 1) { args <- paste0(args, i) }
+    if (length(levels(data_i$extraargs)) > 1) { args <- paste0(args, ea) }
+    if (nchar(args) > 0) {
+      args <- paste0('<span class="all-args">', args, '</span>')
     }
-
-    out('</table>')
+    
+    # capture the beginning of the path but leave the last element of it
+    # this regex is also used in render.js's renderBenchmark() function
+    cmdline <- str_replace_all(data_i$cmdline[[1]], "^([^\\s]*)((?:\\/\\w+)\\s.*$)", ".\\2")
+    
+    stats_b <- stats_es %>%
+      ungroup() %>%
+      filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
+      droplevels()
+    
+    if ("commitid" %in% colnames(stats_b)) {
+      stats_b <- stats_b %>%
+        filter(commitid == change_hash6) %>%
+        droplevels()
+    }
+    
+    if (nrow(stats_b) > 0) {
+      out('<tr>')
+      out('<th scope="row">',  b, args, '</th>')
+      out('<td>')
+      p <- small_inline_comparison(data_ea, !!group_col)
+      img_file <- paste0('inline-', row_count, '.svg')
+      ggsave(img_file, p, "svg", output_dir, width = 3.5, height = 0.4, units = "in")
+      out('<img src="', output_dir, '/', img_file, '">')
+      
+      row_count <- row_count + 1
+      out('</td>\n')
+      
+      if (nrow(stats_b) == 1) {
+        out('<td class="stats-samples">', stats_b$samples, '</td>\n')
+        out('<td><span class="stats-median" title="median">', r2(stats_b$median), '</span></td>\n')
+        out('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span></td>\n')
+        out('<td><button type="button" class="btn btn-sm" data-toggle="popover" data-content="<code>', cmdline, '</code>"></button>\n')
+      } else {
+        # TODO find a nice way of showing the stats for the comparison between exes, which requires more space (perhaps rows)
+        out('<td></td>',
+            '<td></td>',
+            '<td></td>',
+            '<td></td>')
+      }
+      
+      warmup_ea <- warmup_es %>%
+        filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
+        droplevels()
+      
+      if (nrow(warmup_ea) > 0) {
+        img_file <- paste0('warmup-', row_count, '.svg')
+        p <- warmup_plot(warmup_ea, !!group_col)
+        ggsave(img_file, p, "svg", output_dir, width = 6, height = 2.5, units = "in")
+        out('<button type="button" class="btn btn-sm btn-light btn-expand" data-img="', output_dir, '/', img_file, '"></button>\n')
+      }
+      
+      out('</td>');
+      out('</tr>\n')
+    } else {
+      out('<tr>')
+      out('<th scope="row">',  b, '</th><td colspan="4">missing in one of the data sets</td>\n')
+      out('</tr>')
+    }
+    } } } }
   }
-}
-}
-
-perf_diff_table(norm, stats)
-
-
-execs <- levels(peak$exe)
-exec_name <- str_replace_all(execs, c("-jit" = "", "-interp" = ""))
-exec_name <- union(exec_name, exec_name)
-
-exe_type <- function(data) {
-  # print(data)
-  ifelse(grepl("-jit", data), "jit", ifelse(grepl("-interp", data), "interp", "other"))
+  
+  out('</table>')
+  row_count
 }
 
-# The cross comparison is designed for setups where there are two clearly
-# different sets of experiments. The current heuristic assumes that
-# interpreter (-interp) and jit-compiling (-jit) VMs are among the executors,
-# which without these name parts, form a set of two distinct names.
-if (length(exec_name) == 2) {
-  out("<h2>Cross Comparison</h2>\n")
+perf_diff_table <- function(norm, stats, start_row_count) {
+  # e <- "TruffleSOM-graal-bc"
+  
+  row_count <- start_row_count
+    
+  for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>% droplevels()
+    for (s in levels(data_e$suite)) {   data_s <- data_e %>% filter(suite == s) %>% droplevels()
+      # e <- "TruffleSOM-graal"
+      # s <- "macro-steady"
+      out("<h3>", s, "</h3>")
+      out('<div class="title-executor">Executor: ', e, "</div>")
+      
+      stats_es <- stats %>%
+        ungroup() %>%
+        filter(exe == e, suite == s) %>%
+        droplevels()
+      
+      warmup_es <- warmup %>%
+        ungroup() %>%
+        filter(exe == e, suite == s) %>%
+        droplevels()
+      
+      row_count <- perf_diff_table_es(data_s, stats_es, warmup_es, row_count, commitid)
+    }
+  }
+  row_count
+}
 
-  base_exe <- exec_name[[1]]
-  out("<p>Baseline: ", base_exe, "</p>")
+row_count <- perf_diff_table(norm, stats, 0)
 
-  peak_comp <- peak %>%
-    transform(exe_type = exe_type(exe))
-  peak_comp$exe_type <- factor(peak_comp$exe_type)
 
-  base_comp <- peak_comp %>%
-    filter(commitid == change_hash6, grepl(base_exe, exe)) %>%
-    group_by(exe_type, suite, bench,
-             varvalue, cores, inputsize, extraargs,
-             commitid) %>%
-    summarise(base_mean = mean(value),
-              base_median = median(value),
-              .groups = "drop")
+# Identify possible comparison on the data of the change.
+# Within the change data, there may be different executors, which are worth
+# comparing.
 
-  norm_comp <- peak_comp %>%
-    filter(commitid == change_hash6) %>%
-    left_join(base_comp,
-              by = c("exe_type", "suite", "bench",
-                     "varvalue", "cores", "inputsize", "extraargs",
-                     "commitid")) %>%
-    group_by(exe_type, suite, bench,
-             varvalue, cores, inputsize, extraargs,
-             commitid) %>%
-    transform(ratio_mean = value / base_mean,
-              ratio_median = value / base_median)
+restrict_to_change_data <- function(data) {
+  data %>%
+    ungroup() %>%
+    filter(commitid == change_hash) %>%
+    select(!commitid) %>%
+    droplevels()
+}
 
-  stats_comp <- norm_comp %>%
-    group_by(commitid, exe, suite, bench,
-             varvalue, cores, inputsize, extraargs) %>%
-    filter(is.na(warmup) | iteration >= warmup) %>%
-    calculate_stats() %>%
-      ## Drop the things that don't have matching results
+change_data <- result %>%
+  restrict_to_change_data()
+
+# select(!c(unit, criterion, inputsize, cores,
+#           varvalue, trialid, commitid, expid,
+#           iteration, warmup, invocation, extraargs, cmdline,
+#           suite)) %>%
+
+exes_and_suites <- change_data %>%
+  select(c(exe, suite)) %>%
+  unique()
+
+suites_for_comparison <- exes_and_suites %>%
+  group_by(suite) %>%
+  count() %>%
+  filter(n > 1) %>%
+  droplevels()
+
+
+if (nrow(suites_for_comparison) > 0) {
+  out('<h2 id="exe-comparisons">Executor Comparisons</h2>\n')
+  
+  for (s in suites_for_comparison$suite) {
+    # s <- "macro-startup"
+    out('<h3 id="exe-comp-', s ,'">', s ,'</h3>\n')
+
+    change_s <- change_data %>%
+      filter(suite == s) %>%
+      droplevels()
+    exes <- sort(levels(change_s$exe))
+    baseline_exe <- exes[[1]]
+    
+    out("<p>Baseline: ", baseline_exe, "</p>")
+    
+    
+    warmup_s <- warmup %>%
+      restrict_to_change_data() %>%
+      filter(suite == s) %>%
+      droplevels()
+    
+    peak_s <- peak %>%
+      restrict_to_change_data() %>%
+      filter(suite == s) %>%
+      droplevels()
+    
+    base_s <- peak_s %>%
+      filter(exe == baseline_exe) %>%
+      group_by(bench,
+               varvalue, cores, inputsize, extraargs) %>%
+      summarise(base_mean = mean(value),
+                base_median = median(value),
+                .groups = "drop")
+    
+    norm_s <- peak_s %>%
+      left_join(base_s, by = c(
+        "bench", "varvalue", "cores", "inputsize", "extraargs")) %>%
+      group_by(bench, varvalue, cores, inputsize, extraargs) %>%
+      transform(ratio_mean = value / base_mean,
+                ratio_median = value / base_median)
+    
+    
+    stats_s <- norm_s %>%
+      group_by(exe, bench,
+               varvalue, cores, inputsize, extraargs) %>%
+      filter(is.na(warmup) | iteration >= warmup) %>%
+      calculate_stats()
+    
+    not_in_both_s <- stats_s %>%
+      filter(is.na(ratio)) %>%
+      droplevels()
+    
+    stats_s <- stats_s %>%
       filter(!is.na(ratio)) %>%
       droplevels()
-
-  perf_diff_table(norm_comp %>% filter(!grepl(base_exe, exe)), stats_comp)
+   
+    all_colors <- c(baseline_color, change_color, "#8ae234", "#ad7fa8", "#fcaf3e", "#ef2929")[1:length(exes)]
+    lighter_colors <- c("#97c4f0", "#efd0a7", "#b7f774", "#e0c0e4", "#ffd797", "#f78787")[1:length(exes)]
+    
+    p <- ggplot(stats_s, aes(ratio, exe, fill=exe)) +
+      geom_vline(aes(xintercept=1), colour="#999999", linetype="solid") +
+      geom_vline(aes(xintercept=slower_runtime_ratio), colour="#cccccc", linetype="dashed") +
+      geom_vline(aes(xintercept=faster_runtime_ratio), colour="#cccccc", linetype="dashed") +
+      geom_boxplot(aes(colour = exe),
+                   outlier.size = 0.9,
+                   outlier.alpha = 0.6) +
+      stat_summary(fun = negative_geometric.mean,
+                   size = 1, colour = "#503000", geom = "point") +
+      scale_x_log10() +
+      scale_y_discrete(limits = rev) +
+      ylab("") +
+      #coord_cartesian(xlim=c(0.5, 2.5)) +
+      theme_simple(8) +
+      scale_color_manual(values = all_colors) +
+      scale_fill_manual(values = lighter_colors) +
+      # scale_fill_manual(breaks=c("slower", "faster", "indeterminate"),
+      #                   values=c(slow_color, fast_color, NA)) +
+      theme(legend.position = "none")
+   
+    ggsave(paste0('overview.', s, '.svg'), p, "svg", output_dir, width = 4.5, height = 2.5, units = "in")
+    ggsave(paste0('overview.', s, '.png'), p, "png", output_dir, width = 4.5, height = 2.5, units = "in")
+    
+    out('<img src="', output_dir, '/overview.', s, '.svg">')
+   
+    row_count <- perf_diff_table_es(norm_s, stats_s, warmup_s, row_count + 1, exe)
+  }
+  
 }
 
 time <- timing.stop()
