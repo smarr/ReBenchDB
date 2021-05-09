@@ -1,8 +1,10 @@
 # Plots
 library(ggplot2)
 
-warmup_plot <- function (data_b, group) {
+warmup_plot <- function (data_b, group, group_size) {
   group_col <- enquo(group)
+  all_colors <- c(baseline_color, change_color, "#8ae234", "#ad7fa8", "#fcaf3e", "#ef2929")[1:group_size]
+  
   ## First take the medians over the values for each commitid separately
   medians <- data_b %>%
     group_by(!!group_col) %>%
@@ -10,20 +12,20 @@ warmup_plot <- function (data_b, group) {
     .groups = "drop")
 
   # use the highest one with a little margin as an upper bound
-  upperBound <- 2 * max(medians$median)
+  upper_bound <- 2 * max(medians$median)
 
   plot <- ggplot(data_b, aes(x=iteration, y=value)) +
     geom_line(aes(colour = !!group_col)) +
-    scale_color_manual(values = color) +
+    scale_color_manual(values = all_colors) +
     # ggtitle(paste(b, s, e)) +
     ylab(levels(data_b$unit)) +
     # scale_x_continuous(breaks = seq(0, max(data_b$iteration), 10)) +
-    coord_cartesian(ylim=c(0, upperBound)) +
+    coord_cartesian(ylim=c(0, upper_bound)) +
     geom_vline(
       xintercept = seq(0, max(data_b$iteration), 50),
       linetype = "longdash", colour = "#cccccc") +
     theme_simple(8) +
-    theme(legend.position=c(0.92, .92))
+    theme(legend.position=c(0.85, .92))
   plot
 }
 

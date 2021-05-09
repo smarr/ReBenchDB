@@ -345,7 +345,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
       
       if (nrow(warmup_ea) > 0) {
         img_file <- paste0('warmup-', row_count, '.svg')
-        p <- warmup_plot(warmup_ea, !!group_col)
+        p <- warmup_plot(warmup_ea, !!group_col, group_size)
         ggsave(img_file, p, "svg", output_dir, width = 6, height = 2.5, units = "in")
         out('<button type="button" class="btn btn-sm btn-light btn-expand" data-img="', output_dir, '/', img_file, '"></button>\n')
       }
