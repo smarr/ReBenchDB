@@ -555,7 +555,8 @@ if (nrow(suites_for_comparison) > 0) {
 
     out('<img src="', output_dir, '/overview.', s, '.svg">')
 
-    row_count <- perf_diff_table_es(norm_s, stats_s, warmup_s, row_count + 1, exe)
+    row_count <- perf_diff_table_es(
+      norm_s, stats_s, warmup_s, row_count + 1, exe, exes_colors, exes_colors_light)
   }
 
 }
