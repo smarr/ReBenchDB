@@ -40,7 +40,7 @@ negative_geometric.mean <- function(d) {
 
 compare_runtime_ratio_of_suites_plot <- function (
     data, slower_runtime_ratio, faster_runtime_ratio, fast_color, slow_color, scale_color) {
-  ggplot(data, aes(ratio, suite, fill=slower)) +
+  p <- ggplot(data, aes(ratio, suite, fill=slower)) +
     geom_vline(aes(xintercept=1), colour="#999999", linetype="solid") +
     geom_vline(aes(xintercept=slower_runtime_ratio), colour="#cccccc", linetype="dashed") +
     geom_vline(aes(xintercept=faster_runtime_ratio), colour="#cccccc", linetype="dashed") +
@@ -50,34 +50,43 @@ compare_runtime_ratio_of_suites_plot <- function (
     stat_summary(fun = negative_geometric.mean,
                   size = 1, colour = "#503000", geom = "point") +
     scale_x_log10() +
-    ylab("") +
-    coord_cartesian(xlim=c(0.5, 2.5)) +
-    theme_simple(8) +
+    ylab("")
+  
+  if (min(data$ratio) > 0.5 & max(data$ratio) < 2.5) {
+    p <- p + coord_cartesian(xlim=c(0.5, 2.5))
+  }
+  
+  p <- p + theme_simple(8) +
     scale_color_manual(values = scale_color) +
     scale_fill_manual(breaks=c("slower", "faster", "indeterminate"),
                       values=c(slow_color, fast_color, NA)) +
     theme(legend.position = "none")
+  p
 }
 
-small_inline_comparison <- function (data, group) {
+small_inline_comparison <- function (data, group, group_size) {
   group_col <- enquo(group)
   # small_inline_comparison(data_b)
   # data <- data_b
-  group_size <- (data %>% select(!!group_col) %>% unique() %>% count())$n
   all_colors <- c(baseline_color, change_color, "#8ae234", "#ad7fa8", "#fcaf3e", "#ef2929")[1:group_size]
   lighter_colors <- c("#97c4f0", "#efd0a7", "#b7f774", "#e0c0e4", "#ffd797", "#f78787")[1:group_size]
   
-  ggplot(data, aes(x = ratio_median, y = !!group_col)) +
+  p <- ggplot(data, aes(x = ratio_median, y = !!group_col, fill = !!group_col)) +
         geom_vline(aes(xintercept=1), colour="#333333", linetype="solid") +
         geom_boxplot(aes(colour = !!group_col),
                           outlier.size = 0.9,
                           outlier.alpha = 0.6,
                           lwd=0.2) +
         geom_jitter(aes(colour = !!group_col, y = !!group_col), size=0.3, alpha=0.3) +
-        scale_x_log10() +
-        coord_cartesian(xlim=c(0.5, 5)) +
-        theme_simple(5) +
+        scale_x_log10()
+  
+  if (min(data$ratio_median) > 0.5 & max(data$ratio_median) < 5) {
+    p <- p + coord_cartesian(xlim=c(0.5, 5))
+  }
+  
+  p <- p + theme_simple(5) +
         ylab("") +
+        scale_y_discrete(limits = rev) +
         scale_color_manual(values = all_colors) +
         scale_fill_manual(values = lighter_colors) +
         theme(legend.position = "none",
@@ -87,6 +96,7 @@ small_inline_comparison <- function (data, group) {
               axis.text.x = element_text(margin = margin(t = 0.1, unit = "cm")),
               axis.line.y.left=element_blank(),
               axis.line.x.bottom=element_blank())
+  p
 }
 
 ##
