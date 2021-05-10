@@ -27,14 +27,16 @@ timing.stop <- function() {
 
 r2 <- function(val) {
   if (is.na(val)) {
-    return("")
+    ""
+  } else {
+    format(round(val, 2), digits = 2, nsmall = 2)
   }
-  return(round(val, 2))
 }
 
 pro <- function(val) {
   if (is.na(val)) {
-    return("")
+    ""
+  } else {
+    as.character(round(val * 100))  
   }
-  return(round(val * 100))
 }
