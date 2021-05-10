@@ -294,7 +294,7 @@ common_string_start <- function(x) {
 perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, group) {
   group_col <- enquo(group)
   row_count <- start_row_count
-  
+
   out('<table class="table table-sm benchmark-details">')
   out('<thead><tr>
 <th scope="col"></th>
@@ -304,16 +304,16 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
 <th scope="col">change in %</th>
 <th scope="col"></th>
 </tr></thead>')
-  
+
   # b <- "DeltaBlue"
   # data_ea <- data_b
-  
+
   for (b in levels(data_es$bench)) { data_b <- data_es %>% filter(bench == b) %>% droplevels()
     for (v in levels(data_b$varvalue)) {   data_v  <- data_b %>% filter(varvalue == v)   %>% droplevels()
     for (c in levels(data_v$cores)) {      data_c  <- data_v %>% filter(cores == c)      %>% droplevels()
     for (i in levels(data_c$inputsize)) {  data_i  <- data_c %>% filter(inputsize == i)  %>% droplevels()
     for (ea in levels(data_i$extraargs)) { data_ea <- data_i %>% filter(extraargs == ea) %>% droplevels()
-    
+
     args <- ""
     if (length(levels(data_b$varvalue))  > 1) { args <- paste0(args, v) }
     if (length(levels(data_v$cores))     > 1) { args <- paste0(args, c) }
@@ -322,22 +322,22 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
     if (nchar(args) > 0) {
       args <- paste0('<span class="all-args">', args, '</span>')
     }
-    
+
     # capture the beginning of the path but leave the last element of it
     # this regex is also used in render.js's renderBenchmark() function
     cmdline <- str_replace_all(data_i$cmdline[[1]], "^([^\\s]*)((?:\\/\\w+)\\s.*$)", ".\\2")
-    
+
     stats_b <- stats_es %>%
       ungroup() %>%
       filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
       droplevels()
-    
+
     if ("commitid" %in% colnames(stats_b)) {
       stats_b <- stats_b %>%
         filter(commitid == change_hash6) %>%
         droplevels()
     }
-    
+
     group_size <- (data_ea %>% select(!!group_col) %>% unique() %>% count())$n
 
     if (nrow(stats_b) > 0) {
@@ -348,10 +348,10 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
       img_file <- paste0('inline-', row_count, '.svg')
       ggsave(img_file, p, "svg", output_dir, width = 3.5, height = 0.12 + 0.14 * group_size, units = "in")
       out('<img src="', output_dir, '/', img_file, '">')
-      
+
       row_count <- row_count + 1
       out('</td>\n')
-      
+
       if (nrow(stats_b) == 1) {
         out('<td class="stats-samples">', stats_b$samples, '</td>\n')
         out('<td><span class="stats-median" title="median">', r2(stats_b$median), '</span></td>\n')
@@ -372,7 +372,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
           out(substring(e, common_start) , " ", filter(stats_b, exe == e)$samples)
         }
         out('</td>\n')
-        
+
         out('<td><span class="stats-median" title="median">')
         first <- TRUE
         for (e in exes) {
@@ -384,8 +384,8 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
           out(r2(filter(stats_b, exe == e)$median))
         }
         out('</span></td>\n')
-        
-        
+
+
         out('<td>')
         first <- TRUE
         for (e in exes) {
@@ -397,21 +397,21 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
           out('<span class="stats-change" title="change over median">', pro(filter(stats_b, exe == e)$change_m), '</span>')
         }
         out('</td>\n')
-        
+
         out('<td><button type="button" class="btn btn-sm" data-toggle="popover" data-content="<code>', cmdline, '</code>"></button>\n')
       }
-      
+
       warmup_ea <- warmup_es %>%
         filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
         droplevels()
-      
+
       if (nrow(warmup_ea) > 0) {
         img_file <- paste0('warmup-', row_count, '.svg')
         p <- warmup_plot(warmup_ea, !!group_col, group_size)
         ggsave(img_file, p, "svg", output_dir, width = 6, height = 2.5, units = "in")
         out('<button type="button" class="btn btn-sm btn-light btn-expand" data-img="', output_dir, '/', img_file, '"></button>\n')
       }
-      
+
       out('</td>');
       out('</tr>\n')
     } else {
@@ -421,34 +421,34 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
     }
     } } } }
   }
-  
+
   out('</table>')
   row_count
 }
 
 perf_diff_table <- function(norm, stats, start_row_count) {
   # e <- "TruffleSOM-graal-bc"
-  
+
   row_count <- start_row_count
-    
+
   for (e in levels(norm$exe)) {         data_e <- norm   %>% filter(exe == e)   %>% droplevels()
     for (s in levels(data_e$suite)) {   data_s <- data_e %>% filter(suite == s) %>% droplevels()
       # e <- "TruffleSOM-graal"
       # s <- "macro-steady"
       out("<h3>", s, "</h3>")
       out('<div class="title-executor">Executor: ', e, "</div>")
-      
+
       stats_es <- stats %>%
         ungroup() %>%
         filter(exe == e, suite == s) %>%
         droplevels()
-      
+
       warmup_es <- warmup %>%
         ungroup() %>%
         filter(exe == e, suite == s) %>%
         droplevels()
-      
       row_count <- perf_diff_table_es(data_s, stats_es, warmup_es, row_count, commitid)
+
     }
   }
   row_count
@@ -490,7 +490,7 @@ suites_for_comparison <- exes_and_suites %>%
 
 if (nrow(suites_for_comparison) > 0) {
   out('<h2 id="exe-comparisons">Executor Comparisons</h2>\n')
-  
+
   for (s in suites_for_comparison$suite) {
     # s <- "macro-startup"
     out('<h3 id="exe-comp-', s ,'">', s ,'</h3>\n')
@@ -500,20 +500,20 @@ if (nrow(suites_for_comparison) > 0) {
       droplevels()
     exes <- sort(levels(change_s$exe))
     baseline_exe <- exes[[1]]
-    
+
     out("<p>Baseline: ", baseline_exe, "</p>")
-    
-    
+
+
     warmup_s <- warmup %>%
       restrict_to_change_data() %>%
       filter(suite == s) %>%
       droplevels()
-    
+
     peak_s <- peak %>%
       restrict_to_change_data() %>%
       filter(suite == s) %>%
       droplevels()
-    
+
     base_s <- peak_s %>%
       filter(exe == baseline_exe) %>%
       group_by(bench,
@@ -521,32 +521,31 @@ if (nrow(suites_for_comparison) > 0) {
       summarise(base_mean = mean(value),
                 base_median = median(value),
                 .groups = "drop")
-    
+
     norm_s <- peak_s %>%
       left_join(base_s, by = c(
         "bench", "varvalue", "cores", "inputsize", "extraargs")) %>%
       group_by(bench, varvalue, cores, inputsize, extraargs) %>%
       transform(ratio_mean = value / base_mean,
                 ratio_median = value / base_median)
-    
-    
+
+
     stats_s <- norm_s %>%
       group_by(exe, bench,
                varvalue, cores, inputsize, extraargs) %>%
       filter(is.na(warmup) | iteration >= warmup) %>%
       calculate_stats()
-    
+
     not_in_both_s <- stats_s %>%
       filter(is.na(ratio)) %>%
       droplevels()
-    
+
     stats_s <- stats_s %>%
       filter(!is.na(ratio)) %>%
       droplevels()
-   
     all_colors <- c(baseline_color, change_color, "#8ae234", "#ad7fa8", "#fcaf3e", "#ef2929")[1:length(exes)]
     lighter_colors <- c("#97c4f0", "#efd0a7", "#b7f774", "#e0c0e4", "#ffd797", "#f78787")[1:length(exes)]
-    
+
     p <- ggplot(stats_s, aes(ratio, exe, fill=exe)) +
       geom_vline(aes(xintercept=1), colour="#999999", linetype="solid") +
       geom_vline(aes(xintercept=slower_runtime_ratio), colour="#cccccc", linetype="dashed") +
@@ -566,15 +565,15 @@ if (nrow(suites_for_comparison) > 0) {
       # scale_fill_manual(breaks=c("slower", "faster", "indeterminate"),
       #                   values=c(slow_color, fast_color, NA)) +
       theme(legend.position = "none")
-   
+
     ggsave(paste0('overview.', s, '.svg'), p, "svg", output_dir, width = 4.5, height = 2.5, units = "in")
     ggsave(paste0('overview.', s, '.png'), p, "png", output_dir, width = 4.5, height = 2.5, units = "in")
-    
+
     out('<img src="', output_dir, '/overview.', s, '.svg">')
-   
+
     row_count <- perf_diff_table_es(norm_s, stats_s, warmup_s, row_count + 1, exe)
   }
-  
+
 }
 
 time <- timing.stop()
