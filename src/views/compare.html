@@ -22,12 +22,14 @@
       $('#significance-val').val(`${sig}%`);
       $(".stats-change").each((i, e) => {
         const change = parseFloat(e.textContent);
+        const parent = $(e).parent();
+        const target = (parent.find(".stats-change").length > 1) ? $(e) : parent;
         if (change < (-sig)) {
-          $(e).parent().css('background-color', '#e4ffc7');
+          target.css('background-color', '#e4ffc7');
         } else if (change > sig) {
-          $(e).parent().css('background-color', '#ffcccc');
+          target.css('background-color', '#ffcccc');
         } else {
-          $(e).parent().css('background-color', '');
+          target.css('background-color', '');
         }
       });
     }
