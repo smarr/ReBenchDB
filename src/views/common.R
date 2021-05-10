@@ -22,6 +22,33 @@ timing.stop <- function() {
   res
 }
 
+## Utility Functions
+
+common_string_start <- function(x) {
+  x <- sort(x)
+  n <- min(nchar(x))
+  x <- sapply(x, function(s) {
+    substr(s, 1, n)
+  })
+  x <- unique(x)
+  
+  # split the first and last element by character
+  d_x <- strsplit(x[c(1, length(x))], "")
+  # search for the first not common element and so, get the last matching one
+  der_com <- match(FALSE, do.call("==", d_x)) - 1
+  # if there is no matching element, return an empty vector, else return the common part
+  # if (der_com == 0) {
+  #   character(0)
+  # } else {
+  #   substr(x[1], 1, der_com)
+  # }
+  if (is.na(der_com)) {
+    n + 1
+  } else {
+    der_com  
+  }
+}
+
 
 ## Output Formatting
 
