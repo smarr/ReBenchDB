@@ -266,6 +266,30 @@ if (nrow(not_in_both) > 0) {
 
 out("<h2>Benchmark Performance</h2>")
 
+common_string_start <- function(x) {
+  x <- sort(x)
+  n <- min(nchar(x))
+  x <- sapply(x, function(s) {
+    substr(s, 1, n)
+  })
+  x <- unique(x)
+  
+  # split the first and last element by character
+  d_x <- strsplit(x[c(1, length(x))], "")
+  # search for the first not common element and so, get the last matching one
+  der_com <- match(FALSE, do.call("==", d_x)) - 1
+  # if there is no matching element, return an empty vector, else return the common part
+  # if (der_com == 0) {
+  #   character(0)
+  # } else {
+  #   substr(x[1], 1, der_com)
+  # }
+  if (is.na(der_com)) {
+    n + 1
+  } else {
+    der_com  
+  }
+}
 
 perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, group) {
   group_col <- enquo(group)
@@ -334,11 +358,47 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
         out('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span></td>\n')
         out('<td><button type="button" class="btn btn-sm" data-toggle="popover" data-content="<code>', cmdline, '</code>"></button>\n')
       } else {
-        # TODO find a nice way of showing the stats for the comparison between exes, which requires more space (perhaps rows)
-        out('<td></td>',
-            '<td></td>',
-            '<td></td>',
-            '<td>')
+        exes <- levels(stats_b$exe)
+        common_start <- common_string_start(exes)
+
+        out('<td class="stats-samples">')
+        first <- TRUE
+        for (e in exes) {
+          if (first) {
+            first <- FALSE
+          } else {
+            out('<br>\n')
+          }
+          out(substring(e, common_start) , " ", filter(stats_b, exe == e)$samples)
+        }
+        out('</td>\n')
+        
+        out('<td><span class="stats-median" title="median">')
+        first <- TRUE
+        for (e in exes) {
+          if (first) {
+            first <- FALSE
+          } else {
+            out('<br>\n')
+          }
+          out(r2(filter(stats_b, exe == e)$median))
+        }
+        out('</span></td>\n')
+        
+        
+        out('<td>')
+        first <- TRUE
+        for (e in exes) {
+          if (first) {
+            first <- FALSE
+          } else {
+            out('<br>\n')
+          }
+          out('<span class="stats-change" title="change over median">', pro(filter(stats_b, exe == e)$change_m), '</span>')
+        }
+        out('</td>\n')
+        
+        out('<td><button type="button" class="btn btn-sm" data-toggle="popover" data-content="<code>', cmdline, '</code>"></button>\n')
       }
       
       warmup_ea <- warmup_es %>%
