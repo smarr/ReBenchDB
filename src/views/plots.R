@@ -1,9 +1,8 @@
 # Plots
 library(ggplot2)
 
-warmup_plot <- function (data_b, group, group_size) {
+warmup_plot <- function (data_b, group, colors) {
   group_col <- enquo(group)
-  all_colors <- c(baseline_color, change_color, "#8ae234", "#ad7fa8", "#fcaf3e", "#ef2929")[1:group_size]
   
   ## First take the medians over the values for each commitid separately
   medians <- data_b %>%
@@ -16,7 +15,7 @@ warmup_plot <- function (data_b, group, group_size) {
 
   plot <- ggplot(data_b, aes(x=iteration, y=value)) +
     geom_line(aes(colour = !!group_col)) +
-    scale_color_manual(values = all_colors) +
+    scale_color_manual(values = colors) +
     # ggtitle(paste(b, s, e)) +
     ylab(levels(data_b$unit)) +
     # scale_x_continuous(breaks = seq(0, max(data_b$iteration), 10)) +
@@ -64,13 +63,10 @@ compare_runtime_ratio_of_suites_plot <- function (
   p
 }
 
-small_inline_comparison <- function (data, group, group_size) {
+small_inline_comparison <- function (data, group, colors, colors_light) {
   group_col <- enquo(group)
   # small_inline_comparison(data_b)
   # data <- data_b
-  all_colors <- c(baseline_color, change_color, "#8ae234", "#ad7fa8", "#fcaf3e", "#ef2929")[1:group_size]
-  lighter_colors <- c("#97c4f0", "#efd0a7", "#b7f774", "#e0c0e4", "#ffd797", "#f78787")[1:group_size]
-  
   p <- ggplot(data, aes(x = ratio_median, y = !!group_col, fill = !!group_col)) +
         geom_vline(aes(xintercept=1), colour="#333333", linetype="solid") +
         geom_boxplot(aes(colour = !!group_col),
@@ -87,8 +83,8 @@ small_inline_comparison <- function (data, group, group_size) {
   p <- p + theme_simple(5) +
         ylab("") +
         scale_y_discrete(limits = rev) +
-        scale_color_manual(values = all_colors) +
-        scale_fill_manual(values = lighter_colors) +
+        scale_color_manual(values = colors) +
+        scale_fill_manual(values = colors_light) +
         theme(legend.position = "none",
               axis.ticks.y=element_blank(),
               axis.text.y=element_blank(),

@@ -154,8 +154,6 @@ export function startReportGeneration(
     robustPath(`views/`),
     base,
     change,
-    '#729fcf',
-    '#e9b96e',
     dbConfig.database,
     dbConfig.user,
     dbConfig.password,

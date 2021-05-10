@@ -5,20 +5,18 @@ args <- if (Sys.getenv("RSTUDIO") == "1") {
  c("test.html",
    "~/Projects/ReBenchDB/tmp/rstudio/",
    "~/Projects/ReBenchDB/src/views/",
-   "493721",
-   "d3f598",
-   "#729fcf",
-   "#e9b96e",
-   NA,  # "rdb_sm1"
-   NA,
-   NA,
-   "from-file;~/Projects/ReBenchDB/tmp/TruffleSOM-380.qs;~/Projects/ReBenchDB/tmp/TruffleSOM-381.qs"
- ) 
+   "d9dda54b519e3a87351768878afb2c7950036260",  #"493721",
+   "5fa4bdb749d3b4a621362219420947e00e108580",  #"d3f598",
+   "rdb_smde", # NA,  # "rdb_sm1"
+   "", # NA,
+   "", # NA,
+   ""  # "from-file;~/Projects/ReBenchDB/tmp/TruffleSOM-380.qs;~/Projects/ReBenchDB/tmp/TruffleSOM-381.qs"
+ )
 } else {
   commandArgs(trailingOnly = TRUE)
 }
 
-if (length(args) < 11 | args[[1]] == '--help') {
+if (length(args) < 9 | args[[1]] == '--help') {
   cat("Performance Comparison Report
 
 Usage: somns.R outputFile outputDir baselineHash changeHash baselineColor changeColor dbName dbUser dbPass [extraCmd]
@@ -28,8 +26,6 @@ Usage: somns.R outputFile outputDir baselineHash changeHash baselineColor change
   libDir           the path where common.R can be found
   baselineHash     the commit hash of the baseline
   changeHash       the commit hash of the change
-  baselineColor    the color used to represent the baseline
-  changeColor      the color used to represent the change
 
   dbName           name of the database
   dbUser           name of the user used to connect to the DB
@@ -45,12 +41,10 @@ output_dir     <- args[[2]]
 lib_dir        <- args[[3]]
 baseline_hash  <- args[[4]]
 change_hash    <- args[[5]]
-baseline_color <- args[[6]]
-change_color   <- args[[7]]
-db_name        <- args[[8]]
-db_user        <- args[[9]]
-db_pass        <- args[[10]]
-extra_cmd      <- args[[11]]
+db_name        <- args[[6]]
+db_user        <- args[[7]]
+db_pass        <- args[[8]]
+extra_cmd      <- args[[9]]
 
 # Load Libraries
 source(paste0(lib_dir, "/common.R"), chdir=TRUE)
@@ -59,7 +53,6 @@ library(stringr)
 
 baseline_hash6 <- substr(baseline_hash, 1, 6)
 change_hash6 <- substr(change_hash, 1, 6)
-color <- setNames(c(baseline_color, change_color), c(baseline_hash6, change_hash6))
 cmds <- str_split(extra_cmd, ";")[[1]]
 
 
@@ -100,6 +93,22 @@ if (cmds[1] == "from-file") {
   result <- get_measures_for_comparison(rebenchdb, baseline_hash, change_hash)
   disconnect_rebenchdb(rebenchdb)
 }
+
+exes_colors <- setNames(
+  c("#729fcf", "#e9b96e", "#8ae234", "#ad7fa8", "#fcaf3e", "#ef2929", "#fce94f")[1:length(levels(result$exe))],
+  levels(result$exe))
+
+exes_colors_light <- setNames(
+  c("#97c4f0", "#efd0a7", "#b7f774", "#e0c0e4", "#ffd797", "#f78787", "#fffc9c")[1:length(levels(result$exe))],
+  levels(result$exe))
+
+chg_colors <- setNames(
+  c("#729fcf", "#e9b96e"),
+  c(baseline_hash6, change_hash6))
+
+chg_colors_light <- setNames(
+  c("#97c4f0", "#efd0a7"),
+  c(baseline_hash6, change_hash6))
 
 ## Process Data
 warmup <- result %>%
@@ -235,7 +244,7 @@ data_chg_slow <- data_chg %>%
 p <- compare_runtime_ratio_of_suites_plot(
   data_chg_slow,
   slower_runtime_ratio, faster_runtime_ratio,
-  fast_color, slow_color, color)
+  fast_color, slow_color, chg_colors)
 ggsave('overview.svg', p, "svg", output_dir, width = 4.5, height = 2.5, units = "in")
 ggsave('overview.png', p, "png", output_dir, width = 4.5, height = 2.5, units = "in")
 
@@ -266,7 +275,7 @@ if (nrow(not_in_both) > 0) {
 
 out("<h2>Benchmark Performance</h2>")
 
-perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, group) {
+perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, group, colors, colors_light) {
   group_col <- enquo(group)
   row_count <- start_row_count
 
@@ -319,7 +328,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
       out('<tr>')
       out('<th scope="row">',  b, args, '</th>')
       out('<td>')
-      p <- small_inline_comparison(data_ea, !!group_col, group_size)
+      p <- small_inline_comparison(data_ea, !!group_col, colors, colors_light)
       img_file <- paste0('inline-', row_count, '.svg')
       ggsave(img_file, p, "svg", output_dir, width = 3.5, height = 0.12 + 0.14 * group_size, units = "in")
       out('<img src="', output_dir, '/', img_file, '">')
@@ -382,7 +391,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
 
       if (nrow(warmup_ea) > 0) {
         img_file <- paste0('warmup-', row_count, '.svg')
-        p <- warmup_plot(warmup_ea, !!group_col, group_size)
+        p <- warmup_plot(warmup_ea, !!group_col, colors)
         ggsave(img_file, p, "svg", output_dir, width = 6, height = 2.5, units = "in")
         out('<button type="button" class="btn btn-sm btn-light btn-expand" data-img="', output_dir, '/', img_file, '"></button>\n')
       }
@@ -422,8 +431,10 @@ perf_diff_table <- function(norm, stats, start_row_count) {
         ungroup() %>%
         filter(exe == e, suite == s) %>%
         droplevels()
-      row_count <- perf_diff_table_es(data_s, stats_es, warmup_es, row_count, commitid)
 
+      row_count <- perf_diff_table_es(
+        data_s, stats_es, warmup_es,
+        row_count, commitid, chg_colors, chg_colors_light)
     }
   }
   row_count
@@ -518,8 +529,6 @@ if (nrow(suites_for_comparison) > 0) {
     stats_s <- stats_s %>%
       filter(!is.na(ratio)) %>%
       droplevels()
-    all_colors <- c(baseline_color, change_color, "#8ae234", "#ad7fa8", "#fcaf3e", "#ef2929")[1:length(exes)]
-    lighter_colors <- c("#97c4f0", "#efd0a7", "#b7f774", "#e0c0e4", "#ffd797", "#f78787")[1:length(exes)]
 
     p <- ggplot(stats_s, aes(ratio, exe, fill=exe)) +
       geom_vline(aes(xintercept=1), colour="#999999", linetype="solid") +
@@ -535,8 +544,8 @@ if (nrow(suites_for_comparison) > 0) {
       ylab("") +
       #coord_cartesian(xlim=c(0.5, 2.5)) +
       theme_simple(8) +
-      scale_color_manual(values = all_colors) +
-      scale_fill_manual(values = lighter_colors) +
+      scale_color_manual(values = exes_colors) +
+      scale_fill_manual(values = exes_colors_light) +
       # scale_fill_manual(breaks=c("slower", "faster", "indeterminate"),
       #                   values=c(slow_color, fast_color, NA)) +
       theme(legend.position = "none")
