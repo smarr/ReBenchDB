@@ -299,7 +299,7 @@ if (nrow(suites_for_comparison) > 0) {
   out('<nav>\n')
   
   for (s in suites_for_comparison$suite) {
-    out('<a href="#', s ,'">', s ,'</a>\n')
+    out('<a href="#exe-comp-', s ,'">', s ,'</a>\n')
   }
   
   out('</nav>\n')
