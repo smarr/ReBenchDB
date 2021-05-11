@@ -5,6 +5,7 @@ args <- if (Sys.getenv("RSTUDIO") == "1") {
  c("test.html",
    "~/Projects/ReBenchDB/tmp/rstudio/",
    "~/Projects/ReBenchDB/src/views/",
+   "/static/reports",
    "d9dda54b519e3a87351768878afb2c7950036260",  #"493721",
    "5fa4bdb749d3b4a621362219420947e00e108580",  #"d3f598",
    "rdb_smde", # NA,  # "rdb_sm1"
@@ -16,7 +17,7 @@ args <- if (Sys.getenv("RSTUDIO") == "1") {
   commandArgs(trailingOnly = TRUE)
 }
 
-if (length(args) < 9 | args[[1]] == '--help') {
+if (length(args) < 10 | args[[1]] == '--help') {
   cat("Performance Comparison Report
 
 Usage: somns.R outputFile outputDir baselineHash changeHash baselineColor changeColor dbName dbUser dbPass [extraCmd]
@@ -24,6 +25,7 @@ Usage: somns.R outputFile outputDir baselineHash changeHash baselineColor change
   outputFile       the name for the HTML file that is produced
   outputDir        the name for the folder with images produced
   libDir           the path where common.R can be found
+  staticBase       the base url for static resource, e.g., images
   baselineHash     the commit hash of the baseline
   changeHash       the commit hash of the change
 
@@ -39,12 +41,13 @@ Usage: somns.R outputFile outputDir baselineHash changeHash baselineColor change
 output_file    <- args[[1]]
 output_dir     <- args[[2]]
 lib_dir        <- args[[3]]
-baseline_hash  <- args[[4]]
-change_hash    <- args[[5]]
-db_name        <- args[[6]]
-db_user        <- args[[7]]
-db_pass        <- args[[8]]
-extra_cmd      <- args[[9]]
+static_base    <- args[[4]]
+baseline_hash  <- args[[5]]
+change_hash    <- args[[6]]
+db_name        <- args[[7]]
+db_user        <- args[[8]]
+db_pass        <- args[[9]]
+extra_cmd      <- args[[10]]
 
 # Load Libraries
 source(paste0(lib_dir, "/common.R"), chdir=TRUE)
@@ -61,6 +64,8 @@ fast_color <- "#e4ffc7"
 slow_color <- "#ffcccc"
 faster_runtime_ratio <- 0.95
 slower_runtime_ratio <- 1.05
+
+output_url <- paste0(static_base, '/', output_dir)
 
 # Start Timing of Report Generation
 timing.start()
@@ -316,7 +321,7 @@ ggsave('overview.png', p, "png", output_dir, width = 4.5, height = 2.5, units = 
 
 out('<h2 id="overview">Result Overview</h2>')
 
-out('<img src="', output_dir, '/overview.svg">')
+out('<img src="', output_url, '/overview.svg">')
 
 out('<dl class="row">
   <dt class="col-sm-3">Number of Benchmarks</dt>
@@ -399,7 +404,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
       p <- small_inline_comparison(data_ea, !!group_col, colors, colors_light)
       img_file <- paste0('inline-', row_count, '.svg')
       ggsave(img_file, p, "svg", output_dir, width = 3.5, height = 0.12 + 0.14 * group_size, units = "in")
-      out('<img src="', output_dir, '/', img_file, '">')
+      out('<img src="', output_url, '/', img_file, '">')
 
       row_count <- row_count + 1
       out('</td>\n')
@@ -461,7 +466,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
         img_file <- paste0('warmup-', row_count, '.svg')
         p <- warmup_plot(warmup_ea, !!group_col, colors)
         ggsave(img_file, p, "svg", output_dir, width = 6, height = 2.5, units = "in")
-        out('<button type="button" class="btn btn-sm btn-light btn-expand" data-img="', output_dir, '/', img_file, '"></button>\n')
+        out('<button type="button" class="btn btn-sm btn-light btn-expand" data-img="', output_url, '/', img_file, '"></button>\n')
       }
 
       out('</td>');
@@ -593,7 +598,7 @@ if (nrow(suites_for_comparison) > 0) {
     ggsave(paste0('overview.', s, '.svg'), p, "svg", output_dir, width = 4.5, height = 2.5, units = "in")
     ggsave(paste0('overview.', s, '.png'), p, "png", output_dir, width = 4.5, height = 2.5, units = "in")
 
-    out('<img src="', output_dir, '/overview.', s, '.svg">')
+    out('<img src="', output_url, '/overview.', s, '.svg">')
 
     row_count <- perf_diff_table_es(
       norm_s, stats_s, warmup_s, row_count + 1, exe, exes_colors, exes_colors_light)
