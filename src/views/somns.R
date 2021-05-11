@@ -197,9 +197,11 @@ slower_category <- function(data) {
 
 
 if (nrow(stats %>% filter(commitid == change_hash6)) == 0) {
+  out('<div class="compare">')
   out("<h3>Issue with Unexpected Data</h3>",
       "<p>The data provided for baseline and change does not seem to have a common benchmarks/executors.</p>\n",
       "<p>This is known to happen for instance, when benchmarks or parameters are changed, or executors renamed.</p>\n")
+  out('</div>')
   cat("Data provided for baseline and change does not have any common benchmark/executor\n", file = stderr())
   quit(status = 0)
 }
@@ -228,8 +230,6 @@ stats_all <- stats_suite %>%
     num_benchmarks = sum(num_benchmarks),
     .groups = "drop")
 
-out("<h2>Summary Over All Benchmarks</h2>")
-
 data_chg <- stats %>%
   filter(commitid == change_hash6) %>%
   select(commitid, exe, suite, bench, ratio,
@@ -241,12 +241,80 @@ data_chg_slow <- data_chg %>%
   filter(commitid == change_hash6) %>%
   droplevels()
 
+# Identify possible comparison on the data of the change.
+# Within the change data, there may be different executors, which are worth
+# comparing.
+
+restrict_to_change_data <- function(data) {
+  data %>%
+    ungroup() %>%
+    filter(commitid == change_hash6) %>%
+    select(!commitid) %>%
+    droplevels()
+}
+
+change_data <- result %>%
+  restrict_to_change_data()
+
+exes_and_suites <- change_data %>%
+  select(c(exe, suite)) %>%
+  unique()
+
+suites_for_comparison <- exes_and_suites %>%
+  group_by(suite) %>%
+  count() %>%
+  filter(n > 1) %>%
+  droplevels()
+
+## Generate Navigation
+
+out('<div class="container-fluid">')
+out('<div class="row flex-xl-nowrap">')
+
+
+out('<nav class="col-2 compare">\n',
+    '  <a href="#overview">Result Overview</a>')
+
+for (e in levels(norm$exe)) {
+  data_e <- norm   %>% filter(exe == e)   %>% droplevels()
+  if (length(levels(data_e$suite)) > 0) {
+    out('<nav><span>', e, '</span>\n')
+    
+    for (s in levels(data_e$suite)) {
+      data_s <- data_e %>% filter(suite == s) %>% droplevels()
+      out('<a href="#', s, '-', e, '">', s, '</a>\n')
+    }
+    
+    out('</nav>\n')
+} }
+
+
+if (nrow(suites_for_comparison) > 0) {
+  out('<a href="#exe-comparisons">Executor Comparisons</a>\n')
+  out('<nav>\n')
+  
+  for (s in suites_for_comparison$suite) {
+    out('<a href="#', s ,'">', s ,'</a>\n')
+  }
+  
+  out('</nav>\n')
+}
+out('</nav>\n')
+
+
+out('<main class="col-8" role="main">')
+
+
+## Generate Overview Plot
 p <- compare_runtime_ratio_of_suites_plot(
   data_chg_slow,
   slower_runtime_ratio, faster_runtime_ratio,
   fast_color, slow_color, chg_colors)
 ggsave('overview.svg', p, "svg", output_dir, width = 4.5, height = 2.5, units = "in")
 ggsave('overview.png', p, "png", output_dir, width = 4.5, height = 2.5, units = "in")
+
+
+out('<h2 id="overview">Result Overview</h2>')
 
 out('<img src="', output_dir, '/overview.svg">')
 
@@ -419,7 +487,7 @@ perf_diff_table <- function(norm, stats, start_row_count) {
     for (s in levels(data_e$suite)) {   data_s <- data_e %>% filter(suite == s) %>% droplevels()
       # e <- "TruffleSOM-graal"
       # s <- "macro-steady"
-      out("<h3>", s, "</h3>")
+      out('<h3 id="', s, '-', e, '">', s, '</h3>')
       out('<div class="title-executor">Executor: ', e, "</div>")
 
       stats_es <- stats %>%
@@ -443,35 +511,7 @@ perf_diff_table <- function(norm, stats, start_row_count) {
 row_count <- perf_diff_table(norm, stats, 0)
 
 
-# Identify possible comparison on the data of the change.
-# Within the change data, there may be different executors, which are worth
-# comparing.
-
-restrict_to_change_data <- function(data) {
-  data %>%
-    ungroup() %>%
-    filter(commitid == change_hash6) %>%
-    select(!commitid) %>%
-    droplevels()
-}
-
-change_data <- result %>%
-  restrict_to_change_data()
-
-# select(!c(unit, criterion, inputsize, cores,
-#           varvalue, trialid, commitid, expid,
-#           iteration, warmup, invocation, extraargs, cmdline,
-#           suite)) %>%
-
-exes_and_suites <- change_data %>%
-  select(c(exe, suite)) %>%
-  unique()
-
-suites_for_comparison <- exes_and_suites %>%
-  group_by(suite) %>%
-  count() %>%
-  filter(n > 1) %>%
-  droplevels()
+## Output the Executor Comparison
 
 
 if (nrow(suites_for_comparison) > 0) {
@@ -565,5 +605,9 @@ time <- timing.stop()
 
 time <- format(time, digits = 1)
 out('<div class="meta-run-time">Run time of Report: ', time, '</div>')
+
+out('</main>')
+out('</div></div>') # closing class="row flex-nowrap" and class="container-fluid"
+
 cat(paste0('Run time of Report: ', time, '\n'))
 close(output_file_connection)
