@@ -2,8 +2,42 @@ body {
   max-width: 800px;
   margin: 0 auto;
 }
+
 body.compare {
+  max-width: initial;
+  padding-left: 10%;
+}
+
+.compare {
   max-width: 900px;
+}
+
+.compare nav a {
+  display: block;
+}
+
+.compare nav span {
+  margin-left: -10px;
+}
+
+nav.compare {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 4rem;
+  height: calc(100vh - 4rem);
+  overflow-y: auto;
+  border-left: 1px solid #eee;
+  font-size: .875rem;
+  order: 2;
+}
+
+.compare main {
+  order: 1;
+}
+
+.compare nav {
+  padding-left: 20px;
+  padding-bottom: 10px;
 }
 
 .card {

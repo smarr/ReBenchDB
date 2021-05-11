@@ -1,28 +1,30 @@
 # Plots
 library(ggplot2)
 
-warmup_plot <- function (data_b, b, s, e) {
+warmup_plot <- function (data_b, group, colors) {
+  group_col <- enquo(group)
+  
   ## First take the medians over the values for each commitid separately
   medians <- data_b %>%
-    group_by(commitid) %>%
+    group_by(!!group_col) %>%
     summarise(median = median(value),
     .groups = "drop")
 
   # use the highest one with a little margin as an upper bound
-  upperBound <- 2 * max(medians$median)
+  upper_bound <- 2 * max(medians$median)
 
   plot <- ggplot(data_b, aes(x=iteration, y=value)) +
-    geom_line(aes(colour = commitid)) +
-    scale_color_manual(values = color) +
+    geom_line(aes(colour = !!group_col)) +
+    scale_color_manual(values = colors) +
     # ggtitle(paste(b, s, e)) +
     ylab(levels(data_b$unit)) +
     # scale_x_continuous(breaks = seq(0, max(data_b$iteration), 10)) +
-    coord_cartesian(ylim=c(0, upperBound)) +
+    coord_cartesian(ylim=c(0, upper_bound)) +
     geom_vline(
       xintercept = seq(0, max(data_b$iteration), 50),
       linetype = "longdash", colour = "#cccccc") +
     theme_simple(8) +
-    theme(legend.position=c(0.92, .92))
+    theme(legend.position=c(0.85, .92))
   plot
 }
 
@@ -37,7 +39,7 @@ negative_geometric.mean <- function(d) {
 
 compare_runtime_ratio_of_suites_plot <- function (
     data, slower_runtime_ratio, faster_runtime_ratio, fast_color, slow_color, scale_color) {
-  ggplot(data, aes(ratio, suite, fill=slower)) +
+  p <- ggplot(data, aes(ratio, suite, fill=slower)) +
     geom_vline(aes(xintercept=1), colour="#999999", linetype="solid") +
     geom_vline(aes(xintercept=slower_runtime_ratio), colour="#cccccc", linetype="dashed") +
     geom_vline(aes(xintercept=faster_runtime_ratio), colour="#cccccc", linetype="dashed") +
@@ -47,31 +49,42 @@ compare_runtime_ratio_of_suites_plot <- function (
     stat_summary(fun = negative_geometric.mean,
                   size = 1, colour = "#503000", geom = "point") +
     scale_x_log10() +
-    ylab("") +
-    coord_cartesian(xlim=c(0.5, 2.5)) +
-    theme_simple(8) +
+    ylab("")
+  
+  if (min(data$ratio) > 0.5 & max(data$ratio) < 2.5) {
+    p <- p + coord_cartesian(xlim=c(0.5, 2.5))
+  }
+  
+  p <- p + theme_simple(8) +
     scale_color_manual(values = scale_color) +
     scale_fill_manual(breaks=c("slower", "faster", "indeterminate"),
                       values=c(slow_color, fast_color, NA)) +
     theme(legend.position = "none")
+  p
 }
 
-small_inline_comparison <- function (data) {
+small_inline_comparison <- function (data, group, colors, colors_light) {
+  group_col <- enquo(group)
   # small_inline_comparison(data_b)
   # data <- data_b
-  ggplot(data, aes(x = ratio_median, y = commitid)) +
+  p <- ggplot(data, aes(x = ratio_median, y = !!group_col, fill = !!group_col)) +
         geom_vline(aes(xintercept=1), colour="#333333", linetype="solid") +
-        geom_boxplot(aes(colour = commitid),
+        geom_boxplot(aes(colour = !!group_col),
                           outlier.size = 0.9,
                           outlier.alpha = 0.6,
                           lwd=0.2) +
-        geom_jitter(aes(colour = commitid, y = commitid), size=0.3, alpha=0.3) +
-        scale_x_log10() +
-        coord_cartesian(xlim=c(0.5, 5)) +
-        theme_simple(5) +
+        geom_jitter(aes(colour = !!group_col, y = !!group_col), size=0.3, alpha=0.3) +
+        scale_x_log10()
+  
+  if (min(data$ratio_median) > 0.5 & max(data$ratio_median) < 5) {
+    p <- p + coord_cartesian(xlim=c(0.5, 5))
+  }
+  
+  p <- p + theme_simple(5) +
         ylab("") +
-        scale_color_manual(values = color) +
-        scale_fill_manual(values = color) +
+        scale_y_discrete(limits = rev) +
+        scale_color_manual(values = colors) +
+        scale_fill_manual(values = colors_light) +
         theme(legend.position = "none",
               axis.ticks.y=element_blank(),
               axis.text.y=element_blank(),
@@ -79,6 +92,7 @@ small_inline_comparison <- function (data) {
               axis.text.x = element_text(margin = margin(t = 0.1, unit = "cm")),
               axis.line.y.left=element_blank(),
               axis.line.x.bottom=element_blank())
+  p
 }
 
 ##

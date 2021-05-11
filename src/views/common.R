@@ -8,41 +8,8 @@ source("stats.R", chdir = TRUE)
 # avoid scientific notation for numbers, it's more readable to me
 options(scipen=999)
 
-# prints stack trace on error, from: http://stackoverflow.com/a/2000757/916546
-options(warn = 2, keep.source = TRUE, error =
-          quote({
-            cat("Environment:\n", file=stderr());
-
-            # TODO: setup option for dumping to a file (?)
-            # Set `to.file` argument to write this to a file for post-mortem debugging
-            dump.frames();  # writes to last.dump
-
-            #
-            # Debugging in R
-            #   http://www.stats.uwo.ca/faculty/murdoch/software/debuggingR/index.shtml
-            #
-            # Post-mortem debugging
-            #   http://www.stats.uwo.ca/faculty/murdoch/software/debuggingR/pmd.shtml
-            #
-            # Relation functions:
-            #   dump.frames
-            #   recover
-            # >>limitedLabels  (formatting of the dump with source/line numbers)
-            #   sys.frame (and associated)
-            #   traceback
-            #   geterrmessage
-            #
-            # Output based on the debugger function definition.
-
-            n <- length(last.dump)
-            calls <- names(last.dump)
-            cat(paste("  ", 1L:n, ": ", calls, sep = ""), sep = "\n", file=stderr())
-            cat("\n", file=stderr())
-
-            if (!interactive()) {
-              q(status=1) # indicate error
-            }
-          }))
+# prints stack trace on error, using rlang (tidyverse) backtraces
+options(warn = 2, keep.source = TRUE, error = quote(rlang:::entrace()))
 
 timing_data <- NULL
 timing.start <- function() {
@@ -55,19 +22,48 @@ timing.stop <- function() {
   res
 }
 
+## Utility Functions
+
+common_string_start <- function(x) {
+  x <- sort(x)
+  n <- min(nchar(x))
+  x <- sapply(x, function(s) {
+    substr(s, 1, n)
+  })
+  x <- unique(x)
+  
+  # split the first and last element by character
+  d_x <- strsplit(x[c(1, length(x))], "")
+  # search for the first not common element and so, get the last matching one
+  der_com <- match(FALSE, do.call("==", d_x)) - 1
+  # if there is no matching element, return an empty vector, else return the common part
+  # if (der_com == 0) {
+  #   character(0)
+  # } else {
+  #   substr(x[1], 1, der_com)
+  # }
+  if (is.na(der_com)) {
+    n + 1
+  } else {
+    der_com  
+  }
+}
+
 
 ## Output Formatting
 
 r2 <- function(val) {
   if (is.na(val)) {
-    return("")
+    ""
+  } else {
+    format(round(val, 2), digits = 2, nsmall = 2)
   }
-  return(round(val, 2))
 }
 
 pro <- function(val) {
   if (is.na(val)) {
-    return("")
+    ""
+  } else {
+    as.character(round(val * 100))  
   }
-  return(round(val * 100))
 }

@@ -51,19 +51,21 @@ describe('Report Generation', () => {
       expect(content).toEqual(expect.not.stringContaining('<code>##'));
     });
 
-    it('Should have generated a summare plot', () => {
+    it('Should have generated a summary plot', () => {
       const plotFile = getSummaryPlotFileName(outputFile);
       const plotPath = `${reportFolder}/${plotFile}`;
       console.log(plotPath);
       expect(existsSync(plotPath)).toBeTruthy();
     });
 
-    it('Should not include the cross comparison', () => {
+    it('Should not include the exec comparison', () => {
       const content: string = readFileSync(
         `${__dirname}/../resources/reports/${outputFile}`,
         'utf8'
       );
-      expect(content).not.toEqual(expect.stringContaining('Cross Comparison'));
+      expect(content).not.toEqual(
+        expect.stringContaining('Executor Comparisons')
+      );
     });
 
     afterAll(async () => {
@@ -141,12 +143,12 @@ describe('Report Generation', () => {
       expect(output.code).toBe(0);
     }, 120000);
 
-    it('Should include the cross comparison', () => {
+    it('Should include the exec comparison', () => {
       const content: string = readFileSync(
         `${reportFolder}/${outputFile}`,
         'utf8'
       );
-      expect(content).toEqual(expect.stringContaining('Cross Comparison'));
+      expect(content).toEqual(expect.stringContaining('Executor Comparisons'));
     });
 
     afterAll(async () => {

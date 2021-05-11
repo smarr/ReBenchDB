@@ -152,10 +152,9 @@ export function startReportGeneration(
     getOutputImageFolder(outputFile),
     // R ReBenchDB library directory
     robustPath(`views/`),
+    siteConfig.reportsUrl,
     base,
     change,
-    '#729fcf',
-    '#e9b96e',
     dbConfig.database,
     dbConfig.user,
     dbConfig.password,

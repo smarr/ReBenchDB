@@ -9,7 +9,6 @@
   <meta http-equiv="refresh" content="30" />
   {{/generatingReport}}
 
-  <base href="/static/reports/">
   <script>
     //@ts-check
 
@@ -22,12 +21,14 @@
       $('#significance-val').val(`${sig}%`);
       $(".stats-change").each((i, e) => {
         const change = parseFloat(e.textContent);
+        const parent = $(e).parent();
+        const target = (parent.find(".stats-change").length > 1) ? $(e) : parent;
         if (change < (-sig)) {
-          $(e).parent().css('background-color', '#e4ffc7');
+          target.css('background-color', '#e4ffc7');
         } else if (change > sig) {
-          $(e).parent().css('background-color', '#ffcccc');
+          target.css('background-color', '#ffcccc');
         } else {
-          $(e).parent().css('background-color', '');
+          target.css('background-color', '');
         }
       });
     }
@@ -72,7 +73,8 @@
 </head>
 <body class="compare">
 
-<div class="jumbotron">
+<header>
+<div class="jumbotron compare">
   <h2>ReBenchDB for {{project}}</h2>
   {{#revDetails}}
   <h3>Comparing <a href="{{base.repourl}}/compare/{{baselineHash}}...{{changeHash}}">{{baselineHash6}} with {{changeHash6}}</a></h3>
@@ -82,7 +84,24 @@
   {{/revDetails}}
 </div>
 
-<div id="version-details">
+<div class="refresh">
+  <div class="flex-nowrap">
+    <button id="show-refresh-form" type="button" class="btn btn-outline-secondary btn-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-repeat" viewBox="0 0 16 16">
+        <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/>
+        <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/>
+      </svg>
+    </button>
+    <form method="post" action="/admin/refresh/{{project}}/{{baselineHash}}/{{changeHash}}" class="input-group-sm">
+      <input type="password" class="form-control" name="password"
+        placeholder="Password" aria-label="Password">
+    </form>
+  </div>
+</div>
+</header>
+
+
+<div id="version-details" class="compare">
   <h2>Version Details</h2>
   <dl class="row">
     <dt class="col-sm-2">Baseline</dt>
@@ -107,28 +126,13 @@
         <input type="text" readonly class="col-4 form-control-plaintext" id="significance-val" value="5%">
       </div></dd>
   </dl>
-
 </div>
 
-<div class="refresh">
-  <div class="flex-nowrap">
-    <button id="show-refresh-form" type="button" class="btn btn-outline-secondary btn-sm">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-repeat" viewBox="0 0 16 16">
-        <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/>
-        <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/>
-      </svg>
-    </button>
-    <form method="post" action="/admin/refresh/{{project}}/{{baselineHash}}/{{changeHash}}" class="input-group-sm">
-      <input type="password" class="form-control" name="password"
-        placeholder="Password" aria-label="Password">
-    </form>
-  </div>
-</div>
 
 {{{report}}}
 
 {{#generatingReport}}
-<div class="alert alert-secondary" role="alert">
+<div class="alert alert-secondary compare" role="alert">
   <h4 class="alert-heading">Report is currently being generated</h4>
   <p>Please wait, the requested report is currently still generated.</p>
   <p>Last page reload was at {{currentTime}}</p>
@@ -143,7 +147,7 @@
 {{/generatingReport}}
 
 {{#generationFailed}}
-<div class="alert alert-warning" role="alert">
+<div class="alert alert-warning compare" role="alert">
   <h4 class="alert-heading">Report generation failed</h4>
   <hr>
   <h6>Standard Out</h6>
