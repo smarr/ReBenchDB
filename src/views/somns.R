@@ -55,10 +55,7 @@ suppressMessages(library(dplyr))
 library(stringr)
 library(tidyr)
 
-baseline_hash6 <- substr(baseline_hash, 1, 6)
-change_hash6 <- substr(change_hash, 1, 6)
 cmds <- str_split(extra_cmd, ";")[[1]]
-
 
 ## Further configuration
 fast_color <- "#e4ffc7"
@@ -91,7 +88,13 @@ output_file_connection <- file(output_file, "w+")
 ## Load Data
 if (cmds[1] == "from-file") {
   # manual from-file: result <- rbind(load_data_file("~/Projects/ReBenchDB/tmp/TruffleSOM-380.qs"), load_data_file("~/Projects/ReBenchDB/tmp/TruffleSOM-381.qs"))
-  result <- rbind(load_data_file(cmds[2]), load_data_file(cmds[3]))
+  base_data <- load_data_file(cmds[2])
+  change_data <- load_data_file(cmds[3])
+  if (baseline_hash == "") {
+    baseline_hash <- as.character(base_data$commitid[[1]])
+    change_hash <- as.character(change_data$commitid[[1]])
+  }
+  result <- rbind(base_data, change_data)
   result <- factorize_result(result)
   # TODO: add support for using a data file (needs ReBenchDB to offer downloading a data file with this stuff)
   profiles <- NULL
@@ -102,6 +105,9 @@ if (cmds[1] == "from-file") {
   profiles <- get_profile_availability(rebenchdb, baseline_hash, change_hash)
   disconnect_rebenchdb(rebenchdb)
 }
+
+baseline_hash6 <- substr(baseline_hash, 1, 6)
+change_hash6 <- substr(change_hash, 1, 6)
 
 exes_colors <- setNames(
   c("#729fcf", "#e9b96e", "#8ae234", "#ad7fa8", "#fcaf3e", "#ef2929", "#fce94f")[1:length(levels(result$exe))],
