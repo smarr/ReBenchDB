@@ -288,7 +288,7 @@ router.put(
         `Meta data for ${recordedRuns} stored.` +
         ' Storing of measurements is ongoing';
       ctx.status = 201;
-    } catch (e) {
+    } catch (e: any) {
       ctx.status = 500;
       ctx.body = `${e.stack}`;
       console.log(e.stack);
@@ -328,7 +328,7 @@ router.put('/rebenchdb/completion', koaBody(), async (ctx) => {
     ctx.status = 201;
     ctx.body =
       `Completion recorded of ` + `${data.projectName} ${data.experimentName}`;
-  } catch (e) {
+  } catch (e: any) {
     ctx.status = 500;
     ctx.body = `Failed to record completion: ${e}\n${e.stack}`;
     console.error(`/rebenchdb/completion failed to record completion: ${e}`);
