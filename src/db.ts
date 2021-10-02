@@ -915,9 +915,7 @@ export class Database {
     return recordedMeasurements;
   }
 
-  public async recordMetaData(
-    data: BenchmarkData
-  ): Promise<{
+  public async recordMetaData(data: BenchmarkData): Promise<{
     env: Environment;
     exp: Experiment;
     trial: Trial;
