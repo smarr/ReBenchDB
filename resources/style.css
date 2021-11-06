@@ -63,6 +63,16 @@ nav.compare {
   border-color: #729fcf;
 }
 
+.exp-date {
+  float: right;
+  font-size: 50%;
+}
+
+.change-msg {
+  font-size: 80%;
+  line-height: 1
+}
+
 .change .list-group-item.active, .change-badge {
   background-color: #e9b96e;
   border-color: #e9b96e;

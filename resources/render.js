@@ -119,12 +119,14 @@ async function renderChangeDetails(changesDetailsResponse, projectId, $) {
   for (const change of details.changes) {
     // strip out some metadata to be nicer to view.
     const msg = filterCommitMessage(change.commitmessage);
+    const date = formatDateWithTime(change.experimenttime);
 
     const option = `<a class="list-group-item list-group-item-action
       list-min-padding"
       data-toggle="list" data-hash="${change.commitid}" href="">
+        <div class="exp-date" title="Experiment Start Date">${date}</div>
         ${change.commitid.substr(0, 6)} ${change.branchortag}<br>
-        <div style="font-size: 80%; line-height: 1">${msg}</div>
+        <div class="change-msg">${msg}</div>
       </a>`;
 
     p1baseline.append(option);
