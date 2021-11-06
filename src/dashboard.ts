@@ -84,8 +84,8 @@ export async function dashChanges(
   db: Database
 ): Promise<{ changes: any[] }> {
   const result = await db.client.query(
-    `
-      SELECT commitId, branchOrTag, projectId, repoURL, commitMessage
+    ` SELECT commitId, branchOrTag, projectId, repoURL, commitMessage,
+             max(startTime) as experimentTime
       FROM experiment
         JOIN Trial ON expId = experiment.id
         JOIN Source ON sourceId = source.id

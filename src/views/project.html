@@ -9,12 +9,15 @@
 
   <script>
     //@ts-check
-    const dataOverviewP = fetch(`/rebenchdb/dash/{{project.id}}/data-overview`);
+    const project = {
+      name: "{{project.name}}",
+      id:  {{project.id}},
+      showchanges: {{project.showchanges}},
+      allresults: {{project.allresults}},
+    };
 
     $(document).ready(async () => {
-      const dataOverviewResponse = await dataOverviewP;
-      const data = (await dataOverviewResponse.json()).data;
-      renderProjectDataOverview(data, $);
+      $('#project').html(renderProject(project, $));
     });
   </script>
 </head>
@@ -27,33 +30,6 @@
     {{/project.description}}
   </div>
 
-  <div">
-    <table class="table table-sm">
-      <thead>
-        <tr>
-          <th scope="col">Experiment</th>
-          <th scope="col" class="desc">Description</th>
-          <th scope="col">Start/End</th>
-          <th scope="col">User</th>
-          <th scope="col">Commit</th>
-          <th scope="col">Machine</th>
-          <th scope="col" class="num-col">#runs</th>
-          <th scope="col" class="num-col">#measurements</th>
-        </tr>
-      </thead>
-      <tbody id="data-overview">
-        <!-- <tr>
-          <td>exp.name</td>
-          <td>exp.desc</td>
-          <td>min(startTime)/max(endTime)</td>
-          <td>list(user)</td>
-          <td>commitId, commitMessage</td>
-          <td>hostname</td>
-          <td>count(measurements)</td>
-          <td>count(runs)</td>
-        </tr> -->
-      </tbody>
-    </table>
-  </div>
+  <div id="project"></div>
 </body>
 </html>

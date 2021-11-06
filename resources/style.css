@@ -58,9 +58,23 @@ nav.compare {
   overflow: scroll;
 }
 
+#project .scroll-list {
+  max-height: 55vh;
+}
+
 .baseline .list-group-item.active, .baseline-badge {
   background-color: #729fcf;
   border-color: #729fcf;
+}
+
+.exp-date {
+  float: right;
+  font-size: 50%;
+}
+
+.change-msg {
+  font-size: 80%;
+  line-height: 1
 }
 
 .change .list-group-item.active, .change-badge {

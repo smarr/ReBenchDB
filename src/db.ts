@@ -235,6 +235,9 @@ export class Database {
                          WHERE expId = $1 AND endTime IS NULL`,
 
     fetchProjectByName: 'SELECT * from Project WHERE name = $1',
+    fetchProjectBySlugName: `SELECT * from Project
+                               WHERE lower($1) = regexp_replace(
+                                    lower(name), '\\s', '-', 'g')`,
     fetchProjectById: 'SELECT * from Project WHERE id = $1',
     insertProject: 'INSERT INTO Project (name) VALUES ($1) RETURNING *',
 
@@ -591,6 +594,20 @@ export class Database {
       this.queries.insertProject,
       [projectName]
     );
+  }
+
+  public async getProjectBySlug(
+    projectNameSlug: string
+  ): Promise<Project | undefined> {
+    const result = await this.client.query(
+      this.queries.fetchProjectBySlugName,
+      [projectNameSlug]
+    );
+
+    if (result.rowCount !== 1) {
+      return undefined;
+    }
+    return result.rows[0];
   }
 
   public async getProject(projectId: number): Promise<Project | undefined> {
