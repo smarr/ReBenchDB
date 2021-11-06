@@ -46,6 +46,13 @@ router.get('/', async (ctx) => {
   ctx.type = 'html';
 });
 
+router.get('/:projectName', async (ctx) => {
+  ctx.body = processTemplate('project.html', {
+    project: await db.getProjectBySlug(ctx.params.projectName)
+  });
+  ctx.type = 'html';
+});
+
 router.get('/timeline/:projectId', async (ctx) => {
   ctx.body = processTemplate('timeline.html', {
     project: await db.getProject(Number(ctx.params.projectId))

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>ReBench: {{project.name}}</title>
+  <script src="/static/render.js"></script>
+  <script src="/static/plots.js"></script>
+
+  {{{headerHtml}}}
+
+  <script>
+    //@ts-check
+    const project = {
+      name: "{{project.name}}",
+      id:  {{project.id}},
+      showchanges: {{project.showchanges}},
+      allresults: {{project.allresults}},
+    };
+
+    $(document).ready(async () => {
+      $('#project').html(renderProject(project, $));
+    });
+  </script>
+</head>
+<body>
+
+  <div class="jumbotron">
+    <h1 class="display-4">{{project.name}}</h1>
+    {{#project.description}}
+    <h2 class="display-5">{{project.description}}</h2>
+    {{/project.description}}
+  </div>
+
+  <div id="project"></div>
+</body>
+</html>

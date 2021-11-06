@@ -58,6 +58,10 @@ nav.compare {
   overflow: scroll;
 }
 
+#project .scroll-list {
+  max-height: 55vh;
+}
+
 .baseline .list-group-item.active, .baseline-badge {
   background-color: #729fcf;
   border-color: #729fcf;
