@@ -1,6 +1,6 @@
 {
   "name": "rebenchdb",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A Web-Based Database for ReBench Results",
   "main": "index.js",
   "author": {
