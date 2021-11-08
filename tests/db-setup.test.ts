@@ -1,4 +1,4 @@
-import { BenchmarkData } from '../src/api';
+import { BenchmarkData, Criterion, DataPoint } from '../src/api';
 import { loadScheme } from '../src/db';
 import { readFileSync } from 'fs';
 import { TestDatabase, createAndInitializeDB, createDB } from './db-testing';
@@ -194,7 +194,7 @@ describe('Recording a ReBench execution data fragments', () => {
   });
 
   it('should accept criterion information', async () => {
-    const c = basicTestData.criteria[0];
+    const c = <Criterion>basicTestData.criteria?.[0];
     const criterion = await db.recordCriterion(c);
     expect(c.c).toEqual(criterion.name);
     expect(c.u).toEqual(criterion.unit);
@@ -207,6 +207,7 @@ describe('Recording a ReBench execution from payload files', () => {
   let db: TestDatabase;
   let smallTestData: BenchmarkData;
   let largeTestData: BenchmarkData;
+  let profileTestData: BenchmarkData;
 
   beforeAll(async () => {
     // the test database and we
@@ -220,6 +221,9 @@ describe('Recording a ReBench execution from payload files', () => {
     largeTestData = JSON.parse(
       readFileSync(`${__dirname}/large-payload.json`).toString()
     );
+    profileTestData = JSON.parse(
+      readFileSync(`${__dirname}/profile-payload.json`).toString()
+    );
   });
 
   afterAll(async () => {
@@ -229,10 +233,11 @@ describe('Recording a ReBench execution from payload files', () => {
   it(`should accept all data (small-payload),
       and have the measurements persisted`, async () => {
     await db.recordMetaDataAndRuns(smallTestData);
-    const recMs = await db.recordAllData(smallTestData);
+    const [recMs, recPs] = await db.recordAllData(smallTestData);
 
     const measurements = await db.client.query('SELECT * from Measurement');
     expect(recMs).toEqual(3);
+    expect(recPs).toEqual(0);
     expect(measurements.rowCount).toEqual(3);
     await db.awaitQuiescentTimelineUpdater();
 
@@ -253,13 +258,14 @@ describe('Recording a ReBench execution from payload files', () => {
 
     // Do recordData a second time
     await db.recordMetaDataAndRuns(smallTestData);
-    const recMs = await db.recordAllData(smallTestData);
+    const [recMs, recPs] = await db.recordAllData(smallTestData);
 
     // don't need to wait for db.awaitQuiescentTimelineUpdater()
     // because this should not record anything
 
     const measurements = await db.client.query('SELECT * from Measurement');
     expect(recMs).toEqual(0);
+    expect(recPs).toEqual(0);
     expect(measurements.rowCount).toEqual(4);
 
     trials = await db.client.query('SELECT * from Trial');
@@ -277,7 +283,7 @@ describe('Recording a ReBench execution from payload files', () => {
       and have the measurements persisted`,
     async () => {
       await db.recordMetaDataAndRuns(largeTestData);
-      const recMs = await db.recordAllData(largeTestData);
+      const [recMs, recPs] = await db.recordAllData(largeTestData);
 
       const measurements = await db.client.query(
         'SELECT count(*) as cnt from Measurement'
@@ -286,6 +292,7 @@ describe('Recording a ReBench execution from payload files', () => {
       await db.awaitQuiescentTimelineUpdater();
 
       expect(recMs).toEqual(459928);
+      expect(recPs).toEqual(0);
       expect(parseInt(measurements.rows[0].cnt)).toEqual(459928 + 4);
       const timeline = await db.client.query('SELECT * from Timeline');
       expect(timeline.rowCount).toEqual(462);
@@ -310,12 +317,31 @@ describe('Recording a ReBench execution from payload files', () => {
     const run = await db.recordRun(r.runId);
 
     const recordedMeasurements = await db.recordMeasurements(
-      r,
+      <DataPoint[]>r.d,
       run,
       trial,
       criteria,
       availableMs
     );
     expect(recordedMeasurements).toEqual(0);
+  });
+
+  it('should be possible to store profiles', async () => {
+    await db.recordMetaDataAndRuns(profileTestData);
+    const [recMs, recPs] = await db.recordAllData(profileTestData);
+
+    const profiles = await db.client.query(`SELECT * from ProfileData`);
+
+    expect(recMs).toEqual(0);
+    expect(recPs).toEqual(2);
+
+    expect(profiles.rowCount).toEqual(2);
+    const row1 = profiles.rows[0];
+
+    const profileStr = row1.value;
+    expect(typeof profileStr).toBe('string');
+    const profileData = JSON.parse(profileStr);
+    expect(profileData.length).toEqual(16);
+    expect(profileData[0].m).toEqual('GreyObjectsWalker_walkGreyObjects');
   });
 });
