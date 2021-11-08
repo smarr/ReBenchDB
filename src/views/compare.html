@@ -141,9 +141,6 @@
       $('.btn-expand').click(insertWarmupPlot);
       $('.btn-profile').click(insertProfiles);
 
-      const profileButtons = $('.btn-profile');
-      profileButtons.click()
-
       const headlinesForTablesWithWarmupPlots = $("table:has(button.btn-expand)").prev().prev();
       headlinesForTablesWithWarmupPlots.append(
         `<button type="button" class="btn btn-sm btn-light btn-expand"></button>`);
