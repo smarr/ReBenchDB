@@ -73,13 +73,41 @@ get_measures_for_comparison <- function(rebenchdb, hash_1, hash_2) {
 
 get_measures_for_experiment <- function(rebenchdb, exp_id) {
   qry <- dbSendQuery(rebenchdb,
-            paste0(main_data_select, main_data_from,
-                   "WHERE Experiment.id = $1
+                     paste0(main_data_select, main_data_from,
+                            "WHERE Experiment.id = $1
                     ORDER BY runId, trialId, cmdline, invocation, iteration, criterion"))
   dbBind(qry, list(exp_id))
   result <- dbFetch(qry)
   dbClearResult(qry)
+  
+  factorize_result(result)
+}
 
+profile_available_select <- "
+  SELECT expId, runId, trialId, substring(commitId, 1, 6) as commitid,
+    benchmark.name as bench, executor.name as exe, suite.name as suite,
+    cmdline, varValue, cores, inputSize, extraArgs,
+    invocation, numIterations, warmup "
+
+profile_available_from <- "
+  FROM ProfileData
+    JOIN Trial ON trialId = Trial.id
+    JOIN Experiment ON expId = Experiment.id
+    JOIN Source ON source.id = sourceId
+    JOIN Run ON runId = run.id
+    JOIN Suite ON suiteId = suite.id
+    JOIN Benchmark ON benchmarkId = benchmark.id
+    JOIN Executor ON execId = executor.id "
+
+get_profile_availability <- function(rebenchdb, hash_1, hash_2) {
+  qry <- dbSendQuery(rebenchdb,
+                     paste0(main_data_select, main_data_from,
+                            "WHERE (commitId = $1 OR commitid = $2)
+                             ORDER BY expId, runId, invocation, numIterations"))
+  dbBind(qry, list(hash_1, hash_2))
+  result <- dbFetch(qry)
+  dbClearResult(qry)
+  
   factorize_result(result)
 }
 
@@ -96,8 +124,11 @@ factorize_result <- function(result) {
   result$cores <- factor(result$cores)
   result$inputsize <- forcats::fct_explicit_na(factor(result$inputsize), na_level = "")
   result$extraargs <- forcats::fct_explicit_na(factor(result$extraargs), na_level = "")
-  result$criterion <- factor(result$criterion)
-  result$unit <- factor(result$unit)
+  
+  if ("criterion" %in% colnames(result)) {
+    result$criterion <- factor(result$criterion)
+    result$unit <- factor(result$unit)
+  }
   
   result
 }

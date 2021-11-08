@@ -96,6 +96,7 @@ if (cmds[1] == "from-file") {
   # load_and_install_if_necessary("psych")   # uses only geometric.mean
   rebenchdb <- connect_to_rebenchdb(db_name, db_user, db_pass)
   result <- get_measures_for_comparison(rebenchdb, baseline_hash, change_hash)
+  profiles <- get_profile_availability(rebenchdb, baseline_hash, change_hash)
   disconnect_rebenchdb(rebenchdb)
 }
 
@@ -467,6 +468,16 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
         p <- warmup_plot(warmup_ea, !!group_col, colors)
         ggsave(img_file, p, "svg", output_dir, width = 6, height = 2.5, units = "in")
         out('<button type="button" class="btn btn-sm btn-light btn-expand" data-img="', output_url, '/', img_file, '"></button>\n')
+      }
+      
+      profiles_for_bench <- profiles %>%
+        filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
+        select(runid, trialid) %>%
+        unite("id", runid, trialid, sep = "/")
+      
+      if (profiles_for_bench > 0) {
+        ids <- str_flatten(profiles_for_bench$id, ",")
+        out('<td><button type="button" class="btn btn-sm btn-profile" data-content="', ids, '"></button>\n')
       }
 
       out('</td>');
