@@ -213,3 +213,39 @@ td.warmup-plot {
 .num-col {
   text-align: right;
 }
+
+/** Profile **/
+
+.profile-container {
+  padding-top: 1em;
+  padding-bottom: 2em;
+  border-top: 0;
+  font-family: Consolas, Monaco, Lucida Console, monospace;
+  font-size: 10px;
+}
+
+.profile-container .list-group-item {
+  padding: 0;
+}
+
+.profile-container .list-group {
+  padding-left: 30px;
+}
+
+.profile-container > .list-group {
+  padding-left: 0px;
+}
+
+.profile-container .percent {
+  display: inline-block;
+  min-width: 30px;
+  text-align: right;
+}
+
+.glyph-plus:before {
+  content: "+";
+}
+
+.glyph-minus:before {
+  content: "-";
+}

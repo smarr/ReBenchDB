@@ -54,6 +54,37 @@ export async function dashResults(
   return { timeSeries };
 }
 
+export async function dashProfile(
+  runId: number,
+  trialId: number,
+  db: Database
+): Promise<any> {
+  const result = await db.client.query(
+    ` SELECT substring(commitId, 1, 6) as commitid,
+        benchmark.name as bench, executor.name as exe, suite.name as suite,
+        cmdline, varValue, cores, inputSize, extraArgs,
+        invocation, numIterations, warmup, value as profile
+      FROM ProfileData
+        JOIN Trial ON trialId = Trial.id
+        JOIN Experiment ON expId = Experiment.id
+        JOIN Source ON source.id = sourceId
+        JOIN Run ON runId = run.id
+        JOIN Suite ON suiteId = suite.id
+        JOIN Benchmark ON benchmarkId = benchmark.id
+        JOIN Executor ON execId = executor.id
+      WHERE runId = $1 AND trialId = $2`,
+    [runId, trialId]
+  );
+
+  const data = result.rows[0];
+  try {
+    data.profile = JSON.parse(data.profile);
+  } catch (e) {
+    /* let's just leave it a string */
+  }
+  return data;
+}
+
 export async function dashStatistics(db: Database): Promise<{ stats: any[] }> {
   const result = await db.client.query(`
     SELECT * FROM (
