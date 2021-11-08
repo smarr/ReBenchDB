@@ -455,7 +455,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
         }
         out('</td>\n')
 
-        out('<td><button type="button" class="btn btn-sm" data-toggle="popover" data-content="<code>', cmdline, '</code>"></button>\n')
+        out('<td><button type="button" class="btn btn-sm btn-cmdline" data-content="<code>', cmdline, '</code>"></button>\n')
       }
 
       warmup_ea <- warmup_es %>%
@@ -473,7 +473,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
       out('</tr>\n')
     } else {
       out('<tr>')
-      out('<th scope="row">',  b, '</th><td colspan="4">missing in one of the data sets</td>\n')
+      out('<th scope="row">', b, '</th><td colspan="4">missing in one of the data sets</td>\n')
       out('</tr>')
     }
     } } } }
