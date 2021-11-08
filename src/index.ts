@@ -279,9 +279,10 @@ router.put(
     try {
       const recordedRuns = await db.recordMetaDataAndRuns(data);
       db.recordAllData(data)
-        .then((recordedMeasurements) =>
+        .then(([recMs, recPs]) =>
           console.log(
-            `/rebenchdb/results: stored ${recordedMeasurements} measurements`
+            // eslint-disable-next-line max-len
+            `/rebenchdb/results: stored ${recMs} measurements, ${recPs} profiles`
           )
         )
         .catch((e) => {
