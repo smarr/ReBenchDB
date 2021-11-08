@@ -53,6 +53,7 @@ extra_cmd      <- args[[10]]
 source(paste0(lib_dir, "/common.R"), chdir=TRUE)
 suppressMessages(library(dplyr))
 library(stringr)
+library(tidyr)
 
 baseline_hash6 <- substr(baseline_hash, 1, 6)
 change_hash6 <- substr(change_hash, 1, 6)
@@ -414,7 +415,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
         out('<td class="stats-samples">', stats_b$samples, '</td>\n')
         out('<td><span class="stats-median" title="median">', r2(stats_b$median), '</span></td>\n')
         out('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span></td>\n')
-        out('<td><button type="button" class="btn btn-sm" data-toggle="popover" data-content="<code>', cmdline, '</code>"></button>\n')
+        
       } else {
         exes <- levels(stats_b$exe)
         common_start <- common_string_start(exes)
@@ -455,9 +456,9 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
           out('<span class="stats-change" title="change over median">', pro(filter(stats_b, exe == e)$change_m), '</span>')
         }
         out('</td>\n')
-
-        out('<td><button type="button" class="btn btn-sm btn-cmdline" data-content="<code>', cmdline, '</code>"></button>\n')
       }
+      
+      out('<td><button type="button" class="btn btn-sm btn-cmdline" data-content="<code>', cmdline, '</code>"></button>\n')
 
       warmup_ea <- warmup_es %>%
         filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
@@ -475,9 +476,9 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
         select(runid, trialid) %>%
         unite("id", runid, trialid, sep = "/")
       
-      if (profiles_for_bench > 0) {
+      if (nrow(profiles_for_bench) > 0) {
         ids <- str_flatten(profiles_for_bench$id, ",")
-        out('<td><button type="button" class="btn btn-sm btn-profile" data-content="', ids, '"></button>\n')
+        out('<button type="button" class="btn btn-sm btn-profile" data-content="', ids, '"></button>\n')
       }
 
       out('</td>');
