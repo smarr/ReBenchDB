@@ -350,7 +350,7 @@ if (nrow(not_in_both) > 0) {
 
 out("<h2>Benchmark Performance</h2>")
 
-perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, group, colors, colors_light) {
+perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_row_count, group, colors, colors_light) {
   group_col <- enquo(group)
   row_count <- start_row_count
 
@@ -471,14 +471,16 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
         out('<button type="button" class="btn btn-sm btn-light btn-expand" data-img="', output_url, '/', img_file, '"></button>\n')
       }
       
-      profiles_for_bench <- profiles %>%
-        filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
-        select(runid, trialid) %>%
-        unite("id", runid, trialid, sep = "/")
-      
-      if (nrow(profiles_for_bench) > 0) {
-        ids <- str_flatten(profiles_for_bench$id, ",")
-        out('<button type="button" class="btn btn-sm btn-profile" data-content="', ids, '"></button>\n')
+      if (!is.null(profiles_es)) {
+        profiles_for_bench <- profiles_es %>%
+          filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
+          select(commitid, runid, trialid) %>%
+          unite("id", commitid, runid, trialid, sep = "/")
+        
+        if (nrow(profiles_for_bench) > 0) {
+          ids <- str_flatten(profiles_for_bench$id, ",")
+          out('<button type="button" class="btn btn-sm btn-profile" data-content="', ids, '"></button>\n')
+        }
       }
 
       out('</td>');
@@ -516,9 +518,13 @@ perf_diff_table <- function(norm, stats, start_row_count) {
         ungroup() %>%
         filter(exe == e, suite == s) %>%
         droplevels()
+      
+      profiles_es <- profiles %>%
+        filter(exe == e, suite == s) %>%
+        droplevels()
 
       row_count <- perf_diff_table_es(
-        data_s, stats_es, warmup_es,
+        data_s, stats_es, warmup_es, profiles_es,
         row_count, commitid, chg_colors, chg_colors_light)
     }
   }
@@ -613,7 +619,7 @@ if (nrow(suites_for_comparison) > 0) {
     out('<img src="', output_url, '/overview.', s, '.svg">')
 
     row_count <- perf_diff_table_es(
-      norm_s, stats_s, warmup_s, row_count + 1, exe, exes_colors, exes_colors_light)
+      norm_s, stats_s, warmup_s, NULL, row_count + 1, exe, exes_colors, exes_colors_light)
   }
 
 }
