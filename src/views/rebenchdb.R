@@ -101,7 +101,7 @@ profile_available_from <- "
 
 get_profile_availability <- function(rebenchdb, hash_1, hash_2) {
   qry <- dbSendQuery(rebenchdb,
-                     paste0(main_data_select, main_data_from,
+                     paste0(profile_available_select, profile_available_from,
                             "WHERE (commitId = $1 OR commitid = $2)
                              ORDER BY expId, runId, invocation, numIterations"))
   dbBind(qry, list(hash_1, hash_2))
