@@ -234,6 +234,8 @@ td.warmup-plot {
 
 .profile-container > .list-group {
   padding-left: 0px;
+  max-height: 30vh;
+  overflow: scroll;
 }
 
 .profile-container .percent {
