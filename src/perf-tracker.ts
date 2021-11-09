@@ -11,7 +11,8 @@ const iterations = {
   'generate-timeline': 0,
   'prep-exp-data': 0,
   'get-exp-data': 0,
-  'project-benchmarks': 0
+  'project-benchmarks': 0,
+  'get-profiles': 0
 };
 
 const descriptions = {
@@ -22,7 +23,9 @@ const descriptions = {
   'generate-timeline': 'Time of Running R stats to generate timeline data',
   'prep-exp-data': 'Prepare experiment data for download',
   'get-exp-data': 'Starting to prepare experiment data',
-  'project-benchmarks': 'Time of GET /rebenchdb/dash/:projectId/benchmarks'
+  'project-benchmarks': 'Time of GET /rebenchdb/dash/:projectId/benchmarks',
+  'get-profiles':
+    'Time of GET /rebenchdb/dash/:projectId/profiles/:runId/:trialId'
 };
 
 export function initPerfTracker(): void {
