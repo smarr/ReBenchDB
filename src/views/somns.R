@@ -93,6 +93,8 @@ if (cmds[1] == "from-file") {
   # manual from-file: result <- rbind(load_data_file("~/Projects/ReBenchDB/tmp/TruffleSOM-380.qs"), load_data_file("~/Projects/ReBenchDB/tmp/TruffleSOM-381.qs"))
   result <- rbind(load_data_file(cmds[2]), load_data_file(cmds[3]))
   result <- factorize_result(result)
+  # TODO: add support for using a data file (needs ReBenchDB to offer downloading a data file with this stuff)
+  profiles <- NULL
 } else {
   # load_and_install_if_necessary("psych")   # uses only geometric.mean
   rebenchdb <- connect_to_rebenchdb(db_name, db_user, db_pass)
@@ -519,9 +521,13 @@ perf_diff_table <- function(norm, stats, start_row_count) {
         filter(exe == e, suite == s) %>%
         droplevels()
       
-      profiles_es <- profiles %>%
-        filter(exe == e, suite == s) %>%
-        droplevels()
+      if (is.null(profiles)) {
+        profiles_es <- NULL
+      } else {
+        profiles_es <- profiles %>%
+          filter(exe == e, suite == s) %>%
+          droplevels()
+      }
 
       row_count <- perf_diff_table_es(
         data_s, stats_es, warmup_es, profiles_es,
