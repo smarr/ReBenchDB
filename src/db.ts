@@ -9,7 +9,8 @@ import {
   Source as ApiSource,
   Environment as ApiEnvironment,
   Criterion as ApiCriterion,
-  Run as ApiRun,
+  DataPoint as ApiDataPoint,
+  ProfileData as ApiProfileData,
   BenchmarkCompletion
 } from './api';
 import { Pool, PoolConfig, PoolClient } from 'pg';
@@ -283,6 +284,16 @@ export class Database {
           (runId, trialId, invocation, iteration, criterion, value)
         VALUES
           GENERATED`,
+      values: <any[]>[]
+    },
+
+    insertProfile: {
+      name: 'insertProfile',
+      text: `INSERT INTO ProfileData
+          (runId, trialId, invocation, numIterations, value)
+        VALUES
+          ($1, $2, $3, $4, $5)
+        ON CONFLICT DO NOTHING`,
       values: <any[]>[]
     },
 
@@ -855,8 +866,32 @@ export class Database {
     return recordedMeasurements;
   }
 
+  public async recordProfiles(
+    profiles: ApiProfileData[],
+    run: any,
+    trial: any
+  ): Promise<number> {
+    let recordedProfiles = 0;
+
+    for (const p of profiles) {
+      let data = p.d;
+      if (typeof data !== 'string') {
+        data = JSON.stringify(p.d);
+      }
+      recordedProfiles += await this.recordProfile(
+        run.id,
+        trial.id,
+        p.in,
+        p.nit,
+        data
+      );
+    }
+
+    return recordedProfiles;
+  }
+
   public async recordMeasurements(
-    r: ApiRun,
+    dataPoints: ApiDataPoint[],
     run: any,
     trial: any,
     criteria: Map<any, any>,
@@ -867,7 +902,7 @@ export class Database {
     let batchedValues: any[] = [];
     const updateJobs = new TimelineUpdates(this);
 
-    for (const d of r.d) {
+    for (const d of dataPoints) {
       for (const m of d.m) {
         // batched inserts are much faster
         // so let's do this
@@ -942,7 +977,12 @@ export class Database {
     const exp = await this.recordExperiment(data);
     const trial = await this.recordTrial(data, env, exp);
 
-    const criteria = await this.resolveCriteria(data.criteria);
+    let criteria;
+    if (data.criteria) {
+      criteria = await this.resolveCriteria(data.criteria);
+    } else {
+      criteria = null;
+    }
 
     return { env, exp, trial, criteria };
   }
@@ -950,28 +990,36 @@ export class Database {
   public async recordAllData(
     data: BenchmarkData,
     suppressTimeline = false
-  ): Promise<number> {
+  ): Promise<[number, number]> {
     const { trial, criteria } = await this.recordMetaData(data);
 
     let recordedMeasurements = 0;
+    let recordedProfiles = 0;
 
     for (const r of data.data) {
       const run = await this.recordRun(r.runId);
-      const availableMs = await this.retrieveAvailableMeasurements(trial.id);
-      recordedMeasurements += await this.recordMeasurements(
-        r,
-        run,
-        trial,
-        criteria,
-        availableMs
-      );
+
+      if (r.d) {
+        const availableMs = await this.retrieveAvailableMeasurements(trial.id);
+        recordedMeasurements += await this.recordMeasurements(
+          r.d,
+          run,
+          trial,
+          criteria,
+          availableMs
+        );
+      }
+
+      if (r.p) {
+        recordedProfiles += await this.recordProfiles(r.p, run, trial);
+      }
     }
 
     if (recordedMeasurements > 0 && this.timelineEnabled && !suppressTimeline) {
       this.generateTimeline();
     }
 
-    return recordedMeasurements;
+    return [recordedMeasurements, recordedProfiles];
   }
 
   public async recordMetaDataAndRuns(data: BenchmarkData): Promise<number> {
@@ -1003,6 +1051,18 @@ export class Database {
     // [runId, trialId, invocation, iteration, critId, value];
     q.values = values;
     return (await this.client.query(this.queries.insertMeasurement)).rowCount;
+  }
+
+  public async recordProfile(
+    runId: number,
+    trialId: number,
+    invocation: number,
+    numIterations: number,
+    value: string
+  ): Promise<number> {
+    const q = this.queries.insertProfile;
+    q.values = [runId, trialId, invocation, numIterations, value];
+    return (await this.client.query(this.queries.insertProfile)).rowCount;
   }
 
   public async recordTimelineJob(values: number[]): Promise<void> {

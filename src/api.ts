@@ -34,7 +34,8 @@ export interface RunId {
 }
 
 export interface Run {
-  d: DataPoint[];
+  d?: DataPoint[];
+  p?: ProfileData[];
   runId: RunId;
 }
 
@@ -54,6 +55,28 @@ export interface DataPoint {
   it: number;
 
   m: Measure[];
+}
+
+export interface ProfileElement {
+  /** Percent */
+  p: number;
+
+  /** Method, Function, Symbol Name */
+  m: string;
+
+  /** Stack Trace */
+  t?: (ProfileElement | string)[];
+}
+
+export interface ProfileData {
+  /** Data, can be anything. For the moment it should be ProfileElement[] */
+  d: any | ProfileElement[];
+
+  /** Invocation */
+  in: number;
+
+  /** Number of Iterations */
+  nit: number;
 }
 
 export interface Source {
@@ -95,7 +118,7 @@ export interface Environment {
 
 export interface BenchmarkData {
   data: Run[];
-  criteria: Criterion[];
+  criteria?: Criterion[];
   env: Environment;
   source: Source;
 

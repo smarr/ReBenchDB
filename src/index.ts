@@ -21,7 +21,8 @@ import {
   dashDataOverview,
   dashGetExpData,
   reportCompletion,
-  dashDeleteOldReport
+  dashDeleteOldReport,
+  dashProfile
 } from './dashboard';
 import { processTemplate } from './templates';
 import { dbConfig, siteConfig } from './util';
@@ -111,6 +112,21 @@ router.get('/rebenchdb/dash/:projectId/timeline', async (ctx) => {
   ctx.body = await dashTimelineForProject(db, Number(ctx.params.projectId));
   ctx.type = 'application/json';
 });
+
+router.get(
+  '/rebenchdb/dash/:projectId/profiles/:runId/:trialId',
+  async (ctx) => {
+    const start = startRequest();
+
+    ctx.body = await dashProfile(
+      Number(ctx.params.runId),
+      Number(ctx.params.trialId),
+      db
+    );
+    ctx.type = 'application/json';
+    await completeRequest(start, db, 'get-profiles');
+  }
+);
 
 router.get('/rebenchdb/stats', async (ctx) => {
   ctx.body = await dashStatistics(db);
@@ -279,9 +295,10 @@ router.put(
     try {
       const recordedRuns = await db.recordMetaDataAndRuns(data);
       db.recordAllData(data)
-        .then((recordedMeasurements) =>
+        .then(([recMs, recPs]) =>
           console.log(
-            `/rebenchdb/results: stored ${recordedMeasurements} measurements`
+            // eslint-disable-next-line max-len
+            `/rebenchdb/results: stored ${recMs} measurements, ${recPs} profiles`
           )
         )
         .catch((e) => {

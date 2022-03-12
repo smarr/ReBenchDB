@@ -33,13 +33,100 @@
       });
     }
 
-    function insertWarmupPlot(button) {
-      const jqButton = $(button);
+    function insertWarmupPlot(e) {
+      const jqButton = $(e.target);
       let url = jqButton.data('img');
       const insert = `<tr><td class="warmup-plot" colspan="6">
           <img src="${url}"></td></tr>`;
       jqButton.parent().parent().after(insert);
       jqButton.remove();
+    }
+
+    function createEntry(e, profId, counter) {
+      let entryHtml = '';
+      const justStr = typeof e === "string";
+
+      const hasTrace = !justStr && e.t !== undefined;
+
+      if (hasTrace) {
+        entryHtml += `<a href="#${profId}-item-${counter.cnt}" data-toggle="collapse">`;
+      } else {
+        entryHtml += `<span>`;
+      }
+
+      const percent = justStr ? "" : e.p.toFixed(2);
+      entryHtml += `<span class="percent">${percent}</span> `;
+
+      if (hasTrace) {
+        entryHtml += `<span class="glyph glyph-plus"></span> `;
+      }
+
+      if (justStr) {
+        entryHtml += e;
+      } else {
+        entryHtml += e.m;
+      }
+
+      if (hasTrace) {
+        entryHtml += `</a>`;
+
+        entryHtml += `<div class="list-group collapse" id="${profId}-item-${counter.cnt}">`;
+
+        for (const te of e.t) {
+          counter.cnt += 1;
+          entryHtml += createEntry(te, profId, counter);
+        }
+
+        entryHtml += `</div>`;
+      } else {
+        entryHtml += `</span>`;
+      }
+
+      return entryHtml;
+    }
+
+    function fetchProfile(change, runId, trialId, jqInsert) {
+      const profileP = fetch(`/rebenchdb/dash/{{project}}/profiles/${runId}/${trialId}`);
+      profileP.then(
+        async (profileResponse) => {
+          const profileData = await profileResponse.json();
+          const profId = `prof-${change}-${runId}-${trialId}`;
+
+          const container = jqInsert.children();
+          let mainContent = `<div class="list-group list-group-root">`;
+
+          let counter = {cnt: 0};
+          for (const e of profileData.profile) {
+            counter.cnt += 1;
+            if (e.p <= 0.1) { break };
+            mainContent += createEntry(e, profId, counter);
+          }
+
+          mainContent += `</div>`
+          container.append(mainContent);
+
+          $('.list-group-item').on('click', function() {
+            $('.glyph', container)
+              .toggleClass('glyph-plus')
+              .toggleClass('glyph-minus');
+          });
+        });
+    }
+
+    function insertProfiles(e) {
+      const jqButton = $(e.target);
+      let profileInsertTarget = jqButton.parent().parent();
+      jqButton.remove();
+
+      const profilesIds = jqButton.data('content').split(',');
+      for (const ids of profilesIds) {
+        const [change, runId, trialId] = ids.split('/');
+
+        const jqInsert = $(`<tr><td class="profile-container" colspan="6"></td></tr>`);
+        profileInsertTarget.after(jqInsert);
+        profileInsertTarget = jqInsert;
+        fetchProfile(change, runId, trialId, jqInsert);
+      }
     }
 
     $(document).ready(() => {
@@ -50,15 +137,9 @@
       $('#show-refresh-form').click(
         () => $('input[name=password]').show());
 
-      const cmdlineButtons = $('[data-toggle="popover"]');
-      cmdlineButtons.popover({html: true, placement: 'top'});
-      cmdlineButtons.html(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-terminal" viewBox="0 0 16 16">
-                            <path d="M6 9a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3A.5.5 0 0 1 6 9zM3.854 4.146a.5.5 0 1 0-.708.708L4.793 6.5 3.146 8.146a.5.5 0 1 0 .708.708l2-2a.5.5 0 0 0 0-.708l-2-2z"/>
-                            <path d="M2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2zm12 1a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h12z"/>
-                            </svg>`);
-
-      const expandButtons = $('.btn-expand');
-      expandButtons.click((e) => insertWarmupPlot(e.target));
+      $('.btn-cmdline').popover({html: true, placement: 'top'});
+      $('.btn-expand').click(insertWarmupPlot);
+      $('.btn-profile').click(insertProfiles);
 
       const headlinesForTablesWithWarmupPlots = $("table:has(button.btn-expand)").prev().prev();
       headlinesForTablesWithWarmupPlots.append(

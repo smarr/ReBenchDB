@@ -14,11 +14,11 @@ describe('Ensure Test Payloads conform to API', () => {
   });
 
   it('should validate small-payload.json', () => {
-    const basicTestData = JSON.parse(
+    const testData = JSON.parse(
       readFileSync(`${__dirname}/small-payload.json`).toString()
     );
 
-    const result = validateFn(basicTestData);
+    const result = validateFn(testData);
     if (!result) {
       console.error(validateFn.errors);
     }
@@ -26,11 +26,23 @@ describe('Ensure Test Payloads conform to API', () => {
   });
 
   it('should validate large-payload.json', () => {
-    const basicTestData = JSON.parse(
+    const testData = JSON.parse(
       readFileSync(`${__dirname}/large-payload.json`).toString()
     );
 
-    const result = validateFn(basicTestData);
+    const result = validateFn(testData);
+    if (!result) {
+      console.error(validateFn.errors);
+    }
+    expect(result).toBeTruthy();
+  });
+
+  it('should validate profile-payload.json', () => {
+    const testData = JSON.parse(
+      readFileSync(`${__dirname}/profile-payload.json`).toString()
+    );
+
+    const result = validateFn(testData);
     if (!result) {
       console.error(validateFn.errors);
     }

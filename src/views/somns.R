@@ -53,6 +53,7 @@ extra_cmd      <- args[[10]]
 source(paste0(lib_dir, "/common.R"), chdir=TRUE)
 suppressMessages(library(dplyr))
 library(stringr)
+library(tidyr)
 
 baseline_hash6 <- substr(baseline_hash, 1, 6)
 change_hash6 <- substr(change_hash, 1, 6)
@@ -92,10 +93,13 @@ if (cmds[1] == "from-file") {
   # manual from-file: result <- rbind(load_data_file("~/Projects/ReBenchDB/tmp/TruffleSOM-380.qs"), load_data_file("~/Projects/ReBenchDB/tmp/TruffleSOM-381.qs"))
   result <- rbind(load_data_file(cmds[2]), load_data_file(cmds[3]))
   result <- factorize_result(result)
+  # TODO: add support for using a data file (needs ReBenchDB to offer downloading a data file with this stuff)
+  profiles <- NULL
 } else {
   # load_and_install_if_necessary("psych")   # uses only geometric.mean
   rebenchdb <- connect_to_rebenchdb(db_name, db_user, db_pass)
   result <- get_measures_for_comparison(rebenchdb, baseline_hash, change_hash)
+  profiles <- get_profile_availability(rebenchdb, baseline_hash, change_hash)
   disconnect_rebenchdb(rebenchdb)
 }
 
@@ -348,7 +352,7 @@ if (nrow(not_in_both) > 0) {
 
 out("<h2>Benchmark Performance</h2>")
 
-perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, group, colors, colors_light) {
+perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_row_count, group, colors, colors_light) {
   group_col <- enquo(group)
   row_count <- start_row_count
 
@@ -413,7 +417,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
         out('<td class="stats-samples">', stats_b$samples, '</td>\n')
         out('<td><span class="stats-median" title="median">', r2(stats_b$median), '</span></td>\n')
         out('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span></td>\n')
-        out('<td><button type="button" class="btn btn-sm" data-toggle="popover" data-content="<code>', cmdline, '</code>"></button>\n')
+        
       } else {
         exes <- levels(stats_b$exe)
         common_start <- common_string_start(exes)
@@ -454,9 +458,9 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
           out('<span class="stats-change" title="change over median">', pro(filter(stats_b, exe == e)$change_m), '</span>')
         }
         out('</td>\n')
-
-        out('<td><button type="button" class="btn btn-sm" data-toggle="popover" data-content="<code>', cmdline, '</code>"></button>\n')
       }
+      
+      out('<td><button type="button" class="btn btn-sm btn-cmdline" data-content="<code>', cmdline, '</code>"></button>\n')
 
       warmup_ea <- warmup_es %>%
         filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
@@ -468,12 +472,24 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, start_row_count, gr
         ggsave(img_file, p, "svg", output_dir, width = 6, height = 2.5, units = "in")
         out('<button type="button" class="btn btn-sm btn-light btn-expand" data-img="', output_url, '/', img_file, '"></button>\n')
       }
+      
+      if (!is.null(profiles_es)) {
+        profiles_for_bench <- profiles_es %>%
+          filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
+          select(commitid, runid, trialid) %>%
+          unite("id", commitid, runid, trialid, sep = "/")
+        
+        if (nrow(profiles_for_bench) > 0) {
+          ids <- str_flatten(profiles_for_bench$id, ",")
+          out('<button type="button" class="btn btn-sm btn-profile" data-content="', ids, '"></button>\n')
+        }
+      }
 
       out('</td>');
       out('</tr>\n')
     } else {
       out('<tr>')
-      out('<th scope="row">',  b, '</th><td colspan="4">missing in one of the data sets</td>\n')
+      out('<th scope="row">', b, '</th><td colspan="4">missing in one of the data sets</td>\n')
       out('</tr>')
     }
     } } } }
@@ -504,9 +520,17 @@ perf_diff_table <- function(norm, stats, start_row_count) {
         ungroup() %>%
         filter(exe == e, suite == s) %>%
         droplevels()
+      
+      if (is.null(profiles)) {
+        profiles_es <- NULL
+      } else {
+        profiles_es <- profiles %>%
+          filter(exe == e, suite == s) %>%
+          droplevels()
+      }
 
       row_count <- perf_diff_table_es(
-        data_s, stats_es, warmup_es,
+        data_s, stats_es, warmup_es, profiles_es,
         row_count, commitid, chg_colors, chg_colors_light)
     }
   }
@@ -601,7 +625,7 @@ if (nrow(suites_for_comparison) > 0) {
     out('<img src="', output_url, '/overview.', s, '.svg">')
 
     row_count <- perf_diff_table_es(
-      norm_s, stats_s, warmup_s, row_count + 1, exe, exes_colors, exes_colors_light)
+      norm_s, stats_s, warmup_s, NULL, row_count + 1, exe, exes_colors, exes_colors_light)
   }
 
 }
