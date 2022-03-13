@@ -328,8 +328,8 @@ p <- compare_runtime_ratio_of_suites_plot(
   data_chg_slow %>% filter(criterion == "total"),
   slower_runtime_ratio, faster_runtime_ratio,
   fast_color, slow_color, chg_colors)
-ggsave('overview.svg', p, "svg", output_dir, width = 4.5, height = 4, units = "in")
-ggsave('overview.png', p, "png", output_dir, width = 4.5, height = 4, units = "in")
+ggsave('overview.svg', p, "svg", output_dir, width = 4.5, height = 6, units = "in")
+ggsave('overview.png', p, "png", output_dir, width = 4.5, height = 6, units = "in")
 
 
 out('<h2 id="overview">Result Overview</h2>')
