@@ -446,7 +446,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
         out('<td><span class="stats-median" title="median">', r2(stats_b_total$median), '</span></td>\n')
         out('<td><span class="stats-change" title="change over median run time">', pro(stats_b_total$change_m), '</span></td>\n')
         out('<td><span class="stats-median" title="median">', r2(stats_b_gctime$median), '</span></td>\n')
-        out('<td><span class="stats-change" title="change over median GC time">', pro(stats_b_gctime$change_m), '</span></td>\n')
+        out('<td><span class="stats-gc-change" title="change over median GC time">', pro(stats_b_gctime$change_m), '</span></td>\n')
       } else {
         exes <- levels(stats_b_total$exe)
         common_start <- common_string_start(exes)
