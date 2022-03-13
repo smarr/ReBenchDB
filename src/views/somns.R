@@ -300,7 +300,6 @@ for (e in levels(norm$exe)) {
     out('<nav><span>', e, '</span>\n')
     
     for (s in levels(data_e$suite)) {
-      data_s <- data_e %>% filter(suite == s) %>% droplevels()
       out('<a href="#', s, '-', e, '">', s, '</a>\n')
     }
     
