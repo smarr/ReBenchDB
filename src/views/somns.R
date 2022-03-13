@@ -374,9 +374,9 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
 <th scope="col"></th>
 <th scope="col"></th>
 <th scope="col" title="Number of Samples">#M</th>
-<th scope="col">median in ', levels((data_es %>% filter(criterion == "total") %>% droplevels())$unit), '</th>
+<th scope="col">median time<br>in ', levels((data_es %>% filter(criterion == "total") %>% droplevels())$unit), '</th>
 <th scope="col">time diff %</th>
-<th scope="col">median in ', levels((data_es %>% filter(criterion == "GC time") %>% droplevels())$unit), '</th>
+<th scope="col">median GC<br>time in ', levels((data_es %>% filter(criterion == "GC time") %>% droplevels())$unit), '</th>
 <th scope="col">GC diff %</th>
 <th scope="col"></th>
 </tr></thead>')
