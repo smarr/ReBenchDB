@@ -133,23 +133,23 @@ warmup <- result %>%
 
 peak <- result %>%
   group_by(commitid, exe, suite, bench,
-           varvalue, cores, inputsize, extraargs) %>%
+           varvalue, cores, inputsize, extraargs, criterion) %>%
   filter(is.na(warmup) | iteration >= warmup)
 
 
 base <- peak %>%
   filter(commitid == baseline_hash6) %>%
   group_by(exe, suite, bench,
-           varvalue, cores, inputsize, extraargs) %>%
+           varvalue, cores, inputsize, extraargs, criterion) %>%
   summarise(base_mean = mean(value),
             base_median = median(value),
             .groups = "drop")
 
 norm <- peak %>%
   left_join(base, by = c("exe", "suite", "bench",
-                         "varvalue", "cores", "inputsize", "extraargs")) %>%
+                         "varvalue", "cores", "inputsize", "extraargs", "criterion")) %>%
   group_by(exe, suite, bench,
-           varvalue, cores, inputsize, extraargs) %>%
+           varvalue, cores, inputsize, extraargs, criterion) %>%
   transform(ratio_mean = value / base_mean,
             ratio_median = value / base_median)
 
@@ -184,16 +184,16 @@ calculate_stats <- function(data) {
 
 stats <- norm %>%
   group_by(commitid, exe, suite, bench,
-           varvalue, cores, inputsize, extraargs) %>%
+           varvalue, cores, inputsize, extraargs, criterion) %>%
   filter(is.na(warmup) | iteration >= warmup) %>%
   calculate_stats()
 
 not_in_both <- stats %>%
-  filter(is.na(ratio)) %>%
+  filter(is.na(ratio) & criterion == "total") %>%
   droplevels()
 
 stats <- stats %>%
-  filter(!is.na(ratio)) %>%
+  filter(!(is.na(ratio) & criterion == "total")) %>%
   droplevels()
 
 geometric.mean <- function(x) { exp(mean(log(x))) }
@@ -224,7 +224,7 @@ if (nrow(stats %>% filter(commitid == change_hash6)) == 0) {
 stats_suite <- stats %>%
   filter(commitid == change_hash6) %>% # need to remove it so that statistics are accurate, or put it into the group
   filter(!is.na(ratio)) %>%            # filter out the benchmarks not in both data sets
-  group_by(exe, suite) %>%
+  group_by(exe, suite, criterion) %>%
   summarise(
     unit = unit[1],
     min = min(ratio),
@@ -237,6 +237,7 @@ stats_suite <- stats %>%
 stats_suite$slower <- factor(stats_suite$slower)
 
 stats_all <- stats_suite %>%
+  group_by(criterion) %>%
   summarise(
     unit = unit[1],
     min = min(geomean),
@@ -245,14 +246,17 @@ stats_all <- stats_suite %>%
     num_benchmarks = sum(num_benchmarks),
     .groups = "drop")
 
+stats_all_total <- stats_all %>% filter(criterion == "total")
+stats_all_gctime <- stats_all %>% filter(criterion == "GC time")
+
 data_chg <- stats %>%
   filter(commitid == change_hash6) %>%
   select(commitid, exe, suite, bench, ratio,
-         varvalue, cores, inputsize, extraargs) %>%
+         varvalue, cores, inputsize, extraargs, criterion) %>%
   droplevels()
 
 data_chg_slow <- data_chg %>%
-  left_join(stats_suite, by = c("exe", "suite")) %>%
+  left_join(stats_suite, by = c("exe", "suite", "criterion")) %>%
   filter(commitid == change_hash6) %>%
   droplevels()
 
@@ -322,7 +326,7 @@ out('<main class="col-8" role="main">')
 
 ## Generate Overview Plot
 p <- compare_runtime_ratio_of_suites_plot(
-  data_chg_slow,
+  data_chg_slow %>% filter(criterion == "total"),
   slower_runtime_ratio, faster_runtime_ratio,
   fast_color, slow_color, chg_colors)
 ggsave('overview.svg', p, "svg", output_dir, width = 4.5, height = 4, units = "in")
@@ -335,11 +339,15 @@ out('<img src="', output_url, '/overview.svg">')
 
 out('<dl class="row">
   <dt class="col-sm-3">Number of Benchmarks</dt>
-  <dd class="col-sm-8">', stats_all$num_benchmarks, '</dd>
+  <dd class="col-sm-8">', stats_all_total$num_benchmarks, '</dd>
 
-  <dt class="col-sm-3">Geometric Mean</dt>
-  <dd class="col-sm-8">', round(stats_all$geomean, 3), ' (min. ', r2(stats_all$min),
-  ', max. ', r2(stats_all$max), ')</dd>
+  <dt class="col-sm-3">Run time (geomean)</dt>
+  <dd class="col-sm-8">', round(stats_all_total$geomean, 3), ' (min. ', r2(stats_all_total$min),
+  ', max. ', r2(stats_all_total$max), ')</dd>
+  
+  <dt class="col-sm-3">GC time (geomean)</dt>
+  <dd class="col-sm-8">', round(stats_all_gctime$geomean, 3), ' (min. ', r2(stats_all_gctime$min),
+  ', max. ', r2(stats_all_gctime$max), ')</dd>
 </dl>')
 
 
@@ -367,8 +375,10 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
 <th scope="col"></th>
 <th scope="col"></th>
 <th scope="col" title="Number of Samples">#M</th>
-<th scope="col">median in ', levels(data_es$unit), '</th>
-<th scope="col">change in %</th>
+<th scope="col">median in ', levels((data_es %>% filter(criterion == "total") %>% droplevels())$unit), '</th>
+<th scope="col">time diff %</th>
+<th scope="col">median in ', levels((data_es %>% filter(criterion == "GC time") %>% droplevels())$unit), '</th>
+<th scope="col">GC diff %</th>
 <th scope="col"></th>
 </tr></thead>')
 
@@ -394,20 +404,33 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
     # this regex is also used in render.js's renderBenchmark() function
     cmdline <- str_replace_all(data_i$cmdline[[1]], "^([^\\s]*)((?:\\/\\w+)\\s.*$)", ".\\2")
 
-    stats_b <- stats_es %>%
+    stats_b_total <- stats_es %>%
       ungroup() %>%
-      filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
+      filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea, criterion == "total") %>%
+      droplevels()
+    stats_b_gctime <- stats_es %>%
+      ungroup() %>%
+      filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea, criterion == "GC time") %>%
       droplevels()
 
-    if ("commitid" %in% colnames(stats_b)) {
-      stats_b <- stats_b %>%
+    if ("commitid" %in% colnames(stats_b_total)) {
+      stats_b_total <- stats_b_total %>%
+        filter(commitid == change_hash6) %>%
+        droplevels()
+    }
+    if ("commitid" %in% colnames(stats_b_gctime)) {
+      stats_b_gctime <- stats_b_gctime %>%
         filter(commitid == change_hash6) %>%
         droplevels()
     }
 
-    group_size <- (data_ea %>% select(!!group_col) %>% unique() %>% count())$n
+    group_size <- (data_ea %>%
+                     filter(criterion == "total") %>%
+                     select(!!group_col) %>%
+                     unique() %>%
+                     count())$n
 
-    if (nrow(stats_b) > 0) {
+    if (nrow(stats_b_total) > 0) {
       out('<tr>')
       out('<th scope="row">',  b, args, '</th>')
       out('<td>')
@@ -419,13 +442,14 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
       row_count <- row_count + 1
       out('</td>\n')
 
-      if (nrow(stats_b) == 1) {
-        out('<td class="stats-samples">', stats_b$samples, '</td>\n')
-        out('<td><span class="stats-median" title="median">', r2(stats_b$median), '</span></td>\n')
-        out('<td><span class="stats-change" title="change over median">', pro(stats_b$change_m), '</span></td>\n')
-        
+      if (nrow(stats_b_total) == 1) {
+        out('<td class="stats-samples">', stats_b_total$samples, '</td>\n')
+        out('<td><span class="stats-median" title="median">', r2(stats_b_total$median), '</span></td>\n')
+        out('<td><span class="stats-change" title="change over median run time">', pro(stats_b_total$change_m), '</span></td>\n')
+        out('<td><span class="stats-median" title="median">', r2(stats_b_gctime$median), '</span></td>\n')
+        out('<td><span class="stats-change" title="change over median GC time">', pro(stats_b_gctime$change_m), '</span></td>\n')
       } else {
-        exes <- levels(stats_b$exe)
+        exes <- levels(stats_b_total$exe)
         common_start <- common_string_start(exes)
 
         out('<td class="stats-samples">')
@@ -436,7 +460,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
           } else {
             out('<br>\n')
           }
-          out(substring(e, common_start) , " ", filter(stats_b, exe == e)$samples)
+          out(substring(e, common_start) , " ", filter(stats_b_total, exe == e)$samples)
         }
         out('</td>\n')
 
@@ -448,7 +472,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
           } else {
             out('<br>\n')
           }
-          out(r2(filter(stats_b, exe == e)$median))
+          out(r2(filter(stats_b_total, exe == e)$median))
         }
         out('</span></td>\n')
 
@@ -461,7 +485,31 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
           } else {
             out('<br>\n')
           }
-          out('<span class="stats-change" title="change over median">', pro(filter(stats_b, exe == e)$change_m), '</span>')
+          out('<span class="stats-change" title="change over median run time">', pro(filter(stats_b_total, exe == e)$change_m), '</span>')
+        }
+        out('</td>\n')
+        
+        out('<td><span class="stats-median" title="median">')
+        first <- TRUE
+        for (e in exes) {
+          if (first) {
+            first <- FALSE
+          } else {
+            out('<br>\n')
+          }
+          out(r2(filter(stats_b_gctime, exe == e)$median))
+        }
+        out('</span></td>\n')
+        
+        out('<td>')
+        first <- TRUE
+        for (e in exes) {
+          if (first) {
+            first <- FALSE
+          } else {
+            out('<br>\n')
+          }
+          out('<span class="stats-change" title="change over median GC time">', pro(filter(stats_b_gctime, exe == e)$change_m), '</span>')
         }
         out('</td>\n')
       }
@@ -578,34 +626,34 @@ if (nrow(suites_for_comparison) > 0) {
     base_s <- peak_s %>%
       filter(exe == baseline_exe) %>%
       group_by(bench,
-               varvalue, cores, inputsize, extraargs) %>%
+               varvalue, cores, inputsize, extraargs, criterion) %>%
       summarise(base_mean = mean(value),
                 base_median = median(value),
                 .groups = "drop")
 
     norm_s <- peak_s %>%
       left_join(base_s, by = c(
-        "bench", "varvalue", "cores", "inputsize", "extraargs")) %>%
-      group_by(bench, varvalue, cores, inputsize, extraargs) %>%
+        "bench", "varvalue", "cores", "inputsize", "extraargs", "criterion")) %>%
+      group_by(bench, varvalue, cores, inputsize, extraargs, criterion) %>%
       transform(ratio_mean = value / base_mean,
                 ratio_median = value / base_median)
 
 
     stats_s <- norm_s %>%
       group_by(exe, bench,
-               varvalue, cores, inputsize, extraargs) %>%
+               varvalue, cores, inputsize, extraargs, criterion) %>%
       filter(is.na(warmup) | iteration >= warmup) %>%
       calculate_stats()
 
     not_in_both_s <- stats_s %>%
-      filter(is.na(ratio)) %>%
+      filter(is.na(ratio) & criterion == "total") %>%
       droplevels()
 
     stats_s <- stats_s %>%
-      filter(!is.na(ratio)) %>%
+      filter(!(is.na(ratio) & criterion == "total")) %>%
       droplevels()
 
-    p <- ggplot(stats_s, aes(ratio, exe, fill=exe)) +
+    p <- ggplot(stats_s %>% filter(criterion == "total"), aes(ratio, exe, fill=exe)) +
       geom_vline(aes(xintercept=1), colour="#999999", linetype="solid") +
       geom_vline(aes(xintercept=slower_runtime_ratio), colour="#cccccc", linetype="dashed") +
       geom_vline(aes(xintercept=faster_runtime_ratio), colour="#cccccc", linetype="dashed") +

@@ -7,14 +7,20 @@ warmup_plot <- function (data_b, group, colors) {
   ## First take the medians over the values for each commitid separately
   medians <- data_b %>%
     group_by(!!group_col) %>%
+    filter(criterion == "total") %>%
     summarise(median = median(value),
     .groups = "drop")
 
   # use the highest one with a little margin as an upper bound
   upper_bound <- 2 * max(medians$median)
+  data_spread <- data_b %>%
+    filter(criterion == "total" | criterion == "GC time") %>%
+    droplevels() %>%
+    spread(criterion, value)
 
-  plot <- ggplot(data_b, aes(x=iteration, y=value)) +
+  plot <- ggplot(data_spread, aes(x=iteration, y=total)) +
     geom_line(aes(colour = !!group_col)) +
+    geom_point(aes(colour = !!group_col, x=iteration, y=`GC time`, alpha=0.8), size=0.3) +
     scale_color_manual(values = colors) +
     # ggtitle(paste(b, s, e)) +
     ylab(levels(data_b$unit)) +
@@ -68,6 +74,9 @@ small_inline_comparison <- function (data, group, colors, colors_light) {
   group_col <- enquo(group)
   # small_inline_comparison(data_b)
   # data <- data_b
+  data <- data %>%
+    filter(criterion == "total")
+  
   p <- ggplot(data, aes(x = ratio_median, y = !!group_col, fill = !!group_col)) +
         geom_vline(aes(xintercept=1), colour="#333333", linetype="solid") +
         geom_boxplot(aes(colour = !!group_col),
