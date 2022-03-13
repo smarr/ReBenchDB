@@ -39,10 +39,11 @@ negative_geometric.mean <- function(d) {
 
 compare_runtime_ratio_of_suites_plot <- function (
     data, slower_runtime_ratio, faster_runtime_ratio, fast_color, slow_color, scale_color) {
-  p <- ggplot(data, aes(ratio, suite, fill=slower)) +
+  p <- ggplot(data, aes(ratio, exe, fill=slower)) +
     geom_vline(aes(xintercept=1), colour="#999999", linetype="solid") +
     geom_vline(aes(xintercept=slower_runtime_ratio), colour="#cccccc", linetype="dashed") +
     geom_vline(aes(xintercept=faster_runtime_ratio), colour="#cccccc", linetype="dashed") +
+    facet_wrap(~suite, ncol = 1, scales = "free") +
     geom_boxplot(aes(colour = commitid),
                   outlier.size = 0.9,
                   outlier.alpha = 0.6) +
