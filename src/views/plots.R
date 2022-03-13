@@ -19,8 +19,14 @@ warmup_plot <- function (data_b, group, colors) {
     spread(criterion, value)
 
   plot <- ggplot(data_spread, aes(x=iteration, y=total)) +
-    geom_line(aes(colour = !!group_col)) +
-    geom_point(aes(colour = !!group_col, x=iteration, y=`GC time`, alpha=0.8), size=0.3) +
+    geom_line(aes(colour = !!group_col))
+  
+  if ("GC time" %in% colnames(data_spread)) {
+    plot <- plot +
+      geom_point(aes(colour = !!group_col, x=iteration, y=`GC time`, alpha=0.8), size=0.3)
+  }
+  
+  plot <- plot +
     scale_color_manual(values = colors) +
     # ggtitle(paste(b, s, e)) +
     ylab(levels(data_b$unit)) +
