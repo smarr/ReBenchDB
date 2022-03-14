@@ -56,11 +56,24 @@ negative_geometric.mean <- function(d) {
 
 compare_runtime_ratio_of_suites_plot <- function (
     data, slower_runtime_ratio, faster_runtime_ratio, fast_color, slow_color, scale_color) {
+  exes_and_suites <- data %>%
+    select(c(exe, suite)) %>%
+    unique()
+  
+  max_num_exe_per_suite <- (exes_and_suites %>% group_by(suite) %>% count() %>% ungroup() %>% summarise(max = max(n)))$max
+  number_of_suites <- length(levels(exes_and_suites$suite))
+  
   p <- ggplot(data, aes(ratio, exe, fill=slower)) +
     geom_vline(aes(xintercept=1), colour="#999999", linetype="solid") +
     geom_vline(aes(xintercept=slower_runtime_ratio), colour="#cccccc", linetype="dashed") +
-    geom_vline(aes(xintercept=faster_runtime_ratio), colour="#cccccc", linetype="dashed") +
-    facet_wrap(~suite, ncol = 1, scales = "free") +
+    geom_vline(aes(xintercept=faster_runtime_ratio), colour="#cccccc", linetype="dashed")
+  
+  if (max_num_exe_per_suite > 1) {
+    p <- p +
+      facet_wrap(~suite, ncol = 1, scales = "free")
+  }
+  
+  p <- p +
     geom_boxplot(aes(colour = commitid),
                   outlier.size = 0.9,
                   outlier.alpha = 0.6) +
@@ -78,7 +91,19 @@ compare_runtime_ratio_of_suites_plot <- function (
     scale_fill_manual(breaks=c("slower", "faster", "indeterminate"),
                       values=c(slow_color, fast_color, NA)) +
     theme(legend.position = "none")
-  p
+  
+  if (max_num_exe_per_suite == 1) {
+    p <- p +
+      theme(strip.text = element_blank())
+  }
+  
+  height <- 0.5 # estimated for borders
+  height <- height + number_of_suites * max_num_exe_per_suite * 0.3
+  if (max_num_exe_per_suite > 1) {
+    height <- height + number_of_suites * 0.5
+  }
+  
+  list(plot = p, height = height)
 }
 
 small_inline_comparison <- function (data, group, colors, colors_light) {
