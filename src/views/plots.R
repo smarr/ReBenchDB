@@ -14,7 +14,7 @@ warmup_plot <- function (data_b, group, colors) {
   # use the highest one with a little margin as an upper bound
   upper_bound <- 2 * max(medians$median)
   data_spread <- data_b %>%
-    filter(criterion == "total" | criterion == "GC time") %>%
+    filter(criterion == "total" | (criterion == "GC time" | criterion == "Compile time") & value > 0) %>%
     droplevels() %>%
     spread(criterion, value)
 
@@ -23,11 +23,16 @@ warmup_plot <- function (data_b, group, colors) {
   
   if ("GC time" %in% colnames(data_spread)) {
     plot <- plot +
-      geom_point(aes(colour = !!group_col, x=iteration, y=`GC time`, alpha=0.8), size=0.3)
+      geom_point(aes(colour = !!group_col, x=iteration, y=`GC time`, alpha=0.8), size=0.3, na.rm = TRUE)
+  }
+  
+  if ("Compile time" %in% colnames(data_spread)) {
+    plot <- plot +
+      geom_point(aes(colour = !!group_col, x=iteration, y=`Compile time`), size=2, alpha=0.6, shape = 4, na.rm = TRUE)
   }
   
   plot <- plot +
-    scale_color_manual(values = colors) +
+    scale_color_manual(values = colors, na.value = NA) +
     # ggtitle(paste(b, s, e)) +
     ylab(levels(data_b$unit)) +
     # scale_x_continuous(breaks = seq(0, max(data_b$iteration), 10)) +
