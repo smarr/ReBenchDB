@@ -201,13 +201,17 @@ geometric.mean <- function(x) { exp(mean(log(x))) }
 ## Are we faster/slower? have a rough 5% boundary for all the noise
 slower_category <- function(data) {
   m <- geometric.mean(data)
-  if (m > 1.05) {
-    return("slower")
-  } else if (m < 0.95) {
-    return("faster")
-  } else {
+  if (is.na(m)) {
     return("indeterminate")
   }
+  if (m > 1.05) {
+    return("slower")
+  } 
+  
+  if (m < 0.95) {
+    return("faster")
+  }
+  return("indeterminate")
 }
 
 
