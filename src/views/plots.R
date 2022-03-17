@@ -89,7 +89,7 @@ compare_runtime_ratio_of_suites_plot <- function (
   p <- p + theme_simple(8) +
     scale_color_manual(values = scale_color) +
     scale_fill_manual(breaks=c("slower", "faster", "indeterminate"),
-                      values=c(slow_color, fast_color, NA)) +
+                      values=c(slow_color, fast_color, "#ffffff")) +
     theme(legend.position = "none")
   
   if (max_num_exe_per_suite == 1) {
