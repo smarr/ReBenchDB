@@ -53,7 +53,7 @@ common_string_start <- function(x) {
 ## Output Formatting
 
 r2 <- function(val) {
-  if (is.na(val)) {
+  if (length(val) == 0 || is.na(val)) {
     ""
   } else {
     format(round(val, 2), digits = 2, nsmall = 2)
@@ -61,7 +61,7 @@ r2 <- function(val) {
 }
 
 pro <- function(val) {
-  if (is.na(val)) {
+  if (length(val) == 0 || is.na(val)) {
     ""
   } else {
     as.character(round(val * 100))  

@@ -62,7 +62,7 @@ main_data_from <- "
 get_measures_for_comparison <- function(rebenchdb, hash_1, hash_2) {
   qry <- dbSendQuery(rebenchdb,
             paste0(main_data_select, main_data_from,
-                   "WHERE criterion.name = 'total' AND (commitId = $1 OR commitid = $2)
+                   "WHERE commitId = $1 OR commitid = $2
                     ORDER BY expId, runId, invocation, iteration, criterion"))
   dbBind(qry, list(hash_1, hash_2))
   result <- dbFetch(qry)

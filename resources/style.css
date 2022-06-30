@@ -95,7 +95,7 @@ nav.compare {
   color: #fff;
 }
 
-.stats-median, .stats-change {
+.stats-median, .stats-change, .stats-gc-change {
   display: inline-block;
   text-align: right;
   padding-right: 1ex;
@@ -105,7 +105,7 @@ nav.compare {
   width: 100%;
 }
 
-.stats-change {
+.stats-change, .stats-gc-change {
   width: 3.5em;
 }
 
