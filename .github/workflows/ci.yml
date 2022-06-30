@@ -40,12 +40,12 @@ jobs:
       - name: Install R
         uses: r-lib/actions/setup-r@v1
         with:
-          r-version: '4.0.5'
+          r-version: '4.2.1'
 
       - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: '15'
+          node-version: '18'
 
       - name: Cache R packages
         uses: actions/cache@v2
