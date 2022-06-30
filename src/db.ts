@@ -13,9 +13,12 @@ import {
   ProfileData as ApiProfileData,
   BenchmarkCompletion
 } from './api';
-import { Pool, PoolConfig, PoolClient } from 'pg';
-import { SingleRequestOnly } from './single-requester';
-import { startRequest, completeRequest } from './perf-tracker';
+import pg, { PoolConfig } from 'pg';
+import { SingleRequestOnly } from './single-requester.js';
+import { startRequest, completeRequest } from './perf-tracker.js';
+import { getDirname } from './util.js';
+
+const __dirname = getDirname(import.meta.url);
 
 function isUniqueViolationError(err) {
   return err.code === '23505';
@@ -173,7 +176,7 @@ function filterCommitMessage(msg) {
 }
 
 export class Database {
-  public client: Pool | PoolClient;
+  public client: pg.Pool;
   protected readonly dbConfig: PoolConfig;
   private readonly timelineEnabled: boolean;
 
@@ -339,7 +342,7 @@ export class Database {
     this.dbConfig = config;
     this.numReplicates = numReplicates;
     this.timelineEnabled = timelineEnabled;
-    this.client = new Pool(config);
+    this.client = new pg.Pool(config);
     this.executors = new Map();
     this.suites = new Map();
     this.benchmarks = new Map();
@@ -406,7 +409,7 @@ export class Database {
   }
 
   public async activateTransactionSupport(): Promise<void> {
-    this.client = <PoolClient>await this.client.connect();
+    await this.client.connect();
   }
 
   public async revisionsExistInProject(

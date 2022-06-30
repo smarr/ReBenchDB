@@ -2,29 +2,8 @@
 <html lang="en">
 <head>
   <title>ReBench</title>
-  <script src="/static/render.js"></script>
-  <script src="/static/plots.js"></script>
-
-
   {{{headerHtml}}}
-
-
-  <script>
-    //@ts-check
-    const projectsP = fetch(`/rebenchdb/dash/projects`);
-    const statsP = fetch(`/rebenchdb/stats`);
-
-    $(document).ready(async () => {
-      const projectsResponse = await projectsP;
-      const projects = (await projectsResponse.json()).projects;
-
-      for (const project of projects) {
-        $('#projects').append(renderProject(project, $));
-      }
-
-      await populateStatistics(statsP, $);
-    });
-  </script>
+  <script src="/static/index-html.js" type="module"></script>
 </head>
 <body>
 

@@ -1,10 +1,13 @@
 import { readFileSync, existsSync, unlinkSync, rmSync } from 'fs';
 import { execFile, ChildProcessPromise } from 'promisify-child-process';
-import { Database, DatabaseConfig } from './db';
-import { startRequest, completeRequest } from './perf-tracker';
-import { BenchmarkCompletion } from './api';
-import { GitHub } from './github';
-import { robustPath, siteConfig } from './util';
+import { Database, DatabaseConfig } from './db.js';
+import { startRequest, completeRequest } from './perf-tracker.js';
+import { BenchmarkCompletion } from './api.js';
+import { GitHub } from './github.js';
+import { robustPath, siteConfig } from './util.js';
+import { getDirname } from './util.js';
+
+const __dirname = getDirname(import.meta.url);
 
 const reportOutputFolder = robustPath(`../resources/reports/`);
 

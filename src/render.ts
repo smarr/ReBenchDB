@@ -1,10 +1,7 @@
-//@ts-check
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-undef */
-'use strict';
+import { renderResultsPlots, renderTimelinePlot } from './plots.js';
 
 function filterCommitMessage(msg) {
-  let result = msg.replace(/Signed-off-by:.*?\n/g, '');
+  const result = msg.replace(/Signed-off-by:.*?\n/g, '');
   return result;
 }
 
@@ -27,7 +24,7 @@ function formatDateWithTime(dateStr) {
   return `${date.getFullYear()}-${month}-${day} ${hours}:${minutes}`;
 }
 
-function expandMessage(event) {
+export function expandMessage(event): void {
   const elem = event.target;
   elem.parentElement.innerText = elem.dataset.fulltext;
   event.preventDefault();
@@ -47,7 +44,7 @@ function formatCommitMessages(messages) {
   }
 }
 
-function renderProjectDataOverview(data, $) {
+export function renderProjectDataOverview(data): void {
   const tBody = $('#data-overview');
 
   let hasDesc = false;
@@ -83,7 +80,7 @@ function renderProjectDataOverview(data, $) {
   }
 }
 
-function renderChanges(project, $) {
+function renderChanges(project) {
   if (!project.showchanges) {
     return '';
   }
@@ -91,7 +88,7 @@ function renderChanges(project, $) {
   const changesP = fetch(`/rebenchdb/dash/${project.id}/changes`);
   changesP.then(
     async (changesDetailsResponse) =>
-      await renderChangeDetails(changesDetailsResponse, project.id, $)
+      await renderChangeDetails(changesDetailsResponse, project.id)
   );
 
   const changes = `
@@ -111,7 +108,7 @@ function renderChanges(project, $) {
   return changes;
 }
 
-async function renderChangeDetails(changesDetailsResponse, projectId, $) {
+async function renderChangeDetails(changesDetailsResponse, projectId) {
   const details = await changesDetailsResponse.json();
 
   const p1baseline = $(`#p${projectId}-baseline`);
@@ -132,10 +129,10 @@ async function renderChangeDetails(changesDetailsResponse, projectId, $) {
     p1baseline.append(option);
     p1change.append(option);
   }
-  $(`#p${projectId}-compare`).click(() => openCompare(projectId, $));
+  $(`#p${projectId}-compare`).click(() => openCompare(projectId));
 }
 
-function openCompare(projectId, $) {
+function openCompare(projectId) {
   const baseJQ = $(`#p${projectId}-baseline`);
   const projectName = baseJQ.data('project');
   const baseline = baseJQ.find('.active').data('hash');
@@ -147,7 +144,7 @@ function openCompare(projectId, $) {
   window.location.href = `/compare/${projectName}/${baseline}/${change}`;
 }
 
-function renderAllResults(project, $) {
+function renderAllResults(project) {
   if (!project.allresults) {
     return '';
   }
@@ -155,15 +152,15 @@ function renderAllResults(project, $) {
   const resultsP = fetch(`/rebenchdb/dash/${project.id}/results`);
   resultsP.then(async (resultsResponse) => {
     const results = await resultsResponse.json();
-    renderResultsPlots(results.timeSeries, project.id, $);
+    renderResultsPlots(results.timeSeries, project.id);
   });
 
   return `<div id="p${project.id}-results"></div>`;
 }
 
-function renderProject(project, $) {
-  const changes = renderChanges(project, $);
-  const allResults = renderAllResults(project, $);
+export function renderProject(project): string {
+  const changes = renderChanges(project);
+  const allResults = renderAllResults(project);
 
   const result = `<div class="card">
     <h5 class="card-header" id="${project.name}"><a
@@ -176,7 +173,7 @@ function renderProject(project, $) {
   return result;
 }
 
-async function populateStatistics(statsP, $) {
+export async function populateStatistics(statsP): Promise<void> {
   const statsResponse = await statsP;
   const stats = await statsResponse.json();
 
@@ -189,7 +186,7 @@ async function populateStatistics(statsP, $) {
   );
 }
 
-function renderBenchmarks(benchmarks, $) {
+export function renderBenchmarks(benchmarks): void {
   let suiteName = null;
   let content = '';
   for (const benchmark of benchmarks) {
@@ -240,7 +237,7 @@ function renderBenchmark(benchmark) {
   return result;
 }
 
-function renderTimelinePlots(data, $) {
+export function renderTimelinePlots(data): void {
   // prepare data
   const benchmarks = new Map();
   const trials = new Map();

@@ -1,13 +1,8 @@
-//@ts-check
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-undef */
-'use strict';
-
 function simpleSlug(str) {
   return str.replace(/[\W_]+/g, '');
 }
 
-function renderResultsPlots(timeSeries, projectId, $) {
+export function renderResultsPlots(timeSeries, projectId): void {
   let plotDivs = '';
   for (const series in timeSeries) {
     const slug = simpleSlug(series);
@@ -20,11 +15,11 @@ function renderResultsPlots(timeSeries, projectId, $) {
   for (const series in timeSeries) {
     const slug = simpleSlug(series);
     const id = `p${projectId}-results-${slug}`;
-    renderResultsPlot(timeSeries[series], id, $);
+    renderResultsPlot(timeSeries[series], id);
   }
 }
 
-function renderResultsPlot(timeSeries, divId, $) {
+function renderResultsPlot(timeSeries, divId) {
   const index = [];
 
   const trace1 = {
@@ -62,7 +57,7 @@ function renderResultsPlot(timeSeries, divId, $) {
   Plotly.newPlot(divId, data, layout);
 }
 
-function renderTimelinePlot(key, results) {
+export function renderTimelinePlot(key, results): void {
   // split results into branches
   const branches = new Map();
 

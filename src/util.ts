@@ -1,3 +1,12 @@
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+export function getDirname(importMetaUrl: string): string {
+  return dirname(fileURLToPath(importMetaUrl));
+}
+
+const __dirname = getDirname(import.meta.url);
+
 export const robustPath = __dirname.includes('dist/')
   ? function (path) {
       return `${__dirname}/../../src/${path}`;

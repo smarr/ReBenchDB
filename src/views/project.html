@@ -2,24 +2,12 @@
 <html lang="en">
 <head>
   <title>ReBench: {{project.name}}</title>
-  <script src="/static/render.js"></script>
-  <script src="/static/plots.js"></script>
-
+  <meta id="project-name" value="{{project.name}}">
+  <meta id="project-id" value="{{project.id}}">
+  <meta id="project-showchanges" value="{{project.showchanges}}">
+  <meta id="project-allresults" value="{{project.allresults}}">
   {{{headerHtml}}}
-
-  <script>
-    //@ts-check
-    const project = {
-      name: "{{project.name}}",
-      id:  {{project.id}},
-      showchanges: {{project.showchanges}},
-      allresults: {{project.allresults}},
-    };
-
-    $(document).ready(async () => {
-      $('#project').html(renderProject(project, $));
-    });
-  </script>
+  <script src="/static/project-html.js" type="module"></script>
 </head>
 <body>
 

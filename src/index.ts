@@ -3,13 +3,17 @@ import { readFileSync } from 'fs';
 import Koa from 'koa';
 import koaBody from 'koa-body';
 import Router from 'koa-router';
-import { Database } from './db';
-import { BenchmarkData, BenchmarkCompletion } from './api';
-import { createValidator } from './api-validator';
+import { Database } from './db.js';
+import { BenchmarkData, BenchmarkCompletion } from './api.js';
+import { createValidator } from './api-validator.js';
 import { ValidateFunction } from 'ajv';
 
-import { version } from '../package.json';
-import { initPerfTracker, startRequest, completeRequest } from './perf-tracker';
+import packageJson from '../package.json' assert { type: 'json' };
+import {
+  initPerfTracker,
+  startRequest,
+  completeRequest
+} from './perf-tracker.js';
 import {
   dashResults,
   dashStatistics,
@@ -23,12 +27,15 @@ import {
   reportCompletion,
   dashDeleteOldReport,
   dashProfile
-} from './dashboard';
-import { processTemplate } from './templates';
-import { dbConfig, siteConfig } from './util';
-import { GitHub } from './github';
+} from './dashboard.js';
+import { processTemplate } from './templates.js';
+import { dbConfig, siteConfig } from './util.js';
+import { GitHub } from './github.js';
+import { getDirname } from './util.js';
 
-console.log('Starting ReBenchDB Version ' + version);
+const __dirname = getDirname(import.meta.url);
+
+console.log('Starting ReBenchDB Version ' + packageJson.version);
 
 const port = process.env.PORT || 33333;
 
@@ -130,7 +137,7 @@ router.get(
 
 router.get('/rebenchdb/stats', async (ctx) => {
   ctx.body = await dashStatistics(db);
-  ctx.body.version = version;
+  ctx.body.version = packageJson.version;
   ctx.type = 'application/json';
 });
 
@@ -206,17 +213,36 @@ router.post(
 if (DEV) {
   router.get(`${siteConfig.staticUrl}/:filename*`, async (ctx) => {
     console.log(`serve ${ctx.params.filename}`);
+    let path: string;
     // TODO: robustPath?
-    ctx.body = readFileSync(
-      `${__dirname}/../../resources/${ctx.params.filename}`
-    );
     if (ctx.params.filename.endsWith('.css')) {
       ctx.type = 'css';
+      path = `${__dirname}/../../resources/${ctx.params.filename}`;
     } else if (ctx.params.filename.endsWith('.js')) {
       ctx.type = 'application/javascript';
+      path = `${__dirname}/${ctx.params.filename}`;
+    } else if (ctx.params.filename.endsWith('.map')) {
+      ctx.type = 'application/json';
+      path = `${__dirname}/${ctx.params.filename}`;
     } else if (ctx.params.filename.endsWith('.svg')) {
       ctx.type = 'image/svg+xml';
+      path = `${__dirname}/../../resources/${ctx.params.filename}`;
+    } else {
+      throw new Error(`Unsupported file type ${ctx.params.filename}`);
     }
+    ctx.body = readFileSync(path);
+  });
+
+  router.get(`/src/:filename*`, async (ctx) => {
+    console.log(`serve ${ctx.params.filename}`);
+    let path: string;
+    if (ctx.params.filename.endsWith('.ts')) {
+      ctx.type = 'application/typescript';
+      path = `${__dirname}/../../src/${ctx.params.filename}`;
+    } else {
+      throw new Error(`Unsupported file type ${ctx.params.filename}`);
+    }
+    ctx.body = readFileSync(path);
   });
 
   router.get(`${siteConfig.staticUrl}/exp-data/:filename`, async (ctx) => {
@@ -249,7 +275,7 @@ if (DEV) {
 router.get('/status', async (ctx) => {
   ctx.body = `# ReBenchDB Status
 
-- version ${version}
+- version ${packageJson.version}
 `;
   ctx.type = 'text';
 });
@@ -365,7 +391,16 @@ app.use(router.allowedMethods());
 
 (async () => {
   console.log('Initialize Database');
-  await db.initializeDatabase();
+  try {
+    await db.initializeDatabase();
+  } catch (e: any) {
+    if (e.code == 'ECONNREFUSED') {
+      console.log(
+        `Unable to connect to database on port ${e.address}:${e.port}`
+      );
+      process.exit(1);
+    }
+  }
 
   initPerfTracker();
 

@@ -6,6 +6,9 @@ import {
   CompilerOptions,
   PartialArgs
 } from 'typescript-json-schema';
+import { getDirname } from './util.js';
+
+const __dirname = getDirname(import.meta.url);
 
 export function createValidator(): ValidateFunction {
   const compilerOptions: CompilerOptions = {
