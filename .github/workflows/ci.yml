@@ -50,7 +50,7 @@ jobs:
       - name: Cache R packages
         uses: actions/cache@v2
         env:
-          cache-name: r-libs
+          cache-name: r-libs-420
         with:
           path: ${{ env.R_LIBS_USER }}
           key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('src/stats/install.R') }}-2
