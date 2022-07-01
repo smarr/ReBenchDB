@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 import Koa from 'koa';
 import koaBody from 'koa-body';
 import Router from 'koa-router';
-import { Database } from './db.js';
+import { DatabaseWithPool } from './db.js';
 import { BenchmarkData, BenchmarkCompletion } from './api.js';
 import { createValidator } from './api-validator.js';
 import { ValidateFunction } from 'ajv';
@@ -47,7 +47,7 @@ const refreshSecret =
 
 const app = new Koa();
 const router = new Router();
-const db = new Database(dbConfig, 1000, true);
+const db = new DatabaseWithPool(dbConfig, 1000, true);
 
 router.get('/', async (ctx) => {
   ctx.body = processTemplate('index.html');

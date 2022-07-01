@@ -1,7 +1,12 @@
 import { BenchmarkData, Criterion, DataPoint } from '../src/api.js';
 import { loadScheme } from '../src/db.js';
 import { readFileSync } from 'fs';
-import { TestDatabase, createAndInitializeDB, createDB } from './db-testing.js';
+import {
+  TestDatabase,
+  createAndInitializeDB,
+  createDB,
+  closeMainDb
+} from './db-testing.js';
 import { getDirname } from '../src/util.js';
 
 import { jest } from '@jest/globals';
@@ -37,13 +42,14 @@ describe('Setup of PostgreSQL DB', () => {
 
   it('should load the database scheme without error', async () => {
     const createTablesSql = loadScheme();
+    await db.connectClient();
 
     const testSql =
       createTablesSql +
       `
         SELECT * FROM Measurement;`;
 
-    const result = await db.client.query(testSql);
+    const result = await db.query(testSql);
     const len = (<any>result).length;
     expect(len).toBeGreaterThan(numTxStatements);
 
@@ -243,23 +249,23 @@ describe('Recording a ReBench execution from payload files', () => {
     await db.recordMetaDataAndRuns(smallTestData);
     const [recMs, recPs] = await db.recordAllData(smallTestData);
 
-    const measurements = await db.client.query('SELECT * from Measurement');
+    const measurements = await db.query('SELECT * from Measurement');
     expect(recMs).toEqual(3);
     expect(recPs).toEqual(0);
     expect(measurements.rowCount).toEqual(3);
     await db.awaitQuiescentTimelineUpdater();
 
-    const timeline = await db.client.query('SELECT * from Timeline');
+    const timeline = await db.query('SELECT * from Timeline');
     expect(timeline.rowCount).toEqual(1);
   });
 
   it('data recording should be idempotent (small-payload)', async () => {
     // check that the data from the previous test is there
-    let trials = await db.client.query('SELECT * from Trial');
+    let trials = await db.query('SELECT * from Trial');
 
     // performance tracking and the actual trial
     expect(trials.rowCount).toEqual(2);
-    let exps = await db.client.query('SELECT * from Experiment');
+    let exps = await db.query('SELECT * from Experiment');
 
     // performance tracking and the actual experiment
     expect(exps.rowCount).toEqual(2);
@@ -271,16 +277,16 @@ describe('Recording a ReBench execution from payload files', () => {
     // don't need to wait for db.awaitQuiescentTimelineUpdater()
     // because this should not record anything
 
-    const measurements = await db.client.query('SELECT * from Measurement');
+    const measurements = await db.query('SELECT * from Measurement');
     expect(recMs).toEqual(0);
     expect(recPs).toEqual(0);
     expect(measurements.rowCount).toEqual(4);
 
-    trials = await db.client.query('SELECT * from Trial');
+    trials = await db.query('SELECT * from Trial');
 
     // performance tracking and the actual trial
     expect(trials.rowCount).toEqual(2);
-    exps = await db.client.query('SELECT * from Experiment');
+    exps = await db.query('SELECT * from Experiment');
 
     // performance tracking and the actual experiment
     expect(exps.rowCount).toEqual(2);
@@ -293,7 +299,7 @@ describe('Recording a ReBench execution from payload files', () => {
       await db.recordMetaDataAndRuns(largeTestData);
       const [recMs, recPs] = await db.recordAllData(largeTestData);
 
-      const measurements = await db.client.query(
+      const measurements = await db.query(
         'SELECT count(*) as cnt from Measurement'
       );
 
@@ -302,7 +308,7 @@ describe('Recording a ReBench execution from payload files', () => {
       expect(recMs).toEqual(459928);
       expect(recPs).toEqual(0);
       expect(parseInt(measurements.rows[0].cnt)).toEqual(459928 + 4);
-      const timeline = await db.client.query('SELECT * from Timeline');
+      const timeline = await db.query('SELECT * from Timeline');
       expect(timeline.rowCount).toEqual(462);
     },
     timeoutForLargeDataTest
@@ -338,7 +344,7 @@ describe('Recording a ReBench execution from payload files', () => {
     await db.recordMetaDataAndRuns(profileTestData);
     const [recMs, recPs] = await db.recordAllData(profileTestData);
 
-    const profiles = await db.client.query(`SELECT * from ProfileData`);
+    const profiles = await db.query(`SELECT * from ProfileData`);
 
     expect(recMs).toEqual(0);
     expect(recPs).toEqual(2);
@@ -352,4 +358,8 @@ describe('Recording a ReBench execution from payload files', () => {
     expect(profileData.length).toEqual(16);
     expect(profileData[0].m).toEqual('GreyObjectsWalker_walkGreyObjects');
   });
+});
+
+afterAll(() => {
+  closeMainDb();
 });

@@ -19,7 +19,7 @@ WHERE repoURL = 'https://github.com/smarr/ReBenchDB'
  */
 
 export async function dashProjects(db: Database): Promise<{ projects: any[] }> {
-  const result = await db.client.query(`SELECT * from Project`);
+  const result = await db.query(`SELECT * from Project`);
   return { projects: result.rows };
 }
 
@@ -27,7 +27,7 @@ export async function dashResults(
   projectId: number,
   db: Database
 ): Promise<{ timeSeries: Record<string, number[]> }> {
-  const result = await db.client.query(
+  const result = await db.query(
     `SELECT rank_filter.* FROM (
       SELECT t.startTime, m.iteration, value, b.name as benchmark,
         rank() OVER (
@@ -62,7 +62,7 @@ export async function dashProfile(
   trialId: number,
   db: Database
 ): Promise<any> {
-  const result = await db.client.query(
+  const result = await db.query(
     ` SELECT substring(commitId, 1, 6) as commitid,
         benchmark.name as bench, executor.name as exe, suite.name as suite,
         cmdline, varValue, cores, inputSize, extraArgs,
@@ -89,7 +89,7 @@ export async function dashProfile(
 }
 
 export async function dashStatistics(db: Database): Promise<{ stats: any[] }> {
-  const result = await db.client.query(`
+  const result = await db.query(`
     SELECT * FROM (
       SELECT 'Experiments' as table, count(*) as cnt FROM experiment
       UNION ALL
@@ -117,7 +117,7 @@ export async function dashChanges(
   projectId: number,
   db: Database
 ): Promise<{ changes: any[] }> {
-  const result = await db.client.query(
+  const result = await db.query(
     ` SELECT commitId, branchOrTag, projectId, repoURL, commitMessage,
              max(startTime) as experimentTime
       FROM experiment
@@ -136,7 +136,7 @@ export async function dashDataOverview(
   projectId: number,
   db: Database
 ): Promise<{ data: any[] }> {
-  const result = await db.client.query(
+  const result = await db.query(
     `
       SELECT
         exp.id as expId, exp.name, exp.description,
@@ -346,7 +346,7 @@ export async function dashGetExpData(
   dbConfig: DatabaseConfig,
   db: Database
 ): Promise<any> {
-  const result = await db.client.query(
+  const result = await db.query(
     `
       SELECT
         exp.name as expName,
@@ -451,7 +451,7 @@ export async function dashBenchmarksForProject(
   db: Database,
   projectId: number
 ): Promise<{ benchmarks }> {
-  const result = await db.client.query(
+  const result = await db.query(
     `
     SELECT DISTINCT p.name, env.hostname, r.cmdline, b.name as benchmark,
         b.id as benchId, s.name as suiteName, s.id as suiteId,
@@ -477,7 +477,7 @@ export async function dashTimelineForProject(
   db: Database,
   projectId: number
 ): Promise<{ timeline; details }> {
-  const timelineP = db.client.query(
+  const timelineP = db.query(
     `
   SELECT tl.*, src.id as sourceId, b.id as benchmarkId, exe.id as execId,
       s.id as suiteId, hostname
@@ -501,7 +501,7 @@ export async function dashTimelineForProject(
     [projectId]
   );
 
-  const timelineDetailsP = db.client.query(
+  const timelineDetailsP = db.query(
     `
       SELECT DISTINCT src.*, t.id as trialId, t.manualRun, t.startTime,
         t.userName, exp.name as expName, exp.description as expDesc

@@ -13,7 +13,7 @@ import {
   ProfileData as ApiProfileData,
   BenchmarkCompletion
 } from './api';
-import pg, { PoolConfig } from 'pg';
+import pg, { PoolConfig, QueryConfig, QueryResultRow } from 'pg';
 import { SingleRequestOnly } from './single-requester.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
 import { getDirname } from './util.js';
@@ -175,8 +175,7 @@ function filterCommitMessage(msg) {
     .trim();
 }
 
-export class Database {
-  public client: pg.Pool;
+export abstract class Database {
   protected readonly dbConfig: PoolConfig;
   private readonly timelineEnabled: boolean;
 
@@ -342,7 +341,6 @@ export class Database {
     this.dbConfig = config;
     this.numReplicates = numReplicates;
     this.timelineEnabled = timelineEnabled;
-    this.client = new pg.Pool(config);
     this.executors = new Map();
     this.suites = new Map();
     this.benchmarks = new Map();
@@ -376,6 +374,14 @@ export class Database {
     return nums.join(',\n');
   }
 
+  public abstract query<
+    R extends pg.QueryResultRow = any,
+    I extends any[] = any[]
+  >(
+    queryTextOrConfig: string | pg.QueryConfig<I>,
+    values?: I
+  ): Promise<pg.QueryResult<R>>;
+
   public clearCache(): void {
     this.executors.clear();
     this.suites.clear();
@@ -390,7 +396,7 @@ export class Database {
   }
 
   private async needsTables() {
-    const result = await this.client.query(`SELECT *
+    const result = await this.query(`SELECT *
       FROM   information_schema.tables
       WHERE  table_name = 'executor'`);
     return result.rowCount <= 0;
@@ -399,25 +405,18 @@ export class Database {
   public async initializeDatabase(): Promise<void> {
     if (await this.needsTables()) {
       const schema = loadScheme();
-      await this.client.query(schema);
+      await this.query(schema);
     }
   }
 
-  public async close(): Promise<void> {
-    await (<any>this.client).end();
-    (<any>this).client = null;
-  }
-
-  public async activateTransactionSupport(): Promise<void> {
-    await this.client.connect();
-  }
+  public abstract close(): Promise<void>;
 
   public async revisionsExistInProject(
     project: string,
     base: string,
     change: string
   ): Promise<any> {
-    const result = await this.client.query(this.queries.fetchRevsInProject, [
+    const result = await this.query(this.queries.fetchRevsInProject, [
       project,
       base,
       change
@@ -460,9 +459,9 @@ export class Database {
       return cache.get(cacheKey);
     }
 
-    let result = await this.client.query(fetchQ, qVals);
+    let result = await this.query(fetchQ, qVals);
     if (result.rowCount === 0) {
-      result = await this.client.query(insertQ, insertVals);
+      result = await this.query(insertQ, insertVals);
     }
 
     console.assert(result.rowCount === 1);
@@ -613,10 +612,9 @@ export class Database {
   public async getProjectBySlug(
     projectNameSlug: string
   ): Promise<Project | undefined> {
-    const result = await this.client.query(
-      this.queries.fetchProjectBySlugName,
-      [projectNameSlug]
-    );
+    const result = await this.query(this.queries.fetchProjectBySlugName, [
+      projectNameSlug
+    ]);
 
     if (result.rowCount !== 1) {
       return undefined;
@@ -625,9 +623,7 @@ export class Database {
   }
 
   public async getProject(projectId: number): Promise<Project | undefined> {
-    const result = await this.client.query(this.queries.fetchProjectById, [
-      projectId
-    ]);
+    const result = await this.query(this.queries.fetchProjectById, [projectId]);
 
     if (result.rowCount !== 1) {
       return undefined;
@@ -640,7 +636,7 @@ export class Database {
     projectName: string,
     baseBranch: string
   ): Promise<boolean> {
-    const result = await this.client.query(
+    const result = await this.query(
       `
       UPDATE Project
         SET baseBranch = $2
@@ -654,7 +650,7 @@ export class Database {
     projectName: string,
     currentCommitId: string
   ): Promise<Baseline | undefined> {
-    const result = await this.client.query(
+    const result = await this.query(
       `
       SELECT DISTINCT s.*, min(t.startTime) as firstStart
         FROM Source s
@@ -682,7 +678,7 @@ export class Database {
     projectName: string,
     experimentName: string
   ): Promise<Source | undefined> {
-    const result = await this.client.query(
+    const result = await this.query(
       `
       SELECT DISTINCT s.*
         FROM Source s
@@ -728,7 +724,7 @@ export class Database {
       return this.exps.get(cacheKey);
     }
 
-    const result = await this.client.query(this.queries.fetchExpByNames, [
+    const result = await this.query(this.queries.fetchExpByNames, [
       projectName,
       experimentName
     ]);
@@ -742,7 +738,7 @@ export class Database {
     expId: number,
     endTime: string
   ): Promise<void> {
-    await this.client.query(this.queries.updateTrialEndTime, [expId, endTime]);
+    await this.query(this.queries.updateTrialEndTime, [expId, endTime]);
   }
 
   public async reportCompletion(
@@ -768,9 +764,9 @@ export class Database {
   }
 
   private async recordUnit(unitName: string) {
-    const result = await this.client.query(this.queries.fetchUnit, [unitName]);
+    const result = await this.query(this.queries.fetchUnit, [unitName]);
     if (result.rowCount === 0) {
-      await this.client.query(this.queries.insertUnit, [unitName]);
+      await this.query(this.queries.insertUnit, [unitName]);
     }
   }
 
@@ -803,7 +799,7 @@ export class Database {
   }
 
   private async retrieveAvailableMeasurements(trialId: number) {
-    const results = await this.client.query(this.queries.fetchMaxMeasurements, [
+    const results = await this.query(this.queries.fetchMaxMeasurements, [
       trialId
     ]);
     const measurements = {};
@@ -1039,21 +1035,21 @@ export class Database {
     const q = this.queries.insertMeasurementBatched10;
     // [runId, trialId, invocation, iteration, critId, value];
     q.values = values;
-    return (await this.client.query(q)).rowCount;
+    return (await this.query(q)).rowCount;
   }
 
   public async recordMeasurementBatchedN(values: any[]): Promise<number> {
     const q = this.queries.insertMeasurementBatchedN;
     // [runId, trialId, invocation, iteration, critId, value];
     q.values = values;
-    return (await this.client.query(q)).rowCount;
+    return (await this.query(q)).rowCount;
   }
 
   public async recordMeasurement(values: any[]): Promise<number> {
     const q = this.queries.insertMeasurement;
     // [runId, trialId, invocation, iteration, critId, value];
     q.values = values;
-    return (await this.client.query(this.queries.insertMeasurement)).rowCount;
+    return (await this.query(this.queries.insertMeasurement)).rowCount;
   }
 
   public async recordProfile(
@@ -1065,11 +1061,11 @@ export class Database {
   ): Promise<number> {
     const q = this.queries.insertProfile;
     q.values = [runId, trialId, invocation, numIterations, value];
-    return (await this.client.query(this.queries.insertProfile)).rowCount;
+    return (await this.query(this.queries.insertProfile)).rowCount;
   }
 
   public async recordTimelineJob(values: number[]): Promise<void> {
-    await this.client.query(this.queries.insertTimelineJob, values);
+    await this.query(this.queries.insertTimelineJob, values);
   }
 
   private generateTimeline() {
@@ -1121,6 +1117,31 @@ export class Database {
       );
     });
     return prom;
+  }
+}
+
+export class DatabaseWithPool extends Database {
+  private pool: pg.Pool;
+
+  constructor(
+    config: PoolConfig,
+    numReplicates = 1000,
+    timelineEnabled = false
+  ) {
+    super(config, numReplicates, timelineEnabled);
+    this.pool = new pg.Pool(config);
+  }
+
+  public async query<R extends QueryResultRow = any, I extends any[] = any[]>(
+    queryTextOrConfig: string | QueryConfig<I>,
+    values?: I
+  ): Promise<pg.QueryResult<R>> {
+    return this.pool.query(queryTextOrConfig, values);
+  }
+
+  public async close(): Promise<void> {
+    await this.pool.end();
+    (<any>this).pool = null;
   }
 }
 
