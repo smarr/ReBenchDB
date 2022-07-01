@@ -24,7 +24,7 @@ function formatDateWithTime(dateStr) {
   return `${date.getFullYear()}-${month}-${day} ${hours}:${minutes}`;
 }
 
-export function expandMessage(event): void {
+export function expandMessage(event: any): void {
   const elem = event.target;
   elem.parentElement.innerText = elem.dataset.fulltext;
   event.preventDefault();
@@ -44,7 +44,7 @@ function formatCommitMessages(messages) {
   }
 }
 
-export function renderProjectDataOverview(data): void {
+export function renderProjectDataOverview(data: any[]): void {
   const tBody = $('#data-overview');
 
   let hasDesc = false;
@@ -158,7 +158,7 @@ function renderAllResults(project) {
   return `<div id="p${project.id}-results"></div>`;
 }
 
-export function renderProject(project): string {
+export function renderProject(project: any): string {
   const changes = renderChanges(project);
   const allResults = renderAllResults(project);
 
@@ -173,7 +173,7 @@ export function renderProject(project): string {
   return result;
 }
 
-export async function populateStatistics(statsP): Promise<void> {
+export async function populateStatistics(statsP: any): Promise<void> {
   const statsResponse = await statsP;
   const stats = await statsResponse.json();
 
@@ -186,7 +186,7 @@ export async function populateStatistics(statsP): Promise<void> {
   );
 }
 
-export function renderBenchmarks(benchmarks): void {
+export function renderBenchmarks(benchmarks: any): void {
   let suiteName = null;
   let content = '';
   for (const benchmark of benchmarks) {
@@ -237,7 +237,7 @@ function renderBenchmark(benchmark) {
   return result;
 }
 
-export function renderTimelinePlots(data): void {
+export function renderTimelinePlots(data: any): void {
   // prepare data
   const benchmarks = new Map();
   const trials = new Map();
@@ -260,10 +260,10 @@ export function renderTimelinePlots(data): void {
     results.push(result);
   }
 
-  $.appear('.timeline-plot');
+  (<any>$).appear('.timeline-plot');
   $('.timeline-plot').on('appear', function (_event, allAppearedElements) {
     let delay = 0;
-    allAppearedElements.each(function () {
+    allAppearedElements.each(function (this: any) {
       triggerRendering($(this), benchmarks, delay);
       delay += 1;
     });

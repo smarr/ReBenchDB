@@ -1,8 +1,11 @@
+import type { Data } from 'plotly.js';
+declare const Plotly: any;
+
 function simpleSlug(str) {
   return str.replace(/[\W_]+/g, '');
 }
 
-export function renderResultsPlots(timeSeries, projectId): void {
+export function renderResultsPlots(timeSeries: any, projectId: string): void {
   let plotDivs = '';
   for (const series in timeSeries) {
     const slug = simpleSlug(series);
@@ -20,11 +23,11 @@ export function renderResultsPlots(timeSeries, projectId): void {
 }
 
 function renderResultsPlot(timeSeries, divId) {
-  const index = [];
+  const index: number[] = [];
 
-  const trace1 = {
-    x: [],
-    y: [],
+  const trace1: Data = {
+    x: <number[]>[],
+    y: <number[]>[],
     type: 'scatter',
     mode: 'lines',
     name: 'PUT /results',
@@ -35,7 +38,7 @@ function renderResultsPlot(timeSeries, divId) {
   };
 
   trace1.y = timeSeries;
-  const data = [trace1];
+  const data: Data[] = [trace1];
 
   const layout = {
     height: 200,
@@ -57,7 +60,7 @@ function renderResultsPlot(timeSeries, divId) {
   Plotly.newPlot(divId, data, layout);
 }
 
-export function renderTimelinePlot(key, results): void {
+export function renderTimelinePlot(key: any, results: any): void {
   // split results into branches
   const branches = new Map();
 
@@ -100,7 +103,7 @@ export function renderTimelinePlot(key, results): void {
 
   // for each branch, we have three traces, the lower, middle, and upper one
   // lower/upper are thrown as bands around the middle trace
-  const traces = [];
+  const traces: any[] = [];
 
   for (const [branch, data] of branches.entries()) {
     traces.push({

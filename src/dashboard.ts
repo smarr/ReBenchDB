@@ -603,7 +603,7 @@ Summary Over All Benchmarks
 
       See [full report](${reportUrl}) for results.
 
-      <!-- Error occured: ${e} -->
+      <!-- Error occurred: ${e} -->
       `;
       github.postCommitComment(details.owner, details.repo, changeSha, msg);
     });
