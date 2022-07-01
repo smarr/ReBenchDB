@@ -1,4 +1,4 @@
-import { Database, DatabaseConfig } from '../src/db';
+import { Database, DatabaseConfig } from '../src/db.js';
 import { PoolConfig } from 'pg';
 
 export class TestDatabase extends Database {

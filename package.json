@@ -44,15 +44,26 @@
     "typescript-json-schema": "0.53.1"
   },
   "jest": {
-    "preset": "ts-jest",
+    "preset": "ts-jest/presets/default-esm",
     "testEnvironment": "node",
+    "transform": {},
     "testPathIgnorePatterns": [
       "<rootDir>/dist/",
       "<rootDir>/node_modules/"
     ],
     "modulePathIgnorePatterns": [
       "<rootDir>/dist/"
-    ]
+    ],
+    "extensionsToTreatAsEsm": [".ts"],
+    "globals": {
+      "ts-jest": {
+        "useESM": true
+      }
+    },
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "roots": ["tests/"]
   },
   "scripts": {
     "postinstall": "npm run compile",
@@ -66,6 +77,6 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "update": "git pull && npm install . && pm2 restart 0",
     "watch": "tsc -w",
-    "test": "jest"
+    "test": "node --no-warnings --experimental-vm-modules ./node_modules/jest/bin/jest.js"
   }
 }

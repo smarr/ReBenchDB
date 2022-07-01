@@ -8,7 +8,7 @@ import { BenchmarkData, BenchmarkCompletion } from './api.js';
 import { createValidator } from './api-validator.js';
 import { ValidateFunction } from 'ajv';
 
-import packageJson from '../package.json' assert { type: 'json' };
+import packageJson from '../package.json';
 import {
   initPerfTracker,
   startRequest,

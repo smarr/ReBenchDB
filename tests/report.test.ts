@@ -4,7 +4,10 @@ import {
   getSummaryPlotFileName,
   getOutputImageFolder
 } from '../src/dashboard';
-import { DatabaseConfig } from '../src/db';
+import { DatabaseConfig } from '../src/db.js';
+import { getDirname } from '../src/util.js';
+
+const __dirname = getDirname(import.meta.url);
 
 describe('Report Generation', () => {
   const reportFolder = `${__dirname}/../resources/reports`;

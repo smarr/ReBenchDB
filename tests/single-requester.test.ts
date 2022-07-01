@@ -1,4 +1,4 @@
-import { SingleRequestOnly } from '../src/single-requester';
+import { SingleRequestOnly } from '../src/single-requester.js';
 
 describe('Basic functionality of SingleRequestOnly', () => {
   it('should execute the request on a triggering', async () => {

@@ -1,7 +1,10 @@
-import { BenchmarkData, Criterion, DataPoint } from '../src/api';
-import { loadScheme } from '../src/db';
+import { BenchmarkData, Criterion, DataPoint } from '../src/api.js';
+import { loadScheme } from '../src/db.js';
 import { readFileSync } from 'fs';
-import { TestDatabase, createAndInitializeDB, createDB } from './db-testing';
+import { TestDatabase, createAndInitializeDB, createDB } from './db-testing.js';
+import { getDirname } from '../src/util.js';
+
+const __dirname = getDirname(import.meta.url);
 
 const numTxStatements = 3;
 
