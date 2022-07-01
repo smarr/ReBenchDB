@@ -14,6 +14,11 @@ import { getDirname } from '../src/util.js';
 
 const __dirname = getDirname(import.meta.url);
 
+import { jest } from '@jest/globals';
+
+const timeoutForLargeDataTest = 200 * 1000;
+jest.setTimeout(timeoutForLargeDataTest);
+
 describe('Test Dashboard on empty DB', () => {
   let db: TestDatabase;
 

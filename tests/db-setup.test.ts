@@ -4,9 +4,14 @@ import { readFileSync } from 'fs';
 import { TestDatabase, createAndInitializeDB, createDB } from './db-testing.js';
 import { getDirname } from '../src/util.js';
 
+import { jest } from '@jest/globals';
+
 const __dirname = getDirname(import.meta.url);
 
 const numTxStatements = 3;
+
+const timeoutForLargeDataTest = 200 * 1000;
+jest.setTimeout(timeoutForLargeDataTest);
 
 function expectIdsToBeUnique(ids) {
   expect(ids.length).toBeGreaterThan(0);
@@ -300,7 +305,7 @@ describe('Recording a ReBench execution from payload files', () => {
       const timeline = await db.client.query('SELECT * from Timeline');
       expect(timeline.rowCount).toEqual(462);
     },
-    200 * 1000
+    timeoutForLargeDataTest
   );
 
   it('should not fail if some data is already in database', async () => {
