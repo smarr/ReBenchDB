@@ -220,10 +220,10 @@ if (DEV) {
       path = `${__dirname}/../../resources/${ctx.params.filename}`;
     } else if (ctx.params.filename.endsWith('.js')) {
       ctx.type = 'application/javascript';
-      path = `${__dirname}/${ctx.params.filename}`;
+      path = `${__dirname}/views/${ctx.params.filename}`;
     } else if (ctx.params.filename.endsWith('.map')) {
       ctx.type = 'application/json';
-      path = `${__dirname}/${ctx.params.filename}`;
+      path = `${__dirname}/views/${ctx.params.filename}`;
     } else if (ctx.params.filename.endsWith('.svg')) {
       ctx.type = 'image/svg+xml';
       path = `${__dirname}/../../resources/${ctx.params.filename}`;
@@ -233,12 +233,12 @@ if (DEV) {
     ctx.body = readFileSync(path);
   });
 
-  router.get(`/src/:filename*`, async (ctx) => {
+  router.get(`/src/views/:filename*`, async (ctx) => {
     console.log(`serve ${ctx.params.filename}`);
     let path: string;
     if (ctx.params.filename.endsWith('.ts')) {
       ctx.type = 'application/typescript';
-      path = `${__dirname}/../../src/${ctx.params.filename}`;
+      path = `${__dirname}/../../src/views/${ctx.params.filename}`;
     } else {
       throw new Error(`Unsupported file type ${ctx.params.filename}`);
     }
