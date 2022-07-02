@@ -1,4 +1,4 @@
-import { TestDatabase, createAndInitializeDB } from './db-testing';
+import { TestDatabase, createAndInitializeDB } from './db-testing.js';
 import {
   dashStatistics,
   dashResults,
@@ -8,8 +8,16 @@ import {
   dashBenchmarksForProject,
   dashTimelineForProject
 } from '../src/dashboard';
-import { BenchmarkData } from '../src/api';
+import { BenchmarkData } from '../src/api.js';
 import { readFileSync } from 'fs';
+import { getDirname } from '../src/util.js';
+
+const __dirname = getDirname(import.meta.url);
+
+import { jest } from '@jest/globals';
+
+const timeoutForLargeDataTest = 200 * 1000;
+jest.setTimeout(timeoutForLargeDataTest);
 
 describe('Test Dashboard on empty DB', () => {
   let db: TestDatabase;

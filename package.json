@@ -8,6 +8,7 @@
     "email": "git@stefan-marr.de"
   },
   "license": "MIT",
+  "type": "module",
   "dependencies": {
     "@octokit/auth-app": "3.6.1",
     "@octokit/rest": "18.12.0",
@@ -21,9 +22,11 @@
   "devDependencies": {
     "@octokit/types": "6.34.0",
     "@types/jest": "28.1.4",
+    "@types/jquery": "3.5.14",
     "@types/koa": "2.13.4",
     "@types/koa-router": "7.4.4",
     "@types/mustache": "4.1.3",
+    "@types/plotly.js": "1.54.22",
     "@types/pg": "8.6.5",
     "@typescript-eslint/eslint-plugin": "5.30.0",
     "@typescript-eslint/parser": "5.30.0",
@@ -41,20 +44,31 @@
     "typescript-json-schema": "0.53.1"
   },
   "jest": {
-    "preset": "ts-jest",
+    "preset": "ts-jest/presets/default-esm",
     "testEnvironment": "node",
+    "transform": {},
     "testPathIgnorePatterns": [
       "<rootDir>/dist/",
       "<rootDir>/node_modules/"
     ],
     "modulePathIgnorePatterns": [
       "<rootDir>/dist/"
-    ]
+    ],
+    "extensionsToTreatAsEsm": [".ts"],
+    "globals": {
+      "ts-jest": {
+        "useESM": true
+      }
+    },
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "roots": ["tests/"]
   },
   "scripts": {
     "postinstall": "npm run compile",
-    "start": "node ./dist/src/index.js",
-    "nodemon": "DEV=true nodemon ./dist/src/index.js --watch ./dist/src --watch ./dist/package.json",
+    "start": "node --enable-source-maps --experimental-json-modules ./dist/src/index.js",
+    "nodemon": "DEV=true nodemon --enable-source-maps --experimental-json-modules ./dist/src/index.js --watch ./dist/src --watch ./dist/package.json",
     "compile": "tsc && npm run prep-resources && npm run prep-reports",
     "prep-resources": "(cd tests; bzip2 -d -f -k large-payload.json.bz2)",
     "prep-reports": "mkdir -p tmp/interm tmp/knit resources/reports resources/exp-data",
@@ -63,6 +77,6 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "update": "git pull && npm install . && pm2 restart 0",
     "watch": "tsc -w",
-    "test": "jest"
+    "test": "node --no-warnings --experimental-vm-modules ./node_modules/jest/bin/jest.js"
   }
 }

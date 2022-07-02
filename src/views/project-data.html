@@ -1,22 +1,10 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <meta id="project-id" value="{{project.id}}">
   <title>ReBench: {{project.name}}</title>
-  <script src="/static/render.js"></script>
-  <script src="/static/plots.js"></script>
-
   {{{headerHtml}}}
-
-  <script>
-    //@ts-check
-    const dataOverviewP = fetch(`/rebenchdb/dash/{{project.id}}/data-overview`);
-
-    $(document).ready(async () => {
-      const dataOverviewResponse = await dataOverviewP;
-      const data = (await dataOverviewResponse.json()).data;
-      renderProjectDataOverview(data, $);
-    });
-  </script>
+  <script src="/static/project-data.js" type="module"></script>
 </head>
 <body>
 

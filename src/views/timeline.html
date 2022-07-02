@@ -1,28 +1,11 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <meta id="project-id" value="{{project.id}}">
   <title>ReBench: Timeline {{project.name}}</title>
-  <script src="/static/render.js"></script>
-  <script src="/static/plots.js"></script>
-
   {{{headerHtml}}}
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.appear/0.4.1/jquery.appear.min.js" integrity="sha256-19/eyBKQKb8IPrt7321hbLkI1+xyM8d/DpzjyiEKnCE=" crossorigin="anonymous"></script>
-
-  <script>
-    //@ts-check
-    const benchmarksP = fetch(`/rebenchdb/dash/{{project.id}}/benchmarks`);
-    const timelineP = fetch(`/rebenchdb/dash/{{project.id}}/timeline`);
-
-    $(document).ready(async () => {
-      const benchmarksResponse = await benchmarksP;
-      const benchmarks = (await benchmarksResponse.json()).benchmarks;
-      renderBenchmarks(benchmarks, $);
-
-      const timelineResponse = await timelineP;
-      renderTimelinePlots(await timelineResponse.json(), $);
-    });
-  </script>
+  <script src="/static/timeline.js" type="module"></script>
 </head>
 <body>
 

@@ -1,6 +1,9 @@
 import { readFileSync } from 'fs';
 import { ValidateFunction } from 'ajv';
-import { createValidator } from '../src/api-validator';
+import { createValidator } from '../src/api-validator.js';
+import { getDirname } from '../src/util.js';
+
+const __dirname = getDirname(import.meta.url);
 
 describe('Ensure Test Payloads conform to API', () => {
   let validateFn: ValidateFunction;
