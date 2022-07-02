@@ -67,7 +67,7 @@
   },
   "scripts": {
     "postinstall": "npm run compile",
-    "start": "node --experimental-json-modules ./dist/src/index.js",
+    "start": "node --enable-source-maps --experimental-json-modules ./dist/src/index.js",
     "nodemon": "DEV=true nodemon --enable-source-maps --experimental-json-modules ./dist/src/index.js --watch ./dist/src --watch ./dist/package.json",
     "compile": "tsc && npm run prep-resources && npm run prep-reports",
     "prep-resources": "(cd tests; bzip2 -d -f -k large-payload.json.bz2)",
