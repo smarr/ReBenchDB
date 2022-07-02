@@ -1,6 +1,6 @@
 import { readFileSync, existsSync, unlinkSync, rmSync } from 'fs';
 import { execFile, ChildProcessPromise } from 'promisify-child-process';
-import { Database, DatabaseConfig } from './db.js';
+import { Database, DatabaseConfig, Source } from './db.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
 import { BenchmarkCompletion } from './api.js';
 import { GitHub } from './github.js';
@@ -530,7 +530,7 @@ export async function dashTimelineForProject(
 export async function reportCompletion(
   dbConfig: DatabaseConfig,
   db: Database,
-  github: GitHub,
+  github: GitHub | null,
   data: BenchmarkCompletion
 ): Promise<void> {
   await db.reportCompletion(data);
@@ -563,6 +563,36 @@ export async function reportCompletion(
     );
   }
 
+  const { reportId, completionPromise } = await dashCompare(
+    baselineSha,
+    changeSha,
+    data.projectName,
+    dbConfig,
+    db
+  );
+
+  if (github !== null) {
+    reportCompletionToGitHub(
+      github,
+      reportId,
+      completionPromise,
+      change,
+      baselineSha,
+      changeSha,
+      data.projectName
+    );
+  }
+}
+
+function reportCompletionToGitHub(
+  github: GitHub,
+  reportId,
+  completionPromise,
+  change: Source | undefined,
+  baselineSha: string,
+  changeSha: string,
+  projectName: string
+) {
   const details = github.getOwnerRepoFromUrl(change?.repourl);
   if (!details) {
     throw new Error(
@@ -572,17 +602,9 @@ export async function reportCompletion(
     );
   }
 
-  const { reportId, completionPromise } = await dashCompare(
-    baselineSha,
-    changeSha,
-    data.projectName,
-    dbConfig,
-    db
-  );
-
   const reportUrl =
     siteConfig.publicUrl +
-    `/compare/${data.projectName}/${baselineSha}/${changeSha}`;
+    `/compare/${projectName}/${baselineSha}/${changeSha}`;
 
   completionPromise
     .then(() => {
