@@ -8,7 +8,6 @@ import { BenchmarkData, BenchmarkCompletion } from './api.js';
 import { createValidator } from './api-validator.js';
 import { ValidateFunction } from 'ajv';
 
-import packageJson from '../package.json';
 import {
   initPerfTracker,
   startRequest,
@@ -29,11 +28,15 @@ import {
   dashProfile
 } from './dashboard.js';
 import { processTemplate } from './templates.js';
-import { dbConfig, siteConfig } from './util.js';
+import { dbConfig, robustPath, siteConfig } from './util.js';
 import { GitHub } from './github.js';
 import { getDirname } from './util.js';
 
 const __dirname = getDirname(import.meta.url);
+
+const packageJson = JSON.parse(
+  readFileSync(robustPath('../package.json'), 'utf-8')
+);
 
 console.log('Starting ReBenchDB Version ' + packageJson.version);
 
