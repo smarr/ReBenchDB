@@ -129,10 +129,11 @@ async function renderChangeDetails(changesDetailsResponse, projectId) {
     p1baseline.append(option);
     p1change.append(option);
   }
-  $(`#p${projectId}-compare`).click(() => openCompare(projectId));
+  $(`#p${projectId}-compare`).click(() => openCompare(projectId,false));
+  $(`#p${projectId}-compare`).mousedown(() => openCompare(projectId, true));
 }
 
-function openCompare(projectId) {
+function openCompare(projectId, isMiddleMouse) {
   const baseJQ = $(`#p${projectId}-baseline`);
   const projectName = baseJQ.data('project');
   const baseline = baseJQ.find('.active').data('hash');
@@ -141,7 +142,13 @@ function openCompare(projectId) {
   if (baseline === undefined || change === undefined) {
     return;
   }
-  window.location.href = `/compare/${projectName}/${baseline}/${change}`;
+  if (isMiddleMouse) {
+    window.open(`/compare/${projectName}/${baseline}/${change}`, '_blank');
+    return;
+  } 
+    window.location.href = `/compare/${projectName}/${baseline}/${change}`;
+  
+  
 }
 
 function renderAllResults(project) {
