@@ -1,9 +1,24 @@
 import { Octokit } from '@octokit/rest';
 import { createAppAuth } from '@octokit/auth-app';
+import { existsSync, readFileSync } from 'fs';
 
 export interface Repo {
   owner: string;
   repo: string;
+}
+
+export function createGitHubClient(siteConfig: {
+  appId: number;
+  githubPrivateKey: string;
+}): GitHub | null {
+  if (existsSync(siteConfig.githubPrivateKey)) {
+    return new GitHub(
+      siteConfig.appId,
+      readFileSync(siteConfig.githubPrivateKey).toString()
+    );
+  } else {
+    return null;
+  }
 }
 
 export class GitHub {

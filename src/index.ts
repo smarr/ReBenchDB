@@ -29,7 +29,7 @@ import {
 } from './dashboard.js';
 import { processTemplate } from './templates.js';
 import { dbConfig, robustPath, siteConfig } from './util.js';
-import { GitHub } from './github.js';
+import { createGitHubClient } from './github.js';
 import { getDirname } from './util.js';
 
 const __dirname = getDirname(import.meta.url);
@@ -351,10 +351,13 @@ router.put(
   }
 );
 
-const github = new GitHub(
-  siteConfig.appId,
-  readFileSync(siteConfig.githubPrivateKey).toString()
-);
+const github = createGitHubClient(siteConfig);
+if (github === null) {
+  console.log(
+    'Reporting to GitHub is not yet enabled.' +
+      ' Make sure GITHUB_APP_ID and GITHUB_PK are set to enable it.'
+  );
+}
 
 // curl -X PUT -H "Content-Type: application/json" \
 // -d '{"endTime":"bar","experimentName": \
@@ -399,7 +402,8 @@ app.use(router.allowedMethods());
   } catch (e: any) {
     if (e.code == 'ECONNREFUSED') {
       console.log(
-        `Unable to connect to database on port ${e.address}:${e.port}`
+        'Unable to connect to database on port ${e.address}:${e.port}\n' +
+          'ReBenchDB requires a Postgres database to work.'
       );
       process.exit(1);
     }
