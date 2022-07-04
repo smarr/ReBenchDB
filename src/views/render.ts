@@ -146,7 +146,7 @@ function openCompare(projectId, isMiddleMouse) {
     window.open(`/compare/${projectName}/${baseline}/${change}`, '_blank');
     return;
   } 
-    window.location.href = `/compare/${projectName}/${baseline}/${change}`;
+  window.location.href = `/compare/${projectName}/${baseline}/${change}`;
   
   
 }
