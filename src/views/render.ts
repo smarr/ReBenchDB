@@ -103,50 +103,97 @@ function renderChanges(project) {
       </div>
     </div></div>
 
-    <button type="button" class="btn btn-primary"
-      id="p${project.id}-compare">Compare</button>`;
+    <a  class="btn btn-primary" id="p${project.id}-compare"></a>`;
   return changes;
 }
-
+function test() {
+  alert("hello");
+  return true;
+}
 async function renderChangeDetails(changesDetailsResponse, projectId) {
   const details = await changesDetailsResponse.json();
-
+  
   const p1baseline = $(`#p${projectId}-baseline`);
   const p1change = $(`#p${projectId}-change`);
+  var x = 0;
   for (const change of details.changes) {
+
     // strip out some metadata to be nicer to view.
     const msg = filterCommitMessage(change.commitmessage);
     const date = formatDateWithTime(change.experimenttime);
-
-    const option = `<a class="list-group-item list-group-item-action
+    var stridl = "pl" + projectId +"commitRef" + x;
+    var stridr = "pr" + projectId +"commitRef" + x;
+    const optionl = `<a id=${stridl} class="list-group-item list-group-item-action
       list-min-padding"
       data-toggle="list" data-hash="${change.commitid}" href="">
         <div class="exp-date" title="Experiment Start Date">${date}</div>
         ${change.commitid.substr(0, 6)} ${change.branchortag}<br>
         <div class="change-msg">${msg}</div>
       </a>`;
-
-    p1baseline.append(option);
-    p1change.append(option);
+      const optionr = `<a id=${stridr} class="list-group-item list-group-item-action
+      list-min-padding"
+      data-toggle="list" data-hash="${change.commitid}" href="">
+        <div class="exp-date" title="Experiment Start Date">${date}</div>
+        ${change.commitid.substr(0, 6)} ${change.branchortag}<br>
+        <div class="change-msg">${msg}</div>
+      </a>`;
+    //$(`#${strid}`).click(() => test());
+    p1baseline.append(optionl);
+    p1change.append(optionr);
+    $(`#${stridl}`).click(() => refreshHref(projectId,change.commitid, true));
+    $(`#${stridr}`).click(() => refreshHref(projectId,change.commitid, false));
+    x++;
   }
-  $(`#p${projectId}-compare`).click(() => openCompare(projectId,false));
-  $(`#p${projectId}-compare`).mousedown(() => openCompare(projectId, true));
+  
+  
+  //$(`#p${projectId}-compare`).click("onclick",test);
+  //$(`#p${projectId}-compare`).click(() => test());
+  //$(`#p${projectId}-compare`).click(() => openCompare(projectId));
+  //$(`#p${projectId}-compare`).attr("href", "javascript:return test()");
+  //$(`#p${projectId}-compare`).append("href="+ openCompare(projectId,false) )
+  //$(`#p${projectId}-compare`).mousedown(() => openCompare(projectId, true));
+  
 }
 
-function openCompare(projectId, isMiddleMouse) {
+
+
+function refreshHref(projectId, changedcommit, isLeft) {
+  
+
   const baseJQ = $(`#p${projectId}-baseline`);
-  const projectName = baseJQ.data('project');
-  const baseline = baseJQ.find('.active').data('hash');
-  const change = $(`#p${projectId}-change`).find('.active').data('hash');
+  var projectName = baseJQ.data('project');
+  var baseline = baseJQ.find('.active').data('hash');
+  var change = $(`#p${projectId}-change`).find('.active').data('hash');
+  
+
+  if (isLeft && baseline == undefined) {
+    baseline = changedcommit;
+  } 
+
+  if (!isLeft && change == undefined) {
+    change = changedcommit;
+  } 
+
 
   if (baseline === undefined || change === undefined) {
     return;
   }
-  if (isMiddleMouse) {
-    window.open(`/compare/${projectName}/${baseline}/${change}`, '_blank');
+  projectName = projectName.trim();
+  $(`#p${projectId}-compare`).attr("href",`/compare/${projectName}/${baseline}/${change}`);
+}
+
+function openCompare(projectId){
+  const baseJQ = $(`#p${projectId}-baseline`);
+  const projectName = baseJQ.data('project');
+  const baseline = baseJQ.find('.active').data('hash');
+  const change = $(`#p${projectId}-change`).find('.active').data('hash');
+  //alert("Hello");
+  if (baseline === undefined || change === undefined) {
     return;
-  } 
-  window.location.href = `/compare/${projectName}/${baseline}/${change}`;
+  }
+
+  $(`#p${projectId}-compare`).attr("href",`/compare/${projectName}/${baseline}/${change}`);
+  //return `/compare/${projectName}/${baseline}/${change}`;
   
   
 }
