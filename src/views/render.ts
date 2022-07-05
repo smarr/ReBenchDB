@@ -112,15 +112,15 @@ async function renderChangeDetails(changesDetailsResponse, projectId) {
 
   const p1baseline = $(`#p${projectId}-baseline`);
   const p1change = $(`#p${projectId}-change`);
-  var x = 0;
+  let x = 0;
   for (const change of details.changes) {
     // strip out some metadata to be nicer to view.
     const msg = filterCommitMessage(change.commitmessage);
     const date = formatDateWithTime(change.experimenttime);
 
     // left and right unique ids
-    var stridl = 'pl' + projectId + 'commitRef' + x;
-    var stridr = 'pr' + projectId + 'commitRef' + x;
+    let stridl = 'pl' + projectId + 'commitRef' + x;
+    let stridr = 'pr' + projectId + 'commitRef' + x;
 
     const option = ` class="list-group-item list-group-item-action
       list-min-padding"
@@ -145,9 +145,9 @@ function refreshHref(projectId, changedcommit, isLeft) {
   //  commit are defeined. set link if that is true
 
   const baseJQ = $(`#p${projectId}-baseline`);
-  var projectName = baseJQ.data('project');
-  var baseline = baseJQ.find('.active').data('hash');
-  var change = $(`#p${projectId}-change`).find('.active').data('hash');
+  let projectName = baseJQ.data('project');
+  let baseline = baseJQ.find('.active').data('hash');
+  let change = $(`#p${projectId}-change`).find('.active').data('hash');
 
   if (isLeft) {
     baseline = changedcommit;
