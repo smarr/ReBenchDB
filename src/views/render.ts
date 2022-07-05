@@ -112,17 +112,13 @@ async function renderChangeDetails(changesDetailsResponse, projectId) {
 
   const p1baseline = $(`#p${projectId}-baseline`);
   const p1change = $(`#p${projectId}-change`);
-  let x = 0;
+
   for (const change of details.changes) {
     // strip out some metadata to be nicer to view.
     const msg = filterCommitMessage(change.commitmessage);
     const date = formatDateWithTime(change.experimenttime);
 
-    // left and right unique ids
-    let stridl = 'pl' + projectId + 'commitRef' + x;
-    let stridr = 'pr' + projectId + 'commitRef' + x;
-
-    const option = ` class="list-group-item list-group-item-action
+    const option = `<a class="list-group-item list-group-item-action
       list-min-padding"
       data-toggle="list" data-hash="${change.commitid}" href="">
         <div class="exp-date" title="Experiment Start Date">${date}</div>
@@ -130,30 +126,36 @@ async function renderChangeDetails(changesDetailsResponse, projectId) {
         <div class="change-msg">${msg}</div>
       </a>`;
 
-    p1baseline.append(`<a id=${stridl}` + option);
-    p1change.append(`<a id=${stridr}` + option);
-
-    // set a event for each list group item which calls refreashHref
-    $(`#${stridl}`).click(() => refreshHref(projectId, change.commitid, true));
-    $(`#${stridr}`).click(() => refreshHref(projectId, change.commitid, false));
-    x++;
+    p1baseline.append(option);
+    p1change.append(option);
   }
+
+  // set a event for each list group item which calls setHref
+  $(`#p${projectId}-baseline a`).on('click', (event) =>
+    setHref(event, projectId, true)
+  );
+  $(`#p${projectId}-change a`).on('click', (event) =>
+    setHref(event, projectId, false)
+  );
 }
 
-function refreshHref(projectId, changedcommit, isLeft) {
-  // every time a commit is clicked. check to see if both left and right
-  //  commit are defeined. set link if that is true
-
+function setHref(event, projectId, isBaseline) {
+  // every time a commit is clicked, check to see if both left and right
+  // commit are defined. set link if that is true
   const baseJQ = $(`#p${projectId}-baseline`);
-  let projectName = baseJQ.data('project');
-  let baseline = baseJQ.find('.active').data('hash');
-  let change = $(`#p${projectId}-change`).find('.active').data('hash');
+  const projectName = baseJQ.data('project');
 
-  if (isLeft) {
-    baseline = changedcommit;
+  const clicked = $(event.currentTarget).data('hash');
+  let baseline;
+  let change;
+
+  if (isBaseline) {
+    baseline = clicked;
+    change = $(`#p${projectId}-change`).find('.active').data('hash');
   }
-  if (!isLeft) {
-    change = changedcommit;
+  if (!isBaseline) {
+    change = clicked;
+    baseline = baseJQ.find('.active').data('hash');
   }
   if (baseline === undefined || change === undefined) {
     return;
