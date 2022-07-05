@@ -402,7 +402,7 @@ app.use(router.allowedMethods());
   } catch (e: any) {
     if (e.code == 'ECONNREFUSED') {
       console.log(
-        'Unable to connect to database on port ${e.address}:${e.port}\n' +
+        `Unable to connect to database on port ${e.address}:${e.port}\n` +
           'ReBenchDB requires a Postgres database to work.'
       );
       process.exit(1);

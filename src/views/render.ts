@@ -103,8 +103,7 @@ function renderChanges(project) {
       </div>
     </div></div>
 
-    <button type="button" class="btn btn-primary"
-      id="p${project.id}-compare">Compare</button>`;
+    <a class="btn btn-primary" id="p${project.id}-compare">Compare</a>`;
   return changes;
 }
 
@@ -113,6 +112,7 @@ async function renderChangeDetails(changesDetailsResponse, projectId) {
 
   const p1baseline = $(`#p${projectId}-baseline`);
   const p1change = $(`#p${projectId}-change`);
+
   for (const change of details.changes) {
     // strip out some metadata to be nicer to view.
     const msg = filterCommitMessage(change.commitmessage);
@@ -129,19 +129,42 @@ async function renderChangeDetails(changesDetailsResponse, projectId) {
     p1baseline.append(option);
     p1change.append(option);
   }
-  $(`#p${projectId}-compare`).click(() => openCompare(projectId));
+
+  // set a event for each list group item which calls setHref
+  $(`#p${projectId}-baseline a`).on('click', (event) =>
+    setHref(event, projectId, true)
+  );
+  $(`#p${projectId}-change a`).on('click', (event) =>
+    setHref(event, projectId, false)
+  );
 }
 
-function openCompare(projectId) {
+function setHref(event, projectId, isBaseline) {
+  // every time a commit is clicked, check to see if both left and right
+  // commit are defined. set link if that is true
   const baseJQ = $(`#p${projectId}-baseline`);
   const projectName = baseJQ.data('project');
-  const baseline = baseJQ.find('.active').data('hash');
-  const change = $(`#p${projectId}-change`).find('.active').data('hash');
 
+  const clicked = $(event.currentTarget).data('hash');
+  let baseline;
+  let change;
+
+  if (isBaseline) {
+    baseline = clicked;
+    change = $(`#p${projectId}-change`).find('.active').data('hash');
+  }
+  if (!isBaseline) {
+    change = clicked;
+    baseline = baseJQ.find('.active').data('hash');
+  }
   if (baseline === undefined || change === undefined) {
     return;
   }
-  window.location.href = `/compare/${projectName}/${baseline}/${change}`;
+
+  $(`#p${projectId}-compare`).attr(
+    'href',
+    `/compare/${projectName}/${baseline}/${change}`
+  );
 }
 
 function renderAllResults(project) {
