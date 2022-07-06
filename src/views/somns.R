@@ -102,7 +102,8 @@ if (cmds[1] == "from-file") {
   # load_and_install_if_necessary("psych")   # uses only geometric.mean
   rebenchdb <- connect_to_rebenchdb(db_name, db_user, db_pass)
   result <- get_measures_for_comparison(rebenchdb, baseline_hash, change_hash)
-  profiles <- get_profile_availability(rebenchdb, baseline_hash, change_hash)
+  profiles <- get_profile_availability(rebenchdb, baseline_hash, change_hash)  
+  environments <- get_environments()  
   disconnect_rebenchdb(rebenchdb)
 }
 
@@ -368,9 +369,12 @@ if (nrow(not_in_both) > 0) {
 
 out("<h2>Benchmark Performance</h2>")
 
-perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_row_count, group, colors, colors_light) {
+perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_row_count, group, colors, colors_light, environments) {
   group_col <- enquo(group)
   row_count <- start_row_count
+  
+
+  environmentsframe <- data.frame(environments)
 
   out('<table class="table table-sm benchmark-details">')
   out('<thead><tr>
@@ -387,17 +391,22 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
   # b <- "DeltaBlue"
   # data_ea <- data_b
 
-  for (b in levels(data_es$bench)) { data_b <- data_es %>% filter(bench == b) %>% droplevels()
+  for (b in levels(data_es$bench)) { data_b <- data_es %>% filter(bench == b) %>% droplevels() # nolint
     for (v in levels(data_b$varvalue)) {   data_v  <- data_b %>% filter(varvalue == v)   %>% droplevels()
     for (c in levels(data_v$cores)) {      data_c  <- data_v %>% filter(cores == c)      %>% droplevels()
     for (i in levels(data_c$inputsize)) {  data_i  <- data_c %>% filter(inputsize == i)  %>% droplevels()
-    for (ea in levels(data_i$extraargs)) { data_ea <- data_i %>% filter(extraargs == ea) %>% droplevels()
+    for (ea in levels(data_i$extraargs)) { data_ea <- data_i %>% filter(extraargs == ea) %>% droplevels()    
+
+    for (en in levels(data_ea$envid)) { data_en <- data_ea %>% filter(envid == en) %>% droplevels()
+
+
 
     args <- ""
     if (length(levels(data_b$varvalue))  > 1) { args <- paste0(args, v) }
     if (length(levels(data_v$cores))     > 1) { args <- paste0(args, c) }
     if (length(levels(data_c$inputsize)) > 1) { args <- paste0(args, i) }
     if (length(levels(data_i$extraargs)) > 1) { args <- paste0(args, ea) }
+    
     if (nchar(args) > 0) {
       args <- paste0('<span class="all-args">', args, '</span>')
     }
@@ -406,8 +415,11 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
     # this regex is also used in render.js's renderBenchmark() function
     cmdline <- str_replace_all(data_i$cmdline[[1]], "^([^\\s]*)((?:\\/\\w+)\\s.*$)", ".\\2")
 
+    # format all environment information into a single string
+    environmentStr <- paste0("Hostname: ", as.character(environmentsframe[levels(data_en$envid), 2])," |  OS Type: ", as.character(environmentsframe[levels(data_en$envid), 3])," |  Memory: ", as.character(environmentsframe[levels(data_en$envid), 4]), " |  CPU: ", as.character(environmentsframe[levels(data_en$envid), 5]), " |  Clockspeed: " ,as.character(environmentsframe[levels(data_en$envid), 6]))
+    
     stats_b_total <- stats_es %>%
-      ungroup() %>%
+      ungroup() %>%     
       filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea, criterion == "total") %>%
       droplevels()
     stats_b_gctime <- stats_es %>%
@@ -426,7 +438,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
         droplevels()
     }
 
-    group_size <- (data_ea %>%
+    group_size <- (data_en %>%
                      filter(criterion == "total") %>%
                      select(!!group_col) %>%
                      unique() %>%
@@ -436,7 +448,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
       out('<tr>')
       out('<th scope="row">',  b, args, '</th>')
       out('<td>')
-      p <- small_inline_comparison(data_ea, !!group_col, colors, colors_light)
+      p <- small_inline_comparison(data_en, !!group_col, colors, colors_light)
       img_file <- paste0('inline-', row_count, '.svg')
       ggsave(img_file, p, "svg", output_dir, width = 3.5, height = 0.12 + 0.14 * group_size, units = "in")
       out('<img src="', output_url, '/', img_file, '">')
@@ -515,10 +527,17 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
         }
         out('</td>\n')
       }
-      
-      out('<td><button type="button" class="btn btn-sm btn-cmdline" data-content="<code>', cmdline, '</code>"></button>\n')
 
-      warmup_ea <- warmup_es %>%
+      out('<td><button type="button" class="btn btn-sm btn-cmdline" data-content="<code>', cmdline, '</code>"></button>\n')
+      out('<button type="button" class="btn btn-sm btn-environment" data-toggle="popover" data-placement="top" data-content="',environmentStr,'" ></button>')
+      
+      # script to implement the popover for the environment button
+      out('<script>
+          $(document).ready(function(){
+          $(', paste0( "'", '[data-toggle="popover"]' , "'" ) ,').popover();   
+          });
+          </script>')
+       warmup_ea <- warmup_es %>%
         filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
         droplevels()
 
@@ -548,7 +567,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
       out('<th scope="row">', b, '</th><td colspan="4">missing in one of the data sets</td>\n')
       out('</tr>')
     }
-    } } } }
+    } } } } }
   }
 
   out('</table>')
@@ -587,7 +606,7 @@ perf_diff_table <- function(norm, stats, start_row_count) {
 
       row_count <- perf_diff_table_es(
         data_s, stats_es, warmup_es, profiles_es,
-        row_count, commitid, chg_colors, chg_colors_light)
+        row_count, commitid, chg_colors, chg_colors_light, environments)
     }
   }
   row_count
@@ -681,7 +700,7 @@ if (nrow(suites_for_comparison) > 0) {
     out('<img src="', output_url, '/overview.', s, '.svg">')
 
     row_count <- perf_diff_table_es(
-      norm_s, stats_s, warmup_s, NULL, row_count + 1, exe, exes_colors, exes_colors_light)
+      norm_s, stats_s, warmup_s, NULL, row_count + 1, exe, exes_colors, exes_colors_light, environments)
   }
 
 }
