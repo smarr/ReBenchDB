@@ -46,7 +46,7 @@ main_data_select <- "
       cmdline, varValue, cores, inputSize, extraArgs,
       invocation, iteration, warmup,
       criterion.name as criterion, criterion.unit as unit,
-      value,  warmup, envid"
+      value, envid"
 
 main_data_from <- "
     FROM Measurement
@@ -57,8 +57,7 @@ main_data_from <- "
       JOIN Run ON runId = run.id
       JOIN Suite ON suiteId = suite.id
       JOIN Benchmark ON benchmarkId = benchmark.id
-      JOIN Executor ON execId = executor.id 
-      "
+      JOIN Executor ON execId = executor.id "
 
 get_measures_for_comparison <- function(rebenchdb, hash_1, hash_2) {
   qry <- dbSendQuery(rebenchdb,
@@ -88,7 +87,7 @@ profile_available_select <- "
   SELECT expId, runId, trialId, substring(commitId, 1, 6) as commitid,
     benchmark.name as bench, executor.name as exe, suite.name as suite,
     cmdline, varValue, cores, inputSize, extraArgs,
-    invocation, numIterations"
+    invocation, numIterations, warmup"
 
 profile_available_from <- "
   FROM ProfileData
@@ -98,8 +97,7 @@ profile_available_from <- "
     JOIN Run ON runId = run.id
     JOIN Suite ON suiteId = suite.id
     JOIN Benchmark ON benchmarkId = benchmark.id
-    JOIN Executor ON execId = executor.id 
-    "
+    JOIN Executor ON execId = executor.id "
 
 # fetch all benchmarks information from the database
 get_environments <- function(){

@@ -128,7 +128,7 @@ $(() => {
 
   $('#show-refresh-form').click(() => $('input[name=password]').show());
 
-  (<any>$)('.btn-cmdline').popover({ html: true, placement: 'top' });
+  (<any>$)('.btn-popover').popover({ html: true, placement: 'top' });
   $('.btn-expand').click(insertWarmupPlot);
   $('.btn-profile').click(insertProfiles);
 

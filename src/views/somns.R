@@ -391,7 +391,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
   # b <- "DeltaBlue"
   # data_ea <- data_b
 
-  for (b in levels(data_es$bench)) { data_b <- data_es %>% filter(bench == b) %>% droplevels() # nolint
+  for (b in levels(data_es$bench)) { data_b <- data_es %>% filter(bench == b) %>% droplevels()
     for (v in levels(data_b$varvalue)) {   data_v  <- data_b %>% filter(varvalue == v)   %>% droplevels()
     for (c in levels(data_v$cores)) {      data_c  <- data_v %>% filter(cores == c)      %>% droplevels()
     for (i in levels(data_c$inputsize)) {  data_i  <- data_c %>% filter(inputsize == i)  %>% droplevels()
@@ -528,15 +528,9 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
         out('</td>\n')
       }
 
-      out('<td><button type="button" class="btn btn-sm btn-cmdline" data-content="<code>', cmdline, '</code>"></button>\n')
-      out('<button type="button" class="btn btn-sm btn-environment" data-toggle="popover" data-placement="top" data-content="',environmentStr,'" ></button>')
+      out('<td><button type="button" class="btn btn-sm btn-cmdline btn-popover" data-content="<code>', cmdline, '</code>"></button>\n')
+      out('<button type="button" class="btn btn-sm btn-environment btn-popover" data-content="',environmentStr,'" ></button>')
       
-      # script to implement the popover for the environment button
-      out('<script>
-          $(document).ready(function(){
-          $(', paste0( "'", '[data-toggle="popover"]' , "'" ) ,').popover();   
-          });
-          </script>')
        warmup_ea <- warmup_es %>%
         filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
         droplevels()
