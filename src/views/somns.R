@@ -103,6 +103,7 @@ if (cmds[1] == "from-file") {
   rebenchdb <- connect_to_rebenchdb(db_name, db_user, db_pass)
   result <- get_measures_for_comparison(rebenchdb, baseline_hash, change_hash)
   profiles <- get_profile_availability(rebenchdb, baseline_hash, change_hash)
+  environments <- get_environments(rebenchdb, baseline_hash, change_hash)
   disconnect_rebenchdb(rebenchdb)
 }
 
@@ -212,6 +213,28 @@ slower_category <- function(data) {
     return("faster")
   }
   return("indeterminate")
+}
+
+as_human_mem <- function(x) {
+  m <- x
+  mem <- c("b", "kb", "MB", "GB")
+  i <- 1
+  while (i <= 4 && m > 1024) {
+    m <- m / 1024
+    i <- i + 1
+  }
+  paste0(format(m, digits = 3), mem[[i]])
+}
+
+as_human_hz <- function(x) {
+  h <- x
+  hz <- c("Hz", "kHz", "MHz", "GHz")
+  i <- 1
+  while (i <= 4 && h > 1000) {
+    h <- h / 1000
+    i <- i + 1
+  }
+  paste0(format(h, digits = 3), hz[[i]])
 }
 
 
@@ -371,6 +394,8 @@ out("<h2>Benchmark Performance</h2>")
 perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_row_count, group, colors, colors_light) {
   group_col <- enquo(group)
   row_count <- start_row_count
+  
+
 
   out('<table class="table table-sm benchmark-details">')
   out('<thead><tr>
@@ -391,13 +416,18 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
     for (v in levels(data_b$varvalue)) {   data_v  <- data_b %>% filter(varvalue == v)   %>% droplevels()
     for (c in levels(data_v$cores)) {      data_c  <- data_v %>% filter(cores == c)      %>% droplevels()
     for (i in levels(data_c$inputsize)) {  data_i  <- data_c %>% filter(inputsize == i)  %>% droplevels()
-    for (ea in levels(data_i$extraargs)) { data_ea <- data_i %>% filter(extraargs == ea) %>% droplevels()
+    for (ea in levels(data_i$extraargs)) { data_ea <- data_i %>% filter(extraargs == ea) %>% droplevels()    
+
+    for (en in levels(data_ea$envid)) { data_en <- data_ea %>% filter(envid == en) %>% droplevels()
+
+
 
     args <- ""
     if (length(levels(data_b$varvalue))  > 1) { args <- paste0(args, v) }
     if (length(levels(data_v$cores))     > 1) { args <- paste0(args, c) }
     if (length(levels(data_c$inputsize)) > 1) { args <- paste0(args, i) }
     if (length(levels(data_i$extraargs)) > 1) { args <- paste0(args, ea) }
+    
     if (nchar(args) > 0) {
       args <- paste0('<span class="all-args">', args, '</span>')
     }
@@ -405,6 +435,15 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
     # capture the beginning of the path but leave the last element of it
     # this regex is also used in render.js's renderBenchmark() function
     cmdline <- str_replace_all(data_i$cmdline[[1]], "^([^\\s]*)((?:\\/\\w+)\\s.*$)", ".\\2")
+
+    # format all environment information into a single string
+    env <- environments %>%
+      filter(envid == levels(data_en$envid)) %>%
+      unique(incomparables = FALSE) %>%
+      droplevels()
+    environment_str <- paste0(env$hostname,
+      " | ", env$ostype, " | ", as_human_mem(env$memory),
+      " | ", env$cpu, " | ", as_human_hz(env$clockspeed))
 
     stats_b_total <- stats_es %>%
       ungroup() %>%
@@ -426,7 +465,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
         droplevels()
     }
 
-    group_size <- (data_ea %>%
+    group_size <- (data_en %>%
                      filter(criterion == "total") %>%
                      select(!!group_col) %>%
                      unique() %>%
@@ -436,7 +475,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
       out('<tr>')
       out('<th scope="row">',  b, args, '</th>')
       out('<td>')
-      p <- small_inline_comparison(data_ea, !!group_col, colors, colors_light)
+      p <- small_inline_comparison(data_en, !!group_col, colors, colors_light)
       img_file <- paste0('inline-', row_count, '.svg')
       ggsave(img_file, p, "svg", output_dir, width = 3.5, height = 0.12 + 0.14 * group_size, units = "in")
       out('<img src="', output_url, '/', img_file, '">')
@@ -515,10 +554,11 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
         }
         out('</td>\n')
       }
-      
-      out('<td><button type="button" class="btn btn-sm btn-cmdline" data-content="<code>', cmdline, '</code>"></button>\n')
 
-      warmup_ea <- warmup_es %>%
+      out('<td><button type="button" class="btn btn-sm btn-cmdline btn-popover" data-content="<code>', cmdline, '</code>"></button>\n')
+      out('<button type="button" class="btn btn-sm btn-environment btn-popover" data-content="', environment_str, '" ></button>')
+
+       warmup_ea <- warmup_es %>%
         filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
         droplevels()
 
@@ -548,7 +588,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
       out('<th scope="row">', b, '</th><td colspan="4">missing in one of the data sets</td>\n')
       out('</tr>')
     }
-    } } } }
+    } } } } }
   }
 
   out('</table>')

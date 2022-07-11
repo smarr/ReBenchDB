@@ -46,7 +46,7 @@ main_data_select <- "
       cmdline, varValue, cores, inputSize, extraArgs,
       invocation, iteration, warmup,
       criterion.name as criterion, criterion.unit as unit,
-      value "
+      value, envid"
 
 main_data_from <- "
     FROM Measurement
@@ -87,7 +87,7 @@ profile_available_select <- "
   SELECT expId, runId, trialId, substring(commitId, 1, 6) as commitid,
     benchmark.name as bench, executor.name as exe, suite.name as suite,
     cmdline, varValue, cores, inputSize, extraArgs,
-    invocation, numIterations, warmup "
+    invocation, numIterations, warmup"
 
 profile_available_from <- "
   FROM ProfileData
@@ -98,6 +98,28 @@ profile_available_from <- "
     JOIN Suite ON suiteId = suite.id
     JOIN Benchmark ON benchmarkId = benchmark.id
     JOIN Executor ON execId = executor.id "
+
+# fetch all benchmarks information from the database
+get_environments <- function(rebenchdb, hash_1, hash_2) {
+  qry <- dbSendQuery(rebenchdb, "
+    SELECT env.id as envid, env.hostname, env.ostype, env.memory,
+          env.cpu, env.clockspeed
+    FROM Source src
+      JOIN Trial t on t.sourceId = src.id
+      JOIN Environment env ON t.envId = env.id
+    WHERE commitId = $1 OR commitid = $2")
+  dbBind(qry, list(hash_1, hash_2))
+  result <- dbFetch(qry)
+  dbClearResult(qry)
+  result$envid <- factor(result$envid)
+  # do not need to turn them into factors, because we just want to display them
+  # result$hostname <- result$hostname
+  # result$ostype <- result$ostype
+  # result$memory <- result$memory
+  # result$cpu <- result$cpu
+  # result$clockspeed <- result$clockspeed
+  result
+}
 
 get_profile_availability <- function(rebenchdb, hash_1, hash_2) {
   qry <- dbSendQuery(rebenchdb,
@@ -124,12 +146,17 @@ factorize_result <- function(result) {
   result$cores <- factor(result$cores)
   result$inputsize <- forcats::fct_explicit_na(factor(result$inputsize), na_level = "")
   result$extraargs <- forcats::fct_explicit_na(factor(result$extraargs), na_level = "")
+
+  if ("envid" %in% colnames(result)) {
+     result$envid <- factor(result$envid)
+  }
+  
   
   if ("criterion" %in% colnames(result)) {
     result$criterion <- factor(result$criterion)
     result$unit <- factor(result$unit)
   }
-  
+
   result
 }
 
