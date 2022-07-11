@@ -102,8 +102,8 @@ if (cmds[1] == "from-file") {
   # load_and_install_if_necessary("psych")   # uses only geometric.mean
   rebenchdb <- connect_to_rebenchdb(db_name, db_user, db_pass)
   result <- get_measures_for_comparison(rebenchdb, baseline_hash, change_hash)
-  profiles <- get_profile_availability(rebenchdb, baseline_hash, change_hash)  
-  environments <- get_environments()  
+  profiles <- get_profile_availability(rebenchdb, baseline_hash, change_hash)
+  environments <- get_environments(rebenchdb, baseline_hash, change_hash)
   disconnect_rebenchdb(rebenchdb)
 }
 
@@ -413,12 +413,18 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
     # capture the beginning of the path but leave the last element of it
     # this regex is also used in render.js's renderBenchmark() function
     cmdline <- str_replace_all(data_i$cmdline[[1]], "^([^\\s]*)((?:\\/\\w+)\\s.*$)", ".\\2")
-    
+
     # format all environment information into a single string
-    environmentStr <- paste0("Hostname: ", as.character(environments[levels(data_en$envid), which(colnames(environments)=="hostname")])," |  OS Type: ", as.character(environments[levels(data_en$envid), which(colnames(environments)=="ostype")])," |  Memory: ", as.character(environments[levels(data_en$envid), which(colnames(environments)=="memory")]), " |  CPU: ", as.character(environments[levels(data_en$envid), which(colnames(environments)=="cpu")]), " |  Clockspeed: " ,as.character(environments[levels(data_en$envid), which(colnames(environments)=="clockspeed")]))
-    
+    env <- environments %>%
+      filter(envid == levels(data_en$envid)) %>%
+      unique() %>%
+      droplevels()
+    environment_str <- paste0("Hostname: ", env$hostname,
+      " |  OS Type: ", env$ostype, " |  Memory: ", env$memory,
+      " |  CPU: ", env$cpu, " |  Clockspeed: ", env$clockspeed)
+
     stats_b_total <- stats_es %>%
-      ungroup() %>%     
+      ungroup() %>%
       filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea, criterion == "total") %>%
       droplevels()
     stats_b_gctime <- stats_es %>%
@@ -528,8 +534,8 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
       }
 
       out('<td><button type="button" class="btn btn-sm btn-cmdline btn-popover" data-content="<code>', cmdline, '</code>"></button>\n')
-      out('<button type="button" class="btn btn-sm btn-environment btn-popover" data-content="',environmentStr,'" ></button>')
-      
+      out('<button type="button" class="btn btn-sm btn-environment btn-popover" data-content="', environment_str, '" ></button>')
+
        warmup_ea <- warmup_es %>%
         filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
         droplevels()

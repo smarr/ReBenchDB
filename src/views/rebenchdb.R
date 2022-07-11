@@ -100,18 +100,23 @@ profile_available_from <- "
     JOIN Executor ON execId = executor.id "
 
 # fetch all benchmarks information from the database
-get_environments <- function(){
-  qry <- dbSendQuery(rebenchdb, "SELECT id, hostname, ostype, memory, cpu, clockspeed FROM environment")
+get_environments <- function(rebenchdb, hash_1, hash_2) {
+  qry <- dbSendQuery(rebenchdb, "
+    SELECT env.id as envid, env.hostname, env.ostype, env.memory,
+          env.cpu, env.clockspeed
+    FROM Source src
+      JOIN Trial t on t.sourceId = src.id
+      JOIN Environment env   ON t.envId = env.id
+    WHERE commitId = $1 OR commitid = $2")
+  dbBind(qry, list(hash_1, hash_2))
   result <- dbFetch(qry)
   dbClearResult(qry)
-  result$id <- factor(result$id)
+  result$envid <- factor(result$envid)
   result$hostname <- factor(result$hostname)
   result$ostype <- factor(result$ostype)
   result$memory <- factor(result$memory)
   result$cpu <- factor(result$cpu)
   result$clockspeed <- factor(result$clockspeed)
-
-  result <- data.frame(result)
   result
 }
 
