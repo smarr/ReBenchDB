@@ -369,12 +369,11 @@ if (nrow(not_in_both) > 0) {
 
 out("<h2>Benchmark Performance</h2>")
 
-perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_row_count, group, colors, colors_light, environments) {
+perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_row_count, group, colors, colors_light) {
   group_col <- enquo(group)
   row_count <- start_row_count
   
 
-  environmentsframe <- data.frame(environments)
 
   out('<table class="table table-sm benchmark-details">')
   out('<thead><tr>
@@ -414,9 +413,9 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
     # capture the beginning of the path but leave the last element of it
     # this regex is also used in render.js's renderBenchmark() function
     cmdline <- str_replace_all(data_i$cmdline[[1]], "^([^\\s]*)((?:\\/\\w+)\\s.*$)", ".\\2")
-
+    
     # format all environment information into a single string
-    environmentStr <- paste0("Hostname: ", as.character(environmentsframe[levels(data_en$envid), 2])," |  OS Type: ", as.character(environmentsframe[levels(data_en$envid), 3])," |  Memory: ", as.character(environmentsframe[levels(data_en$envid), 4]), " |  CPU: ", as.character(environmentsframe[levels(data_en$envid), 5]), " |  Clockspeed: " ,as.character(environmentsframe[levels(data_en$envid), 6]))
+    environmentStr <- paste0("Hostname: ", as.character(environments[levels(data_en$envid), which(colnames(environments)=="hostname")])," |  OS Type: ", as.character(environments[levels(data_en$envid), which(colnames(environments)=="ostype")])," |  Memory: ", as.character(environments[levels(data_en$envid), which(colnames(environments)=="memory")]), " |  CPU: ", as.character(environments[levels(data_en$envid), which(colnames(environments)=="cpu")]), " |  Clockspeed: " ,as.character(environments[levels(data_en$envid), which(colnames(environments)=="clockspeed")]))
     
     stats_b_total <- stats_es %>%
       ungroup() %>%     
@@ -600,7 +599,7 @@ perf_diff_table <- function(norm, stats, start_row_count) {
 
       row_count <- perf_diff_table_es(
         data_s, stats_es, warmup_es, profiles_es,
-        row_count, commitid, chg_colors, chg_colors_light, environments)
+        row_count, commitid, chg_colors, chg_colors_light)
     }
   }
   row_count
@@ -694,7 +693,7 @@ if (nrow(suites_for_comparison) > 0) {
     out('<img src="', output_url, '/overview.', s, '.svg">')
 
     row_count <- perf_diff_table_es(
-      norm_s, stats_s, warmup_s, NULL, row_count + 1, exe, exes_colors, exes_colors_light, environments)
+      norm_s, stats_s, warmup_s, NULL, row_count + 1, exe, exes_colors, exes_colors_light)
   }
 
 }

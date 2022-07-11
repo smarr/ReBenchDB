@@ -111,6 +111,7 @@ get_environments <- function(){
   result$cpu <- factor(result$cpu)
   result$clockspeed <- factor(result$clockspeed)
 
+  result <- data.frame(result)
   result
 }
 
@@ -149,7 +150,7 @@ factorize_result <- function(result) {
     result$criterion <- factor(result$criterion)
     result$unit <- factor(result$unit)
   }
-  
+
   result
 }
 
