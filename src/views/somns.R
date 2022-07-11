@@ -215,6 +215,28 @@ slower_category <- function(data) {
   return("indeterminate")
 }
 
+as_human_mem <- function(x) {
+  m <- x
+  mem <- c("b", "kb", "MB", "GB")
+  i <- 1
+  while (i <= 4 && m > 1024) {
+    m <- m / 1024
+    i <- i + 1
+  }
+  paste0(format(m, digits = 3), mem[[i]])
+}
+
+as_human_hz <- function(x) {
+  h <- x
+  hz <- c("Hz", "kHz", "MHz", "GHz")
+  i <- 1
+  while (i <= 4 && h > 1000) {
+    h <- h / 1000
+    i <- i + 1
+  }
+  paste0(format(h, digits = 3), hz[[i]])
+}
+
 
 if (nrow(stats %>% filter(commitid == change_hash6)) == 0) {
   out('<div class="compare">')
@@ -417,11 +439,11 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
     # format all environment information into a single string
     env <- environments %>%
       filter(envid == levels(data_en$envid)) %>%
-      unique() %>%
+      unique(incomparables = FALSE) %>%
       droplevels()
-    environment_str <- paste0("Hostname: ", env$hostname,
-      " |  OS Type: ", env$ostype, " |  Memory: ", env$memory,
-      " |  CPU: ", env$cpu, " |  Clockspeed: ", env$clockspeed)
+    environment_str <- paste0(env$hostname,
+      " | ", env$ostype, " | ", as_human_mem(env$memory),
+      " | ", env$cpu, " | ", as_human_hz(env$clockspeed))
 
     stats_b_total <- stats_es %>%
       ungroup() %>%

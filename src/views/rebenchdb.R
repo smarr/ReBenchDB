@@ -106,17 +106,18 @@ get_environments <- function(rebenchdb, hash_1, hash_2) {
           env.cpu, env.clockspeed
     FROM Source src
       JOIN Trial t on t.sourceId = src.id
-      JOIN Environment env   ON t.envId = env.id
+      JOIN Environment env ON t.envId = env.id
     WHERE commitId = $1 OR commitid = $2")
   dbBind(qry, list(hash_1, hash_2))
   result <- dbFetch(qry)
   dbClearResult(qry)
   result$envid <- factor(result$envid)
-  result$hostname <- factor(result$hostname)
-  result$ostype <- factor(result$ostype)
-  result$memory <- factor(result$memory)
-  result$cpu <- factor(result$cpu)
-  result$clockspeed <- factor(result$clockspeed)
+  # do not need to turn them into factors, because we just want to display them
+  # result$hostname <- result$hostname
+  # result$ostype <- result$ostype
+  # result$memory <- result$memory
+  # result$cpu <- result$cpu
+  # result$clockspeed <- result$clockspeed
   result
 }
 
