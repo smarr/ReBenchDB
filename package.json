@@ -76,9 +76,9 @@
     "prep-static": "cp dist/src/views/*.js resources",
     "prep-resources": "(cd tests; bzip2 -d -f -k large-payload.json.bz2)",
     "prep-reports": "mkdir -p tmp/interm tmp/knit resources/reports resources/exp-data",
-    "format": "prettier --config .prettierrc '{src,tests,resources}/**/*.{ts,js}' --write",
+    "format": "prettier --config .prettierrc '{src,tests}/**/*.{ts}' --write",
     "verify": "npm run lint",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint": "eslint . --ext .ts,.tsx",
     "update": "git pull && npm install . && pm2 restart 0",
     "watch": "tsc -w",
     "test": "node --no-warnings --experimental-vm-modules ./node_modules/jest/bin/jest.js"
