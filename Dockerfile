@@ -28,8 +28,14 @@ RUN npm install .
 RUN npm run compile
 
 
-#CMD ["service","postgresql", "start" ]
+RUN echo 'echo Starting ReBenchDB\n\
+service postgresql start\n\
+DEV=true npm run start' > ./start-server.sh
 
+ENV RDB_USER=docker
+ENV RDB_PASS=docker
+ENV RDB_DB=rebenchdb
+ENV REFRESH_SECRET=refresh
 
 # postgres port
 # EXPOSE 5432
@@ -37,3 +43,4 @@ RUN npm run compile
 # open TCP/Project port
 EXPOSE 33333
 
+CMD ["bash", "./start-server.sh" ]
