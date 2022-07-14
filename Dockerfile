@@ -1,14 +1,4 @@
-############################################################################
-#                                                                          #
-#                          RebenchDB Docker File                           #
-#                                                                          #
-############################################################################
-# Version: 1.1   Date: 14/07/2020
-# Author: Humphrey Burchell & Stefan Marr
-
-# ubuntu version >=22.04 as of April 20202
-FROM ubuntu:latest
-# this allows the setup to ignore all of the ubuntu OS setup thats not needed for this docker image (Time Zone for example)
+FROM ubuntu:22.04
 ARG DEBIAN_FRONTEND=noninteractive
 
 # all of the project files will be copyed to a new dir called project
