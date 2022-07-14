@@ -1,58 +1,39 @@
 FROM ubuntu:22.04
+# this allows the setup to ignore all of the ubuntu OS setup
+# thats not needed for this docker image (Time Zone for example)
 ARG DEBIAN_FRONTEND=noninteractive
 
+# tools needed for docker setup
+RUN apt-get update && apt-get install -y apt-utils curl bash
+
+# Add Node.js repo
+RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
+
+# R, Node.js, PostgreSQL, headers for R packages
+RUN apt-get install -y \
+    r-base build-essential nodejs \
+    postgresql \
+    libfontconfig1-dev \
+    libpq-dev
+
 # all of the project files will be copyed to a new dir called project
-RUN mkdir project/
-COPY . project/
+COPY . /project
 
-# updating OS and Tools needed to do docker setup
-RUN apt-get update && apt-get install -y apt-utils && apt-get install -y curl && apt-get install -y bash
-
-
-# Installing R
-RUN apt-get install -y r-base 
-
-
-# Installing Nodejs (NPM is Included in this install)
-# must have at least node 18 hence the bash
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs
-
-# Installing build-essential 
-RUN apt-get install -y build-essential 
-
-# Installing postgresql
-RUN apt-get install -y postgresql
-
-# Installing missing headers for R libraries
-RUN apt-get install -y libfontconfig1-dev
-RUN apt-get install -y libpq-dev
-
-# Instaling R libraries 
-RUN Rscript project/src/stats/install.R
+# Installing R libraries
+RUN Rscript /project/src/stats/install.R
 
 # Set the working dir to the project & install and compile all dependency
 WORKDIR /project/
 RUN npm install .
 RUN npm run compile
 
-# open postgres port
-EXPOSE 5432
 
-# open TCP/Project port
-EXPOSE 33333
-
-# start database on container run
-# this seems to stop ssh into the container so it must be done once inside the container
 #CMD ["service","postgresql", "start" ]
 
 
-# Build the container
-# sudo docker build -t *name-the-container* .
+# postgres port
+# EXPOSE 5432
 
-# Run the container with ssh
-# sudo docker run -p 33333:33333 -i -t *name-the-container*
-
-# once in the container you will need to start the postgres server
-# service postgresql start
+# open TCP/Project port
+EXPOSE 33333
 
