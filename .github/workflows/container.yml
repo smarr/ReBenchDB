@@ -1,0 +1,27 @@
+name: CI
+
+on: [merge, push, pull_request]
+
+env:
+  RDB_DB:   rebenchdb
+  RDB_USER: docker
+  RDB_PASS: docker
+  DEBUG:    true
+  LANG:     en_US.UTF-8
+  LANGUAGE: en_US.UTF-8
+  LC_ALL:   en_US.UTF-8
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Build Docker Image
+        run: |
+          docker build -t rebenchdb-docker .
+
+      - name: Run Docker Image
+        run: |
+          docker run -p 33333:33333 -d -t rebenchdb-docker
+
+     
