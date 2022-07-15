@@ -196,6 +196,26 @@ export function renderProject(project: any): string {
   return result;
 }
 
+export function renderWelcomeAndSetupSuggestions(): string {
+  const result = `<div class="card">
+  <h5 class="card-header" id="setup-info">
+    Welcome to your ReBenchDB Instance</h5>
+  <div class="card-body">
+    <p>Currently, there are no projects available.</p>
+
+    <p>To get started, run your benchmarks with
+    <a href="https://rebench.readthedocs.io/">ReBench</a>
+    and add the following to your project's ReBench configuration file:</p>
+    <code><pre>reporting:
+  rebenchdb:
+    db_url: ${window.location.href}rebenchdb
+    repo_url: https://url-to-your-project-repository
+    record_all: true # make sure everything is recorded
+    project_name: Your-Project-Name</pre></code>
+  </div></div>`;
+  return result;
+}
+
 export async function populateStatistics(statsP: any): Promise<void> {
   const statsResponse = await statsP;
   const stats = await statsResponse.json();
