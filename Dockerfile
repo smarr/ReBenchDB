@@ -4,7 +4,8 @@ FROM ubuntu:22.04
 ARG DEBIAN_FRONTEND=noninteractive
 
 # tools needed for docker setup
-RUN apt-get update && apt-get install -y apt-utils curl bash
+RUN apt-get update && apt-get install -y apt-utils curl bash && apt-get -y install sudo
+
 
 # Add Node.js repo
 RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
@@ -29,7 +30,7 @@ RUN npm run compile
 
 # Initialize Database
 RUN service postgresql start && \
-  PGPASSWORD=postgres psql -U postgres -c "CREATE USER docker with password 'docker'; CREATE DATABASE rebenchdb; GRANT ALL PRIVILEGES ON DATABASE rebenchdb TO docker;"
+   sudo -u postgres psql -c "CREATE USER docker with password 'docker';" -c " CREATE DATABASE rebenchdb;" -c "GRANT ALL PRIVILEGES ON DATABASE rebenchdb TO docker;"
 
 RUN echo 'echo Starting ReBenchDB\n\
 service postgresql start\n\
