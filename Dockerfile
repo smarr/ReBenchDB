@@ -4,8 +4,7 @@ FROM ubuntu:22.04
 ARG DEBIAN_FRONTEND=noninteractive
 
 # tools needed for docker setup
-RUN apt-get update && apt-get install -y apt-utils curl bash && apt-get -y install sudo
-
+RUN apt-get update && apt-get install -y apt-utils curl bash sudo
 
 # Add Node.js repo
 RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
