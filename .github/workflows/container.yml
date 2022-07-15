@@ -1,6 +1,6 @@
 name: CI
 
-on: [merge, push, pull_request]
+on: [push, pull_request]
 
 env:
   RDB_DB:   rebenchdb
@@ -12,16 +12,23 @@ env:
   LC_ALL:   en_US.UTF-8
 
 jobs:
-  build-and-test:
+  docker:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Build Docker Image
-        run: |
-          docker build -t rebenchdb-docker .
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      -
+        name: Build
+        uses: docker/build-push-action@v3
+        with:
+          push: false
+    
+    
 
-      - name: Run Docker Image
-        run: |
-          docker run -p 33333:33333 -d -t rebenchdb-docker
 
      
