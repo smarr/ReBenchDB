@@ -27,6 +27,9 @@ WORKDIR /project/
 RUN npm install .
 RUN npm run compile
 
+# Initialize Database
+RUN service postgresql start && \
+  PGPASSWORD=postgres psql -U postgres -c "CREATE USER docker with password 'docker'; CREATE DATABASE rebenchdb; GRANT ALL PRIVILEGES ON DATABASE rebenchdb TO docker;"
 
 RUN echo 'echo Starting ReBenchDB\n\
 service postgresql start\n\
