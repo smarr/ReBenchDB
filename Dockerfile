@@ -29,7 +29,9 @@ RUN npm run compile
 
 # Initialize Database
 RUN service postgresql start && \
-   sudo -u postgres psql -c "CREATE USER docker with password 'docker';" -c " CREATE DATABASE rebenchdb;" -c "GRANT ALL PRIVILEGES ON DATABASE rebenchdb TO docker;"
+   sudo -u postgres psql -c "CREATE USER docker with password 'docker';" \
+     -c " CREATE DATABASE rebenchdb;" \
+     -c "GRANT ALL PRIVILEGES ON DATABASE rebenchdb TO docker;"
 
 RUN echo 'echo Starting ReBenchDB\n\
 service postgresql start\n\
