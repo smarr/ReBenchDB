@@ -728,7 +728,7 @@ if (nrow(suites_for_comparison) > 0) {
 
 time <- timing.stop()
 
-time <- format(time, digits = 1)
+time <- format(time, digits = 2, nsmall = 2)
 out('<div class="meta-run-time">Run time of Report: ', time, '</div>')
 
 out('</main>')
