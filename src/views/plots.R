@@ -5,17 +5,17 @@ warmup_plot <- function (data_b, group, colors) {
   group_col <- enquo(group)
   
   ## First take the medians over the values for each commitid separately
-  medians <- data_b %>%
-    group_by(!!group_col) %>%
-    filter(criterion == "total") %>%
+  medians <- data_b |>
+    group_by(!!group_col) |>
+    filter(criterion == "total") |>
     summarise(median = median(value),
     .groups = "drop")
 
   # use the highest one with a little margin as an upper bound
   upper_bound <- 2 * max(medians$median)
-  data_spread <- data_b %>%
-    filter(criterion == "total" | (criterion == "GC time" | criterion == "Compile time") & value > 0) %>%
-    droplevels() %>%
+  data_spread <- data_b |>
+    filter(criterion == "total" | (criterion == "GC time" | criterion == "Compile time") & value > 0) |>
+    droplevels() |>
     spread(criterion, value)
 
   plot <- ggplot(data_spread, aes(x=iteration, y=total)) +
@@ -56,11 +56,11 @@ negative_geometric.mean <- function(d) {
 
 compare_runtime_ratio_of_suites_plot <- function (
     data, slower_runtime_ratio, faster_runtime_ratio, fast_color, slow_color, scale_color) {
-  exes_and_suites <- data %>%
-    select(c(exe, suite)) %>%
+  exes_and_suites <- data |>
+    select(c(exe, suite)) |>
     unique()
   
-  max_num_exe_per_suite <- (exes_and_suites %>% group_by(suite) %>% count() %>% ungroup() %>% summarise(max = max(n)))$max
+  max_num_exe_per_suite <- (exes_and_suites |> group_by(suite) |> count() |> ungroup() |> summarise(max = max(n)))$max
   number_of_suites <- length(levels(exes_and_suites$suite))
   
   p <- ggplot(data, aes(ratio, exe, fill=slower)) +
@@ -110,7 +110,7 @@ small_inline_comparison <- function (data, group, colors, colors_light) {
   group_col <- enquo(group)
   # small_inline_comparison(data_b)
   # data <- data_b
-  data <- data %>%
+  data <- data |>
     filter(criterion == "total")
   
   p <- ggplot(data, aes(x = ratio_median, y = !!group_col, fill = !!group_col)) +
