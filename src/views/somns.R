@@ -98,6 +98,7 @@ if (cmds[1] == "from-file") {
   result <- factorize_result(result)
   # TODO: add support for using a data file (needs ReBenchDB to offer downloading a data file with this stuff)
   profiles <- NULL
+  environments <- NULL
 } else {
   # load_and_install_if_necessary("psych")   # uses only geometric.mean
   rebenchdb <- connect_to_rebenchdb(db_name, db_user, db_pass)
@@ -437,13 +438,15 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
     cmdline <- str_replace_all(data_i$cmdline[[1]], "^([^\\s]*)((?:\\/\\w+)\\s.*$)", ".\\2")
 
     # format all environment information into a single string
-    env <- environments %>%
-      filter(envid == levels(data_en$envid)) %>%
-      unique(incomparables = FALSE) %>%
-      droplevels()
-    environment_str <- paste0(env$hostname,
-      " | ", env$ostype, " | ", as_human_mem(env$memory),
-      " | ", env$cpu, " | ", as_human_hz(env$clockspeed))
+    if (!is.null(environments)) {
+      env <- environments %>%
+        filter(envid == levels(data_en$envid)) %>%
+        unique(incomparables = FALSE) %>%
+        droplevels()
+      environment_str <- paste0(env$hostname,
+        " | ", env$ostype, " | ", as_human_mem(env$memory),
+        " | ", env$cpu, " | ", as_human_hz(env$clockspeed))
+    }
 
     stats_b_total <- stats_es %>%
       ungroup() %>%
@@ -556,9 +559,11 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
       }
 
       out('<td><button type="button" class="btn btn-sm btn-cmdline btn-popover" data-content="<code>', cmdline, '</code>"></button>\n')
-      out('<button type="button" class="btn btn-sm btn-environment btn-popover" data-content="', environment_str, '" ></button>')
+      if (!is.null(environments)) {
+        out('<button type="button" class="btn btn-sm btn-environment btn-popover" data-content="', environment_str, '" ></button>')
+      }
 
-       warmup_ea <- warmup_es %>%
+      warmup_ea <- warmup_es %>%
         filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) %>%
         droplevels()
 
