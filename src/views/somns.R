@@ -130,8 +130,7 @@ chg_colors_light <- setNames(
 ## Process Data
 warmup <- result |>
   filter(!grepl("startup", suite, fixed = TRUE),
-         !grepl("interp", exe, fixed = TRUE)) |>
-  droplevels()
+         !grepl("interp", exe, fixed = TRUE))
 
 peak <- result |>
   group_by(commitid, exe, suite, bench,
@@ -191,12 +190,10 @@ stats <- norm |>
   calculate_stats()
 
 not_in_both <- stats |>
-  filter(is.na(ratio) & criterion == "total") |>
-  droplevels()
+  filter(is.na(ratio) & criterion == "total")
 
 stats <- stats |>
-  filter(!(is.na(ratio) & criterion == "total")) |>
-  droplevels()
+  filter(!(is.na(ratio) & criterion == "total"))
 
 geometric.mean <- function(x) { exp(mean(log(x))) }
 
@@ -280,13 +277,11 @@ stats_all_gctime <- stats_all |> filter(criterion == "GC time")
 data_chg <- stats |>
   filter(commitid == change_hash6) |>
   select(commitid, exe, suite, bench, ratio,
-         varvalue, cores, inputsize, extraargs, criterion) |>
-  droplevels()
+         varvalue, cores, inputsize, extraargs, criterion)
 
 data_chg_slow <- data_chg |>
   left_join(stats_suite, by = c("exe", "suite", "criterion")) |>
-  filter(commitid == change_hash6) |>
-  droplevels()
+  filter(commitid == change_hash6)
 
 # Identify possible comparison on the data of the change.
 # Within the change data, there may be different executors, which are worth
@@ -296,8 +291,7 @@ restrict_to_change_data <- function(data) {
   data |>
     ungroup() |>
     filter(commitid == change_hash6) |>
-    select(!commitid) |>
-    droplevels()
+    select(!commitid)
 }
 
 change_data <- result |>
@@ -441,8 +435,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
     if (!is.null(environments)) {
       env <- environments |>
         filter(envid == levels(data_en$envid)) |>
-        unique(incomparables = FALSE) |>
-        droplevels()
+        unique(incomparables = FALSE)
       environment_str <- paste0(env$hostname,
         " | ", env$ostype, " | ", as_human_mem(env$memory),
         " | ", env$cpu, " | ", as_human_hz(env$clockspeed))
@@ -450,23 +443,22 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
 
     stats_b_total <- stats_es |>
       ungroup() |>
-      filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea, criterion == "total") |>
-      droplevels()
+      filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea, criterion == "total")
     stats_b_gctime <- stats_es |>
       ungroup() |>
-      filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea, criterion == "GC time") |>
-      droplevels()
+      filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea, criterion == "GC time")
 
     if ("commitid" %in% colnames(stats_b_total)) {
       stats_b_total <- stats_b_total |>
-        filter(commitid == change_hash6) |>
-        droplevels()
+        filter(commitid == change_hash6)
     }
+    stats_b_total <- stats_b_total |> droplevels()
+    
     if ("commitid" %in% colnames(stats_b_gctime)) {
       stats_b_gctime <- stats_b_gctime |>
-        filter(commitid == change_hash6) |>
-        droplevels()
+        filter(commitid == change_hash6)
     }
+    stats_b_gctime <- stats_b_gctime |> droplevels()
 
     group_size <- (data_en |>
                      filter(criterion == "total") |>
@@ -564,8 +556,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
       }
 
       warmup_ea <- warmup_es |>
-        filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) |>
-        droplevels()
+        filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea)
 
       if (nrow(warmup_ea) > 0) {
         img_file <- paste0('warmup-', row_count, '.svg')
@@ -614,20 +605,17 @@ perf_diff_table <- function(norm, stats, start_row_count) {
 
       stats_es <- stats |>
         ungroup() |>
-        filter(exe == e, suite == s) |>
-        droplevels()
+        filter(exe == e, suite == s)
 
       warmup_es <- warmup |>
         ungroup() |>
-        filter(exe == e, suite == s) |>
-        droplevels()
+        filter(exe == e, suite == s)
       
       if (is.null(profiles)) {
         profiles_es <- NULL
       } else {
         profiles_es <- profiles |>
-          filter(exe == e, suite == s) |>
-          droplevels()
+          filter(exe == e, suite == s)
       }
 
       row_count <- perf_diff_table_es(
@@ -662,13 +650,11 @@ if (nrow(suites_for_comparison) > 0) {
 
     warmup_s <- warmup |>
       restrict_to_change_data() |>
-      filter(suite == s) |>
-      droplevels()
+      filter(suite == s)
 
     peak_s <- peak |>
       restrict_to_change_data() |>
-      filter(suite == s) |>
-      droplevels()
+      filter(suite == s)
 
     base_s <- peak_s |>
       filter(exe == baseline_exe) |>
@@ -693,12 +679,10 @@ if (nrow(suites_for_comparison) > 0) {
       calculate_stats()
 
     not_in_both_s <- stats_s |>
-      filter(is.na(ratio) & criterion == "total") |>
-      droplevels()
+      filter(is.na(ratio) & criterion == "total")
 
     stats_s <- stats_s |>
-      filter(!(is.na(ratio) & criterion == "total")) |>
-      droplevels()
+      filter(!(is.na(ratio) & criterion == "total"))
 
     p <- ggplot(stats_s |> filter(criterion == "total"), aes(ratio, exe, fill=exe)) +
       geom_vline(aes(xintercept=1), colour="#999999", linetype="solid") +
