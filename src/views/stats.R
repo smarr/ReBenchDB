@@ -11,7 +11,7 @@ boot_median <- function(data, indices) {
 # The interval is calculated using the adjusted bootstrap percentile (BCa) method.
 get_bca <- function(data, num_replicates) {
   if (length(data) < 30 | all(data == data[[1]])) {
-    return(list(median=NA, lower=NA, upper=NA))
+    return(tibble(bci95low=NA, bci95up=NA))
   }
 
   b <- boot(data, boot_median, num_replicates) # 1000
@@ -20,18 +20,18 @@ get_bca <- function(data, num_replicates) {
     bb <- boot.ci(b, type="bca")
     # column 4 and 5 contain the lower and upper ends of the interval
     if (is.null(bb$bca[4])) {
-      return(list(median=NA, lower=NA, upper=NA))
+      return(tibble(bci95low=NA, bci95up=NA))
     } else {
-      list(median=b$t0, lower=bb$bca[4], upper=bb$bca[5])
+      return(tibble(bci95low=bb$bca[4], bci95up=bb$bca[5]))
     }
   },
   error = function (cond) {
     tryCatch({
       bb <- boot.ci(b, type="bca")
-      return(list(median=b$t0, lower=bb$normal[2], upper=bb$normal[3]))  
+      return(tibble(bci95low=bb$normal[2], bci95up=bb$normal[3]))  
     },
     error = function (cond) {
-      return(list(median=NA, lower=NA, upper=NA))
+      return(tibble(bci95low=NA, bci95up=NA))
     })
   })
 }
