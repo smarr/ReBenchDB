@@ -386,7 +386,7 @@ if (nrow(not_in_both) > 0) {
 
 out("<h2>Benchmark Performance</h2>")
 
-perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_row_count, group, colors, colors_light) {
+perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_row_count, group, colors, colors_light, show_warmup) {
   group_col <- enquo(group)
   row_count <- start_row_count
   
@@ -558,7 +558,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
       warmup_ea <- warmup_es |>
         filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea)
 
-      if (nrow(warmup_ea) > 0) {
+      if (nrow(warmup_ea) > 0 && show_warmup) {
         img_file <- paste0('warmup-', row_count, '.svg')
         p <- warmup_plot(warmup_ea, !!group_col, colors)
         ggsave(img_file, p, "svg", output_dir, width = 6, height = 2.5, units = "in")
@@ -620,7 +620,7 @@ perf_diff_table <- function(norm, stats, start_row_count) {
 
       row_count <- perf_diff_table_es(
         data_s, stats_es, warmup_es, profiles_es,
-        row_count, commitid, chg_colors, chg_colors_light)
+        row_count, commitid, chg_colors, chg_colors_light, TRUE)
     }
   }
   row_count
@@ -710,7 +710,7 @@ if (nrow(suites_for_comparison) > 0) {
     out('<img src="', output_url, '/overview.', s, '.svg">')
 
     row_count <- perf_diff_table_es(
-      norm_s, stats_s, warmup_s, NULL, row_count + 1, exe, exes_colors, exes_colors_light)
+      norm_s, stats_s, warmup_s, NULL, row_count + 1, exe, exes_colors, exes_colors_light, FALSE)
   }
 
 }
