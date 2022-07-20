@@ -25,16 +25,19 @@ rebenchdb <- connect_to_rebenchdb(db_name, db_user, db_pass)
 
 dbBegin(rebenchdb)
 qry <- dbSendQuery(rebenchdb, "
-SELECT DISTINCT m.runId, m.trialId, m.criterion, m.value
-	FROM Measurement m
-	JOIN TimelineCalcJob tcj ON
-	  tcj.trialId = m.trialId AND
-	  tcj.runId = m.runId AND
-	  tcj.criterion = m.criterion
+WITH deletedJobs AS ( 
+    DELETE FROM TimelineCalcJob tcj
+    RETURNING tcj.trialId, tcj.runId, tcj.criterion
+)
+SELECT m.runId, m.trialId, m.criterion, m.value
+    FROM deletedJobs d
+    JOIN Measurement m ON
+      d.trialId = m.trialId AND
+      d.runId = m.runId AND
+      d.criterion = m.criterion
 ", immediate = TRUE)
 result <- dbFetch(qry)
 dbClearResult(qry)
-dbExecute(rebenchdb, "TRUNCATE TimelineCalcJob")
 dbCommit(rebenchdb)
 
 
