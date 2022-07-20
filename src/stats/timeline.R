@@ -57,8 +57,7 @@ calc_stats <- function (data) {
       median = median(value),
       numsamples = length(value),
 
-      bci95low = get_bca(value, num_replicates)$lower,
-      bci95up = get_bca(value, num_replicates)$upper,
+      get_bca(value, num_replicates),
       .groups = "drop")
   res
 }
