@@ -44,8 +44,8 @@ dbCommit(rebenchdb)
 # result$recordedsamples <- factor(result$recordedsamples)
 
 calc_stats <- function (data) {
-  res <- data %>%
-    group_by(runid, trialid, criterion) %>%
+  res <- data |>
+    group_by(runid, trialid, criterion) |>
     summarise(
       minval = min(value),
       maxval = max(value),
@@ -60,7 +60,7 @@ calc_stats <- function (data) {
   res
 }
 
-stats <- result %>%
+stats <- result |>
   calc_stats()
 
 # dbAppendTable(rebenchdb, "timeline", stats)
