@@ -122,6 +122,51 @@ function insertProfiles(e) {
   }
 }
 
+function initializeFilters(): void {
+  const allBenchmarkNameElements = $(
+    '.benchmark-details tbody th:nth-child(1)'
+  );
+
+  const byName = new Map();
+
+  allBenchmarkNameElements.each((_, element) => {
+    const name = element.textContent?.trim();
+    if (!byName.has(name)) {
+      byName.set(name, []);
+    }
+
+    byName.get(name).push(element);
+  });
+
+  let nameCheckBoxes = '';
+  const sortedNames = Array.from(byName.keys()).sort();
+  for (const name of sortedNames) {
+    nameCheckBoxes += `
+      <div class="form-check">
+      <input type="checkbox"
+        class="form-check-input" id="filter-${name}" value="${name}" checked>
+      <label class="form-check-label" for="filter-${name}">${name}</label>
+      </div>`;
+  }
+  $('#filters .card-body').html(
+    '<div class="card-text">' + nameCheckBoxes + '</div>'
+  );
+  $('#filters .card-body input').on('change', (e) => {
+    const jE = $(e.currentTarget);
+    const name = jE.val();
+    const nameElements = byName.get(name);
+    if (jE.is(':checked')) {
+      for (const nameElem of nameElements) {
+        $(nameElem).parent().show();
+      }
+    } else {
+      for (const nameElem of nameElements) {
+        $(nameElem).parent().hide();
+      }
+    }
+  });
+}
+
 $(() => {
   $('#significance').on('input', determineAndDisplaySignificance);
   determineAndDisplaySignificance();
@@ -147,4 +192,6 @@ $(() => {
       .find('.btn-expand');
     expandButtons.each((i, elm) => insertWarmupPlot(elm));
   });
+
+  initializeFilters();
 });
