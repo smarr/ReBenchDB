@@ -482,7 +482,7 @@ export abstract class Database {
     projectSlug: string,
     base: string,
     change: string
-  ): Promise<any> {
+  ): Promise<{ dataFound: boolean; base?: any; change?: any }> {
     const result = await this.query(this.queries.fetchRevsInProject, [
       projectSlug,
       base,
