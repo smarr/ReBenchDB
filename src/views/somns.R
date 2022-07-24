@@ -429,7 +429,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
 
     # capture the beginning of the path but leave the last element of it
     # this regex is also used in render.js's renderBenchmark() function
-    cmdline <- str_replace_all(data_i$cmdline[[1]], "^([^\\s]*)((?:\\/\\w+)\\s.*$)", ".\\2")
+    cmdline <- str_replace_all(data_i$cmdline[[1]], "^([^\\s]*)\\/([^\\s]+\\s.*$)", "\\2")
 
     # format all environment information into a single string
     if (!is.null(environments)) {
