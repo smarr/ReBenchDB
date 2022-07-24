@@ -600,6 +600,7 @@ perf_diff_table <- function(norm, stats, start_row_count) {
     for (s in levels(data_e$suite)) {   data_s <- data_e |> filter(suite == s) |> droplevels()
       # e <- "TruffleSOM-graal"
       # s <- "macro-steady"
+      out('<div class="exe-suite-group">')
       out('<h3 id="', s, '-', e, '">', s, '</h3>')
       out('<div class="title-executor">Executor: ', e, "</div>")
 
@@ -621,6 +622,8 @@ perf_diff_table <- function(norm, stats, start_row_count) {
       row_count <- perf_diff_table_es(
         data_s, stats_es, warmup_es, profiles_es,
         row_count, commitid, chg_colors, chg_colors_light, TRUE)
+
+      out('</div>') # exe-suite-group
     }
   }
   row_count
