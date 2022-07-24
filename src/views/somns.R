@@ -469,7 +469,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
     if (nrow(stats_b_total) > 0) {
       out('<tr>')
       out('<th scope="row">',  b, args, '</th>')
-      out('<td>')
+      out('<td class="inline-cmp">')
       p <- small_inline_comparison(data_en, !!group_col, colors, colors_light)
       img_file <- paste0('inline-', row_count, '.svg')
       ggsave(img_file, p, "svg", output_dir, width = 3.5, height = 0.12 + 0.14 * group_size, units = "in")
