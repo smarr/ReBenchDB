@@ -59,7 +59,13 @@ nav.compare {
 }
 
 #project .scroll-list {
-  max-height: 55vh;
+  max-height: calc((100vh - 320px) / 2);
+}
+
+@media (min-width: 576px) {
+  #project .scroll-list {
+    max-height: 55vh;
+  }
 }
 
 .baseline .list-group-item.active, .baseline-badge {
