@@ -205,8 +205,8 @@ slower_category <- function(data) {
   }
   if (m > 1.05) {
     return("slower")
-  } 
-  
+  }
+
   if (m < 0.95) {
     return("faster")
   }
@@ -320,11 +320,11 @@ for (e in levels(norm$exe)) {
   data_e <- norm   |> filter(exe == e)   |> droplevels()
   if (length(levels(data_e$suite)) > 0) {
     out('<nav><span>', e, '</span>\n')
-    
+
     for (s in levels(data_e$suite)) {
       out('<a href="#', s, '-', e, '">', s, '</a>\n')
     }
-    
+
     out('</nav>\n')
 } }
 
@@ -332,11 +332,11 @@ for (e in levels(norm$exe)) {
 if (nrow(suites_for_comparison) > 0) {
   out('<a href="#exe-comparisons">Executor Comparisons</a>\n')
   out('<nav>\n')
-  
+
   for (s in suites_for_comparison$suite) {
     out('<a href="#exe-comp-', s ,'">', s ,'</a>\n')
   }
-  
+
   out('</nav>\n')
 }
 out('</nav>\n')
@@ -364,7 +364,7 @@ out('<dl class="row">
   <dt class="col-sm-3">Run time (geomean)</dt>
   <dd class="col-sm-8">', round(stats_all_total$geomean, 3), ' (min. ', r2(stats_all_total$min),
   ', max. ', r2(stats_all_total$max), ')</dd>
-  
+
   <dt class="col-sm-3">GC time (geomean)</dt>
   <dd class="col-sm-8">', round(stats_all_gctime$geomean, 3), ' (min. ', r2(stats_all_gctime$min),
   ', max. ', r2(stats_all_gctime$max), ')</dd>
@@ -389,7 +389,7 @@ out("<h2>Benchmark Performance</h2>")
 perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_row_count, group, colors, colors_light, show_warmup) {
   group_col <- enquo(group)
   row_count <- start_row_count
-  
+
 
 
   out('<table class="table table-sm benchmark-details">')
@@ -411,7 +411,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
     for (v in levels(data_b$varvalue)) {   data_v  <- data_b |> filter(varvalue == v)   |> droplevels()
     for (c in levels(data_v$cores)) {      data_c  <- data_v |> filter(cores == c)      |> droplevels()
     for (i in levels(data_c$inputsize)) {  data_i  <- data_c |> filter(inputsize == i)  |> droplevels()
-    for (ea in levels(data_i$extraargs)) { data_ea <- data_i |> filter(extraargs == ea) |> droplevels()    
+    for (ea in levels(data_i$extraargs)) { data_ea <- data_i |> filter(extraargs == ea) |> droplevels()
 
     for (en in levels(data_ea$envid)) { data_en <- data_ea |> filter(envid == en) |> droplevels()
 
@@ -422,7 +422,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
     if (length(levels(data_v$cores))     > 1) { args <- paste0(args, c) }
     if (length(levels(data_c$inputsize)) > 1) { args <- paste0(args, i) }
     if (length(levels(data_i$extraargs)) > 1) { args <- paste0(args, ea) }
-    
+
     if (nchar(args) > 0) {
       args <- paste0('<span class="all-args">', args, '</span>')
     }
@@ -453,7 +453,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
         filter(commitid == change_hash6)
     }
     stats_b_total <- stats_b_total |> droplevels()
-    
+
     if ("commitid" %in% colnames(stats_b_gctime)) {
       stats_b_gctime <- stats_b_gctime |>
         filter(commitid == change_hash6)
@@ -524,7 +524,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
           out('<span class="stats-change" title="change over median run time">', pro(filter(stats_b_total, exe == e)$change_m), '</span>')
         }
         out('</td>\n')
-        
+
         out('<td><span class="stats-median" title="median">')
         first <- TRUE
         for (e in exes) {
@@ -536,7 +536,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
           out(r2(filter(stats_b_gctime, exe == e)$median))
         }
         out('</span></td>\n')
-        
+
         out('<td>')
         first <- TRUE
         for (e in exes) {
@@ -564,13 +564,13 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
         ggsave(img_file, p, "svg", output_dir, width = 6, height = 2.5, units = "in")
         out('<button type="button" class="btn btn-sm btn-light btn-expand" data-img="', output_url, '/', img_file, '"></button>\n')
       }
-      
+
       if (!is.null(profiles_es)) {
         profiles_for_bench <- profiles_es |>
           filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea) |>
           select(commitid, runid, trialid) |>
           unite("id", commitid, runid, trialid, sep = "/")
-        
+
         if (nrow(profiles_for_bench) > 0) {
           ids <- str_flatten(profiles_for_bench$id, ",")
           out('<button type="button" class="btn btn-sm btn-profile" data-content="', ids, '"></button>\n')
@@ -610,7 +610,7 @@ perf_diff_table <- function(norm, stats, start_row_count) {
       warmup_es <- warmup |>
         ungroup() |>
         filter(exe == e, suite == s)
-      
+
       if (is.null(profiles)) {
         profiles_es <- NULL
       } else {
