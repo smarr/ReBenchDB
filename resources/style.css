@@ -40,6 +40,48 @@ nav.compare {
   padding-bottom: 10px;
 }
 
+#report-nav-toggler {
+  display: inline-block;
+}
+
+main {
+  max-width: 100%;
+}
+
+@media (min-width: 1200px) {
+  #report-nav-toggler {
+    display: none;
+  }
+  main {
+    max-width: 67%;
+  }
+}
+
+nav.compare {
+  display: none;
+}
+
+nav.compare.show {
+  display: block;
+}
+
+@media (max-width: 1199px) {
+  nav.compare.show {
+    flex: none;
+    height: fit-content;
+    min-width: 160px;
+    order: 0;
+    position: relative;
+  }
+}
+
+@media (min-width: 1200px) {
+  nav.compare {
+    /* overriding the collapse CSS to make it always visible */
+    display: block !important;
+  }
+}
+
 .card {
   margin-top: 1em;
 }
@@ -59,7 +101,13 @@ nav.compare {
 }
 
 #project .scroll-list {
-  max-height: 55vh;
+  max-height: calc((100vh - 320px) / 2);
+}
+
+@media (min-width: 576px) {
+  #project .scroll-list {
+    max-height: 55vh;
+  }
 }
 
 .baseline .list-group-item.active, .baseline-badge {
