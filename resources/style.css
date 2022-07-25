@@ -5,7 +5,12 @@ body {
 
 body.compare {
   max-width: initial;
-  padding-left: 10%;
+}
+
+@media (min-width: 576px) {
+  body.compare {
+    padding-left: 10%;
+  }
 }
 
 .compare {
@@ -312,3 +317,13 @@ td.warmup-plot {
   content: "-";
 }
 
+@media (max-width: 576px) {
+  .inline-cmp {
+    max-width: 100px;
+    overflow: hidden;
+  }
+
+  .inline-cmp img {
+    margin-left: -70px;
+  }
+}
