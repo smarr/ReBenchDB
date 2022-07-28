@@ -73,9 +73,9 @@ function createEntry(e, profId, counter) {
   return entryHtml;
 }
 
-function fetchProfile(change, runId, trialId, jqInsert) {
+function fetchProfile(projectName: string, change, runId, trialId, jqInsert) {
   const profileP = fetch(
-    `/rebenchdb/dash/{{project}}/profiles/${runId}/${trialId}`
+    `/rebenchdb/dash/${projectName}/profiles/${runId}/${trialId}`
   );
   profileP.then(async (profileResponse) => {
     const profileData = await profileResponse.json();
@@ -105,6 +105,7 @@ function fetchProfile(change, runId, trialId, jqInsert) {
 }
 
 function insertProfiles(e) {
+  const projectName = $('#project-name').attr('value');
   const jqButton = $(e.target);
   let profileInsertTarget = jqButton.parent().parent();
   jqButton.remove();
@@ -118,7 +119,7 @@ function insertProfiles(e) {
     );
     profileInsertTarget.after(jqInsert);
     profileInsertTarget = jqInsert;
-    fetchProfile(change, runId, trialId, jqInsert);
+    fetchProfile(projectName, change, runId, trialId, jqInsert);
   }
 }
 
