@@ -1065,7 +1065,7 @@ export abstract class Database {
     const q = this.queries.insertMeasurement;
     // [runId, trialId, invocation, iteration, critId, value];
     q.values = values;
-    return (await this.query(this.queries.insertMeasurement)).rowCount;
+    return (await this.query(q)).rowCount;
   }
 
   public async recordProfile(
@@ -1077,7 +1077,7 @@ export abstract class Database {
   ): Promise<number> {
     const q = this.queries.insertProfile;
     q.values = [runId, trialId, invocation, numIterations, value];
-    return (await this.query(this.queries.insertProfile)).rowCount;
+    return (await this.query(q)).rowCount;
   }
 
   public async recordTimelineJob(values: number[]): Promise<void> {
