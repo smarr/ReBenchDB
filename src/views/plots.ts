@@ -253,12 +253,23 @@ export function renderComparisonTimelinePlot(
     seriesConfig(response.changeBranchName, 'BCI 95th, high', changeLight, 1)
   ];
 
-  if (response.baseTimestamp !== null) {
+  if (response.baseTimestamp !== null && response.changeTimestamp !== null) {
     addDataSeriesToHighlightResult(response.data, response.baseTimestamp, 2);
     series.push(seriesConfig('', '', baselineColor, 1, true, baselineLight));
   }
-  if (response.changeTimestamp !== null) {
-    addDataSeriesToHighlightResult(response.data, response.changeTimestamp, 5);
+  let noChangeDataSeries = false;
+  if (response.changeTimestamp !== null || response.baseTimestamp !== null) {
+    let ts;
+    let dataIndex;
+    if (response.changeTimestamp !== null) {
+      ts = response.changeTimestamp;
+      dataIndex = 5;
+    } else {
+      ts = response.baseTimestamp;
+      dataIndex = 2;
+      noChangeDataSeries = true;
+    }
+    addDataSeriesToHighlightResult(response.data, ts, dataIndex);
     series.push(seriesConfig('', '', changeColor, 1, true, changeLight));
   }
 
@@ -284,5 +295,10 @@ export function renderComparisonTimelinePlot(
     ]
   };
 
-  return new uPlot(options, response.data, jqInsert[0]);
+  const plot = new uPlot(options, response.data, jqInsert[0]);
+
+  if (noChangeDataSeries) {
+    jqInsert.find('.u-legend tr:nth-child(6)').addClass('hidden');
+  }
+  return plot;
 }

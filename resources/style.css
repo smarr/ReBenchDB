@@ -328,6 +328,10 @@ td.warmup-plot {
   display: table-row !important;
 }
 
+.u-legend tr.hidden.u-series {
+  display: none !important;
+}
+
 .u-legend td, .u-legend th {
   border-top: unset;
 }
@@ -408,7 +412,7 @@ td.warmup-plot {
 .u-marker {
   display: block;
   float: right;
-  margin-top: 3px;
+  margin-top: 4px;
   margin-left: 5px;
 }
 
