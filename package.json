@@ -17,7 +17,8 @@
     "koa-router": "12.0.0",
     "mustache": "4.2.0",
     "pg": "8.7.3",
-    "promisify-child-process": "4.1.1"
+    "promisify-child-process": "4.1.1",
+    "uplot": "1.6.22"
   },
   "engines": {
     "node": ">=18.4.0"
@@ -42,6 +43,7 @@
     "nodemon": "2.0.19",
     "prettier": "2.7.1",
     "source-map-support": "0.5.21",
+    "terser": "5.14.2",
     "ts-jest": "28.0.7",
     "typescript": "4.7.4",
     "typescript-json-schema": "0.54.0"
@@ -72,15 +74,15 @@
     "postinstall": "npm run compile",
     "start": "node --enable-source-maps --experimental-json-modules ./dist/src/index.js",
     "nodemon": "DEV=true nodemon --enable-source-maps --experimental-json-modules ./dist/src/index.js --watch ./dist/src --watch ./dist/package.json",
-    "compile": "tsc && npm run prep-resources && npm run prep-reports && npm run prep-static",
-    "prep-static": "cp dist/src/views/*.js resources",
-    "prep-resources": "(cd tests; bzip2 -d -f -k large-payload.json.bz2)",
+    "compile": "tsc && npm run prep-reports && npm run prep-static",
+    "prep-static": "cp dist/src/views/*.js ./resources/; cp node_modules/uplot/dist/uPlot.min.css ./resources/; terser --module --ecma 2018 --compress --mangle -o ./resources/uPlot.esm.min.js -- node_modules/uplot/dist/uPlot.esm.js",
     "prep-reports": "mkdir -p tmp/interm tmp/knit resources/reports resources/exp-data",
     "format": "prettier --config .prettierrc '{src,tests}/**/*.{ts}' --write",
     "verify": "npm run lint",
     "lint": "eslint . --ext .ts,.tsx",
     "update": "git pull && npm install . && pm2 restart 0",
     "watch": "tsc -w",
+    "pretest": "(cd tests; bzip2 -d -f -k large-payload.json.bz2)",
     "test": "node --no-warnings --experimental-vm-modules ./node_modules/jest/bin/jest.js"
   }
 }
