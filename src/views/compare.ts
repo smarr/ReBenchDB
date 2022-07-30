@@ -224,8 +224,7 @@ async function insertTimeline(e): Promise<void> {
   dataId.change = changeHash;
 
   const insert =
-    '<tr><td class="profile-container" colspan="6">' +
-    '<div class="plot-container"></div></td></tr>';
+    '<tr><td colspan="6"><div class="plot-container"></div></td></tr>';
   const jqInsert = $(insert);
   jqInsert.insertAfter(jqButton.parent().parent());
   jqButton.remove();
