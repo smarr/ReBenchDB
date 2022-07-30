@@ -235,23 +235,29 @@ router.post(
 
 if (DEV) {
   router.get(`${siteConfig.staticUrl}/:filename*`, async (ctx) => {
-    console.log(`serve ${ctx.params.filename}`);
+    const filename = ctx.params.filename;
+    console.log(`serve ${filename}`);
     let path: string;
+
     // TODO: robustPath?
-    if (ctx.params.filename.endsWith('.css')) {
+    if (filename.endsWith('.css')) {
       ctx.type = 'css';
-      path = `${__dirname}/../../resources/${ctx.params.filename}`;
-    } else if (ctx.params.filename.endsWith('.js')) {
+      path = `${__dirname}/../../resources/${filename}`;
+    } else if (filename.endsWith('.js')) {
       ctx.type = 'application/javascript';
-      path = `${__dirname}/views/${ctx.params.filename}`;
-    } else if (ctx.params.filename.endsWith('.map')) {
+      if (filename.includes('uPlot')) {
+        path = `${__dirname}/../../resources/${filename}`;
+      } else {
+        path = `${__dirname}/views/${filename}`;
+      }
+    } else if (filename.endsWith('.map')) {
       ctx.type = 'application/json';
-      path = `${__dirname}/views/${ctx.params.filename}`;
-    } else if (ctx.params.filename.endsWith('.svg')) {
+      path = `${__dirname}/views/${filename}`;
+    } else if (filename.endsWith('.svg')) {
       ctx.type = 'image/svg+xml';
-      path = `${__dirname}/../../resources/${ctx.params.filename}`;
+      path = `${__dirname}/../../resources/${filename}`;
     } else {
-      throw new Error(`Unsupported file type ${ctx.params.filename}`);
+      throw new Error(`Unsupported file type. Filename: ${filename}`);
     }
     ctx.body = readFileSync(path);
   });
