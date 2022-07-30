@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <title>ReBenchDB for {{project}}: Comparing {{baselineHash6}} with {{changeHash6}}</title>
+  <meta id="baseHash" value="{{baselineHash}}">
+  <meta id="changeHash" value="{{changeHash}}">
   <meta id="project-name" value="{{project}}">
 
   {{{headerHtml}}}
@@ -10,6 +12,7 @@
   <meta http-equiv="refresh" content="30" />
   {{/generatingReport}}
 
+  <link rel="stylesheet" href="/static/uPlot.min.css">
   <script src="/static/compare.js" type="module"></script>
 </head>
 <body class="compare">

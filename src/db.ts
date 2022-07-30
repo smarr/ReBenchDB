@@ -11,7 +11,10 @@ import {
   Criterion as ApiCriterion,
   DataPoint as ApiDataPoint,
   ProfileData as ApiProfileData,
-  BenchmarkCompletion
+  BenchmarkCompletion,
+  TimelineRequest,
+  TimelineResponse,
+  PlotData
 } from './api';
 import pg, { PoolConfig, QueryConfig, QueryResultRow } from 'pg';
 import { SingleRequestOnly } from './single-requester.js';
@@ -327,7 +330,20 @@ export abstract class Database {
                             JOIN Source s ON t.sourceId = s.id
                           WHERE p.name = $1
                             AND s.commitid = $2
-                            OR s.commitid = $3`
+                            OR s.commitid = $3`,
+
+    fetchBranchNamesForChange: {
+      name: 'fetchBranchNamesForChange',
+      text: `SELECT branchOrTag, s.commitId
+             FROM Source s
+               JOIN Trial      tr ON tr.sourceId = s.id
+               JOIN Experiment e  ON tr.expId = e.id
+               JOIN Project    p  ON p.id = e.projectId
+             WHERE
+               p.name = $1 AND
+               (s.commitid = $2 OR s.commitid = $3)`,
+      values: <any[]>[]
+    }
   };
 
   private static readonly batchN = 50;
@@ -1117,6 +1133,191 @@ export abstract class Database {
       );
     });
     return prom;
+  }
+
+  public async getBranchNames(
+    projectName: string,
+    base: string,
+    change: string
+  ): Promise<null | { baseBranchName: string; changeBranchName: string }> {
+    const q = { ...this.queries.fetchBranchNamesForChange };
+    q.values = [projectName, base, change];
+    console.log(q);
+    let result;
+    try {
+      result = await this.query(q);
+    } catch (e) {
+      console.error(e);
+    }
+
+    if (result.rowCount < 0) {
+      return null;
+    }
+
+    if (result.rowCount == 1) {
+      return {
+        baseBranchName: result.rows[0].branchortag,
+        changeBranchName: result.rows[0].branchortag
+      };
+    }
+
+    console.assert(result.rowCount == 2);
+    if (result.rows[0].commitid == base) {
+      return {
+        baseBranchName: result.rows[0].branchortag,
+        changeBranchName: result.rows[1].branchortag
+      };
+    }
+
+    console.assert(result.rows[0].commitid == change);
+    return {
+      baseBranchName: result.rows[1].branchortag,
+      changeBranchName: result.rows[0].branchortag
+    };
+  }
+
+  public async getTimelineData(
+    projectName: string,
+    request: TimelineRequest
+  ): Promise<TimelineResponse | null> {
+    const branches = await this.getBranchNames(
+      projectName,
+      request.baseline,
+      request.change
+    );
+
+    if (branches === null) {
+      return null;
+    }
+
+    const q = this.constructTimelineQuery(projectName, branches, request);
+    const result = await this.query(q);
+
+    if (result.rowCount < 1) {
+      return null;
+    }
+
+    const data = this.convertToTimelineResponse(
+      result.rows,
+      branches.baseBranchName
+    );
+    return {
+      baseBranchName: branches.baseBranchName,
+      changeBranchName: branches.changeBranchName,
+      data: data
+    };
+  }
+
+  private convertToTimelineResponse(
+    rows: any[],
+    baseBranchName: string
+  ): PlotData {
+    const data: PlotData = [
+      [], // time stamp
+      [], // baseline bci low
+      [], // baseline median
+      [], // baseline bci high
+      [], // change bci low
+      [], // change median
+      [] // change bci high
+    ];
+
+    for (const row of rows) {
+      data[0].push(row.starttime);
+      if (row.branch == baseBranchName) {
+        data[1].push(row.bci95low);
+        data[2].push(row.median);
+        data[3].push(row.bci95up);
+        data[4].push(null);
+        data[5].push(null);
+        data[6].push(null);
+      } else {
+        data[1].push(null);
+        data[2].push(null);
+        data[3].push(null);
+        data[4].push(row.bci95low);
+        data[5].push(row.median);
+        data[6].push(row.bci95up);
+      }
+    }
+
+    return data;
+  }
+
+  private constructTimelineQuery(
+    projectName: string,
+    branches: { baseBranchName: string; changeBranchName: string },
+    request: TimelineRequest
+  ): QueryConfig {
+    let sql = `
+      SELECT
+        extract(epoch from tr.startTime at time zone 'UTC')::int as startTime,
+        s.branchOrTag as branch,
+        ti.median, ti.bci95low, ti.bci95up
+      FROM Timeline ti
+        JOIN Trial      tr ON tr.id = ti.trialId
+        JOIN Source     s  ON tr.sourceId = s.id
+        JOIN Experiment e  ON tr.expId = e.id
+        JOIN Project    p  ON p.id = e.projectId
+        JOIN Run        r  ON r.id = ti.runId
+        JOIN Executor  exe ON exe.id = r.execId
+        JOIN Benchmark  b  ON b.id = r.benchmarkId
+        JOIN Suite      su ON su.id = r.suiteId
+      WHERE
+        s.branchOrTag IN ($1, $2) AND
+        p.name = $3   AND
+        b.name = $4   AND
+        su.name = $5  AND
+        exe.name = $6
+        ::ADDITIONAL-PARAMETERS::
+      ORDER BY tr.startTime ASC;
+    `;
+
+    let additionalParameters = '';
+    let storedQueryName = 'get-timeline-data-bpbs-';
+
+    const parameters = [
+      branches.baseBranchName,
+      branches.changeBranchName,
+      projectName,
+      request.b,
+      request.s,
+      request.e
+    ];
+
+    if (request.v) {
+      parameters.push(request.v);
+      additionalParameters += 'AND r.varValue = $' + parameters.length + ' ';
+      storedQueryName += 'v';
+    }
+
+    if (request.c) {
+      parameters.push(request.c);
+      additionalParameters += 'AND r.cores = $' + parameters.length + ' ';
+      storedQueryName += 'c';
+    }
+
+    if (request.i) {
+      parameters.push(request.i);
+      additionalParameters += 'AND r.inputSize = $' + parameters.length + ' ';
+      storedQueryName += 'i';
+    }
+
+    if (request.ea) {
+      parameters.push(request.ea);
+      additionalParameters += 'AND r.extraArgs = $' + parameters.length + ' ';
+      storedQueryName += 'ea';
+    }
+
+    sql = sql.replace('::ADDITIONAL-PARAMETERS::', additionalParameters);
+    console.log(sql);
+    console.error(additionalParameters);
+
+    return {
+      name: storedQueryName,
+      text: sql,
+      values: parameters
+    };
   }
 }
 

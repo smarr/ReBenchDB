@@ -577,6 +577,20 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
         }
       }
 
+      benchmark_id_json <- paste0(
+        '{"b":"',  b,
+        '","e":"', levels(data_en$exe),
+        '","s":"', levels(data_en$suite), '"')
+
+      if (length(levels(data_b$varvalue))  > 1) { benchmark_id_json <- paste0(benchmark_id_json, ',"v":"', v, '"') }
+      if (length(levels(data_v$cores))     > 1) { benchmark_id_json <- paste0(benchmark_id_json, ',"c":"', c, '"') }
+      if (length(levels(data_c$inputsize)) > 1) { benchmark_id_json <- paste0(benchmark_id_json, ',"i":"', i, '"') }
+      if (length(levels(data_i$extraargs)) > 1) { benchmark_id_json <- paste0(benchmark_id_json, ',"ea":"', ea, '"') }
+
+      benchmark_id_json <- paste0(benchmark_id_json, '}')
+
+      out('<button type="button" class="btn btn-sm btn-timeline" data-content=\'', benchmark_id_json, '\'></button>\n')
+
       out('</td>');
       out('</tr>\n')
     } else {

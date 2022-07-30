@@ -1,3 +1,5 @@
+import { renderComparisonTimelinePlot } from './plots.js';
+
 function determineAndDisplaySignificance() {
   const val = $('#significance').val();
   displaySignificance(val);
@@ -105,7 +107,7 @@ function fetchProfile(projectName: string, change, runId, trialId, jqInsert) {
 }
 
 function insertProfiles(e) {
-  const projectName = $('#project-name').attr('value');
+  const projectName = <string>$('#project-name').attr('value');
   const jqButton = $(e.target);
   let profileInsertTarget = jqButton.parent().parent();
   jqButton.remove();
@@ -197,6 +199,56 @@ function initializeFilters(): void {
   );
 }
 
+async function fetchPost(url: string, data: any): Promise<any> {
+  const response = await fetch(url, {
+    method: 'POST',
+    mode: 'same-origin',
+    cache: 'no-cache',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    redirect: 'follow',
+    referrerPolicy: 'no-referrer',
+    body: JSON.stringify(data)
+  });
+  return response.json();
+}
+
+async function insertTimeline(e): Promise<void> {
+  const projectName = <string>$('#project-name').attr('value');
+  const jqButton = $(e.target);
+
+  const baseHash = $('#baseHash').attr('value');
+  const changeHash = $('#changeHash').attr('value');
+  const dataId = jqButton.data('content');
+  dataId.baseline = baseHash;
+  dataId.change = changeHash;
+
+  const insert =
+    '<tr><td class="profile-container" colspan="6">' +
+    '<div class="plot-container"></div></td></tr>';
+  const jqInsert = $(insert);
+  jqInsert.insertAfter(jqButton.parent().parent());
+  jqButton.remove();
+
+  await fetchTimelineData(
+    projectName,
+    dataId,
+    jqInsert.find('.plot-container')
+  );
+}
+
+async function fetchTimelineData(
+  projectName: string,
+  dataId,
+  jqInsert
+): Promise<void> {
+  const response = await fetchPost(
+    `/rebenchdb/dash/${projectName}/timelines`,
+    dataId
+  );
+  renderComparisonTimelinePlot(response, jqInsert);
+}
+
 $(() => {
   $('#significance').on('input', determineAndDisplaySignificance);
   determineAndDisplaySignificance();
@@ -206,6 +258,7 @@ $(() => {
   (<any>$)('.btn-popover').popover({ html: true, placement: 'top' });
   $('.btn-expand').click(insertWarmupPlot);
   $('.btn-profile').click(insertProfiles);
+  $('.btn-timeline').on('click', insertTimeline);
 
   const headlinesForTablesWithWarmupPlots = $('table:has(button.btn-expand)')
     .prev()

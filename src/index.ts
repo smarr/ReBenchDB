@@ -4,7 +4,7 @@ import Koa from 'koa';
 import koaBody from 'koa-body';
 import Router from 'koa-router';
 import { DatabaseWithPool } from './db.js';
-import { BenchmarkData, BenchmarkCompletion } from './api.js';
+import { BenchmarkData, BenchmarkCompletion, TimelineRequest } from './api.js';
 import { createValidator } from './api-validator.js';
 import { ValidateFunction } from 'ajv';
 
@@ -210,6 +210,26 @@ router.post(
       ctx.body = 'Incorrect authentication.';
       ctx.status = 403;
     }
+  }
+);
+
+router.post(
+  '/rebenchdb/dash/:projectName/timelines',
+  koaBody(),
+  async (ctx) => {
+    const timelineRequest = <TimelineRequest>ctx.request.body;
+    const result = await db.getTimelineData(
+      ctx.params.projectName,
+      timelineRequest
+    );
+    if (result === null) {
+      ctx.body = { error: 'Requested data was not found' };
+      ctx.status = 404;
+    } else {
+      ctx.body = result;
+      ctx.status = 200;
+    }
+    ctx.type = 'json';
   }
 );
 
