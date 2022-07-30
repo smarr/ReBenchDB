@@ -2,6 +2,7 @@ dist
 node_modules
 .vscode
 resources/reports
+resources/*.js
 tmp/knit
 tmp/interm
 /tests/large-payload.json
