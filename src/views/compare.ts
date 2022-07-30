@@ -253,11 +253,11 @@ $(() => {
   $('#significance').on('input', determineAndDisplaySignificance);
   determineAndDisplaySignificance();
 
-  $('#show-refresh-form').click(() => $('input[name=password]').show());
+  $('#show-refresh-form').on('click', () => $('input[name=password]').show());
 
   (<any>$)('.btn-popover').popover({ html: true, placement: 'top' });
-  $('.btn-expand').click(insertWarmupPlot);
-  $('.btn-profile').click(insertProfiles);
+  $('.btn-expand').on('click', insertWarmupPlot);
+  $('.btn-profile').on('click', insertProfiles);
   $('.btn-timeline').on('click', insertTimeline);
 
   const headlinesForTablesWithWarmupPlots = $('table:has(button.btn-expand)')
@@ -267,7 +267,7 @@ $(() => {
     `<button type="button" class="btn btn-sm btn-light btn-expand"></button>`
   );
   const buttons = headlinesForTablesWithWarmupPlots.find('.btn-expand');
-  buttons.click((e) => {
+  buttons.on('click', (e) => {
     const expandButtons = $(e.target)
       .parent()
       .next()
