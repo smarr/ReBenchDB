@@ -179,6 +179,30 @@ const baselineLight = '#97c4f0';
 const changeColor = '#e9b96e';
 const changeLight = '#efd0a7';
 
+function computeAxisLabelSpace(self, axisTickLabels, axisIdx, cycleNum) {
+  const axis = self.axes[axisIdx];
+
+  // bail out, force convergence
+  if (cycleNum > 1) {
+    return axis._size;
+  }
+
+  let axisSize = axis.ticks.size + axis.gap;
+
+  // find longest value
+  const longest = (axisTickLabels ?? []).reduce(
+    (acc, label) => (label.length > acc.length ? label : acc),
+    ''
+  );
+
+  if (longest != '') {
+    self.ctx.font = axis.font[0];
+    axisSize += self.ctx.measureText(longest).width / devicePixelRatio;
+  }
+
+  return Math.ceil(axisSize);
+}
+
 export function renderComparisonTimelinePlot(
   response: TimelineResponse,
   jqInsert: any
@@ -204,7 +228,13 @@ export function renderComparisonTimelinePlot(
       { series: [4, 5], fill: changeLight, dir: 1 },
       { series: [5, 6], fill: changeLight, dir: 1 }
     ],
-    axes: [{}, { values: (_, vals) => vals.map((v) => v + 'ms') }]
+    axes: [
+      {},
+      {
+        values: (_, vals) => vals.map((v) => v + 'ms'),
+        size: computeAxisLabelSpace
+      }
+    ]
   };
 
   return new uPlot(options, response.data, jqInsert[0]);
