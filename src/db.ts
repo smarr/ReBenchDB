@@ -1142,13 +1142,7 @@ export abstract class Database {
   ): Promise<null | { baseBranchName: string; changeBranchName: string }> {
     const q = { ...this.queries.fetchBranchNamesForChange };
     q.values = [projectName, base, change];
-    console.log(q);
-    let result;
-    try {
-      result = await this.query(q);
-    } catch (e) {
-      console.error(e);
-    }
+    const result = await this.query(q);
 
     if (result.rowCount < 0) {
       return null;
@@ -1310,8 +1304,6 @@ export abstract class Database {
     }
 
     sql = sql.replace('::ADDITIONAL-PARAMETERS::', additionalParameters);
-    console.log(sql);
-    console.error(additionalParameters);
 
     return {
       name: storedQueryName,
