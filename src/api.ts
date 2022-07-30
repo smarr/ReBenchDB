@@ -190,6 +190,8 @@ export interface TimelineRequest {
 export interface TimelineResponse {
   baseBranchName: string;
   changeBranchName: string;
+  baseTimestamp: number | null;
+  changeTimestamp: number | null;
   data: PlotData;
 }
 

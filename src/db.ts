@@ -1193,19 +1193,19 @@ export abstract class Database {
 
     const data = this.convertToTimelineResponse(
       result.rows,
-      branches.baseBranchName
+      branches.baseBranchName,
+      branches.changeBranchName
     );
-    return {
-      baseBranchName: branches.baseBranchName,
-      changeBranchName: branches.changeBranchName,
-      data: data
-    };
+    return data;
   }
 
   private convertToTimelineResponse(
     rows: any[],
-    baseBranchName: string
-  ): PlotData {
+    baseBranchName: string,
+    changeBranchName: string
+  ): TimelineResponse {
+    let baseTimestamp: number | null = null;
+    let changeTimestamp: number | null = null;
     const data: PlotData = [
       [], // time stamp
       [], // baseline bci low
@@ -1219,6 +1219,9 @@ export abstract class Database {
     for (const row of rows) {
       data[0].push(row.starttime);
       if (row.branch == baseBranchName) {
+        if (row.iscurrent) {
+          baseTimestamp = row.starttime;
+        }
         data[1].push(row.bci95low);
         data[2].push(row.median);
         data[3].push(row.bci95up);
@@ -1226,6 +1229,9 @@ export abstract class Database {
         data[5].push(null);
         data[6].push(null);
       } else {
+        if (row.iscurrent) {
+          changeTimestamp = row.starttime;
+        }
         data[1].push(null);
         data[2].push(null);
         data[3].push(null);
@@ -1235,7 +1241,13 @@ export abstract class Database {
       }
     }
 
-    return data;
+    return {
+      baseBranchName,
+      changeBranchName,
+      baseTimestamp,
+      changeTimestamp,
+      data
+    };
   }
 
   private constructTimelineQuery(
@@ -1246,7 +1258,7 @@ export abstract class Database {
     let sql = `
       SELECT
         extract(epoch from tr.startTime at time zone 'UTC')::int as startTime,
-        s.branchOrTag as branch,
+        s.branchOrTag as branch, s.commitid IN ($1, $2) as isCurrent,
         ti.median, ti.bci95low, ti.bci95up
       FROM Timeline ti
         JOIN Trial      tr ON tr.id = ti.trialId
@@ -1258,11 +1270,11 @@ export abstract class Database {
         JOIN Benchmark  b  ON b.id = r.benchmarkId
         JOIN Suite      su ON su.id = r.suiteId
       WHERE
-        s.branchOrTag IN ($1, $2) AND
-        p.name = $3   AND
-        b.name = $4   AND
-        su.name = $5  AND
-        exe.name = $6
+        s.branchOrTag IN ($3, $4) AND
+        p.name = $5   AND
+        b.name = $6   AND
+        su.name = $7  AND
+        exe.name = $8
         ::ADDITIONAL-PARAMETERS::
       ORDER BY tr.startTime ASC;
     `;
@@ -1271,6 +1283,8 @@ export abstract class Database {
     let storedQueryName = 'get-timeline-data-bpbs-';
 
     const parameters = [
+      request.baseline,
+      request.change,
       branches.baseBranchName,
       branches.changeBranchName,
       projectName,

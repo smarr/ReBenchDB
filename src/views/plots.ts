@@ -1,4 +1,4 @@
-import type { TimelineResponse } from 'api';
+import type { PlotData, TimelineResponse } from 'api';
 import type { Data } from 'plotly.js';
 declare const Plotly: any;
 import uPlot from '/static/uPlot.esm.min.js';
@@ -163,14 +163,32 @@ function seriesConfig(
   branchName: string,
   metric: string,
   color: string,
-  width: number
+  width: number,
+  largerPoint = false,
+  largerPointFill: string | undefined = undefined
 ) {
-  return {
-    label: `${branchName} ${metric}`,
+  let label;
+  if (branchName !== '' && metric !== '') {
+    label = `${branchName} ${metric}`;
+  } else {
+    label = '';
+  }
+
+  const cfg: any = {
+    label,
     stroke: color,
     value: formatMs,
     width: width
   };
+
+  if (largerPoint) {
+    cfg.points = {
+      size: 9,
+      fill: largerPointFill
+    };
+  }
+
+  return cfg;
 }
 
 const baselineColor = '#729fcf';
@@ -203,25 +221,54 @@ function computeAxisLabelSpace(self, axisTickLabels, axisIdx, cycleNum) {
   return Math.ceil(axisSize);
 }
 
+function addDataSeriesToHighlightResult(
+  data: PlotData,
+  timestampToHighlight: number,
+  idxOfData: number
+): void {
+  const seriesForCurrentBase: (number | null)[] = [];
+  data.push(seriesForCurrentBase);
+  for (const i in data[0]) {
+    const ts = data[0][i];
+    if (ts == timestampToHighlight) {
+      const currentValue = data[idxOfData][i];
+      seriesForCurrentBase.push(currentValue);
+    } else {
+      seriesForCurrentBase.push(null);
+    }
+  }
+}
+
 export function renderComparisonTimelinePlot(
   response: TimelineResponse,
   jqInsert: any
 ): any {
+  const series = [
+    {},
+    seriesConfig(response.baseBranchName, 'BCI 95th, low', baselineLight, 1),
+    seriesConfig(response.baseBranchName, 'Median', baselineColor, 2),
+    seriesConfig(response.baseBranchName, 'BCI 95th, high', baselineLight, 1),
+    seriesConfig(response.changeBranchName, 'BCI 95th, low', changeLight, 1),
+    seriesConfig(response.changeBranchName, 'Median', changeColor, 2),
+    seriesConfig(response.changeBranchName, 'BCI 95th, high', changeLight, 1)
+  ];
+
+  if (response.baseTimestamp !== null) {
+    addDataSeriesToHighlightResult(response.data, response.baseTimestamp, 2);
+    series.push(seriesConfig('', '', baselineColor, 1, true, baselineLight));
+  }
+  if (response.changeTimestamp !== null) {
+    addDataSeriesToHighlightResult(response.data, response.changeTimestamp, 5);
+    series.push(seriesConfig('', '', changeColor, 1, true, changeLight));
+  }
+
   const options = {
     width: 576,
     height: 240,
     title: 'Runtime in ms',
     tzDate: (ts: number) => uPlot.tzDate(new Date(ts * 1000), 'UTC'),
     scales: { x: {}, y: {} },
-    series: [
-      {},
-      seriesConfig(response.baseBranchName, 'BCI 95th, low', baselineLight, 1),
-      seriesConfig(response.baseBranchName, 'Median', baselineColor, 2),
-      seriesConfig(response.baseBranchName, 'BCI 95th, high', baselineLight, 1),
-      seriesConfig(response.changeBranchName, 'BCI 95th, low', changeLight, 1),
-      seriesConfig(response.changeBranchName, 'Median', changeColor, 2),
-      seriesConfig(response.changeBranchName, 'BCI 95th, high', changeLight, 1)
-    ],
+    series,
     bands: [
       { series: [1, 2], fill: baselineLight, dir: 1 },
       { series: [2, 3], fill: baselineLight, dir: 1 },
