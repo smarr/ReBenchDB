@@ -19,11 +19,11 @@ export class TestDatabase extends Database {
 
   constructor(
     config: PoolConfig,
-    numReplicates: number,
+    numBootstrapSamples: number,
     timelineEnabled: boolean,
     useTransactions: boolean
   ) {
-    super(config, numReplicates, timelineEnabled);
+    super(config, numBootstrapSamples, timelineEnabled);
     this.connectionPool = new pg.Pool(config);
     this.usesTransactions = useTransactions;
     this.client = null;
@@ -106,13 +106,13 @@ export class TestDatabase extends Database {
 
 export async function createAndInitializeDB(
   testSuite: string,
-  numReplicates = 1000,
+  numBootstrapSamples = 1000,
   timelineEnabled = false,
   useTransactions = true
 ): Promise<TestDatabase> {
   const testDb = await createDB(
     testSuite,
-    numReplicates,
+    numBootstrapSamples,
     timelineEnabled,
     useTransactions
   );
@@ -122,7 +122,7 @@ export async function createAndInitializeDB(
 
 export async function createDB(
   testSuite: string,
-  numReplicates = 1000,
+  numBootstrapSamples = 1000,
   timelineEnabled = false,
   useTransactions = true
 ): Promise<TestDatabase> {
@@ -137,7 +137,12 @@ export async function createDB(
 
   cfg.database = dbNameForSuite;
 
-  return new TestDatabase(cfg, numReplicates, timelineEnabled, useTransactions);
+  return new TestDatabase(
+    cfg,
+    numBootstrapSamples,
+    timelineEnabled,
+    useTransactions
+  );
 }
 
 let mainDB: Database | null = null;

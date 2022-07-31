@@ -183,7 +183,7 @@ export abstract class Database {
   private readonly timelineEnabled: boolean;
 
   /** Number of bootstrap samples to take for timeline. */
-  private readonly numReplicates: number;
+  private readonly numBootstrapSamples: number;
 
   private readonly executors: Map<string, Executor>;
   private readonly suites: Map<string, Suite>;
@@ -350,12 +350,12 @@ export abstract class Database {
 
   constructor(
     config: PoolConfig,
-    numReplicates = 1000,
+    numBootstrapSamples = 1000,
     timelineEnabled = false
   ) {
     console.assert(config !== undefined);
     this.dbConfig = config;
-    this.numReplicates = numReplicates;
+    this.numBootstrapSamples = numBootstrapSamples;
     this.timelineEnabled = timelineEnabled;
     this.executors = new Map();
     this.suites = new Map();
@@ -1105,7 +1105,7 @@ export abstract class Database {
         this.dbConfig.database,
         this.dbConfig.user,
         this.dbConfig.password,
-        this.numReplicates
+        this.numBootstrapSamples
       ];
       const start = startRequest();
       execFile(
