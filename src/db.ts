@@ -1270,12 +1270,14 @@ export abstract class Database {
         JOIN Executor  exe ON exe.id = r.execId
         JOIN Benchmark  b  ON b.id = r.benchmarkId
         JOIN Suite      su ON su.id = r.suiteId
+        JOIN Criterion  c  ON ti.criterion = c.id
       WHERE
         s.branchOrTag IN ($3, $4) AND
         p.name = $5   AND
         b.name = $6   AND
         su.name = $7  AND
-        exe.name = $8
+        exe.name = $8 AND
+        c.name   = 'total'
         ::ADDITIONAL-PARAMETERS::
       ORDER BY tr.startTime ASC;
     `;
