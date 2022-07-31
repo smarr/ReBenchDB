@@ -1144,7 +1144,7 @@ export abstract class Database {
     q.values = [projectName, base, change];
     const result = await this.query(q);
 
-    if (result.rowCount < 0) {
+    if (result.rowCount < 1) {
       return null;
     }
 
