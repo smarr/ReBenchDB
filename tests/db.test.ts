@@ -59,11 +59,60 @@ describe('Timeline-plot Queries', () => {
   });
 
   describe('Retrieving branch names based on commit ids', () => {
-    it.todo('should return `null` if there is an error');
+    it('should return `null` if there is an error', async () => {
+      const result = await db.getBranchNames(
+        projectName,
+        'non-existing-commit',
+        'another-non-existing-commit'
+      );
 
-    it.todo('should handle both commit ids being on the same branch');
+      expect(result).toBeNull();
+    });
 
-    it.todo('should attribute branch names correctly to base and change');
+    it('should handle both commit ids being on the same branch', async () => {
+      let result = await db.getBranchNames(
+        projectName,
+        earlierBaseCommitId,
+        baseCommitId
+      );
+
+      expect(result?.baseBranchName).toEqual(baseBranch);
+      expect(result?.changeBranchName).toEqual(baseBranch);
+
+      result = await db.getBranchNames(
+        projectName,
+        baseCommitId,
+        earlierBaseCommitId
+      );
+
+      expect(result?.baseBranchName).toEqual(baseBranch);
+      expect(result?.changeBranchName).toEqual(baseBranch);
+
+      result = await db.getBranchNames(projectName, baseCommitId, baseCommitId);
+
+      expect(result?.baseBranchName).toEqual(baseBranch);
+      expect(result?.changeBranchName).toEqual(baseBranch);
+    });
+
+    it('should match branch names correctly to base and change', async () => {
+      let result = await db.getBranchNames(
+        projectName,
+        baseCommitId,
+        changeCommitId
+      );
+
+      expect(result?.baseBranchName).toEqual(baseBranch);
+      expect(result?.changeBranchName).toEqual(changeBranch);
+
+      result = await db.getBranchNames(
+        projectName,
+        changeCommitId,
+        baseCommitId
+      );
+
+      expect(result?.baseBranchName).toEqual(changeBranch);
+      expect(result?.changeBranchName).toEqual(baseBranch);
+    });
   });
 
   describe('Retrieving timeline data', () => {
