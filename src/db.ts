@@ -335,7 +335,7 @@ export abstract class Database {
 
     fetchBranchNamesForChange: {
       name: 'fetchBranchNamesForChange',
-      text: `SELECT branchOrTag, s.commitId
+      text: `SELECT DISTINCT branchOrTag, s.commitId
              FROM Source s
                JOIN Trial      tr ON tr.sourceId = s.id
                JOIN Experiment e  ON tr.expId = e.id
