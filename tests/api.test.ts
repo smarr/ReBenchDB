@@ -2,6 +2,7 @@ import { readFileSync } from 'fs';
 import { ValidateFunction } from 'ajv';
 import { createValidator } from '../src/api-validator.js';
 import { getDirname } from '../src/util.js';
+import { log } from '../src/logging.js';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -23,7 +24,7 @@ describe('Ensure Test Payloads conform to API', () => {
 
     const result = validateFn(testData);
     if (!result) {
-      console.error(validateFn.errors);
+      log.error(validateFn.errors);
     }
     expect(result).toBeTruthy();
   });
@@ -35,7 +36,7 @@ describe('Ensure Test Payloads conform to API', () => {
 
     const result = validateFn(testData);
     if (!result) {
-      console.error(validateFn.errors);
+      log.error(validateFn.errors);
     }
     expect(result).toBeTruthy();
   });
@@ -47,7 +48,7 @@ describe('Ensure Test Payloads conform to API', () => {
 
     const result = validateFn(testData);
     if (!result) {
-      console.error(validateFn.errors);
+      log.error(validateFn.errors);
     }
     expect(result).toBeTruthy();
   });

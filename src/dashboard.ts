@@ -6,6 +6,7 @@ import { BenchmarkCompletion } from './api.js';
 import { GitHub } from './github.js';
 import { robustPath, siteConfig } from './util.js';
 import { getDirname } from './util.js';
+import { log } from './logging.js';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -196,7 +197,7 @@ export function startReportGeneration(
   ];
 
   const cmd = 'Rscript';
-  console.log(`Generate Report: ${cmd} '${args.join(`' '`)}'`);
+  log.debug(`Generate Report: ${cmd} '${args.join(`' '`)}'`);
 
   return execFile(cmd, args, { cwd: reportOutputFolder });
 }
@@ -315,7 +316,7 @@ export async function dashCompare(
         })
         .catch(async (e) => {
           const { stdout, stderr } = e;
-          console.error(`Report generation error: ${e}`);
+          log.error('Report generation error', e);
           reportGeneration.set(reportId, {
             e,
             stdout,
@@ -405,7 +406,7 @@ export async function dashGetExpData(
         expDataFile
       ];
 
-      console.log(
+      log.debug(
         `Prepare Data for Download:` +
           `${__dirname}/../../src/stats/get-exp-data.R ${args.join(' ')}`
       );
@@ -424,7 +425,7 @@ export async function dashGetExpData(
           await completeRequest(start, db, 'prep-exp-data');
         })
         .catch(async (error) => {
-          console.error(`Data preparation failed: ${error}`);
+          log.error('Data preparation failed', error);
           expDataPreparation.set(expDataId, {
             error,
             stdout: error.stdout,

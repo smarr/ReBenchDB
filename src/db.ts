@@ -20,6 +20,7 @@ import pg, { PoolConfig, QueryConfig, QueryResultRow } from 'pg';
 import { SingleRequestOnly } from './single-requester.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
 import { getDirname } from './util.js';
+import { assert, log } from './logging.js';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -353,7 +354,7 @@ export abstract class Database {
     numBootstrapSamples = 1000,
     timelineEnabled = false
   ) {
-    console.assert(config !== undefined);
+    assert(config !== undefined);
     this.dbConfig = config;
     this.numBootstrapSamples = numBootstrapSamples;
     this.timelineEnabled = timelineEnabled;
@@ -480,7 +481,7 @@ export abstract class Database {
       result = await this.query(insertQ, insertVals);
     }
 
-    console.assert(result.rowCount === 1);
+    assert(result.rowCount === 1);
     cache.set(cacheKey, result.rows[0]);
     return result.rows[0];
   }
@@ -833,7 +834,7 @@ export abstract class Database {
 
       const crit = run[r.criterion];
 
-      console.assert(
+      assert(
         !(r.inv in crit),
         `${r.runid}, ${r.criterion}, ${r.inv} in ${JSON.stringify(crit)}`
       );
@@ -1115,7 +1116,7 @@ export abstract class Database {
         async (errorCode, stdout, stderr) => {
           function handleResult() {
             if (errorCode) {
-              console.log(`timeline.R failed: ${errorCode}
+              log.debug(`timeline.R failed: ${errorCode}
               Stdout:
                 ${stdout}
 
@@ -1155,7 +1156,7 @@ export abstract class Database {
       };
     }
 
-    console.assert(result.rowCount == 2);
+    assert(result.rowCount == 2);
     if (result.rows[0].commitid == base) {
       return {
         baseBranchName: result.rows[0].branchortag,
@@ -1163,7 +1164,7 @@ export abstract class Database {
       };
     }
 
-    console.assert(result.rows[0].commitid == change);
+    assert(result.rows[0].commitid == change);
     return {
       baseBranchName: result.rows[1].branchortag,
       changeBranchName: result.rows[0].branchortag
