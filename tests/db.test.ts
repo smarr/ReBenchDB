@@ -1,0 +1,200 @@
+import {
+  TestDatabase,
+  createAndInitializeDB,
+  closeMainDb
+} from './db-testing.js';
+import { BenchmarkData, TimelineRequest } from '../src/api.js';
+import { readFileSync } from 'fs';
+import { getDirname } from '../src/util.js';
+
+const __dirname = getDirname(import.meta.url);
+
+describe('Timeline-plot Queries', () => {
+  let db: TestDatabase;
+  let projectName: string;
+  let baseBranch: string;
+  let changeBranch: string;
+
+  let earlierBaseCommitId: string;
+  let baseCommitId: string;
+  let changeCommitId: string;
+
+  let benchmark: string;
+  let executor: string;
+  let suite: string;
+
+  beforeAll(async () => {
+    db = await createAndInitializeDB('db_ts_basic', 25, true, false);
+
+    const data = readFileSync(`${__dirname}/small-payload.json`).toString();
+    const basicTestData: BenchmarkData = JSON.parse(data);
+    projectName = basicTestData.projectName;
+
+    baseBranch = basicTestData.source.branchOrTag = 'base-branch';
+    db.setProjectBaseBranch(projectName, basicTestData.source.branchOrTag);
+    earlierBaseCommitId = basicTestData.source.commitId;
+
+    await db.recordMetaDataAndRuns(basicTestData);
+    await db.recordAllData(basicTestData);
+
+    // have a second experiment in the database
+    basicTestData.experimentName += ' 2';
+    basicTestData.startTime = '2019-12-14T22:49:56';
+    changeBranch = basicTestData.source.branchOrTag = 'change-branch';
+    changeCommitId = basicTestData.source.commitId =
+      '2222222222222222222222222222222222222222';
+
+    await db.recordMetaDataAndRuns(basicTestData);
+    await db.recordAllData(basicTestData);
+
+    // have a merge in the database
+    basicTestData.experimentName += ' 3';
+    basicTestData.startTime = '2019-12-15T22:49:56';
+    basicTestData.source.branchOrTag = baseBranch;
+    baseCommitId = basicTestData.source.commitId =
+      '3333333333333333333333333333333333333333';
+
+    await db.recordMetaDataAndRuns(basicTestData);
+    await db.recordAllData(basicTestData);
+
+    benchmark = basicTestData.data[0].runId.benchmark.name;
+    executor = basicTestData.data[0].runId.benchmark.suite.executor.name;
+    suite = basicTestData.data[0].runId.benchmark.suite.name;
+
+    await db.awaitQuiescentTimelineUpdater();
+  });
+
+  afterAll(async () => {
+    await db.close();
+  });
+
+  describe('Retrieving branch names based on commit ids', () => {
+    it('should return `null` if there is an error', async () => {
+      const result = await db.getBranchNames(
+        projectName,
+        'non-existing-commit',
+        'another-non-existing-commit'
+      );
+
+      expect(result).toBeNull();
+    });
+
+    it('should handle both commit ids being on the same branch', async () => {
+      let result = await db.getBranchNames(
+        projectName,
+        earlierBaseCommitId,
+        baseCommitId
+      );
+
+      expect(result?.baseBranchName).toEqual(baseBranch);
+      expect(result?.changeBranchName).toEqual(baseBranch);
+
+      result = await db.getBranchNames(
+        projectName,
+        baseCommitId,
+        earlierBaseCommitId
+      );
+
+      expect(result?.baseBranchName).toEqual(baseBranch);
+      expect(result?.changeBranchName).toEqual(baseBranch);
+
+      result = await db.getBranchNames(projectName, baseCommitId, baseCommitId);
+
+      expect(result?.baseBranchName).toEqual(baseBranch);
+      expect(result?.changeBranchName).toEqual(baseBranch);
+    });
+
+    it('should match branch names correctly to base and change', async () => {
+      let result = await db.getBranchNames(
+        projectName,
+        baseCommitId,
+        changeCommitId
+      );
+
+      expect(result?.baseBranchName).toEqual(baseBranch);
+      expect(result?.changeBranchName).toEqual(changeBranch);
+
+      result = await db.getBranchNames(
+        projectName,
+        changeCommitId,
+        baseCommitId
+      );
+
+      expect(result?.baseBranchName).toEqual(changeBranch);
+      expect(result?.changeBranchName).toEqual(baseBranch);
+    });
+  });
+
+  describe('Retrieving timeline data', () => {
+    it('should return `null` if there is an error', async () => {
+      const request: TimelineRequest = {
+        baseline: 'non-existing-commitid',
+        change: 'another-non-existing-commitid',
+        b: benchmark,
+        e: executor,
+        s: suite
+      };
+
+      const result = await db.getTimelineData(projectName, request);
+      expect(result).toBeNull();
+    });
+
+    it('should return median and BCIs for each branch', async () => {
+      const request: TimelineRequest = {
+        baseline: baseCommitId,
+        change: changeCommitId,
+        b: benchmark,
+        e: executor,
+        s: suite
+      };
+
+      const result = await db.getTimelineData(projectName, request);
+      expect(result?.baseBranchName).toEqual(baseBranch);
+      expect(result?.changeBranchName).toEqual(changeBranch);
+
+      expect(result?.baseTimestamp).toEqual(1576450196);
+      expect(result?.changeTimestamp).toEqual(1576363796);
+
+      expect(result?.data).toEqual([
+        [1576277396, 1576363796, 1576450196],
+        [null, null, null],
+        [432.783, null, 432.783],
+        [null, null, null],
+        [null, null, null],
+        [null, 432.783, null],
+        [null, null, null]
+      ]);
+    });
+
+    it('should identify the current data points per branch', async () => {
+      const request: TimelineRequest = {
+        baseline: baseCommitId,
+        change: earlierBaseCommitId,
+        b: benchmark,
+        e: executor,
+        s: suite
+      };
+
+      const result = await db.getTimelineData(projectName, request);
+      expect(result?.baseBranchName).toEqual(baseBranch);
+      expect(result?.changeBranchName).toEqual(baseBranch);
+
+      expect(result?.baseTimestamp).toEqual(1576450196);
+      expect(result?.changeTimestamp).toBeNull();
+
+      expect(result?.data).toEqual([
+        [1576277396, 1576450196],
+        [null, null],
+        [432.783, 432.783],
+        [null, null],
+        [null, null],
+        [null, null],
+        [null, null]
+      ]);
+    });
+  });
+});
+
+afterAll(() => {
+  closeMainDb();
+});

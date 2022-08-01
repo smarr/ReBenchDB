@@ -57,7 +57,6 @@ describe('Report Generation', () => {
     it('Should have generated a summary plot', () => {
       const plotFile = getSummaryPlotFileName(outputFile);
       const plotPath = `${reportFolder}/${plotFile}`;
-      console.log(plotPath);
       expect(existsSync(plotPath)).toBeTruthy();
     });
 

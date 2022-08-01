@@ -11,12 +11,16 @@ import {
   Criterion as ApiCriterion,
   DataPoint as ApiDataPoint,
   ProfileData as ApiProfileData,
-  BenchmarkCompletion
+  BenchmarkCompletion,
+  TimelineRequest,
+  TimelineResponse,
+  PlotData
 } from './api';
 import pg, { PoolConfig, QueryConfig, QueryResultRow } from 'pg';
 import { SingleRequestOnly } from './single-requester.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
 import { getDirname } from './util.js';
+import { assert, log } from './logging.js';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -180,7 +184,7 @@ export abstract class Database {
   private readonly timelineEnabled: boolean;
 
   /** Number of bootstrap samples to take for timeline. */
-  private readonly numReplicates: number;
+  private readonly numBootstrapSamples: number;
 
   private readonly executors: Map<string, Executor>;
   private readonly suites: Map<string, Suite>;
@@ -327,19 +331,32 @@ export abstract class Database {
                             JOIN Source s ON t.sourceId = s.id
                           WHERE p.name = $1
                             AND s.commitid = $2
-                            OR s.commitid = $3`
+                            OR s.commitid = $3`,
+
+    fetchBranchNamesForChange: {
+      name: 'fetchBranchNamesForChange',
+      text: `SELECT DISTINCT branchOrTag, s.commitId
+             FROM Source s
+               JOIN Trial      tr ON tr.sourceId = s.id
+               JOIN Experiment e  ON tr.expId = e.id
+               JOIN Project    p  ON p.id = e.projectId
+             WHERE
+               p.name = $1 AND
+               (s.commitid = $2 OR s.commitid = $3)`,
+      values: <any[]>[]
+    }
   };
 
   private static readonly batchN = 50;
 
   constructor(
     config: PoolConfig,
-    numReplicates = 1000,
+    numBootstrapSamples = 1000,
     timelineEnabled = false
   ) {
-    console.assert(config !== undefined);
+    assert(config !== undefined);
     this.dbConfig = config;
-    this.numReplicates = numReplicates;
+    this.numBootstrapSamples = numBootstrapSamples;
     this.timelineEnabled = timelineEnabled;
     this.executors = new Map();
     this.suites = new Map();
@@ -464,7 +481,7 @@ export abstract class Database {
       result = await this.query(insertQ, insertVals);
     }
 
-    console.assert(result.rowCount === 1);
+    assert(result.rowCount === 1);
     cache.set(cacheKey, result.rows[0]);
     return result.rows[0];
   }
@@ -817,7 +834,7 @@ export abstract class Database {
 
       const crit = run[r.criterion];
 
-      console.assert(
+      assert(
         !(r.inv in crit),
         `${r.runid}, ${r.criterion}, ${r.inv} in ${JSON.stringify(crit)}`
       );
@@ -1049,7 +1066,7 @@ export abstract class Database {
     const q = this.queries.insertMeasurement;
     // [runId, trialId, invocation, iteration, critId, value];
     q.values = values;
-    return (await this.query(this.queries.insertMeasurement)).rowCount;
+    return (await this.query(q)).rowCount;
   }
 
   public async recordProfile(
@@ -1061,7 +1078,7 @@ export abstract class Database {
   ): Promise<number> {
     const q = this.queries.insertProfile;
     q.values = [runId, trialId, invocation, numIterations, value];
-    return (await this.query(this.queries.insertProfile)).rowCount;
+    return (await this.query(q)).rowCount;
   }
 
   public async recordTimelineJob(values: number[]): Promise<void> {
@@ -1089,7 +1106,7 @@ export abstract class Database {
         this.dbConfig.database,
         this.dbConfig.user,
         this.dbConfig.password,
-        this.numReplicates
+        this.numBootstrapSamples
       ];
       const start = startRequest();
       execFile(
@@ -1099,7 +1116,7 @@ export abstract class Database {
         async (errorCode, stdout, stderr) => {
           function handleResult() {
             if (errorCode) {
-              console.log(`timeline.R failed: ${errorCode}
+              log.debug(`timeline.R failed: ${errorCode}
               Stdout:
                 ${stdout}
 
@@ -1117,6 +1134,199 @@ export abstract class Database {
       );
     });
     return prom;
+  }
+
+  public async getBranchNames(
+    projectName: string,
+    base: string,
+    change: string
+  ): Promise<null | { baseBranchName: string; changeBranchName: string }> {
+    const q = { ...this.queries.fetchBranchNamesForChange };
+    q.values = [projectName, base, change];
+    const result = await this.query(q);
+
+    if (result.rowCount < 1) {
+      return null;
+    }
+
+    if (result.rowCount == 1) {
+      return {
+        baseBranchName: result.rows[0].branchortag,
+        changeBranchName: result.rows[0].branchortag
+      };
+    }
+
+    assert(result.rowCount == 2);
+    if (result.rows[0].commitid == base) {
+      return {
+        baseBranchName: result.rows[0].branchortag,
+        changeBranchName: result.rows[1].branchortag
+      };
+    }
+
+    assert(result.rows[0].commitid == change);
+    return {
+      baseBranchName: result.rows[1].branchortag,
+      changeBranchName: result.rows[0].branchortag
+    };
+  }
+
+  public async getTimelineData(
+    projectName: string,
+    request: TimelineRequest
+  ): Promise<TimelineResponse | null> {
+    const branches = await this.getBranchNames(
+      projectName,
+      request.baseline,
+      request.change
+    );
+
+    if (branches === null) {
+      return null;
+    }
+
+    const q = this.constructTimelineQuery(projectName, branches, request);
+    const result = await this.query(q);
+
+    if (result.rowCount < 1) {
+      return null;
+    }
+
+    const data = this.convertToTimelineResponse(
+      result.rows,
+      branches.baseBranchName,
+      branches.changeBranchName
+    );
+    return data;
+  }
+
+  private convertToTimelineResponse(
+    rows: any[],
+    baseBranchName: string,
+    changeBranchName: string
+  ): TimelineResponse {
+    let baseTimestamp: number | null = null;
+    let changeTimestamp: number | null = null;
+    const data: PlotData = [
+      [], // time stamp
+      [], // baseline bci low
+      [], // baseline median
+      [], // baseline bci high
+      [], // change bci low
+      [], // change median
+      [] // change bci high
+    ];
+
+    for (const row of rows) {
+      data[0].push(row.starttime);
+      if (row.branch == baseBranchName) {
+        if (row.iscurrent) {
+          baseTimestamp = row.starttime;
+        }
+        data[1].push(row.bci95low);
+        data[2].push(row.median);
+        data[3].push(row.bci95up);
+        data[4].push(null);
+        data[5].push(null);
+        data[6].push(null);
+      } else {
+        if (row.iscurrent) {
+          changeTimestamp = row.starttime;
+        }
+        data[1].push(null);
+        data[2].push(null);
+        data[3].push(null);
+        data[4].push(row.bci95low);
+        data[5].push(row.median);
+        data[6].push(row.bci95up);
+      }
+    }
+
+    return {
+      baseBranchName,
+      changeBranchName,
+      baseTimestamp,
+      changeTimestamp,
+      data
+    };
+  }
+
+  private constructTimelineQuery(
+    projectName: string,
+    branches: { baseBranchName: string; changeBranchName: string },
+    request: TimelineRequest
+  ): QueryConfig {
+    let sql = `
+      SELECT
+        extract(epoch from tr.startTime at time zone 'UTC')::int as startTime,
+        s.branchOrTag as branch, s.commitid IN ($1, $2) as isCurrent,
+        ti.median, ti.bci95low, ti.bci95up
+      FROM Timeline ti
+        JOIN Trial      tr ON tr.id = ti.trialId
+        JOIN Source     s  ON tr.sourceId = s.id
+        JOIN Experiment e  ON tr.expId = e.id
+        JOIN Project    p  ON p.id = e.projectId
+        JOIN Run        r  ON r.id = ti.runId
+        JOIN Executor  exe ON exe.id = r.execId
+        JOIN Benchmark  b  ON b.id = r.benchmarkId
+        JOIN Suite      su ON su.id = r.suiteId
+        JOIN Criterion  c  ON ti.criterion = c.id
+      WHERE
+        s.branchOrTag IN ($3, $4) AND
+        p.name = $5   AND
+        b.name = $6   AND
+        su.name = $7  AND
+        exe.name = $8 AND
+        c.name   = 'total'
+        ::ADDITIONAL-PARAMETERS::
+      ORDER BY tr.startTime ASC;
+    `;
+
+    let additionalParameters = '';
+    let storedQueryName = 'get-timeline-data-bpbs-';
+
+    const parameters = [
+      request.baseline,
+      request.change,
+      branches.baseBranchName,
+      branches.changeBranchName,
+      projectName,
+      request.b,
+      request.s,
+      request.e
+    ];
+
+    if (request.v) {
+      parameters.push(request.v);
+      additionalParameters += 'AND r.varValue = $' + parameters.length + ' ';
+      storedQueryName += 'v';
+    }
+
+    if (request.c) {
+      parameters.push(request.c);
+      additionalParameters += 'AND r.cores = $' + parameters.length + ' ';
+      storedQueryName += 'c';
+    }
+
+    if (request.i) {
+      parameters.push(request.i);
+      additionalParameters += 'AND r.inputSize = $' + parameters.length + ' ';
+      storedQueryName += 'i';
+    }
+
+    if (request.ea) {
+      parameters.push(request.ea);
+      additionalParameters += 'AND r.extraArgs = $' + parameters.length + ' ';
+      storedQueryName += 'ea';
+    }
+
+    sql = sql.replace('::ADDITIONAL-PARAMETERS::', additionalParameters);
+
+    return {
+      name: storedQueryName,
+      text: sql,
+      values: parameters
+    };
   }
 }
 

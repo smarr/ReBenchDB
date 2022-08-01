@@ -157,3 +157,66 @@ export interface VersionInfo {
   name: string;
   version: string;
 }
+
+export interface TimelineRequest {
+  /** commit id for baseline */
+  baseline: string;
+
+  /** commit id for change */
+  change: string;
+
+  /** benchmark name */
+  b: string;
+
+  /** exe name */
+  e: string;
+
+  /** suite name */
+  s: string;
+
+  /** varValue */
+  v?: string;
+
+  /** cores */
+  c?: string;
+
+  /** input size */
+  i?: string;
+
+  /** extra args */
+  ea?: string;
+}
+
+export interface TimelineResponse {
+  baseBranchName: string;
+  changeBranchName: string;
+  baseTimestamp: number | null;
+  changeTimestamp: number | null;
+  data: PlotData;
+}
+
+export type PlotData = [
+  number[] /** UNIX time stamps */,
+
+  /** Baseline Branch */
+
+  /** bootstrap confidence interval, 95th, low,  millisecond values */
+  (number | null)[],
+
+  /** median, millisecond values */
+  (number | null)[],
+
+  /** bootstrap confidence interval, 95th, high, millisecond values */
+  (number | null)[],
+
+  /** Change Branch */
+
+  /** bootstrap confidence interval, 95th, low, millisecond values */
+  (number | null)[],
+
+  /** median, millisecond values */
+  (number | null)[],
+
+  /** bootstrap confidence interval, 95th, high, millisecond values */
+  (number | null)[]
+];

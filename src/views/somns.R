@@ -408,9 +408,9 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
   # data_ea <- data_b
 
   for (b in levels(data_es$bench)) { data_b <- data_es |> filter(bench == b) |> droplevels()
-    for (v in levels(data_b$varvalue)) {   data_v  <- data_b |> filter(varvalue == v)   |> droplevels()
-    for (c in levels(data_v$cores)) {      data_c  <- data_v |> filter(cores == c)      |> droplevels()
-    for (i in levels(data_c$inputsize)) {  data_i  <- data_c |> filter(inputsize == i)  |> droplevels()
+    for (v  in levels(data_b$varvalue)) {   data_v  <- data_b |> filter(varvalue == v)   |> droplevels()
+    for (c  in levels(data_v$cores)) {      data_c  <- data_v |> filter(cores == c)      |> droplevels()
+    for (i  in levels(data_c$inputsize)) {  data_i  <- data_c |> filter(inputsize == i)  |> droplevels()
     for (ea in levels(data_i$extraargs)) { data_ea <- data_i |> filter(extraargs == ea) |> droplevels()
 
     for (en in levels(data_ea$envid)) { data_en <- data_ea |> filter(envid == en) |> droplevels()
@@ -429,7 +429,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
 
     # capture the beginning of the path but leave the last element of it
     # this regex is also used in render.js's renderBenchmark() function
-    cmdline <- str_replace_all(data_i$cmdline[[1]], "^([^\\s]*)\\/([^\\s]+\\s.*$)", "\\2")
+    cmdline <- str_replace_all(data_en$cmdline[[1]], "^([^\\s]*)\\/([^\\s]+\\s.*$)", "\\2")
 
     # format all environment information into a single string
     if (!is.null(environments)) {
@@ -576,6 +576,20 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
           out('<button type="button" class="btn btn-sm btn-profile" data-content="', ids, '"></button>\n')
         }
       }
+
+      benchmark_id_json <- paste0(
+        '{"b":"',  b,
+        '","e":"', levels(data_en$exe),
+        '","s":"', levels(data_en$suite), '"')
+
+      if (length(levels(data_b$varvalue))  > 1) { benchmark_id_json <- paste0(benchmark_id_json, ',"v":"', v, '"') }
+      if (length(levels(data_v$cores))     > 1) { benchmark_id_json <- paste0(benchmark_id_json, ',"c":"', c, '"') }
+      if (length(levels(data_c$inputsize)) > 1) { benchmark_id_json <- paste0(benchmark_id_json, ',"i":"', i, '"') }
+      if (length(levels(data_i$extraargs)) > 1) { benchmark_id_json <- paste0(benchmark_id_json, ',"ea":"', ea, '"') }
+
+      benchmark_id_json <- paste0(benchmark_id_json, '}')
+
+      out('<button type="button" class="btn btn-sm btn-timeline" data-content=\'', benchmark_id_json, '\'></button>\n')
 
       out('</td>');
       out('</tr>\n')

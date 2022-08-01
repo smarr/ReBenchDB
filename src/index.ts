@@ -4,7 +4,7 @@ import Koa from 'koa';
 import koaBody from 'koa-body';
 import Router from 'koa-router';
 import { DatabaseWithPool } from './db.js';
-import { BenchmarkData, BenchmarkCompletion } from './api.js';
+import { BenchmarkData, BenchmarkCompletion, TimelineRequest } from './api.js';
 import { createValidator } from './api-validator.js';
 import { ValidateFunction } from 'ajv';
 
@@ -31,6 +31,7 @@ import { processTemplate } from './templates.js';
 import { dbConfig, robustPath, siteConfig } from './util.js';
 import { createGitHubClient } from './github.js';
 import { getDirname } from './util.js';
+import { log } from './logging.js';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -38,7 +39,7 @@ const packageJson = JSON.parse(
   readFileSync(robustPath('../package.json'), 'utf-8')
 );
 
-console.log('Starting ReBenchDB Version ' + packageJson.version);
+log.info('Starting ReBenchDB Version ' + packageJson.version);
 
 const port = process.env.PORT || 33333;
 
@@ -88,7 +89,7 @@ router.get('/rebenchdb/get-exp-data/:expId', async (ctx) => {
     ctx.type = 'html';
     ctx.set('Cache-Control', 'no-cache');
   } else {
-    console.log(data.downloadUrl);
+    log.debug(data.downloadUrl);
     ctx.redirect(data.downloadUrl);
   }
 
@@ -213,31 +214,57 @@ router.post(
   }
 );
 
+router.post(
+  '/rebenchdb/dash/:projectName/timelines',
+  koaBody(),
+  async (ctx) => {
+    const timelineRequest = <TimelineRequest>ctx.request.body;
+    const result = await db.getTimelineData(
+      ctx.params.projectName,
+      timelineRequest
+    );
+    if (result === null) {
+      ctx.body = { error: 'Requested data was not found' };
+      ctx.status = 404;
+    } else {
+      ctx.body = result;
+      ctx.status = 200;
+    }
+    ctx.type = 'json';
+  }
+);
+
 if (DEV) {
   router.get(`${siteConfig.staticUrl}/:filename*`, async (ctx) => {
-    console.log(`serve ${ctx.params.filename}`);
+    const filename = ctx.params.filename;
+    log.debug(`serve ${filename}`);
     let path: string;
+
     // TODO: robustPath?
-    if (ctx.params.filename.endsWith('.css')) {
+    if (filename.endsWith('.css')) {
       ctx.type = 'css';
-      path = `${__dirname}/../../resources/${ctx.params.filename}`;
-    } else if (ctx.params.filename.endsWith('.js')) {
+      path = `${__dirname}/../../resources/${filename}`;
+    } else if (filename.endsWith('.js')) {
       ctx.type = 'application/javascript';
-      path = `${__dirname}/views/${ctx.params.filename}`;
-    } else if (ctx.params.filename.endsWith('.map')) {
+      if (filename.includes('uPlot')) {
+        path = `${__dirname}/../../resources/${filename}`;
+      } else {
+        path = `${__dirname}/views/${filename}`;
+      }
+    } else if (filename.endsWith('.map')) {
       ctx.type = 'application/json';
-      path = `${__dirname}/views/${ctx.params.filename}`;
-    } else if (ctx.params.filename.endsWith('.svg')) {
+      path = `${__dirname}/views/${filename}`;
+    } else if (filename.endsWith('.svg')) {
       ctx.type = 'image/svg+xml';
-      path = `${__dirname}/../../resources/${ctx.params.filename}`;
+      path = `${__dirname}/../../resources/${filename}`;
     } else {
-      throw new Error(`Unsupported file type ${ctx.params.filename}`);
+      throw new Error(`Unsupported file type. Filename: ${filename}`);
     }
     ctx.body = readFileSync(path);
   });
 
   router.get(`/src/views/:filename*`, async (ctx) => {
-    console.log(`serve ${ctx.params.filename}`);
+    log.debug(`serve ${ctx.params.filename}`);
     let path: string;
     if (ctx.params.filename.endsWith('.ts')) {
       ctx.type = 'application/typescript';
@@ -249,7 +276,7 @@ if (DEV) {
   });
 
   router.get(`${siteConfig.staticUrl}/exp-data/:filename`, async (ctx) => {
-    console.log(`serve ${ctx.params.filename}`);
+    log.debug(`serve ${ctx.params.filename}`);
     ctx.body = readFileSync(
       `${__dirname}/../../resources/exp-data/${ctx.params.filename}`
     );
@@ -261,7 +288,7 @@ if (DEV) {
   router.get(
     `${siteConfig.reportsUrl}/:change/figure-html/:filename`,
     async (ctx) => {
-      console.log(`serve ${ctx.params.filename}`);
+      log.debug(`serve ${ctx.params.filename}`);
       const reportPath = `${__dirname}/../../resources/reports`;
       ctx.body = readFileSync(
         `${reportPath}/${ctx.params.change}/figure-html/${ctx.params.filename}`
@@ -288,13 +315,12 @@ const validateFn: ValidateFunction = DEBUG ? createValidator() : <any>undefined;
 function validateSchema(data: BenchmarkData, ctx: Router.IRouterContext) {
   const result = validateFn(data);
   if (!result) {
-    console.log('Data validation failed.');
-    console.error(validateFn.errors);
+    log.error('Data validation failed.', validateFn.errors);
     ctx.status = 500;
     ctx.body = `Request does not validate:
 ${validateFn.errors}`;
   } else {
-    console.log('Data validated successfully.');
+    log.debug('Data validated successfully.');
   }
 }
 
@@ -325,16 +351,16 @@ router.put(
       const recordedRuns = await db.recordMetaDataAndRuns(data);
       db.recordAllData(data)
         .then(([recMs, recPs]) =>
-          console.log(
+          log.info(
             // eslint-disable-next-line max-len
             `/rebenchdb/results: stored ${recMs} measurements, ${recPs} profiles`
           )
         )
         .catch((e) => {
-          console.error(
-            `/rebenchdb/results failed to store measurements: ${e}`
+          log.error(
+            '/rebenchdb/results failed to store measurements:',
+            e.stack
           );
-          console.error(e.stack);
         });
 
       ctx.body =
@@ -344,7 +370,7 @@ router.put(
     } catch (e: any) {
       ctx.status = 500;
       ctx.body = `${e.stack}`;
-      console.log(e.stack);
+      log.error(e, e.stack);
     }
 
     await completeRequest(start, db, 'put-results');
@@ -353,7 +379,7 @@ router.put(
 
 const github = createGitHubClient(siteConfig);
 if (github === null) {
-  console.log(
+  log.info(
     'Reporting to GitHub is not yet enabled.' +
       ' Make sure GITHUB_APP_ID and GITHUB_PK are set to enable it.'
   );
@@ -377,7 +403,7 @@ router.put('/rebenchdb/completion', koaBody(), async (ctx) => {
 
   try {
     await reportCompletion(dbConfig, db, github, data);
-    console.log(
+    log.debug(
       `/rebenchdb/completion: ${data.projectName}` +
         `${data.experimentName} was completed`
     );
@@ -387,8 +413,7 @@ router.put('/rebenchdb/completion', koaBody(), async (ctx) => {
   } catch (e: any) {
     ctx.status = 500;
     ctx.body = `Failed to record completion: ${e}\n${e.stack}`;
-    console.error(`/rebenchdb/completion failed to record completion: ${e}`);
-    console.log(e.stack);
+    log.error('/rebenchdb/completion failed to record completion:', e);
   }
 });
 
@@ -396,12 +421,12 @@ app.use(router.routes());
 app.use(router.allowedMethods());
 
 (async () => {
-  console.log('Initialize Database');
+  log.info('Initialize Database');
   try {
     await db.initializeDatabase();
   } catch (e: any) {
     if (e.code == 'ECONNREFUSED') {
-      console.log(
+      log.error(
         `Unable to connect to database on port ${e.address}:${e.port}\n` +
           'ReBenchDB requires a Postgres database to work.'
       );
@@ -411,6 +436,6 @@ app.use(router.allowedMethods());
 
   initPerfTracker();
 
-  console.log(`Starting server on http://localhost:${port}`);
+  log.info(`Starting server on http://localhost:${port}`);
   app.listen(port);
 })();
