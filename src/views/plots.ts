@@ -158,7 +158,7 @@ function formatMs(_, val) {
 }
 
 function seriesConfig(
-  branchName: string,
+  branchName: string | null,
   metric: string,
   color: string,
   width: number,
@@ -166,7 +166,9 @@ function seriesConfig(
   largerPointFill: string | undefined = undefined
 ) {
   let label;
-  if (branchName !== '' && metric !== '') {
+  if (branchName === null && metric !== '') {
+    label = metric;
+  } else if (branchName !== '' && metric !== '') {
     label = `${branchName} ${metric}`;
   } else {
     label = '';
@@ -237,6 +239,40 @@ function addDataSeriesToHighlightResult(
   }
 }
 
+export function renderTimelinePlot(
+  response: TimelineResponse,
+  jqInsert: any
+): any {
+  const series = [
+    {},
+    seriesConfig(null, 'BCI 95th, low', baselineLight, 1),
+    seriesConfig(null, 'Median', baselineColor, 2),
+    seriesConfig(null, 'BCI 95th, high', baselineLight, 1),
+  ];
+
+  const options = {
+    width: 800,
+    height: 240,
+    title: 'Run time in ms',
+    tzDate: (ts: number) => uPlot.tzDate(new Date(ts * 1000), 'UTC'),
+    scales: { x: {}, y: {} },
+    series,
+    bands: [
+      { series: [1, 2], fill: baselineLight, dir: 1 },
+      { series: [2, 3], fill: baselineLight, dir: 1 }
+    ],
+    axes: [
+      {},
+      {
+        values: (_, vals) => vals.map((v) => v + 'ms'),
+        size: computeAxisLabelSpace
+      }
+    ]
+  };
+
+  return new uPlot(options, response.data, jqInsert[0]);
+}
+
 export function renderComparisonTimelinePlot(
   response: TimelineResponse,
   jqInsert: any
@@ -274,7 +310,7 @@ export function renderComparisonTimelinePlot(
   const options = {
     width: 576,
     height: 240,
-    title: 'Runtime in ms',
+    title: 'Run time in ms',
     tzDate: (ts: number) => uPlot.tzDate(new Date(ts * 1000), 'UTC'),
     scales: { x: {}, y: {} },
     series,

@@ -1,14 +1,38 @@
-import { renderBenchmarks, renderTimelinePlots } from './render.js';
+import type { TimelineResponse } from 'api.js';
+import { renderTimelinePlot } from './plots.js';
 
 const projectId = $('#project-id').attr('value');
-const benchmarksP = fetch(`/rebenchdb/dash/${projectId}/benchmarks`);
-const timelineP = fetch(`/rebenchdb/dash/${projectId}/timeline`);
+
+async function loadPlotOnce(this: any) {
+  const thisJq = $(this);
+  if (thisJq.data('requested')) {
+    return;
+  }
+
+  thisJq.data('requested', true);
+
+  const runId = thisJq.data('runid');
+  const timelineP = await fetch(
+    `/rebenchdb/dash/${projectId}/timeline/${runId}`
+  );
+  const response = <TimelineResponse>await timelineP.json();
+  renderTimelinePlot(response, thisJq);
+  thisJq.off('appear', onPlotAppearing);
+}
+
+function onPlotAppearing(_event, allAppearedElements) {
+  allAppearedElements.each(loadPlotOnce);
+}
 
 $(async () => {
-  const benchmarksResponse = await benchmarksP;
-  const benchmarks = (await benchmarksResponse.json()).benchmarks;
-  renderBenchmarks(benchmarks);
+  const timelineJq = $('.timeline-plot');
+  // activate the appear event
+  (<any>timelineJq).appear();
+  timelineJq.on('appear', onPlotAppearing);
 
-  const timelineResponse = await timelineP;
-  renderTimelinePlots(await timelineResponse.json());
+  timelineJq.each((i, e) => {
+    if (i < 10) {
+      loadPlotOnce.call(e);
+    }
+  });
 });

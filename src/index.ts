@@ -66,8 +66,10 @@ router.get('/:projectName', async (ctx) => {
 });
 
 router.get('/timeline/:projectId', async (ctx) => {
+  const projectId = Number(ctx.params.projectId);
   ctx.body = processTemplate('timeline.html', {
-    project: await db.getProject(Number(ctx.params.projectId))
+    project: await db.getProject(projectId),
+    benchmarks: await db.getLatestBenchmarksForTimelineView(projectId)
   });
   ctx.type = 'html';
 });
@@ -119,8 +121,14 @@ router.get('/rebenchdb/dash/:projectId/benchmarks', async (ctx) => {
   await completeRequest(start, db, 'project-benchmarks');
 });
 
-router.get('/rebenchdb/dash/:projectId/timeline', async (ctx) => {
-  ctx.body = await dashTimelineForProject(db, Number(ctx.params.projectId));
+router.get('/rebenchdb/dash/:projectId/timeline/:runId', async (ctx) => {
+  ctx.body = await db.getTimelineForRun(
+    Number(ctx.params.projectId),
+    Number(ctx.params.runId)
+  );
+  if (ctx.body === null) {
+    ctx.status = 500;
+  }
   ctx.type = 'application/json';
 });
 

@@ -16,6 +16,21 @@
     {{/project.description}}
   </div>
 
-  <div id="benchmarks"></div>
+  {{#benchmarks}}
+  {{#exec}}
+  <div class="exe-suite-group">
+    <h3 id="se-{{suiteId}}-{{execId}}">{{suiteName}}</h3>
+    <div class="title-executor">Executor: {{execName}}</div>
+
+    {{#benchmarks}}
+    <h4>{{benchName}}</h4>
+    <p>{{cmdline}}</p>
+
+    <div class="timeline-plot" data-runid="{{runId}}"></div>
+    {{/benchmarks}}
+  </div>
+
+  {{/exec}}
+  {{/benchmarks}}
 </body>
 </html>
