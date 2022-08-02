@@ -1,12 +1,15 @@
-import { TestDatabase, createAndInitializeDB } from './db-testing.js';
+import {
+  TestDatabase,
+  createAndInitializeDB,
+  closeMainDb
+} from './db-testing.js';
 import {
   dashStatistics,
   dashResults,
   dashChanges,
   dashProjects,
   dashDataOverview,
-  dashBenchmarksForProject,
-  dashTimelineForProject
+  dashBenchmarksForProject
 } from '../src/dashboard';
 import { BenchmarkData } from '../src/api.js';
 import { readFileSync } from 'fs';
@@ -32,7 +35,7 @@ describe('Test Dashboard on empty DB', () => {
 
   it('Should get empty results request', async () => {
     const result = await dashResults(0, db);
-    expect(result.timeSeries).toEqual({});
+    expect(result).toEqual([]);
   });
 
   it('Should get empty statistics', async () => {
@@ -106,9 +109,14 @@ describe('Test Dashboard with basic test data loaded', () => {
   });
 
   it('Should get results', async () => {
-    const results = (await dashResults(1, db)).timeSeries;
-    expect(results['NBody']).toHaveLength(numExperiments * 3);
-    expect(results['NBody'][0]).toBeCloseTo(432.783, 2);
+    const results = await dashResults(1, db);
+    const nBody = results[0];
+    expect(nBody.benchmark).toEqual('NBody');
+    expect(nBody.values).toHaveLength(numExperiments * 3);
+    expect(nBody.values).toEqual([
+      383.821, 482.53, 432.783, 432.783, 383.821, 482.53, 432.783, 482.53,
+      383.821
+    ]);
   });
 
   it('Should get statistics', async () => {
@@ -175,24 +183,48 @@ describe('Test Dashboard with basic test data loaded', () => {
     expect(data[0].benchmark).toEqual('NBody');
   });
 
-  it('Should get stats for the timeline', async () => {
+  it('Should get meta data for the timeline', async () => {
     await db.awaitQuiescentTimelineUpdater();
-    const { timeline, details } = await dashTimelineForProject(db, 1);
+    const response = await db.getLatestBenchmarksForTimelineView(1);
+    expect(response).toEqual([
+      {
+        exec: [
+          {
+            benchmarks: [
+              {
+                benchId: 1,
+                benchName: 'NBody',
+                cmdline:
+                  'som -t1   core-lib/Benchmarks/Harness.ns NBody  1 0 10000',
+                runId: 1
+              }
+            ],
+            execId: 1,
+            execName: 'SOMns-graal'
+          }
+        ],
+        suiteId: 1,
+        suiteName: 'macro-startup'
+      }
+    ]);
+  });
 
-    expect(timeline).toHaveLength(numExperiments);
-    expect(details).toHaveLength(numExperiments);
+  it('Should get the timeline data for a run', async () => {
+    await db.awaitQuiescentTimelineUpdater();
+    const response = await db.getTimelineForRun(1, 1);
 
-    expect(timeline[0].mean).toEqual(433.04468);
-    expect(timeline[0].maxval).toEqual(482.53);
-    expect(timeline[0].minval).toEqual(383.821);
-    expect(timeline[0].numsamples).toEqual(3);
-    expect(timeline[0].runid).toEqual(1);
-    expect(timeline[0].trialid).toEqual(1);
-
-    expect(details[0].trialid).toEqual(1);
-    expect(details[0].id).toEqual(1);
-    expect(details[0].username).toEqual('smarr');
-    expect(details[0].expname).toEqual('Small Test Case');
+    expect(response).toEqual({
+      baseBranchName: null,
+      baseTimestamp: null,
+      changeBranchName: null,
+      changeTimestamp: null,
+      data: [
+        [1576277396, 1576450196],
+        [null, null],
+        [432.783, 432.783],
+        [null, null]
+      ]
+    });
   });
 
   it('Should determine a baseline commit for comparison', async () => {
@@ -217,4 +249,8 @@ describe('Test Dashboard with basic test data loaded', () => {
   // TODO
   // dashCompare
   // dashGetExpData
+});
+
+afterAll(() => {
+  closeMainDb();
 });

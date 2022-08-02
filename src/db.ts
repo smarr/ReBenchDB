@@ -15,7 +15,8 @@ import {
   TimelineRequest,
   TimelineResponse,
   PlotData,
-  FullPlotData
+  FullPlotData,
+  TimelineSuite
 } from './api';
 import pg, { PoolConfig, QueryConfig, QueryResultRow } from 'pg';
 import { SingleRequestOnly } from './single-requester.js';
@@ -1212,7 +1213,7 @@ export abstract class Database {
 
   public async getLatestBenchmarksForTimelineView(
     projectId: number
-  ): Promise<any[] | null> {
+  ): Promise<TimelineSuite[] | null> {
     const q = { ...this.queries.fetchLatestBenchmarksForProject };
     q.values = [projectId];
 
@@ -1224,14 +1225,14 @@ export abstract class Database {
     let suiteId: number | null = null;
     let exeId: number | null = null;
 
-    const suites: any = [];
-    let currentSuite: any = null;
+    const suites: TimelineSuite[] = [];
+    let currentSuite: TimelineSuite | null = null;
     let currentExec: any = null;
 
     for (const r of result.rows) {
       if (r.suiteid !== suiteId) {
         currentSuite = {
-          suiteId: r.suiteId,
+          suiteId: r.suiteid,
           suiteName: r.suitename,
           exec: []
         };
@@ -1245,7 +1246,7 @@ export abstract class Database {
           execName: r.execname,
           benchmarks: []
         };
-        currentSuite.exec.push(currentExec);
+        currentSuite?.exec.push(currentExec);
         exeId = r.execid;
       }
 
@@ -1367,7 +1368,8 @@ export abstract class Database {
   }
 
   private constructTimelineQueryForRun(
-    projectId: number, runId: number
+    projectId: number,
+    runId: number
   ): QueryConfig {
     const sql = `
       SELECT

@@ -242,3 +242,22 @@ export interface AllResults {
 }
 
 export type PlotData = FullPlotData | BasePlotData;
+
+export interface TimelineSuite {
+  suiteId: number;
+  suiteName: string;
+  exec: TimelineExecutor[];
+}
+
+export interface TimelineExecutor {
+  execId: number;
+  execName: string;
+  benchmarks: TimelineBenchmark[];
+}
+
+export interface TimelineBenchmark {
+  benchId: number;
+  benchName: string;
+  cmdline: string;
+  runId: number;
+}
