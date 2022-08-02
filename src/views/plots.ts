@@ -1,6 +1,4 @@
 import type { PlotData, TimelineResponse } from 'api';
-import type { Data } from 'plotly.js';
-declare const Plotly: any;
 import uPlot from '/static/uPlot.esm.min.js';
 
 function simpleSlug(str) {

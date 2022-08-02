@@ -31,7 +31,6 @@
     "@types/koa": "2.13.5",
     "@types/koa-router": "7.4.4",
     "@types/mustache": "4.2.1",
-    "@types/plotly.js": "1.54.22",
     "@types/pg": "8.6.5",
     "@typescript-eslint/eslint-plugin": "5.30.7",
     "@typescript-eslint/parser": "5.30.7",
