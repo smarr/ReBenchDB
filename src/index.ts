@@ -20,7 +20,6 @@ import {
   dashCompare,
   dashProjects,
   dashBenchmarksForProject,
-  dashTimelineForProject,
   dashDataOverview,
   dashGetExpData,
   reportCompletion,

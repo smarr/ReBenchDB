@@ -1,3 +1,4 @@
+import { AllResults } from 'api.js';
 import { renderResultsPlots, renderTimelinePlot } from './plots.js';
 
 function filterCommitMessage(msg) {
@@ -174,11 +175,11 @@ function renderAllResults(project) {
 
   const resultsP = fetch(`/rebenchdb/dash/${project.id}/results`);
   resultsP.then(async (resultsResponse) => {
-    const results = await resultsResponse.json();
-    renderResultsPlots(results.timeSeries, project.id);
+    const results = <AllResults[]>await resultsResponse.json();
+    renderResultsPlots(results, project.id);
   });
 
-  return `<div id="p${project.id}-results"></div>`;
+  return `<div id="p${project.id}-results" class="timeline-single"></div>`;
 }
 
 export function renderProject(project: any): string {
@@ -227,54 +228,6 @@ export async function populateStatistics(statsP: any): Promise<void> {
   table.append(
     `<tr class="table-info"><td>Version</td><td>${stats.version}</td></tr>`
   );
-}
-
-export function renderBenchmarks(benchmarks: any): void {
-  let suiteName = null;
-  let content = '';
-  for (const benchmark of benchmarks) {
-    if (suiteName !== benchmark.suitename) {
-      if (content !== '') {
-        content += '</div>'; // closing card-columns
-        $('#benchmarks').append(content);
-        content = '';
-      }
-
-      content += `<h3>${benchmark.suitename}</h3>`;
-      suiteName = benchmark.suitename;
-      content += `<div class="card-columns">`;
-    }
-
-    content += renderBenchmark(benchmark);
-  }
-
-  // handling the last benchmark suite
-  if (content !== '') {
-    content += '</div>'; // closing card-columns
-    $('#benchmarks').append(content);
-  }
-}
-
-function renderBenchmark(benchmark) {
-  const cmdline = simplifyCmdline(benchmark.cmdline);
-
-  const plotId =
-    `${benchmark.benchid}-${benchmark.suiteid}` +
-    `-${benchmark.execid}-${benchmark.hostname}`;
-  const result = `
-    <div class="card">
-      <div class="card-body">
-        <h5 class="card-title">${benchmark.benchmark}</h5>
-        <p class="card-text"><small class="text-muted">
-        ${benchmark.execname}, ${benchmark.hostname}<br/>
-        <code>${cmdline}</code></small></p>
-        <div class="timeline-plot"
-          id="plot-${plotId}"
-          class="card-img-top"></div>
-      </div>
-    </div>`;
-
-  return result;
 }
 
 export function renderTimelinePlots(data: any): void {

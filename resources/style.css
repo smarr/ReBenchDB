@@ -324,7 +324,10 @@ td.warmup-plot {
   display: none !important;
 }
 
-.u-legend tr:nth-child(1), .u-legend tr:nth-child(3), .u-legend tr:nth-child(6) {
+.timeline-multi .u-legend tr:nth-child(1),
+.timeline-multi .u-legend tr:nth-child(3),
+.timeline-multi .u-legend tr:nth-child(6),
+.timeline-single .u-legend tr:nth-child(2) {
   display: table-row !important;
 }
 

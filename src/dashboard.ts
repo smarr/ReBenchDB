@@ -2,11 +2,12 @@ import { readFileSync, existsSync, unlinkSync, rmSync } from 'fs';
 import { execFile, ChildProcessPromise } from 'promisify-child-process';
 import { Database, DatabaseConfig, Source } from './db.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
-import { BenchmarkCompletion } from './api.js';
+import { AllResults, BenchmarkCompletion } from './api.js';
 import { GitHub } from './github.js';
 import { robustPath, siteConfig } from './util.js';
 import { getDirname } from './util.js';
 import { log } from './logging.js';
+import { QueryConfig } from 'pg';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -27,35 +28,39 @@ export async function dashProjects(db: Database): Promise<{ projects: any[] }> {
 export async function dashResults(
   projectId: number,
   db: Database
-): Promise<{ timeSeries: Record<string, number[]> }> {
-  const result = await db.query(
-    `SELECT rank_filter.* FROM (
-      SELECT t.startTime, m.iteration, value, b.name as benchmark,
-        rank() OVER (
-          PARTITION BY b.id
-          ORDER BY t.startTime DESC, m.iteration DESC
-        )
-        FROM Measurement m
-          JOIN Trial t ON  m.trialId = t.id
-          JOIN Experiment e ON t.expId = e.id
-          JOIN Run r ON m.runId = r.id
-          JOIN Benchmark b ON r.benchmarkId = b.id
-        WHERE projectId = $1
-        ORDER BY t.startTime, m.iteration
-      ) rank_filter WHERE RANK <= 100`,
-    [projectId]
-  );
-  // dropped to avoid getting too much data:
-  //           trialId, iteration, c.unit,
-  //           JOIN Criterion c ON criterion = c.id
-  const timeSeries: Record<string, number[]> = {};
-  for (const r of result.rows) {
-    if (!(r.benchmark in timeSeries)) {
-      timeSeries[r.benchmark] = [];
-    }
-    timeSeries[r.benchmark].push(r.value);
-  }
-  return { timeSeries };
+): Promise<AllResults[]> {
+  const q: QueryConfig = {
+    name: 'all-results',
+    text: ` WITH Results AS (
+              SELECT
+                    value, b.name as benchmark,
+                    rank() OVER (
+                      PARTITION BY b.id
+                      ORDER BY t.startTime DESC, m.iteration DESC
+                    )
+                    FROM Measurement m
+                      JOIN Trial t ON  m.trialId = t.id
+                      JOIN Experiment e ON t.expId = e.id
+                      JOIN Run r ON m.runId = r.id
+                      JOIN Benchmark b ON r.benchmarkId = b.id
+                      JOIN Criterion c ON m.criterion = c.id
+                    WHERE projectId = $1 AND
+                      c.name = 'total'
+                    ORDER BY t.startTime, m.iteration
+            ),
+            LastHundred AS (
+              SELECT rank, value, benchmark
+              FROM Results
+              WHERE rank <= 100
+              ORDER BY benchmark, rank ASC
+            )
+            SELECT array_agg(value) as values, benchmark
+            FROM LastHundred
+            GROUP BY benchmark;`,
+    values: [projectId]
+  };
+  const result = await db.query(q);
+  return result.rows;
 }
 
 export async function dashProfile(

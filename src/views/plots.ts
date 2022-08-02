@@ -1,153 +1,55 @@
-import type { PlotData, TimelineResponse } from 'api';
+import type { AllResults, PlotData, TimelineResponse } from 'api';
 import uPlot from '/static/uPlot.esm.min.js';
 
 function simpleSlug(str) {
   return str.replace(/[\W_]+/g, '');
 }
 
-export function renderResultsPlots(timeSeries: any, projectId: string): void {
+export function renderResultsPlots(
+  data: AllResults[],
+  projectId: string
+): void {
   let plotDivs = '';
-  for (const series in timeSeries) {
-    const slug = simpleSlug(series);
+  for (const e of data) {
+    const slug = simpleSlug(e.benchmark);
     plotDivs +=
-      `<h6>${series}</h6>` + `<div id="p${projectId}-results-${slug}"></div>`;
+      `<h6>${e.benchmark}</h6>` +
+      `<div id="p${projectId}-results-${slug}"></div>`;
   }
 
   $(`#p${projectId}-results`).append(plotDivs);
 
-  for (const series in timeSeries) {
-    const slug = simpleSlug(series);
+  for (const e of data) {
+    const slug = simpleSlug(e.benchmark);
     const id = `p${projectId}-results-${slug}`;
-    renderResultsPlot(timeSeries[series], id);
+    renderResultsPlot(e.values, document.getElementById(id));
   }
 }
 
-function renderResultsPlot(timeSeries, divId) {
-  const index: number[] = [];
-
-  const trace1: Data = {
-    x: <number[]>[],
-    y: <number[]>[],
-    type: 'scatter',
-    mode: 'lines',
-    name: 'PUT /results',
-    line: {
-      color: '#97c4f0',
-      width: 3
-    }
-  };
-
-  trace1.y = timeSeries;
-  const data: Data[] = [trace1];
-
-  const layout = {
-    height: 200,
-    margin: {
-      t: 0,
-      l: 60,
-      b: 40
-    },
-    yaxis: {
-      title: 'Time in ms'
-    }
-  };
-
-  for (let i = 1; i <= timeSeries.length; i += 1) {
-    index.push(i);
-  }
-  trace1.x = index;
-
-  Plotly.newPlot(divId, data, layout);
-}
-
-export function renderTimelinePlot(key: any, results: any): void {
-  // split results into branches
-  const branches = new Map();
-
-  for (const r of results) {
-    const branch = r.trial.branchortag;
-    if (!branches.has(branch)) {
-      branches.set(branch, {
-        lower: [],
-        middle: [],
-        upper: [],
-        result: [],
-        x: [],
-        typeLower: '',
-        typeUpper: '',
-        typeMiddle: ''
-      });
-    }
-
-    const data = branches.get(branch);
-    if (r.bci95low !== null) {
-      // we got a confidence interval
-      data.lower.push(r.bci95low);
-      data.middle.push(r.median);
-      data.upper.push(r.bci95up);
-      data.typeLower = 'BCI 95%';
-      data.typeUpper = 'BCI 95%';
-      data.typeMiddle = 'median';
-    } else {
-      // no confidence interval, simply min/max/mean
-      data.lower.push(r.minval);
-      data.middle.push(r.mean);
-      data.upper.push(r.maxval);
-      data.typeLower = 'minimum';
-      data.typeUpper = 'maximum';
-      data.typeMiddle = 'mean';
-    }
-    data.x.push(r.trial.start);
-    data.result.push(r);
+function renderResultsPlot(values: number[], targetElem: HTMLElement | null) {
+  const indexes = new Array(values.length);
+  for (let i = 1; i <= values.length; i += 1) {
+    indexes[i - 1] = i;
   }
 
-  // for each branch, we have three traces, the lower, middle, and upper one
-  // lower/upper are thrown as bands around the middle trace
-  const traces: any[] = [];
+  const series = [{}, seriesConfig(null, 'Run time', baselineColor, 2)];
 
-  for (const [branch, data] of branches.entries()) {
-    traces.push({
-      x: data.x,
-      y: data.lower,
-      line: { width: 0 },
-      marker: { color: '444' },
-      mode: 'lines',
-      name: `${branch} ${data.typeLower}`,
-      type: 'scatter'
-    });
-
-    traces.push({
-      x: data.x,
-      y: data.middle,
-      fill: 'tonexty',
-      fillcolor: 'rgba(68, 68, 68, 0.3)',
-      line: { color: 'rgb(31, 119, 180)' },
-      mode: 'lines',
-      name: `${branch} ${data.typeMiddle}`,
-      type: 'scatter'
-    });
-
-    traces.push({
-      x: data.x,
-      y: data.upper,
-      fill: 'tonexty',
-      fillcolor: 'rgba(68, 68, 68, 0.3)',
-      line: { width: 0 },
-      marker: { color: '444' },
-      mode: 'lines',
-      name: `${branch} ${data.typeUpper}`,
-      type: 'scatter'
-    });
-  }
-
-  const layout = {
-    showlegend: false,
-    height: 350,
-    width: 350,
-    yaxis: { title: 'Run Time (ms)' }
+  const options = {
+    width: 750,
+    height: 240,
+    title: 'Run time in ms',
+    scales: { x: { time: false }, y: {} },
+    series,
+    axes: [
+      {},
+      {
+        values: (_, vals) => vals.map((v) => v + 'ms'),
+        size: computeAxisLabelSpace
+      }
+    ]
   };
 
-  Plotly.newPlot(key, traces, layout);
+  return new uPlot(options, [indexes, values], targetElem);
 }
 
 function formatMs(_, val) {
@@ -218,7 +120,8 @@ function computeAxisLabelSpace(self, axisTickLabels, axisIdx, cycleNum) {
     axisSize += self.ctx.measureText(longest).width / devicePixelRatio;
   }
 
-  return Math.ceil(axisSize);
+  const extraPadding = 3; // leave just a bit more space
+  return Math.ceil(axisSize + extraPadding);
 }
 
 function addDataSeriesToHighlightResult(
@@ -247,7 +150,7 @@ export function renderTimelinePlot(
     {},
     seriesConfig(null, 'BCI 95th, low', baselineLight, 1),
     seriesConfig(null, 'Median', baselineColor, 2),
-    seriesConfig(null, 'BCI 95th, high', baselineLight, 1),
+    seriesConfig(null, 'BCI 95th, high', baselineLight, 1)
   ];
 
   const options = {
