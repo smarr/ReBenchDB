@@ -255,13 +255,6 @@ export function renderBenchmarks(benchmarks: any): void {
   }
 }
 
-export function simplifyCmdline(cmdline: string): string {
-  // remove the beginning of the path, leaving only the last element of it
-  // this regex is also used in somns.Rmd, the suites part, for creating a table
-  const pathRegex = /^([^\s]*)\/([^\s]+\s.*$)/;
-  return cmdline.replace(pathRegex, '$2');
-}
-
 function renderBenchmark(benchmark) {
   const cmdline = simplifyCmdline(benchmark.cmdline);
 

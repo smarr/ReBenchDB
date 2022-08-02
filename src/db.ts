@@ -21,6 +21,7 @@ import { SingleRequestOnly } from './single-requester.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
 import { getDirname } from './util.js';
 import { assert, log } from './logging.js';
+import { simplifyCmdline } from './views/util.js';
 
 const __dirname = getDirname(import.meta.url);
 

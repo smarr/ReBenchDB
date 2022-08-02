@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 
-import { simplifyCmdline } from '../src/views/render';
+import { simplifyCmdline } from '../src/views/util';
 
 describe('Helper Functions for Rendering', () => {
   describe('Simplifying the command-line for display', () => {
