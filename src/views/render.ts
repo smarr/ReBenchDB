@@ -1,5 +1,5 @@
 import { AllResults } from 'api.js';
-import { renderResultsPlots, renderTimelinePlot } from './plots.js';
+import { renderResultsPlots } from './plots.js';
 
 function filterCommitMessage(msg) {
   const result = msg.replace(/Signed-off-by:.*?\n/g, '');
@@ -228,54 +228,4 @@ export async function populateStatistics(statsP: any): Promise<void> {
   table.append(
     `<tr class="table-info"><td>Version</td><td>${stats.version}</td></tr>`
   );
-}
-
-export function renderTimelinePlots(data: any): void {
-  // prepare data
-  const benchmarks = new Map();
-  const trials = new Map();
-
-  for (const trial of data.details) {
-    trial.start = new Date(trial.starttime);
-    trials.set(trial.trialid, trial);
-  }
-
-  for (const result of data.timeline) {
-    const key =
-      `plot-${result.benchmarkid}-${result.suiteid}` +
-      `-${result.execid}-${result.hostname}`;
-    if (!benchmarks.has(key)) {
-      benchmarks.set(key, []);
-    }
-
-    const results = benchmarks.get(key);
-    result.trial = trials.get(result.trialid);
-    results.push(result);
-  }
-
-  (<any>$).appear('.timeline-plot');
-  $('.timeline-plot').on('appear', function (_event, allAppearedElements) {
-    let delay = 0;
-    allAppearedElements.each(function (this: any) {
-      triggerRendering($(this), benchmarks, delay);
-      delay += 1;
-    });
-  });
-
-  // and force render first 6
-  let delay = 0;
-  $('.timeline-plot')
-    .slice(0, 5)
-    .each(function () {
-      triggerRendering($(this), benchmarks, delay);
-      delay += 1;
-    });
-}
-
-function triggerRendering(elem, benchmarks, delay) {
-  const id = elem.prop('id');
-  const results = benchmarks.get(id);
-  setTimeout(() => {
-    renderTimelinePlot(id, results);
-  }, 130 * delay);
 }
