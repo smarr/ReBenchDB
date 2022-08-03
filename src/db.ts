@@ -97,6 +97,7 @@ export interface Criterion {
 export interface Project {
   id: number;
   name: string;
+  slug: string;
   description: string;
   logo: string;
   showchanges: boolean;
@@ -246,10 +247,11 @@ export abstract class Database {
 
     fetchProjectByName: 'SELECT * from Project WHERE name = $1',
     fetchProjectBySlugName: `SELECT * from Project
-                               WHERE lower($1) = regexp_replace(
-                                    lower(name), '\\s', '-', 'g')`,
+                               WHERE lower($1) = lower(slug)`,
     fetchProjectById: 'SELECT * from Project WHERE id = $1',
-    insertProject: 'INSERT INTO Project (name) VALUES ($1) RETURNING *',
+    insertProject: `INSERT INTO Project (name, slug)
+                      VALUES ($1, regexp_replace($1, '[^0-9a-zA-Z-]', '-', 'g'))
+                    RETURNING *`,
 
     fetchExpByNames: `SELECT e.* FROM Experiment e
                         JOIN Project p ON p.id = e.projectId
@@ -332,7 +334,7 @@ export abstract class Database {
                             JOIN Experiment e ON e.projectId = p.id
                             JOIN Trial t ON e.id = t.expId
                             JOIN Source s ON t.sourceId = s.id
-                          WHERE p.name = $1
+                          WHERE lower(p.slug) = lower($1)
                             AND s.commitid = $2
                             OR s.commitid = $3`,
 
@@ -469,12 +471,12 @@ export abstract class Database {
   public abstract close(): Promise<void>;
 
   public async revisionsExistInProject(
-    project: string,
+    projectSlug: string,
     base: string,
     change: string
   ): Promise<any> {
     const result = await this.query(this.queries.fetchRevsInProject, [
-      project,
+      projectSlug,
       base,
       change
     ]);
@@ -671,6 +673,19 @@ export abstract class Database {
   ): Promise<Project | undefined> {
     const result = await this.query(this.queries.fetchProjectBySlugName, [
       projectNameSlug
+    ]);
+
+    if (result.rowCount !== 1) {
+      return undefined;
+    }
+    return result.rows[0];
+  }
+
+  public async getProjectByName(
+    projectName: string
+  ): Promise<Project | undefined> {
+    const result = await this.query(this.queries.fetchProjectByName, [
+      projectName
     ]);
 
     if (result.rowCount !== 1) {

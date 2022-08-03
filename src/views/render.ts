@@ -1,4 +1,5 @@
-import { AllResults } from 'api.js';
+import type { AllResults } from 'api.js';
+import type { Project } from 'db.js';
 import { renderResultsPlots } from './plots.js';
 
 function filterCommitMessage(msg) {
@@ -182,17 +183,17 @@ function renderAllResults(project) {
   return `<div id="p${project.id}-results" class="timeline-single"></div>`;
 }
 
-export function renderProject(project: any): string {
+export function renderProject(project: Project): string {
   const changes = renderChanges(project);
   const allResults = renderAllResults(project);
 
   const result = `<div class="card">
     <h5 class="card-header" id="${project.name}"><a
-      href="/project/${project.id}">${project.name}</a></h5>
+      href="/${project.slug}/data">${project.name}</a></h5>
     <div class="card-body">
       ${changes}
       ${allResults}
-      <a href="/timeline/${project.id}">Timeline</a>
+      <a href="/${project.slug}/timeline">Timeline</a>
     </div></div>`;
   return result;
 }

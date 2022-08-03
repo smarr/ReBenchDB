@@ -1,6 +1,6 @@
 import { readFileSync, existsSync, unlinkSync, rmSync } from 'fs';
 import { execFile, ChildProcessPromise } from 'promisify-child-process';
-import { Database, DatabaseConfig, Source } from './db.js';
+import { Database, DatabaseConfig, Project, Source } from './db.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
 import { AllResults, BenchmarkCompletion } from './api.js';
 import { GitHub } from './github.js';
@@ -20,7 +20,9 @@ JOIN Measurement m ON  m.expId = exp.id
 WHERE repoURL = 'https://github.com/smarr/ReBenchDB'
  */
 
-export async function dashProjects(db: Database): Promise<{ projects: any[] }> {
+export async function dashProjects(
+  db: Database
+): Promise<{ projects: Project[] }> {
   const result = await db.query(`SELECT * from Project`);
   return { projects: result.rows };
 }
@@ -249,17 +251,17 @@ export function dashDeleteOldReport(
 export async function dashCompare(
   base: string,
   change: string,
-  project: string,
+  projectSlug: string,
   dbConfig: DatabaseConfig,
   db: Database
 ): Promise<any> {
   const baselineHash6 = base.substr(0, 6);
   const changeHash6 = change.substr(0, 6);
 
-  const reportId = getReportId(project, base, change);
+  const reportId = getReportId(projectSlug, base, change);
 
   const data: any = {
-    project,
+    project: projectSlug,
     baselineHash: base,
     changeHash: change,
     baselineHash6,
@@ -268,11 +270,11 @@ export async function dashCompare(
     completionPromise: Promise.resolve()
   };
 
-  const revDetails = await db.revisionsExistInProject(project, base, change);
+  const revDetails = await db.revisionsExistInProject(projectSlug, base, change);
   if (!revDetails.dataFound) {
     data.generationFailed = true;
     data.stdout =
-      `The requested project ${project} does not have data ` +
+      `The requested project ${projectSlug} does not have data ` +
       `on the revisions ${base} and ${change}.`;
     data.stderr = '';
     data.generatingReport = false;
@@ -348,6 +350,7 @@ export async function dashCompare(
 const expDataPreparation = new Map();
 
 export async function dashGetExpData(
+  projectSlug: string,
   expId: number,
   dbConfig: DatabaseConfig,
   db: Database
@@ -364,8 +367,9 @@ export async function dashGetExpData(
         Experiment exp
       JOIN Project p ON exp.projectId = p.id
 
-      WHERE exp.id = $1`,
-    [expId]
+      WHERE exp.id = $1 AND
+        lower(p.slug) = lower($2)`,
+    [expId, projectSlug]
   );
 
   let data: any;

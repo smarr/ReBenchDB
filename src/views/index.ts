@@ -1,3 +1,4 @@
+import type { Project } from 'db.js';
 import {
   populateStatistics,
   renderProject,
@@ -9,7 +10,7 @@ const statsP = fetch(`/rebenchdb/stats`);
 
 $(async () => {
   const projectsResponse = await projectsP;
-  const projects = (await projectsResponse.json()).projects;
+  const projects = <Project[]>(await projectsResponse.json()).projects;
 
   if (projects.length > 0) {
     for (const project of projects) {
