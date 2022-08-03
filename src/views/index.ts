@@ -1,24 +1,26 @@
-import type { Project } from 'db.js';
 import {
   populateStatistics,
-  renderProject,
-  renderWelcomeAndSetupSuggestions
+  renderAllResults,
+  renderChanges
 } from './render.js';
 
-const projectsP = fetch(`/rebenchdb/dash/projects`);
 const statsP = fetch(`/rebenchdb/stats`);
 
 $(async () => {
-  const projectsResponse = await projectsP;
-  const projects = <Project[]>(await projectsResponse.json()).projects;
+  $('.project-data').each((_i, elem) => {
+    const elemJq = $(elem);
+    const showChanges = elemJq.data('showchanges');
+    const allResults = elemJq.data('allresults');
+    const projectId = elemJq.data('id');
 
-  if (projects.length > 0) {
-    for (const project of projects) {
-      $('#projects').append(renderProject(project));
+    if (showChanges) {
+      renderChanges(projectId);
     }
-  } else {
-    $('#projects').append(renderWelcomeAndSetupSuggestions());
-  }
+
+    if (allResults) {
+      renderAllResults(projectId);
+    }
+  });
 
   await populateStatistics(statsP);
 });

@@ -249,6 +249,10 @@ export abstract class Database {
     fetchProjectBySlugName: `SELECT * from Project
                                WHERE lower($1) = lower(slug)`,
     fetchProjectById: 'SELECT * from Project WHERE id = $1',
+    fetchAllProjects: {
+      name: 'fetchAllProjects',
+      text: 'SELECT * FROM Project'
+    },
     insertProject: `INSERT INTO Project (name, slug)
                       VALUES ($1, regexp_replace($1, '[^0-9a-zA-Z-]', '-', 'g'))
                     RETURNING *`,
@@ -692,6 +696,11 @@ export abstract class Database {
       return undefined;
     }
     return result.rows[0];
+  }
+
+  public async getAllProjects(): Promise<Project[]> {
+    const result = await this.query(this.queries.fetchAllProjects);
+    return result.rows;
   }
 
   public async getProject(projectId: number): Promise<Project | undefined> {

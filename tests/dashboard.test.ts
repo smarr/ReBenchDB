@@ -7,7 +7,6 @@ import {
   dashStatistics,
   dashResults,
   dashChanges,
-  dashProjects,
   dashDataOverview,
   dashBenchmarksForProject
 } from '../src/dashboard';
@@ -102,7 +101,7 @@ describe('Test Dashboard with basic test data loaded', () => {
   });
 
   it('Should get a project', async () => {
-    const projects = (await dashProjects(db)).projects;
+    const projects = await db.getAllProjects();
     expect(projects).toHaveLength(1);
     expect(projects[0].name).toEqual('Small Example Project');
     expect(projects[0].id).toEqual(1);

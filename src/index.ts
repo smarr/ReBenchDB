@@ -18,7 +18,6 @@ import {
   dashStatistics,
   dashChanges,
   dashCompare,
-  dashProjects,
   dashBenchmarksForProject,
   dashDataOverview,
   dashGetExpData,
@@ -53,7 +52,8 @@ const router = new Router();
 const db = new DatabaseWithPool(dbConfig, 1000, true);
 
 router.get('/', async (ctx) => {
-  ctx.body = processTemplate('index.html');
+  const projects = await db.getAllProjects();
+  ctx.body = processTemplate('index.html', { projects });
   ctx.type = 'html';
 });
 
@@ -145,11 +145,6 @@ router.get('/:projectSlug/data/:expId', async (ctx) => {
   }
 
   await completeRequest(start, db, 'get-exp-data');
-});
-
-router.get(`/rebenchdb/dash/projects`, async (ctx) => {
-  ctx.body = await dashProjects(db);
-  ctx.type = 'application/json';
 });
 
 router.get('/rebenchdb/dash/:projectId/results', async (ctx) => {

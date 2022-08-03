@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <title>ReBench: {{project.name}}</title>
-  <meta id="project-name" value="{{project.name}}">
   <meta id="project-id" value="{{project.id}}">
   <meta id="project-showchanges" value="{{project.showchanges}}">
   <meta id="project-allresults" value="{{project.allresults}}">
@@ -18,6 +17,32 @@
     {{/project.description}}
   </div>
 
-  <div id="project"></div>
+  <div id="project">
+    <div class="card">
+      <h5 class="card-header" id="{{ project.slug }}"><a
+        href="/{{ project.slug }}/data">{{ project.name }}</a></h5>
+      <div class="card-body">
+        {{#project.showchanges}}
+        <h5>Changes</h5>
+        <div class="container min-padding"><div class="row">
+          <div class="col-sm min-padding scroll-list">
+            <div class="list-group baseline" id="p{{ project.id }}-baseline"
+              data-project-slug="{{ project.slug }}"></div>
+          </div>
+          <div class="col-sm min-padding scroll-list">
+            <div class="list-group change" id="p{{ project.id }}-change"></div>
+          </div>
+        </div></div>
+
+        <a class="btn btn-primary" id="p{{ project.id }}-compare">Compare</a>
+        {{/project.showchanges}}
+        {{#project.allresults}}
+        <div id="p{{ project.id }}-results" class="timeline-single"></div>
+        {{/project.allresults}}
+        <div class="project-card-content"></div>
+        <a href="/{{ project.slug }}/timeline">Timeline</a>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

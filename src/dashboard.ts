@@ -1,6 +1,6 @@
 import { readFileSync, existsSync, unlinkSync, rmSync } from 'fs';
 import { execFile, ChildProcessPromise } from 'promisify-child-process';
-import { Database, DatabaseConfig, Project, Source } from './db.js';
+import { Database, DatabaseConfig, Source } from './db.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
 import { AllResults, BenchmarkCompletion } from './api.js';
 import { GitHub } from './github.js';
@@ -19,13 +19,6 @@ JOIN Experiment exp ON exp.sourceId = s.id
 JOIN Measurement m ON  m.expId = exp.id
 WHERE repoURL = 'https://github.com/smarr/ReBenchDB'
  */
-
-export async function dashProjects(
-  db: Database
-): Promise<{ projects: Project[] }> {
-  const result = await db.query(`SELECT * from Project`);
-  return { projects: result.rows };
-}
 
 export async function dashResults(
   projectId: number,
@@ -270,7 +263,11 @@ export async function dashCompare(
     completionPromise: Promise.resolve()
   };
 
-  const revDetails = await db.revisionsExistInProject(projectSlug, base, change);
+  const revDetails = await db.revisionsExistInProject(
+    projectSlug,
+    base,
+    change
+  );
   if (!revDetails.dataFound) {
     data.generationFailed = true;
     data.stdout =
