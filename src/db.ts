@@ -435,7 +435,7 @@ export abstract class Database {
 
   private static readonly batchN = 50;
 
-  private statsValid: TimedCacheValidity;
+  protected statsValid: TimedCacheValidity;
 
   constructor(
     config: PoolConfig,
@@ -1574,6 +1574,7 @@ export class DatabaseWithPool extends Database {
   }
 
   public async close(): Promise<void> {
+    this.statsValid.invalidateAndNew();
     await this.pool.end();
     (<any>this).pool = null;
   }

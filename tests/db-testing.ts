@@ -80,6 +80,8 @@ export class TestDatabase extends Database {
   }
 
   public async close(): Promise<void> {
+    this.statsValid.invalidateAndNew();
+
     if (this.closingAttempted) {
       throw new Error('Already attempted to close');
     }
