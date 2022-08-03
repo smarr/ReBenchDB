@@ -23,6 +23,9 @@ export const dbConfig = {
   port: 5432
 };
 
+/** How long to still hold on to the cache after it became invalid. In ms. */
+export const cacheInvalidationDelay = 1000 * 60 * 5; /* 5 minutes */
+
 export const siteConfig = {
   reportsUrl: process.env.REPORTS_URL || '/static/reports',
   staticUrl: process.env.STATIC_URL || '/static',

@@ -26,7 +26,12 @@ import {
   dashProfile
 } from './dashboard.js';
 import { processTemplate } from './templates.js';
-import { dbConfig, robustPath, siteConfig } from './util.js';
+import {
+  cacheInvalidationDelay,
+  dbConfig,
+  robustPath,
+  siteConfig
+} from './util.js';
 import { createGitHubClient } from './github.js';
 import { getDirname } from './util.js';
 import { log } from './logging.js';
@@ -49,7 +54,7 @@ const refreshSecret =
 
 const app = new Koa();
 const router = new Router();
-const db = new DatabaseWithPool(dbConfig, 1000, true);
+const db = new DatabaseWithPool(dbConfig, 1000, true, cacheInvalidationDelay);
 
 router.get('/', async (ctx) => {
   const projects = await db.getAllProjects();

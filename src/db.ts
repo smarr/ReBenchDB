@@ -183,6 +183,40 @@ function filterCommitMessage(msg) {
     .trim();
 }
 
+export class TimedCacheValidity {
+  private valid: boolean;
+  private scheduledInvalidation: boolean;
+
+  /** Delay in milliseconds. */
+  public readonly invalidationDelay: number;
+
+  constructor(invalidationDelay: number) {
+    this.invalidationDelay = invalidationDelay;
+    this.valid = true;
+    this.scheduledInvalidation = false;
+  }
+
+  public invalidate(): void {
+    if (this.scheduledInvalidation) {
+      return;
+    }
+
+    this.scheduledInvalidation = true;
+    if (this.invalidationDelay === 0) {
+      this.valid = false;
+    } else {
+      setTimeout(() => {
+        log.warn('Invalidate CacheValid');
+        this.valid = false;
+      }, this.invalidationDelay);
+    }
+  }
+
+  public isValid(): boolean {
+    return this.valid;
+  }
+}
+
 export abstract class Database {
   protected readonly dbConfig: PoolConfig;
   private readonly timelineEnabled: boolean;
@@ -399,10 +433,13 @@ export abstract class Database {
 
   private static readonly batchN = 50;
 
+  private statsValid: TimedCacheValidity;
+
   constructor(
     config: PoolConfig,
     numBootstrapSamples = 1000,
-    timelineEnabled = false
+    timelineEnabled = false,
+    cacheInvalidationDelay = 0
   ) {
     assert(config !== undefined);
     this.dbConfig = config;
@@ -418,6 +455,7 @@ export abstract class Database {
     this.trials = new Map();
     this.criteria = new Map();
     this.projects = new Map();
+    this.statsValid = new TimedCacheValidity(cacheInvalidationDelay);
 
     this.queries.insertMeasurementBatchedN.text = `INSERT INTO Measurement
          (runId, trialId, invocation, iteration, criterion, value)
@@ -427,6 +465,15 @@ export abstract class Database {
     this.timelineUpdater = new SingleRequestOnly(async () => {
       return this.performTimelineUpdate();
     });
+  }
+
+  public getStatsCacheValidity(): TimedCacheValidity {
+    return this.statsValid;
+  }
+
+  private invalidateStatsCache() {
+    this.statsValid.invalidate();
+    this.statsValid = new TimedCacheValidity(this.statsValid.invalidationDelay);
   }
 
   private generateBatchInsert(numTuples: number, sizeTuples: number) {
@@ -1075,6 +1122,7 @@ export abstract class Database {
     data: BenchmarkData,
     suppressTimeline = false
   ): Promise<[number, number]> {
+    this.invalidateStatsCache();
     const { trial, criteria } = await this.recordMetaData(data);
 
     let recordedMeasurements = 0;
@@ -1510,9 +1558,10 @@ export class DatabaseWithPool extends Database {
   constructor(
     config: PoolConfig,
     numReplicates = 1000,
-    timelineEnabled = false
+    timelineEnabled = false,
+    cacheInvalidationDelay = 0
   ) {
-    super(config, numReplicates, timelineEnabled);
+    super(config, numReplicates, timelineEnabled, cacheInvalidationDelay);
     this.pool = new pg.Pool(config);
   }
 

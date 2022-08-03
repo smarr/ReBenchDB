@@ -1,6 +1,6 @@
 import { readFileSync, existsSync, unlinkSync, rmSync } from 'fs';
 import { execFile, ChildProcessPromise } from 'promisify-child-process';
-import { Database, DatabaseConfig, Source } from './db.js';
+import { TimedCacheValidity, Database, DatabaseConfig, Source } from './db.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
 import { AllResults, BenchmarkCompletion } from './api.js';
 import { GitHub } from './github.js';
@@ -13,6 +13,8 @@ const __dirname = getDirname(import.meta.url);
 
 const reportOutputFolder = robustPath(`../resources/reports/`);
 
+let dbCacheValid: TimedCacheValidity | null = null;
+
 /**
  * SELECT exp.id, exp.startTime, m.iteration, m.value FROM Source s
 JOIN Experiment exp ON exp.sourceId = s.id
@@ -20,10 +22,22 @@ JOIN Measurement m ON  m.expId = exp.id
 WHERE repoURL = 'https://github.com/smarr/ReBenchDB'
  */
 
+const resultsCache: AllResults[][] = [];
+
 export async function dashResults(
   projectId: number,
   db: Database
 ): Promise<AllResults[]> {
+  if (
+    resultsCache[projectId] &&
+    dbCacheValid !== null &&
+    dbCacheValid.isValid()
+  ) {
+    return resultsCache[projectId];
+  }
+
+  dbCacheValid = db.getStatsCacheValidity();
+
   const q: QueryConfig = {
     name: 'all-results',
     text: ` WITH Results AS (
@@ -55,7 +69,8 @@ export async function dashResults(
     values: [projectId]
   };
   const result = await db.query(q);
-  return result.rows;
+  resultsCache[projectId] = result.rows;
+  return resultsCache[projectId];
 }
 
 export async function dashProfile(
@@ -89,7 +104,19 @@ export async function dashProfile(
   return data;
 }
 
+let statisticsCache: { stats: any[] } | null = null;
+
 export async function dashStatistics(db: Database): Promise<{ stats: any[] }> {
+  if (
+    statisticsCache !== null &&
+    dbCacheValid !== null &&
+    dbCacheValid.isValid()
+  ) {
+    return statisticsCache;
+  }
+
+  dbCacheValid = db.getStatsCacheValidity();
+
   const result = await db.query(`
     SELECT * FROM (
       SELECT 'Experiments' as table, count(*) as cnt FROM experiment
@@ -111,7 +138,8 @@ export async function dashStatistics(db: Database): Promise<{ stats: any[] }> {
       SELECT 'Measurements' as table, count(*) as cnt FROM measurement
     ) as counts
     ORDER BY counts.table`);
-  return { stats: result.rows };
+  statisticsCache = { stats: result.rows };
+  return statisticsCache;
 }
 
 export async function dashChanges(
