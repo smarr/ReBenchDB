@@ -246,8 +246,12 @@ export abstract class Database {
                          WHERE expId = $1 AND endTime IS NULL`,
 
     fetchProjectByName: 'SELECT * from Project WHERE name = $1',
-    fetchProjectBySlugName: `SELECT * from Project
-                               WHERE lower($1) = lower(slug)`,
+    fetchProjectBySlugName: {
+      name: 'fetchProjectBySlugName',
+      text: `SELECT * from Project
+              WHERE lower($1) = lower(slug)`,
+      values: ['']
+    },
     fetchProjectById: 'SELECT * from Project WHERE id = $1',
     fetchAllProjects: {
       name: 'fetchAllProjects',
@@ -675,9 +679,9 @@ export abstract class Database {
   public async getProjectBySlug(
     projectNameSlug: string
   ): Promise<Project | undefined> {
-    const result = await this.query(this.queries.fetchProjectBySlugName, [
-      projectNameSlug
-    ]);
+    const q = { ...this.queries.fetchProjectBySlugName };
+    q.values = [projectNameSlug];
+    const result = await this.query(q);
 
     if (result.rowCount !== 1) {
       return undefined;
