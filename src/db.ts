@@ -258,7 +258,7 @@ export abstract class Database {
       text: 'SELECT * FROM Project'
     },
     insertProject: `INSERT INTO Project (name, slug)
-                      VALUES ($1, regexp_replace($1, '[^0-9a-zA-Z-]', '-', 'g'))
+                      VALUES ($1, regexp_replace($2, '[^0-9a-zA-Z-]', '-', 'g'))
                     RETURNING *`,
 
     fetchExpByNames: `SELECT e.* FROM Experiment e
@@ -672,7 +672,7 @@ export abstract class Database {
       this.queries.fetchProjectByName,
       [projectName],
       this.queries.insertProject,
-      [projectName]
+      [projectName, projectName]
     );
   }
 
