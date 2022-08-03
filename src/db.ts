@@ -188,7 +188,7 @@ export class TimedCacheValidity {
   private scheduledInvalidation: boolean;
 
   /** Delay in milliseconds. */
-  public readonly invalidationDelay: number;
+  private readonly invalidationDelay: number;
 
   constructor(invalidationDelay: number) {
     this.invalidationDelay = invalidationDelay;
@@ -196,20 +196,22 @@ export class TimedCacheValidity {
     this.scheduledInvalidation = false;
   }
 
-  public invalidate(): void {
-    if (this.scheduledInvalidation) {
-      return;
+  public invalidateAndNew(): TimedCacheValidity {
+    if (!this.scheduledInvalidation) {
+      this.scheduledInvalidation = true;
+      if (this.invalidationDelay === 0) {
+        this.valid = false;
+      } else {
+        setTimeout(() => {
+          this.valid = false;
+        }, this.invalidationDelay);
+      }
     }
 
-    this.scheduledInvalidation = true;
-    if (this.invalidationDelay === 0) {
-      this.valid = false;
-    } else {
-      setTimeout(() => {
-        log.warn('Invalidate CacheValid');
-        this.valid = false;
-      }, this.invalidationDelay);
+    if (this.valid) {
+      return this;
     }
+    return new TimedCacheValidity(this.invalidationDelay);
   }
 
   public isValid(): boolean {
@@ -472,8 +474,7 @@ export abstract class Database {
   }
 
   private invalidateStatsCache() {
-    this.statsValid.invalidate();
-    this.statsValid = new TimedCacheValidity(this.statsValid.invalidationDelay);
+    this.statsValid = this.statsValid.invalidateAndNew();
   }
 
   private generateBatchInsert(numTuples: number, sizeTuples: number) {
