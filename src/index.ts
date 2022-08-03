@@ -115,7 +115,7 @@ router.get('/project/:projectId', async (ctx) => {
     respondProjectIdNotFound(ctx, Number(ctx.params.projectId));
   }
   ctx.body = processTemplate('project-data.html', {
-    project: await db.getProject(Number(ctx.params.projectId))
+    project
   });
   ctx.type = 'html';
 });
