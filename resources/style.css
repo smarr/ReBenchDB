@@ -315,6 +315,10 @@ td.warmup-plot {
   }
 }
 
+.timeline .exe-suite-group {
+  padding-bottom: 60px;
+}
+
 .uplot {
   margin-left: auto;
   margin-right: auto;

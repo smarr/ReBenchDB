@@ -1,4 +1,5 @@
 import type { TimelineResponse } from 'api.js';
+import { initializeFilters } from './filter.js';
 import { renderTimelinePlot } from './plots.js';
 
 const projectId = $('#project-id').attr('value');
@@ -35,4 +36,6 @@ $(async () => {
       loadPlotOnce.call(e);
     }
   });
+
+  initializeFilters('.benchmark > h4');
 });
