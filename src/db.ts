@@ -14,13 +14,16 @@ import {
   BenchmarkCompletion,
   TimelineRequest,
   TimelineResponse,
-  PlotData
+  PlotData,
+  FullPlotData,
+  TimelineSuite
 } from './api';
 import pg, { PoolConfig, QueryConfig, QueryResultRow } from 'pg';
 import { SingleRequestOnly } from './single-requester.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
 import { getDirname } from './util.js';
 import { assert, log } from './logging.js';
+import { simplifyCmdline } from './views/util.js';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -344,6 +347,43 @@ export abstract class Database {
                p.name = $1 AND
                (s.commitid = $2 OR s.commitid = $3)`,
       values: <any[]>[]
+    },
+    fetchLatestBenchmarksForProject: {
+      name: 'fetchLatestBenchmarksForProject',
+      text: `WITH LatestExperiment AS (
+                SELECT exp.id as expId, max(t.startTime) as newest
+                FROM Project p
+                  JOIN Experiment exp    ON exp.projectId = p.id
+                  JOIN Trial t           ON t.expId = exp.id
+                  JOIN Source src        ON t.sourceId = src.id
+                WHERE p.id = $1 AND
+                  p.baseBranch = src.branchOrTag
+                GROUP BY exp.id
+                ORDER BY newest DESC
+                LIMIT 1
+              )
+              SELECT DISTINCT
+                s.id as suiteId, s.name as suiteName,
+                exe.id as execId, exe.name as execName,
+                b.id as benchId, b.name as benchmark,
+                r.cmdline,
+                r.id as runId
+              FROM Project p
+                JOIN Experiment exp    ON exp.projectId = p.id
+                JOIN Trial t           ON t.expId = exp.id
+                JOIN Source src        ON t.sourceId = src.id
+                JOIN Environment env   ON t.envId = env.id
+                JOIN Timeline tl       ON tl.trialId = t.id
+                JOIN Run r             ON tl.runId = r.id
+                JOIN Benchmark b       ON r.benchmarkId = b.id
+                JOIN Suite s           ON r.suiteId = s.id
+                JOIN Executor exe      ON r.execId = exe.id
+                JOIN LatestExperiment le ON exp.id = le.expId
+              WHERE
+                p.id = $1 AND
+                p.baseBranch = src.branchOrTag
+              ORDER BY suiteName, execName, benchmark, cmdline;`,
+      values: <number[]>[]
     }
   };
 
@@ -1171,6 +1211,70 @@ export abstract class Database {
     };
   }
 
+  public async getLatestBenchmarksForTimelineView(
+    projectId: number
+  ): Promise<TimelineSuite[] | null> {
+    const q = { ...this.queries.fetchLatestBenchmarksForProject };
+    q.values = [projectId];
+
+    const result = await this.query(q);
+    if (result.rowCount < 1) {
+      return null;
+    }
+
+    let suiteId: number | null = null;
+    let exeId: number | null = null;
+
+    const suites: TimelineSuite[] = [];
+    let currentSuite: TimelineSuite | null = null;
+    let currentExec: any = null;
+
+    for (const r of result.rows) {
+      if (r.suiteid !== suiteId) {
+        currentSuite = {
+          suiteId: r.suiteid,
+          suiteName: r.suitename,
+          exec: []
+        };
+        suites.push(currentSuite);
+        suiteId = r.suiteId;
+      }
+
+      if (r.execid !== exeId) {
+        currentExec = {
+          execId: r.execid,
+          execName: r.execname,
+          benchmarks: []
+        };
+        currentSuite?.exec.push(currentExec);
+        exeId = r.execid;
+      }
+
+      currentExec.benchmarks.push({
+        benchId: r.benchid,
+        benchName: r.benchmark,
+        cmdline: simplifyCmdline(r.cmdline),
+        runId: r.runid
+      });
+    }
+
+    return suites;
+  }
+
+  public async getTimelineForRun(
+    projectId: number,
+    runId: number
+  ): Promise<TimelineResponse | null> {
+    const q = this.constructTimelineQueryForRun(projectId, runId);
+    const result = await this.query(q);
+
+    if (result.rowCount < 1) {
+      return null;
+    }
+
+    return this.convertToTimelineResponse(result.rows, null, null);
+  }
+
   public async getTimelineData(
     projectName: string,
     request: TimelineRequest
@@ -1202,33 +1306,43 @@ export abstract class Database {
 
   private convertToTimelineResponse(
     rows: any[],
-    baseBranchName: string,
-    changeBranchName: string
+    baseBranchName: string | null,
+    changeBranchName: string | null
   ): TimelineResponse {
     let baseTimestamp: number | null = null;
     let changeTimestamp: number | null = null;
-    const data: PlotData = [
-      [], // time stamp
-      [], // baseline bci low
-      [], // baseline median
-      [], // baseline bci high
-      [], // change bci low
-      [], // change median
-      [] // change bci high
-    ];
+    const data: PlotData =
+      baseBranchName !== null
+        ? [
+            [], // time stamp
+            [], // baseline bci low
+            [], // baseline median
+            [], // baseline bci high
+            [], // change bci low
+            [], // change median
+            [] // change bci high
+          ]
+        : [
+            [], // time stamp
+            [], // baseline bci low
+            [], // baseline median
+            [] // baseline bci high
+          ];
 
     for (const row of rows) {
       data[0].push(row.starttime);
-      if (row.branch == baseBranchName) {
-        if (row.iscurrent) {
+      if (baseBranchName === null || row.branch == baseBranchName) {
+        if (baseBranchName !== null && row.iscurrent) {
           baseTimestamp = row.starttime;
         }
         data[1].push(row.bci95low);
         data[2].push(row.median);
         data[3].push(row.bci95up);
-        data[4].push(null);
-        data[5].push(null);
-        data[6].push(null);
+        if (baseBranchName !== null) {
+          (<FullPlotData>data)[4].push(null);
+          (<FullPlotData>data)[5].push(null);
+          (<FullPlotData>data)[6].push(null);
+        }
       } else {
         if (row.iscurrent) {
           changeTimestamp = row.starttime;
@@ -1236,9 +1350,11 @@ export abstract class Database {
         data[1].push(null);
         data[2].push(null);
         data[3].push(null);
-        data[4].push(row.bci95low);
-        data[5].push(row.median);
-        data[6].push(row.bci95up);
+        if (baseBranchName !== null) {
+          (<FullPlotData>data)[4].push(row.bci95low);
+          (<FullPlotData>data)[5].push(row.median);
+          (<FullPlotData>data)[6].push(row.bci95up);
+        }
       }
     }
 
@@ -1248,6 +1364,36 @@ export abstract class Database {
       baseTimestamp,
       changeTimestamp,
       data
+    };
+  }
+
+  private constructTimelineQueryForRun(
+    projectId: number,
+    runId: number
+  ): QueryConfig {
+    const sql = `
+      SELECT
+        extract(epoch from tr.startTime at time zone 'UTC')::int as startTime,
+        s.branchOrTag as branch,
+        ti.median, ti.bci95low, ti.bci95up
+      FROM Timeline ti
+        JOIN Trial      tr ON tr.id = ti.trialId
+        JOIN Source     s  ON tr.sourceId = s.id
+        JOIN Experiment e  ON tr.expId = e.id
+        JOIN Project    p  ON p.id = e.projectId
+        JOIN Run        r  ON r.id = ti.runId
+        JOIN Criterion  c  ON ti.criterion = c.id
+      WHERE
+        s.branchOrTag = p.baseBranch AND
+        p.id = $1   AND
+        r.id = $2   AND
+        c.name   = 'total'
+      ORDER BY tr.startTime ASC;
+    `;
+    return {
+      name: 'get-timeline-data-for-pid-runid',
+      text: sql,
+      values: [projectId, runId]
     };
   }
 

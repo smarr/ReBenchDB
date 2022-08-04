@@ -188,14 +188,14 @@ export interface TimelineRequest {
 }
 
 export interface TimelineResponse {
-  baseBranchName: string;
-  changeBranchName: string;
+  baseBranchName: string | null;
+  changeBranchName: string | null;
   baseTimestamp: number | null;
   changeTimestamp: number | null;
   data: PlotData;
 }
 
-export type PlotData = [
+export type FullPlotData = [
   number[] /** UNIX time stamps */,
 
   /** Baseline Branch */
@@ -220,3 +220,44 @@ export type PlotData = [
   /** bootstrap confidence interval, 95th, high, millisecond values */
   (number | null)[]
 ];
+
+export type BasePlotData = [
+  number[] /** UNIX time stamps */,
+
+  /** Baseline Branch */
+
+  /** bootstrap confidence interval, 95th, low,  millisecond values */
+  (number | null)[],
+
+  /** median, millisecond values */
+  (number | null)[],
+
+  /** bootstrap confidence interval, 95th, high, millisecond values */
+  (number | null)[]
+];
+
+export interface AllResults {
+  benchmark: string;
+  values: number[];
+}
+
+export type PlotData = FullPlotData | BasePlotData;
+
+export interface TimelineSuite {
+  suiteId: number;
+  suiteName: string;
+  exec: TimelineExecutor[];
+}
+
+export interface TimelineExecutor {
+  execId: number;
+  execName: string;
+  benchmarks: TimelineBenchmark[];
+}
+
+export interface TimelineBenchmark {
+  benchId: number;
+  benchName: string;
+  cmdline: string;
+  runId: number;
+}

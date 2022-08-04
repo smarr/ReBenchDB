@@ -1,4 +1,5 @@
-import { renderResultsPlots, renderTimelinePlot } from './plots.js';
+import { AllResults } from 'api.js';
+import { renderResultsPlots } from './plots.js';
 
 function filterCommitMessage(msg) {
   const result = msg.replace(/Signed-off-by:.*?\n/g, '');
@@ -174,11 +175,11 @@ function renderAllResults(project) {
 
   const resultsP = fetch(`/rebenchdb/dash/${project.id}/results`);
   resultsP.then(async (resultsResponse) => {
-    const results = await resultsResponse.json();
-    renderResultsPlots(results.timeSeries, project.id);
+    const results = <AllResults[]>await resultsResponse.json();
+    renderResultsPlots(results, project.id);
   });
 
-  return `<div id="p${project.id}-results"></div>`;
+  return `<div id="p${project.id}-results" class="timeline-single"></div>`;
 }
 
 export function renderProject(project: any): string {
@@ -227,109 +228,4 @@ export async function populateStatistics(statsP: any): Promise<void> {
   table.append(
     `<tr class="table-info"><td>Version</td><td>${stats.version}</td></tr>`
   );
-}
-
-export function renderBenchmarks(benchmarks: any): void {
-  let suiteName = null;
-  let content = '';
-  for (const benchmark of benchmarks) {
-    if (suiteName !== benchmark.suitename) {
-      if (content !== '') {
-        content += '</div>'; // closing card-columns
-        $('#benchmarks').append(content);
-        content = '';
-      }
-
-      content += `<h3>${benchmark.suitename}</h3>`;
-      suiteName = benchmark.suitename;
-      content += `<div class="card-columns">`;
-    }
-
-    content += renderBenchmark(benchmark);
-  }
-
-  // handling the last benchmark suite
-  if (content !== '') {
-    content += '</div>'; // closing card-columns
-    $('#benchmarks').append(content);
-  }
-}
-
-export function simplifyCmdline(cmdline: string): string {
-  // remove the beginning of the path, leaving only the last element of it
-  // this regex is also used in somns.Rmd, the suites part, for creating a table
-  const pathRegex = /^([^\s]*)\/([^\s]+\s.*$)/;
-  return cmdline.replace(pathRegex, '$2');
-}
-
-function renderBenchmark(benchmark) {
-  const cmdline = simplifyCmdline(benchmark.cmdline);
-
-  const plotId =
-    `${benchmark.benchid}-${benchmark.suiteid}` +
-    `-${benchmark.execid}-${benchmark.hostname}`;
-  const result = `
-    <div class="card">
-      <div class="card-body">
-        <h5 class="card-title">${benchmark.benchmark}</h5>
-        <p class="card-text"><small class="text-muted">
-        ${benchmark.execname}, ${benchmark.hostname}<br/>
-        <code>${cmdline}</code></small></p>
-        <div class="timeline-plot"
-          id="plot-${plotId}"
-          class="card-img-top"></div>
-      </div>
-    </div>`;
-
-  return result;
-}
-
-export function renderTimelinePlots(data: any): void {
-  // prepare data
-  const benchmarks = new Map();
-  const trials = new Map();
-
-  for (const trial of data.details) {
-    trial.start = new Date(trial.starttime);
-    trials.set(trial.trialid, trial);
-  }
-
-  for (const result of data.timeline) {
-    const key =
-      `plot-${result.benchmarkid}-${result.suiteid}` +
-      `-${result.execid}-${result.hostname}`;
-    if (!benchmarks.has(key)) {
-      benchmarks.set(key, []);
-    }
-
-    const results = benchmarks.get(key);
-    result.trial = trials.get(result.trialid);
-    results.push(result);
-  }
-
-  (<any>$).appear('.timeline-plot');
-  $('.timeline-plot').on('appear', function (_event, allAppearedElements) {
-    let delay = 0;
-    allAppearedElements.each(function (this: any) {
-      triggerRendering($(this), benchmarks, delay);
-      delay += 1;
-    });
-  });
-
-  // and force render first 6
-  let delay = 0;
-  $('.timeline-plot')
-    .slice(0, 5)
-    .each(function () {
-      triggerRendering($(this), benchmarks, delay);
-      delay += 1;
-    });
-}
-
-function triggerRendering(elem, benchmarks, delay) {
-  const id = elem.prop('id');
-  const results = benchmarks.get(id);
-  setTimeout(() => {
-    renderTimelinePlot(id, results);
-  }, 130 * delay);
 }
