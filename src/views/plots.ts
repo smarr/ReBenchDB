@@ -80,7 +80,8 @@ function seriesConfig(
     label,
     stroke: color,
     value: formatMs,
-    width: width
+    width: width,
+    spanGaps: true
   };
 
   if (largerPoint) {
