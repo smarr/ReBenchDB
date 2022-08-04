@@ -149,7 +149,7 @@ router.get('/:projectSlug/data/:expId', async (ctx) => {
     ctx.redirect(data.downloadUrl);
   }
 
-  await completeRequest(start, db, 'get-exp-data');
+  completeRequest(start, db, 'get-exp-data');
 });
 
 router.get('/rebenchdb/dash/:projectId/results', async (ctx) => {
@@ -158,7 +158,7 @@ router.get('/rebenchdb/dash/:projectId/results', async (ctx) => {
   ctx.body = await dashResults(Number(ctx.params.projectId), db);
   ctx.type = 'application/json';
 
-  await completeRequest(start, db, 'get-results');
+  completeRequest(start, db, 'get-results');
 });
 
 router.get('/rebenchdb/dash/:projectId/benchmarks', async (ctx) => {
@@ -167,7 +167,7 @@ router.get('/rebenchdb/dash/:projectId/benchmarks', async (ctx) => {
   ctx.body = await dashBenchmarksForProject(db, Number(ctx.params.projectId));
   ctx.type = 'application/json';
 
-  await completeRequest(start, db, 'project-benchmarks');
+  completeRequest(start, db, 'project-benchmarks');
 });
 
 router.get('/rebenchdb/dash/:projectId/timeline/:runId', async (ctx) => {
@@ -192,7 +192,7 @@ router.get(
       db
     );
     ctx.type = 'application/json';
-    await completeRequest(start, db, 'get-profiles');
+    completeRequest(start, db, 'get-profiles');
   }
 );
 
@@ -240,7 +240,7 @@ router.get('/:projectSlug/compare/:baseline..:change', async (ctx) => {
     ctx.set('Cache-Control', 'no-cache');
   }
 
-  await completeRequest(start, db, 'change');
+  completeRequest(start, db, 'change');
 });
 
 router.get('/admin/perform-timeline-update', async (ctx) => {
@@ -441,7 +441,7 @@ router.put(
       log.error(e, e.stack);
     }
 
-    await completeRequest(start, db, 'put-results');
+    completeRequest(start, db, 'put-results');
   }
 );
 

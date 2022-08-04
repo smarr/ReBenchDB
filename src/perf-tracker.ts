@@ -110,10 +110,10 @@ export async function completeRequest(
   reqStart: number,
   db: Database,
   request: string
-): Promise<void> {
+): Promise<[number, number]> {
   const time = performance.now() - reqStart;
   iterations[request] += 1;
-  await db.recordAllData(
+  return db.recordAllData(
     constructData(time, iterations[request], request),
     true
   );
