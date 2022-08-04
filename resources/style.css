@@ -3,25 +3,25 @@ body {
   margin: 0 auto;
 }
 
-body.compare {
+body.compare, body.timeline {
   max-width: initial;
 }
 
 @media (min-width: 576px) {
-  body.compare {
+  body.compare, body.timeline {
     padding-left: 10%;
   }
 }
 
-.compare {
+.compare, .timeline {
   max-width: 900px;
 }
 
-.compare nav a {
+.compare nav a, .timeline nav a {
   display: block;
 }
 
-.compare nav span {
+.compare nav span, .timeline nav span {
   margin-left: -10px;
 }
 
@@ -36,11 +36,11 @@ nav.compare {
   order: 2;
 }
 
-.compare main {
+.compare main, .timeline main {
   order: 1;
 }
 
-.compare nav {
+.compare nav, .timeline nav {
   padding-left: 20px;
   padding-bottom: 10px;
 }
