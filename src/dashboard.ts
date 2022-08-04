@@ -13,8 +13,6 @@ const __dirname = getDirname(import.meta.url);
 
 const reportOutputFolder = robustPath(`../resources/reports/`);
 
-let dbCacheValid: TimedCacheValidity | null = null;
-
 /**
  * SELECT exp.id, exp.startTime, m.iteration, m.value FROM Source s
 JOIN Experiment exp ON exp.sourceId = s.id
@@ -23,6 +21,7 @@ WHERE repoURL = 'https://github.com/smarr/ReBenchDB'
  */
 
 const resultsCache: AllResults[][] = [];
+let resultsCacheValid: TimedCacheValidity | null = null;
 
 export async function dashResults(
   projectId: number,
@@ -30,13 +29,14 @@ export async function dashResults(
 ): Promise<AllResults[]> {
   if (
     resultsCache[projectId] &&
-    dbCacheValid !== null &&
-    dbCacheValid.isValid()
+    resultsCacheValid !== null &&
+    resultsCacheValid.isValid()
   ) {
     return resultsCache[projectId];
   }
 
-  dbCacheValid = db.getStatsCacheValidity();
+  resultsCacheValid = db.getStatsCacheValidity();
+  resultsCache.length = 0;
 
   const q: QueryConfig = {
     name: 'all-results',
@@ -105,17 +105,22 @@ export async function dashProfile(
 }
 
 let statisticsCache: { stats: any[] } | null = null;
+let statsCacheValid: TimedCacheValidity | null = null;
+
+export function statsCache(): TimedCacheValidity | null {
+  return statsCacheValid;
+}
 
 export async function dashStatistics(db: Database): Promise<{ stats: any[] }> {
   if (
     statisticsCache !== null &&
-    dbCacheValid !== null &&
-    dbCacheValid.isValid()
+    statsCacheValid !== null &&
+    statsCacheValid.isValid()
   ) {
     return statisticsCache;
   }
 
-  dbCacheValid = db.getStatsCacheValidity();
+  statsCacheValid = db.getStatsCacheValidity();
 
   const result = await db.query(`
     SELECT * FROM (
