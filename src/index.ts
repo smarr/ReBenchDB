@@ -26,7 +26,12 @@ import {
   dashProfile
 } from './dashboard.js';
 import { processTemplate } from './templates.js';
-import { dbConfig, robustPath, siteConfig } from './util.js';
+import {
+  cacheInvalidationDelay,
+  dbConfig,
+  robustPath,
+  siteConfig
+} from './util.js';
 import { createGitHubClient } from './github.js';
 import { getDirname } from './util.js';
 import { log } from './logging.js';
@@ -49,7 +54,7 @@ const refreshSecret =
 
 const app = new Koa();
 const router = new Router();
-const db = new DatabaseWithPool(dbConfig, 1000, true);
+const db = new DatabaseWithPool(dbConfig, 1000, true, cacheInvalidationDelay);
 
 router.get('/', async (ctx) => {
   const projects = await db.getAllProjects();
@@ -110,7 +115,7 @@ router.get('/project/:projectId', async (ctx) => {
     respondProjectIdNotFound(ctx, Number(ctx.params.projectId));
   }
   ctx.body = processTemplate('project-data.html', {
-    project: await db.getProject(Number(ctx.params.projectId))
+    project
   });
   ctx.type = 'html';
 });
@@ -144,7 +149,7 @@ router.get('/:projectSlug/data/:expId', async (ctx) => {
     ctx.redirect(data.downloadUrl);
   }
 
-  await completeRequest(start, db, 'get-exp-data');
+  completeRequest(start, db, 'get-exp-data');
 });
 
 router.get('/rebenchdb/dash/:projectId/results', async (ctx) => {
@@ -153,7 +158,7 @@ router.get('/rebenchdb/dash/:projectId/results', async (ctx) => {
   ctx.body = await dashResults(Number(ctx.params.projectId), db);
   ctx.type = 'application/json';
 
-  await completeRequest(start, db, 'get-results');
+  completeRequest(start, db, 'get-results');
 });
 
 router.get('/rebenchdb/dash/:projectId/benchmarks', async (ctx) => {
@@ -162,7 +167,7 @@ router.get('/rebenchdb/dash/:projectId/benchmarks', async (ctx) => {
   ctx.body = await dashBenchmarksForProject(db, Number(ctx.params.projectId));
   ctx.type = 'application/json';
 
-  await completeRequest(start, db, 'project-benchmarks');
+  completeRequest(start, db, 'project-benchmarks');
 });
 
 router.get('/rebenchdb/dash/:projectId/timeline/:runId', async (ctx) => {
@@ -187,7 +192,7 @@ router.get(
       db
     );
     ctx.type = 'application/json';
-    await completeRequest(start, db, 'get-profiles');
+    completeRequest(start, db, 'get-profiles');
   }
 );
 
@@ -235,7 +240,7 @@ router.get('/:projectSlug/compare/:baseline..:change', async (ctx) => {
     ctx.set('Cache-Control', 'no-cache');
   }
 
-  await completeRequest(start, db, 'change');
+  completeRequest(start, db, 'change');
 });
 
 router.get('/admin/perform-timeline-update', async (ctx) => {
@@ -436,7 +441,7 @@ router.put(
       log.error(e, e.stack);
     }
 
-    await completeRequest(start, db, 'put-results');
+    completeRequest(start, db, 'put-results');
   }
 );
 
