@@ -35,8 +35,10 @@ export async function dashResults(
     return resultsCache[projectId];
   }
 
+  if (resultsCacheValid === null || !resultsCacheValid.isValid()) {
+    resultsCache.length = 0;
+  }
   resultsCacheValid = db.getStatsCacheValidity();
-  resultsCache.length = 0;
 
   const q: QueryConfig = {
     name: 'all-results',
