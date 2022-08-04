@@ -1,12 +1,15 @@
-import { renderProject } from './render.js';
+import { renderChanges, renderAllResults } from './render.js';
 
 $(async () => {
-  const project = {
-    name: $('#project-name').attr('value'),
-    id: $('#project-id').attr('value'),
-    showchanges: $('#project-showchanges').attr('value') === 'true',
-    allresults: $('#project-allresults').attr('value') === 'true'
-  };
+  const projectId = <string>$('#project-id').attr('value');
+  const showChanges = $('#project-showchanges').attr('value') === 'true';
+  const allResults = $('#project-allresults').attr('value') === 'true';
 
-  $('#project').html(renderProject(project));
+  if (showChanges) {
+    renderChanges(projectId);
+  }
+
+  if (allResults) {
+    renderAllResults(projectId);
+  }
 });

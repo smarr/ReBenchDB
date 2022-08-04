@@ -1,4 +1,4 @@
-import { AllResults } from 'api.js';
+import type { AllResults } from 'api.js';
 import { renderResultsPlots } from './plots.js';
 
 function filterCommitMessage(msg) {
@@ -81,34 +81,15 @@ export function renderProjectDataOverview(data: any[]): void {
   }
 }
 
-function renderChanges(project) {
-  if (!project.showchanges) {
-    return '';
-  }
-
-  const changesP = fetch(`/rebenchdb/dash/${project.id}/changes`);
+export function renderChanges(projectId: string): void {
+  const changesP = fetch(`/rebenchdb/dash/${projectId}/changes`);
   changesP.then(
     async (changesDetailsResponse) =>
-      await renderChangeDetails(changesDetailsResponse, project.id)
+      await renderChangeDetails(changesDetailsResponse, projectId)
   );
-
-  const changes = `
-    <h5>Changes</h5>
-    <div class="container min-padding"><div class="row">
-      <div class="col-sm min-padding scroll-list">
-        <div class="list-group baseline" id="p${project.id}-baseline"
-          data-project="${project.name}"></div>
-      </div>
-      <div class="col-sm min-padding scroll-list">
-        <div class="list-group change" id="p${project.id}-change"></div>
-      </div>
-    </div></div>
-
-    <a class="btn btn-primary" id="p${project.id}-compare">Compare</a>`;
-  return changes;
 }
 
-async function renderChangeDetails(changesDetailsResponse, projectId) {
+async function renderChangeDetails(changesDetailsResponse, projectId: string) {
   const details = await changesDetailsResponse.json();
 
   const p1baseline = $(`#p${projectId}-baseline`);
@@ -144,7 +125,7 @@ function setHref(event, projectId, isBaseline) {
   // every time a commit is clicked, check to see if both left and right
   // commit are defined. set link if that is true
   const baseJQ = $(`#p${projectId}-baseline`);
-  const projectName = baseJQ.data('project');
+  const projectSlug = baseJQ.data('project-slug');
 
   const clicked = $(event.currentTarget).data('hash');
   let baseline;
@@ -164,57 +145,16 @@ function setHref(event, projectId, isBaseline) {
 
   $(`#p${projectId}-compare`).attr(
     'href',
-    `/compare/${projectName}/${baseline}/${change}`
+    `/${projectSlug}/compare/${baseline}..${change}`
   );
 }
 
-function renderAllResults(project) {
-  if (!project.allresults) {
-    return '';
-  }
-
-  const resultsP = fetch(`/rebenchdb/dash/${project.id}/results`);
+export function renderAllResults(projectId: string): void {
+  const resultsP = fetch(`/rebenchdb/dash/${projectId}/results`);
   resultsP.then(async (resultsResponse) => {
     const results = <AllResults[]>await resultsResponse.json();
-    renderResultsPlots(results, project.id);
+    renderResultsPlots(results, projectId);
   });
-
-  return `<div id="p${project.id}-results" class="timeline-single"></div>`;
-}
-
-export function renderProject(project: any): string {
-  const changes = renderChanges(project);
-  const allResults = renderAllResults(project);
-
-  const result = `<div class="card">
-    <h5 class="card-header" id="${project.name}"><a
-      href="/project/${project.id}">${project.name}</a></h5>
-    <div class="card-body">
-      ${changes}
-      ${allResults}
-      <a href="/timeline/${project.id}">Timeline</a>
-    </div></div>`;
-  return result;
-}
-
-export function renderWelcomeAndSetupSuggestions(): string {
-  const result = `<div class="card">
-  <h5 class="card-header" id="setup-info">
-    Welcome to your ReBenchDB Instance</h5>
-  <div class="card-body">
-    <p>Currently, there are no projects available.</p>
-
-    <p>To get started, run your benchmarks with
-    <a href="https://rebench.readthedocs.io/">ReBench</a>
-    and add the following to your project's ReBench configuration file:</p>
-    <code><pre>reporting:
-  rebenchdb:
-    db_url: ${window.location.href}rebenchdb
-    repo_url: https://url-to-your-project-repository
-    record_all: true # make sure everything is recorded
-    project_name: Your-Project-Name</pre></code>
-  </div></div>`;
-  return result;
 }
 
 export async function populateStatistics(statsP: any): Promise<void> {

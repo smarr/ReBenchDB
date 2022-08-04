@@ -97,6 +97,7 @@ export interface Criterion {
 export interface Project {
   id: number;
   name: string;
+  slug: string;
   description: string;
   logo: string;
   showchanges: boolean;
@@ -245,11 +246,20 @@ export abstract class Database {
                          WHERE expId = $1 AND endTime IS NULL`,
 
     fetchProjectByName: 'SELECT * from Project WHERE name = $1',
-    fetchProjectBySlugName: `SELECT * from Project
-                               WHERE lower($1) = regexp_replace(
-                                    lower(name), '\\s', '-', 'g')`,
+    fetchProjectBySlugName: {
+      name: 'fetchProjectBySlugName',
+      text: `SELECT * from Project
+              WHERE lower($1) = lower(slug)`,
+      values: ['']
+    },
     fetchProjectById: 'SELECT * from Project WHERE id = $1',
-    insertProject: 'INSERT INTO Project (name) VALUES ($1) RETURNING *',
+    fetchAllProjects: {
+      name: 'fetchAllProjects',
+      text: 'SELECT * FROM Project'
+    },
+    insertProject: `INSERT INTO Project (name, slug)
+                      VALUES ($1, regexp_replace($2, '[^0-9a-zA-Z-]', '-', 'g'))
+                    RETURNING *`,
 
     fetchExpByNames: `SELECT e.* FROM Experiment e
                         JOIN Project p ON p.id = e.projectId
@@ -332,7 +342,7 @@ export abstract class Database {
                             JOIN Experiment e ON e.projectId = p.id
                             JOIN Trial t ON e.id = t.expId
                             JOIN Source s ON t.sourceId = s.id
-                          WHERE p.name = $1
+                          WHERE lower(p.slug) = lower($1)
                             AND s.commitid = $2
                             OR s.commitid = $3`,
 
@@ -469,12 +479,12 @@ export abstract class Database {
   public abstract close(): Promise<void>;
 
   public async revisionsExistInProject(
-    project: string,
+    projectSlug: string,
     base: string,
     change: string
-  ): Promise<any> {
+  ): Promise<{ dataFound: boolean; base?: any; change?: any }> {
     const result = await this.query(this.queries.fetchRevsInProject, [
-      project,
+      projectSlug,
       base,
       change
     ]);
@@ -662,21 +672,39 @@ export abstract class Database {
       this.queries.fetchProjectByName,
       [projectName],
       this.queries.insertProject,
-      [projectName]
+      [projectName, projectName]
     );
   }
 
   public async getProjectBySlug(
     projectNameSlug: string
   ): Promise<Project | undefined> {
-    const result = await this.query(this.queries.fetchProjectBySlugName, [
-      projectNameSlug
+    const q = { ...this.queries.fetchProjectBySlugName };
+    q.values = [projectNameSlug];
+    const result = await this.query(q);
+
+    if (result.rowCount !== 1) {
+      return undefined;
+    }
+    return result.rows[0];
+  }
+
+  public async getProjectByName(
+    projectName: string
+  ): Promise<Project | undefined> {
+    const result = await this.query(this.queries.fetchProjectByName, [
+      projectName
     ]);
 
     if (result.rowCount !== 1) {
       return undefined;
     }
     return result.rows[0];
+  }
+
+  public async getAllProjects(): Promise<Project[]> {
+    const result = await this.query(this.queries.fetchAllProjects);
+    return result.rows;
   }
 
   public async getProject(projectId: number): Promise<Project | undefined> {

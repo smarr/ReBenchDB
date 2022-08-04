@@ -67,6 +67,7 @@ CREATE TABLE Criterion (
 CREATE TABLE Project (
   id serial primary key,
   name varchar unique,
+  slug varchar unique,
   description text,
   logo varchar,
   showChanges bool DEFAULT true,

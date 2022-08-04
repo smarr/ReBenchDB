@@ -23,7 +23,55 @@
     <a href="https://rebench.readthedocs.io/"><img src="https://img.shields.io/badge/Documentation-Go-informational"></a>
   </div>
 
-  <div id="projects"></div>
+  <div id="projects">
+    {{#projects}}
+    <div class="card project-data" data-id="{{ id }}" data-showchanges="{{ showchanges }}" data-allresults="{{ allresults }}">
+      <h5 class="card-header" id="{{ slug }}"><a
+        href="/{{ slug }}/data">{{ name }}</a></h5>
+      <div class="card-body">
+        {{#showchanges}}
+        <h5>Changes</h5>
+        <div class="container min-padding"><div class="row">
+          <div class="col-sm min-padding scroll-list">
+            <div class="list-group baseline" id="p{{ id }}-baseline"
+              data-project-slug="{{ slug }}"></div>
+          </div>
+          <div class="col-sm min-padding scroll-list">
+            <div class="list-group change" id="p{{ id }}-change"></div>
+          </div>
+        </div></div>
+
+        <a class="btn btn-primary" id="p{{ id }}-compare">Compare</a>
+        {{/showchanges}}
+        {{#allresults}}
+        <div id="p{{ id }}-results" class="timeline-single"></div>
+        {{/allresults}}
+        <a href="/{{ slug }}/timeline">Timeline</a>
+      </div>
+    </div>
+    {{/projects}}
+    {{^projects}}
+    <div class="card">
+      <h5 class="card-header" id="setup-info">
+        Welcome to your ReBenchDB Instance</h5>
+      <div class="card-body">
+        <p>Currently, there are no projects available.</p>
+
+        <p>To get started, run your benchmarks with
+        <a href="https://rebench.readthedocs.io/">ReBench</a>
+        and add the following to your project's ReBench configuration file:</p>
+        <code><pre>reporting:
+  rebenchdb:
+    db_url: <span id="host-url"></span>rebenchdb
+    repo_url: https://url-to-your-project-repository
+    record_all: true # make sure everything is recorded
+    project_name: Your-Project-Name</pre></code>
+      </div></div>
+      <script>
+        document.getElementById('host-url').textContent = window.location.href;
+      </script>
+    {{/projects}}
+  </div>
 
   <div class="row">
     <div class="col-sm-6">

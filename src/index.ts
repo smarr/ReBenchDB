@@ -18,7 +18,6 @@ import {
   dashStatistics,
   dashChanges,
   dashCompare,
-  dashProjects,
   dashBenchmarksForProject,
   dashDataOverview,
   dashGetExpData,
@@ -53,37 +52,88 @@ const router = new Router();
 const db = new DatabaseWithPool(dbConfig, 1000, true);
 
 router.get('/', async (ctx) => {
-  ctx.body = processTemplate('index.html');
+  const projects = await db.getAllProjects();
+  ctx.body = processTemplate('index.html', { projects });
   ctx.type = 'html';
 });
 
-router.get('/:projectName', async (ctx) => {
-  ctx.body = processTemplate('project.html', {
-    project: await db.getProjectBySlug(ctx.params.projectName)
-  });
-  ctx.type = 'html';
+router.get('/:projectSlug', async (ctx) => {
+  const project = await db.getProjectBySlug(ctx.params.projectSlug);
+  if (project) {
+    ctx.body = processTemplate('project.html', { project });
+    ctx.type = 'html';
+  } else {
+    respondProjectNotFound(ctx, ctx.params.projectSlug);
+  }
 });
+
+function respondProjectIdNotFound(ctx, projectId: number) {
+  ctx.body = `Requested project with id ${projectId} not found`;
+  ctx.status = 404;
+  ctx.type = 'text';
+}
+
+function respondProjectNotFound(ctx, projectSlug: string) {
+  ctx.body = `Requested project "${projectSlug}" not found`;
+  ctx.status = 404;
+  ctx.type = 'text';
+}
 
 router.get('/timeline/:projectId', async (ctx) => {
-  const projectId = Number(ctx.params.projectId);
-  ctx.body = processTemplate('timeline.html', {
-    project: await db.getProject(projectId),
-    benchmarks: await db.getLatestBenchmarksForTimelineView(projectId)
-  });
-  ctx.type = 'html';
+  const project = await db.getProject(Number(ctx.params.projectId));
+  if (project) {
+    ctx.redirect(`/${project.slug}/timeline`);
+  } else {
+    respondProjectIdNotFound(ctx, Number(ctx.params.projectId));
+  }
+});
+
+router.get('/:projectSlug/timeline', async (ctx) => {
+  const project = await db.getProjectBySlug(ctx.params.projectSlug);
+
+  if (project) {
+    ctx.body = processTemplate('timeline.html', {
+      project,
+      benchmarks: await db.getLatestBenchmarksForTimelineView(project.id)
+    });
+    ctx.type = 'html';
+  } else {
+    respondProjectNotFound(ctx, ctx.params.projectSlug);
+  }
 });
 
 router.get('/project/:projectId', async (ctx) => {
+  const project = await db.getProject(Number(ctx.params.projectId));
+  if (project) {
+    ctx.redirect(`/${project.slug}/data`);
+  } else {
+    respondProjectIdNotFound(ctx, Number(ctx.params.projectId));
+  }
   ctx.body = processTemplate('project-data.html', {
     project: await db.getProject(Number(ctx.params.projectId))
   });
   ctx.type = 'html';
 });
 
-router.get('/rebenchdb/get-exp-data/:expId', async (ctx) => {
+router.get('/:projectSlug/data', async (ctx) => {
+  const project = await db.getProjectBySlug(ctx.params.projectSlug);
+  if (project) {
+    ctx.body = processTemplate('project-data.html', { project });
+    ctx.type = 'html';
+  } else {
+    respondProjectNotFound(ctx, ctx.params.projectSlug);
+  }
+});
+
+router.get('/:projectSlug/data/:expId', async (ctx) => {
   const start = startRequest();
 
-  const data = await dashGetExpData(Number(ctx.params.expId), dbConfig, db);
+  const data = await dashGetExpData(
+    ctx.params.projectSlug,
+    Number(ctx.params.expId),
+    dbConfig,
+    db
+  );
 
   if (data.preparingData) {
     ctx.body = processTemplate('get-exp-data.html', data);
@@ -95,11 +145,6 @@ router.get('/rebenchdb/get-exp-data/:expId', async (ctx) => {
   }
 
   await completeRequest(start, db, 'get-exp-data');
-});
-
-router.get(`/rebenchdb/dash/projects`, async (ctx) => {
-  ctx.body = await dashProjects(db);
-  ctx.type = 'application/json';
 });
 
 router.get('/rebenchdb/dash/:projectId/results', async (ctx) => {
@@ -163,12 +208,23 @@ router.get('/rebenchdb/dash/:projectId/data-overview', async (ctx) => {
 });
 
 router.get('/compare/:project/:baseline/:change', async (ctx) => {
+  const project = await db.getProjectByName(ctx.params.project);
+  if (project) {
+    ctx.redirect(
+      `/${project.slug}/compare/${ctx.params.baseline}..${ctx.params.change}`
+    );
+  } else {
+    respondProjectNotFound(ctx, ctx.params.project);
+  }
+});
+
+router.get('/:projectSlug/compare/:baseline..:change', async (ctx) => {
   const start = startRequest();
 
   const data = await dashCompare(
     ctx.params.baseline,
     ctx.params.change,
-    ctx.params.project,
+    ctx.params.projectSlug,
     dbConfig,
     db
   );
