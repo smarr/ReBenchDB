@@ -8,6 +8,32 @@ export default class StoreResults extends RebenchDbBenchmark {
     this.iteration = 0;
   }
 
+  public async oneTimeSetup(problemSize: string): Promise<void> {
+    await super.oneTimeSetup(problemSize);
+
+    if (problemSize === 'full') {
+      // just use the testData as is
+    } else if (problemSize === 'large') {
+      this.testData.data.length = 50;
+    } else if (problemSize === 'medium') {
+      this.testData.data.length = 20;
+      for (const run of this.testData.data) {
+        if (run.d) {
+          run.d.length = 200;
+        }
+      }
+    } else if (problemSize === 'small') {
+      this.testData.data.length = 10;
+      for (const run of this.testData.data) {
+        if (run.d) {
+          run.d.length = 15;
+        }
+      }
+    } else {
+      throw new Error('Unsupported problem size given: ' + problemSize);
+    }
+  }
+
   public async benchmark(): Promise<any> {
     this.iteration += 1;
     this.testData.experimentName = 'Benchmark ' + this.iteration;
@@ -18,8 +44,10 @@ export default class StoreResults extends RebenchDbBenchmark {
   public verifyResult(result: any): boolean {
     const [recMs, recPs] = result;
 
-    if (this.problemSize === 'large') {
+    if (this.problemSize === 'full') {
       return recMs === 459928 && recPs === 0;
+    } else if (this.problemSize === 'large') {
+      return recMs === 75987 && recPs === 0;
     } else if (this.problemSize === 'medium') {
       return recMs === 5197 && recPs === 0;
     } else if (this.problemSize === 'small') {

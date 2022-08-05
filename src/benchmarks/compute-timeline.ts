@@ -7,6 +7,28 @@ export default class ComputeTimeline extends RebenchDbBenchmark {
   public async oneTimeSetup(problemSize: string): Promise<void> {
     await super.oneTimeSetup(problemSize);
 
+    if (problemSize === 'full') {
+      // just use the testData as is
+    } else if (problemSize === 'large') {
+      this.testData.data.length = 50;
+    } else if (problemSize === 'medium') {
+      this.testData.data.length = 20;
+      for (const run of this.testData.data) {
+        if (run.d) {
+          run.d.length = 200;
+        }
+      }
+    } else if (problemSize === 'small') {
+      this.testData.data.length = 10;
+      for (const run of this.testData.data) {
+        if (run.d) {
+          run.d.length = 15;
+        }
+      }
+    } else {
+      throw new Error('Unsupported problem size given: ' + problemSize);
+    }
+
     this.testData.experimentName = 'Benchmark 1';
     this.testData.source.commitId = 'commit-1';
     await this.db?.recordAllData(this.testData);
@@ -46,6 +68,10 @@ export default class ComputeTimeline extends RebenchDbBenchmark {
     }
 
     if (this.problemSize === 'large') {
+      return result.numJobs === 152 && result.timelineEntries.count === '152';
+    }
+
+    if (this.problemSize === 'full') {
       return result.numJobs === 920 && result.timelineEntries.count === '920';
     }
 

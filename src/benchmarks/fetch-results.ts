@@ -5,13 +5,31 @@ export default class RenderReport extends RebenchDbBenchmark {
   public async oneTimeSetup(problemSize: string): Promise<void> {
     await super.oneTimeSetup(problemSize);
 
-    this.testData.experimentName = 'Benchmark 1';
-    this.testData.source.commitId = 'commit-1';
-    await this.db?.recordAllData(this.testData);
+    if (problemSize === 'large') {
+      // just use the testData as is
+    } else if (problemSize === 'medium') {
+      this.testData.data.length = 20;
+      for (const run of this.testData.data) {
+        if (run.d) {
+          run.d.length = 200;
+        }
+      }
+    } else if (problemSize === 'small') {
+      this.testData.data.length = 10;
+      for (const run of this.testData.data) {
+        if (run.d) {
+          run.d.length = 15;
+        }
+      }
+    } else {
+      throw new Error('Unsupported problem size given: ' + problemSize);
+    }
 
-    this.testData.experimentName = 'Benchmark 2';
-    this.testData.source.commitId = 'commit-2';
-    await this.db?.recordAllData(this.testData);
+    for (let i = 1; i <= 2; i += 1) {
+      this.testData.experimentName = 'Benchmark ' + i;
+      this.testData.source.commitId = 'commit-' + i;
+      await this.db?.recordAllData(this.testData);
+    }
   }
 
   public async benchmark(): Promise<any> {
