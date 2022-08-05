@@ -7,4 +7,4 @@ build-and-benchmark:
   script:
     - podman build . -f Dockerfile -t rebenchdb
     - podman build . -f Dockerfile.rebench -t bench-rdb
-    - podman run bench-rdb:latest
+    - podman run bench-rdb:latest -c --experiment="CI ID $CI_PIPELINE_ID" --branch="$CI_COMMIT_REF_NAME" rebench.conf

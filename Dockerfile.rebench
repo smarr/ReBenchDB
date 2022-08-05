@@ -4,4 +4,11 @@ FROM rebenchdb:latest
 RUN apt-get install -y git python3-pip
 RUN pip install git+https://github.com/smarr/ReBench.git
 
-CMD ["rebench", "--help" ]
+RUN echo 'echo Starting PostgreSQL Server\n\
+service postgresql start\n\
+rebench "$@"' > ./start-server-and-rebench.sh
+
+RUN npm run pretest
+
+ENTRYPOINT ["bash", "./start-server-and-rebench.sh"]
+CMD ["--help"]
