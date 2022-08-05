@@ -1,0 +1,10 @@
+stages:
+  - build-and-benchmark
+
+build-and-benchmark:
+  stage: build-and-benchmark
+  tags: [yuria2]
+  script:
+    - podman build . -f Dockerfile -t rebenchdb
+    - podman build . -f Dockerfile.rebench -t bench-rdb
+    - podman run bench-rdb:latest

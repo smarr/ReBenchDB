@@ -1,0 +1,7 @@
+# Used for benchmarking
+FROM rebenchdb:latest
+
+RUN apt-get install -y git python3-pip
+RUN pip install git+https://github.com/smarr/ReBench.git
+
+CMD ["rebench", "--help" ]
