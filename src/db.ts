@@ -271,9 +271,9 @@ export abstract class Database {
                   hostname, osType, memory, cpu, clockSpeed)
                 VALUES ($1, $2, $3, $4, $5) RETURNING *`,
 
-    fetchTrialByUserEnvStart: `SELECT * FROM Trial
+    fetchTrialByUserEnvStartExp: `SELECT * FROM Trial
                                WHERE username = $1 AND envId = $2 AND
-                                     startTime = $3`,
+                                     startTime = $3 AND expId = $4`,
     insertTrial: `INSERT INTO Trial (manualRun, startTime, expId, username,
                                      envId, sourceId, denoise)
                   VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
@@ -687,19 +687,18 @@ export abstract class Database {
     exp: Experiment
   ): Promise<Trial> {
     const e = data.env;
-    const cacheKey = `${e.userName}-${env.id}-${data.startTime}`;
+    const cacheKey = `${e.userName}-${env.id}-${data.startTime}-${exp.id}`;
 
     if (this.trials.has(cacheKey)) {
       return <Trial>this.trials.get(cacheKey);
     }
-
     const source = await this.recordSource(data.source);
 
     return this.recordCached(
       this.trials,
       cacheKey,
-      this.queries.fetchTrialByUserEnvStart,
-      [e.userName, env.id, data.startTime],
+      this.queries.fetchTrialByUserEnvStartExp,
+      [e.userName, env.id, data.startTime, exp.id],
       this.queries.insertTrial,
       [
         e.manualRun,
