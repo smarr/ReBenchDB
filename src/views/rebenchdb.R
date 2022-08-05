@@ -37,7 +37,8 @@ connect_to_rebenchdb <- function(dbname, user, pass, host, port) {
     port = port,
     dbname = dbname,
     user = user,
-    password = pass)
+    password = pass,
+    sslmode = 'disable')
 }
 
 main_data_select <- "
