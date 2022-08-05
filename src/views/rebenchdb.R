@@ -31,14 +31,14 @@ load_data_url <- function(url) {
 connect_to_rebenchdb <- function(dbname, user, pass, host, port) {
   host <- if (host == "") { NULL } else { host }
   port <- if (port == "") { NULL } else { port }
-  DBI::dbConnect(
+  suppressWarnings(DBI::dbConnect(
     RPostgres::Postgres(),
     host = host,
     port = port,
     dbname = dbname,
     user = user,
     password = pass,
-    sslmode = 'disable')
+    sslmode = 'disable'))
 }
 
 main_data_select <- "
