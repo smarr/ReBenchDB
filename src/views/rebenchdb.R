@@ -28,9 +28,9 @@ load_data_url <- function(url) {
 }
 
 
-connect_to_rebenchdb <- function(dbname, user, pass) {
-  host <- if (Sys.getenv("DB_HOST") == "") { NULL } else { Sys.getenv("DB_HOST") }
-  port <- if (Sys.getenv("DB_PORT") == "") { NULL } else { Sys.getenv("DB_PORT") }
+connect_to_rebenchdb <- function(dbname, user, pass, host, port) {
+  host <- if (host == "") { NULL } else { host }
+  port <- if (port == "") { NULL } else { port }
   DBI::dbConnect(
     RPostgres::Postgres(),
     host = host,

@@ -1222,6 +1222,8 @@ export abstract class Database {
         this.dbConfig.database,
         this.dbConfig.user,
         this.dbConfig.password,
+        this.dbConfig.host,
+        this.dbConfig.port,
         this.numBootstrapSamples
       ];
       const start = startRequest();
