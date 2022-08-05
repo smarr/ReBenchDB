@@ -45,7 +45,8 @@ EXPOSE 33333
 RUN service postgresql start && \
    sudo -u postgres psql -c "CREATE USER docker with password 'docker';" \
      -c " CREATE DATABASE rebenchdb;" \
-     -c "GRANT ALL PRIVILEGES ON DATABASE rebenchdb TO docker;"
+     -c "GRANT ALL PRIVILEGES ON DATABASE rebenchdb TO docker;" \
+     -c "ALTER USER docker CREATEDB;"
 
 # Generate Script to start the image
 RUN echo 'echo Starting ReBenchDB\n\
