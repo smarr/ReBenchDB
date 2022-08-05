@@ -261,3 +261,10 @@ export interface TimelineBenchmark {
   cmdline: string;
   runId: number;
 }
+
+export interface TimelineJob {
+  timelinejobid: number;
+  trialid: number;
+  runid: number;
+  criterion: number;
+}
