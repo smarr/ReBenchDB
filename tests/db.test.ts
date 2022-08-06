@@ -6,8 +6,68 @@ import {
 import { BenchmarkData, TimelineRequest } from '../src/api.js';
 import { readFileSync } from 'fs';
 import { getDirname } from '../src/util.js';
+import { Experiment, Environment } from 'db.js';
 
 const __dirname = getDirname(import.meta.url);
+
+describe('Record Trial', () => {
+  let db: TestDatabase;
+  let basicTestData: BenchmarkData;
+  let env: Environment;
+  let exp: Experiment;
+
+  beforeAll(async () => {
+    db = await createAndInitializeDB('db_record_trial', 0, false, false);
+    const data = readFileSync(`${__dirname}/small-payload.json`).toString();
+    basicTestData = JSON.parse(data);
+
+    env = await db.recordEnvironment(basicTestData.env);
+    exp = await db.recordExperiment(basicTestData);
+  });
+
+  afterAll(async () => {
+    await db.close();
+  });
+
+  it('the database should not have any trials', async () => {
+    const result = await db.query('SELECT * FROM Trial');
+    expect(result.rowCount).toEqual(0);
+  });
+
+  it('should record a new trial in the database', async () => {
+    const result = await db.recordTrial(basicTestData, env, exp);
+
+    const tResult = await db.query('SELECT * FROM Trial');
+    expect(tResult.rowCount).toEqual(1);
+    expect(tResult.rows[0].username).toEqual('smarr');
+
+    expect(result.username).toEqual('smarr');
+  });
+
+  it('recording the same, again, should not add it to the db', async () => {
+    const result = await db.recordTrial(basicTestData, env, exp);
+
+    const tResult = await db.query('SELECT * FROM Trial');
+    expect(tResult.rowCount).toEqual(1);
+    expect(tResult.rows[0].username).toEqual('smarr');
+
+    expect(result.username).toEqual('smarr');
+  });
+
+  it('but, recording the same for another experiment, should', async () => {
+    basicTestData.experimentName += ' 2';
+    const exp2 = await db.recordExperiment(basicTestData);
+    expect(exp2.id).not.toEqual(exp.id);
+
+    const result = await db.recordTrial(basicTestData, env, exp2);
+    expect(result.expid).toEqual(exp2.id);
+
+    const tResult = await db.query('SELECT * FROM Trial');
+    expect(tResult.rowCount).toEqual(2);
+    expect(tResult.rows[0].expid).toEqual(exp.id);
+    expect(tResult.rows[1].expid).toEqual(exp2.id);
+  });
+});
 
 describe('Timeline-plot Queries', () => {
   let db: TestDatabase;
