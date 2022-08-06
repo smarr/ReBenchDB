@@ -16,36 +16,49 @@ RUN apt-get install -y \
     libfontconfig1-dev \
     libpq-dev
 
-# all of the project files will be copyed to a new dir called project
-COPY . /project
+# Copy only the install.R to enable caching
+RUN mkdir -p /project/src/stats/
+COPY ./src/stats/install.R /project/src/stats/
 
 # Installing R libraries
 RUN Rscript /project/src/stats/install.R
 
+
+# Copy only package.json to enable caching
+COPY ./package.json ./package-lock.json /project/
+
 # Set the working dir to the project & install and compile all dependency
 WORKDIR /project/
-RUN npm install .
-RUN npm run compile
 
-# Initialize Database
-RUN service postgresql start && \
-   sudo -u postgres psql -c "CREATE USER docker with password 'docker';" \
-     -c " CREATE DATABASE rebenchdb;" \
-     -c "GRANT ALL PRIVILEGES ON DATABASE rebenchdb TO docker;"
+RUN npm ci --ignore-scripts .
 
-RUN echo 'echo Starting ReBenchDB\n\
-service postgresql start\n\
-DEV=true npm run start' > ./start-server.sh
-
+# Basic Configuration
 ENV RDB_USER=docker
 ENV RDB_PASS=docker
 ENV RDB_DB=rebenchdb
 ENV REFRESH_SECRET=refresh
 
-# postgres port
-# EXPOSE 5432
-
 # open TCP/Project port
 EXPOSE 33333
+
+# Initialize Database
+RUN service postgresql start && \
+   sudo -u postgres psql -c "CREATE USER docker with password 'docker';" \
+     -c " CREATE DATABASE rebenchdb;" \
+     -c "GRANT ALL PRIVILEGES ON DATABASE rebenchdb TO docker;" \
+     -c "ALTER USER docker CREATEDB;"
+
+# Generate Script to start the image
+RUN echo 'echo Starting ReBenchDB\n\
+service postgresql start\n\
+DEV=true npm run start' > ./start-server.sh
+
+# all of the project files will be copyed to a new dir called project
+COPY . /project
+
+RUN npm run compile
+
+ENV TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 CMD ["bash", "./start-server.sh" ]

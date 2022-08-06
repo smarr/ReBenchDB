@@ -11,16 +11,18 @@ args <- if (Sys.getenv("RSTUDIO") == "1") {
    "rdb_smde", # NA,  # "rdb_sm1"
    "", # NA,
    "", # NA,
+   "", # NA,
+   "", # NA,
    ""  # "from-file;~/Projects/ReBenchDB/tmp/TruffleSOM-380.qs;~/Projects/ReBenchDB/tmp/TruffleSOM-381.qs"
  )
 } else {
   commandArgs(trailingOnly = TRUE)
 }
 
-if (length(args) < 10 | args[[1]] == '--help') {
+if (length(args) < 12 | args[[1]] == '--help') {
   cat("Performance Comparison Report
 
-Usage: somns.R outputFile outputDir baselineHash changeHash baselineColor changeColor dbName dbUser dbPass [extraCmd]
+Usage: somns.R outputFile outputDir baselineHash changeHash baselineColor changeColor dbName dbUser dbPass dbHost dbPort [extraCmd]
 
   outputFile       the name for the HTML file that is produced
   outputDir        the name for the folder with images produced
@@ -32,6 +34,8 @@ Usage: somns.R outputFile outputDir baselineHash changeHash baselineColor change
   dbName           name of the database
   dbUser           name of the user used to connect to the DB
   dbPass           password used for the DB
+  dbHost           name of database host
+  dbPort           number of database port
 
   extraCmd         a command interpreted by the script
                    as a ; separated list
@@ -47,7 +51,9 @@ change_hash    <- args[[6]]
 db_name        <- args[[7]]
 db_user        <- args[[8]]
 db_pass        <- args[[9]]
-extra_cmd      <- args[[10]]
+db_host        <- args[[10]]
+db_port        <- args[[11]]
+extra_cmd      <- args[[12]]
 
 # Load Libraries
 source(paste0(lib_dir, "/common.R"), chdir=TRUE)
@@ -101,7 +107,7 @@ if (cmds[1] == "from-file") {
   environments <- NULL
 } else {
   # load_and_install_if_necessary("psych")   # uses only geometric.mean
-  rebenchdb <- connect_to_rebenchdb(db_name, db_user, db_pass)
+  rebenchdb <- connect_to_rebenchdb(db_name, db_user, db_pass, db_host, db_port)
   result <- get_measures_for_comparison(rebenchdb, baseline_hash, change_hash)
   profiles <- get_profile_availability(rebenchdb, baseline_hash, change_hash)
   environments <- get_environments(rebenchdb, baseline_hash, change_hash)

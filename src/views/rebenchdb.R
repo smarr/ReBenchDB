@@ -5,18 +5,18 @@ library(DBI)
 suppressMessages(library(qs))
 
 load_data_file <- function(filename) {
-  qread(filename)  
+  qread(filename)
 }
 
 load_data_url <- function(url) {
   # url <- "https://rebench.stefan-marr.de/rebenchdb/get-exp-data/37"
   safe_name <- str_replace_all(url, "[:/.]", "-")
   cache_file <- paste0(str_replace_all(safe_name, "-+", "-"), ".qs")
-  
+
   if(!file.exists(cache_file)) {
     download.file(url=url, destfile=cache_file)
   }
-  
+
   tryCatch(
     qread(cache_file),
     error = function(c) {
@@ -28,16 +28,17 @@ load_data_url <- function(url) {
 }
 
 
-connect_to_rebenchdb <- function(dbname, user, pass) {
-  host <- if (Sys.getenv("DB_HOST") == "") { NULL } else { Sys.getenv("DB_HOST") }
-  port <- if (Sys.getenv("DB_PORT") == "") { NULL } else { Sys.getenv("DB_PORT") }
-  DBI::dbConnect(
+connect_to_rebenchdb <- function(dbname, user, pass, host, port) {
+  host <- if (host == "") { NULL } else { host }
+  port <- if (port == "") { NULL } else { port }
+  suppressWarnings(DBI::dbConnect(
     RPostgres::Postgres(),
     host = host,
     port = port,
     dbname = dbname,
     user = user,
-    password = pass)
+    password = pass,
+    sslmode = 'disable'))
 }
 
 main_data_select <- "
@@ -79,7 +80,7 @@ get_measures_for_experiment <- function(rebenchdb, exp_id) {
   dbBind(qry, list(exp_id))
   result <- dbFetch(qry)
   dbClearResult(qry)
-  
+
   factorize_result(result)
 }
 
@@ -129,7 +130,7 @@ get_profile_availability <- function(rebenchdb, hash_1, hash_2) {
   dbBind(qry, list(hash_1, hash_2))
   result <- dbFetch(qry)
   dbClearResult(qry)
-  
+
   factorize_result(result)
 }
 
@@ -150,8 +151,8 @@ factorize_result <- function(result) {
   if ("envid" %in% colnames(result)) {
      result$envid <- factor(result$envid)
   }
-  
-  
+
+
   if ("criterion" %in% colnames(result)) {
     result$criterion <- factor(result$criterion)
     result$unit <- factor(result$unit)

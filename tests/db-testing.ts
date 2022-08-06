@@ -29,6 +29,16 @@ export class TestDatabase extends Database {
     this.client = null;
   }
 
+  public getDatabaseConfig(): DatabaseConfig {
+    return {
+      user: <string>this.dbConfig.user,
+      password: <string>this.dbConfig.password,
+      host: <string>this.dbConfig.host,
+      database: <string>this.dbConfig.database,
+      port: <number>this.dbConfig.port
+    };
+  }
+
   public query<R extends QueryResultRow = any, I extends any[] = any[]>(
     queryTextOrConfig: string | QueryConfig<I>,
     values?: I

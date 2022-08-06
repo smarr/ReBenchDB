@@ -131,10 +131,10 @@ CREATE TABLE Trial (
   endTime timestamp with time zone NULL,
 
   -- We assume that there is only
-  -- a single experiment per user/environment/startTime.
+  -- a single trial per user/environment/startTime/experiment.
   -- sourceId is not included, since it should be
   -- functionally dependent on startTime in the intended scenarios.
-  unique (username, envId, startTime),
+  unique (username, envId, expId, startTime),
 
   foreign key (expId) references Experiment (id),
   foreign key (envId) references Environment (id),

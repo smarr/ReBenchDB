@@ -228,6 +228,8 @@ export function startReportGeneration(
     dbConfig.database,
     dbConfig.user,
     dbConfig.password,
+    dbConfig.host,
+    String(dbConfig.port),
     extraCmd
   ];
 
@@ -444,6 +446,8 @@ export async function dashGetExpData(
         dbConfig.user,
         dbConfig.password,
         dbConfig.database,
+        dbConfig.host,
+        String(dbConfig.port),
         expDataFile
       ];
 

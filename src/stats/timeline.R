@@ -13,7 +13,9 @@ if (Sys.getenv("RSTUDIO") == "1" & Sys.getenv("LOGNAME") == "smarr") {
   db_name <- args[1]
   db_user <- args[2]
   db_pass <- args[3]
-  num_replicates <- as.numeric(args[4])
+  db_host <- args[4]
+  db_port <- args[5]
+  num_replicates <- as.numeric(args[6])
 }
 
 source("../views/rebenchdb.R", chdir = TRUE)
@@ -21,11 +23,11 @@ source("../views/stats.R", chdir = TRUE)
 
 suppressMessages(library(dplyr))
 
-rebenchdb <- connect_to_rebenchdb(db_name, db_user, db_pass)
+rebenchdb <- connect_to_rebenchdb(db_name, db_user, db_pass, db_host, db_port)
 
 dbBegin(rebenchdb)
 qry <- dbSendQuery(rebenchdb, "
-WITH deletedJobs AS ( 
+WITH deletedJobs AS (
     DELETE FROM TimelineCalcJob tcj
     RETURNING tcj.trialId, tcj.runId, tcj.criterion
 )

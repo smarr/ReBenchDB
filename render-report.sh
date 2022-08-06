@@ -5,5 +5,5 @@ popd > /dev/null
 
 exec Rscript "${BASEDIR}/src/views/somns.R" \
     test.html test.figures "${BASEDIR}/src/views" "" \
-    '' '' '' '' '' \
+    '' '' '' '' '' '' '' \
     "from-file;${BASEDIR}/$1;${BASEDIR}/$2"
