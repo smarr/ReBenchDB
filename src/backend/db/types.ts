@@ -131,7 +131,7 @@ export interface Measurement {
   invocation: number;
   iteration: number;
 
-  value: number;
+  value: number[];
 }
 
 export interface Baseline extends Source {

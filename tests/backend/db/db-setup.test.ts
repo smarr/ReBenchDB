@@ -210,6 +210,14 @@ describe('Recording a ReBench execution from payload files', () => {
 
     const timeline = await db.query({ text: 'SELECT * from Timeline' });
     expect(timeline.rowCount).toEqual(1);
+
+    // tests to see if small payload has separated each invocation
+    // into an array of length 1
+    const expectedValues = [[383.821], [432.783], [482.53]];
+    for (const elm in expectedValues) {
+      expect(measurements.rows[elm].value.length).toEqual(1);
+      expect(measurements.rows[elm].value).toEqual(expectedValues[elm]);
+    }
   });
 
   it('data recording should be idempotent (small-payload)', async () => {
@@ -260,11 +268,39 @@ describe('Recording a ReBench execution from payload files', () => {
 
       await db.awaitQuiescentTimelineUpdater();
 
-      expect(recMs).toEqual(459928);
+      // sql to find total number of values that exist in the table
+      const totalNumberOfValuesQuery = await db.query({
+        text: 'SELECT SUM(cardinality(value)) FROM Measurement'
+      });
+
+      // this finds all no unique IDs
+      // if the sql has failed to merge all iteration into a single row,
+      // then this will be > 0
+      const numNonUniqueIDsQuery = await db.query({
+        text: `SELECT runid, trialid, criterion, invocation
+        FROM measurement 
+        WHERE (runid, trialid, criterion, invocation) IN
+        (SELECT runid, trialid, criterion, invocation 
+          FROM measurement 
+          GROUP BY runid, trialid, criterion, invocation 
+          HAVING COUNT(*) > 1);`
+      });
+
+      const expectedTimelineRowCount = 317;
+      const numberRowsAdded = 460;
+      const expectedNumberRows = 464;
+      const expectedNumberValues = 459932;
+
+      expect(recMs).toEqual(numberRowsAdded);
       expect(recPs).toEqual(0);
-      expect(parseInt(measurements.rows[0].cnt)).toEqual(459928 + 3);
+      expect(parseInt(measurements.rows[0].cnt)).toEqual(expectedNumberRows);
       const timeline = await db.query({ text: 'SELECT * from Timeline' });
-      expect(timeline.rowCount).toEqual(317);
+      expect(timeline.rowCount).toEqual(expectedTimelineRowCount);
+      expect(parseInt(totalNumberOfValuesQuery.rows[0].sum)).toEqual(
+        expectedNumberValues
+      );
+
+      expect(numNonUniqueIDsQuery.rows.length).toEqual(0);
     },
     timeoutForLargeDataTest
   );
@@ -312,6 +348,54 @@ describe('Recording a ReBench execution from payload files', () => {
     const profileData = JSON.parse(profileStr);
     expect(profileData.length).toEqual(16);
     expect(profileData[0].m).toEqual('GreyObjectsWalker_walkGreyObjects');
+  });
+
+  it(`should not combine single iterations,
+   and combine multiple iterations`, async () => {
+    await db.recordMetaDataAndRuns(smallTestData);
+    await db.recordAllData(smallTestData);
+
+    // obtain the bits, this should match what `recordData` does above
+    const { trial, criteria } = await db.recordMetaData(smallTestData);
+
+    // now, manually do the recording
+    const r = smallTestData.data[0];
+
+    // and pretend there's no data yet
+    const availableMs = {};
+
+    const run = await db.recordRun(r.runId);
+
+    // let returnedJobs;
+    // let returnedIterationMap = new Map<string, Array<number>>();
+    const returnedIterationMap = await db.preProcessMeasurements(
+      <DataPoint[]>r.d,
+      run,
+      trial,
+      criteria,
+      availableMs
+    );
+
+    const IterationMap = returnedIterationMap as Map<string, Array<number>>;
+    expect(IterationMap.size).toEqual(3);
+    expect(IterationMap.entries().next().value[1].length).toEqual(1);
+
+    // add all of the datapoint to it self.
+    // this should cause every row to have another value.
+    // and no new rows should be added
+    const doubleDataPoints = <DataPoint[]>r.d?.concat(r.d);
+
+    const returnedIterationMap2 = await db.preProcessMeasurements(
+      doubleDataPoints,
+      run,
+      trial,
+      criteria,
+      availableMs
+    );
+
+    const IterationMap2 = returnedIterationMap2 as Map<string, Array<number>>;
+    expect(IterationMap2.size).toEqual(3);
+    expect(IterationMap2.entries().next().value[1].length).toEqual(2);
   });
 });
 
