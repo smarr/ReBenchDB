@@ -281,14 +281,21 @@ export abstract class Database {
                          SET endTime = $2
                          WHERE expId = $1 AND endTime IS NULL`,
 
-    fetchProjectByName: 'SELECT * from Project WHERE name = $1',
+    fetchProjectByName: 'SELECT * FROM Project WHERE name = $1',
     fetchProjectBySlugName: {
       name: 'fetchProjectBySlugName',
-      text: `SELECT * from Project
+      text: `SELECT * FROM Project
               WHERE lower($1) = lower(slug)`,
       values: ['']
     },
-    fetchProjectById: 'SELECT * from Project WHERE id = $1',
+    fetchProjectByExpId: {
+      name: 'fetchProjectByExpId',
+      text: `SELECT p.* FROM Project p
+              JOIN Experiment e ON e.projectId = p.id
+              WHERE e.id = $1`,
+      values: [0]
+    },
+    fetchProjectById: 'SELECT * FROM Project WHERE id = $1',
     fetchAllProjects: {
       name: 'fetchAllProjects',
       text: 'SELECT * FROM Project'
@@ -728,6 +735,17 @@ export abstract class Database {
   ): Promise<Project | undefined> {
     const q = { ...this.queries.fetchProjectBySlugName };
     q.values = [projectNameSlug];
+    const result = await this.query(q);
+
+    if (result.rowCount !== 1) {
+      return undefined;
+    }
+    return result.rows[0];
+  }
+
+  public async getProjectByExpId(expId: number): Promise<Project | undefined> {
+    const q = { ...this.queries.fetchProjectByExpId };
+    q.values = [expId];
     const result = await this.query(q);
 
     if (result.rowCount !== 1) {
