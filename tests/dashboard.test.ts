@@ -29,7 +29,7 @@ describe('Test Dashboard on empty DB', () => {
   });
 
   afterAll(async () => {
-    await db.close();
+    return db.close();
   });
 
   it('Should get empty results request', async () => {
@@ -97,7 +97,7 @@ describe('Test Dashboard with basic test data loaded', () => {
   });
 
   afterAll(async () => {
-    await db.close();
+    return db.close();
   });
 
   it('Should get a project', async () => {
@@ -250,6 +250,7 @@ describe('Test Dashboard with basic test data loaded', () => {
   // dashGetExpData
 });
 
-afterAll(() => {
-  closeMainDb();
+
+afterAll(async () => {
+  return closeMainDb();
 });

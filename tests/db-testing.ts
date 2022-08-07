@@ -169,7 +169,7 @@ function getMainDB(): Database {
 
 export async function closeMainDb(): Promise<void> {
   if (mainDB !== null) {
-    await mainDB.close();
+    return mainDB.close();
   }
 }
 
