@@ -26,7 +26,7 @@ describe('Record Trial', () => {
   });
 
   afterAll(async () => {
-    await db.close();
+    return db.close();
   });
 
   it('the database should not have any trials', async () => {
@@ -125,7 +125,7 @@ describe('Timeline-plot Queries', () => {
   });
 
   afterAll(async () => {
-    await db.close();
+    return db.close();
   });
 
   describe('Retrieving branch names based on commit ids', () => {
@@ -255,6 +255,6 @@ describe('Timeline-plot Queries', () => {
   });
 });
 
-afterAll(() => {
-  closeMainDb();
+afterAll(async () => {
+  return closeMainDb();
 });

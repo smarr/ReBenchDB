@@ -47,7 +47,10 @@ export async function dashResults(
                     value, b.name as benchmark,
                     rank() OVER (
                       PARTITION BY b.id
-                      ORDER BY t.startTime DESC, m.iteration DESC
+                      ORDER BY
+                        t.startTime DESC,
+                        m.invocation DESC,
+                        m.iteration DESC
                     )
                     FROM Measurement m
                       JOIN Trial t ON  m.trialId = t.id
@@ -57,13 +60,13 @@ export async function dashResults(
                       JOIN Criterion c ON m.criterion = c.id
                     WHERE projectId = $1 AND
                       c.name = 'total'
-                    ORDER BY t.startTime, m.iteration
+                    ORDER BY t.startTime, m.invocation, m.iteration
             ),
             LastHundred AS (
               SELECT rank, value, benchmark
               FROM Results
               WHERE rank <= 100
-              ORDER BY benchmark, rank ASC
+              ORDER BY benchmark, rank DESC
             )
             SELECT array_agg(value) as values, benchmark
             FROM LastHundred

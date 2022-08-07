@@ -37,7 +37,7 @@ describe('Setup of PostgreSQL DB', () => {
   });
 
   afterAll(async () => {
-    await db.close();
+    return db.close();
   });
 
   it('should load the database scheme without error', async () => {
@@ -72,11 +72,11 @@ describe('Recording a ReBench execution data fragments', () => {
   });
 
   afterAll(async () => {
-    await db.close();
+    return db.close();
   });
 
   afterEach(async () => {
-    await db.rollback();
+    return db.rollback();
   });
 
   it('should accept executor information', async () => {
@@ -241,7 +241,7 @@ describe('Recording a ReBench execution from payload files', () => {
   });
 
   afterAll(async () => {
-    await db.close();
+    return db.close();
   });
 
   it(`should accept all data (small-payload),
@@ -360,6 +360,6 @@ describe('Recording a ReBench execution from payload files', () => {
   });
 });
 
-afterAll(() => {
-  closeMainDb();
+afterAll(async () => {
+  return closeMainDb();
 });
