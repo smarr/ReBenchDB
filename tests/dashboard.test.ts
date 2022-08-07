@@ -365,7 +365,7 @@ describe('dashResults', () => {
       data: createRunData(1, 200, 'trivial', 'test', 'testExec'),
       criteria: createCriteria()
     };
-    await db.recordAllData(trivialData);
+    await db.recordAllData(trivialData, true);
 
     const result = await dashResults(1, db);
 
@@ -390,7 +390,7 @@ describe('dashResults', () => {
       data: createRunData(4, 50, '4runs50it', 'test', 'testExec'),
       criteria: createCriteria()
     };
-    await db.recordAllData(data4runs50it);
+    await db.recordAllData(data4runs50it, true);
 
     const result = await dashResults(2, db);
 
@@ -415,7 +415,7 @@ describe('dashResults', () => {
       data: createRunData(2, 25, 'multi-trial', 'test', 'testExec'),
       criteria: createCriteria()
     };
-    await db.recordAllData(multiTrial);
+    await db.recordAllData(multiTrial, true);
 
     multiTrial = {
       env,
@@ -426,7 +426,7 @@ describe('dashResults', () => {
       data: createRunData(2, 25, 'multi-trial', 'test', 'testExec', 2),
       criteria: createCriteria()
     };
-    await db.recordAllData(multiTrial);
+    await db.recordAllData(multiTrial, true);
 
     const result = await dashResults(3, db);
 
@@ -453,11 +453,23 @@ describe('dashResults', () => {
 
   it(`should get results in the correct order
       cross multiple experiments`, async () => {
-    await db.recordAllData(createData('Exp 1', '2022-01-01 10:00 UTC', 0));
-    await db.recordAllData(createData('Exp 1', '2022-01-01 12:00 UTC', 2));
+    await db.recordAllData(
+      createData('Exp 1', '2022-01-01 10:00 UTC', 0),
+      true
+    );
+    await db.recordAllData(
+      createData('Exp 1', '2022-01-01 12:00 UTC', 2),
+      true
+    );
 
-    await db.recordAllData(createData('Exp 2', '2022-02-02 10:00 UTC', 4));
-    await db.recordAllData(createData('Exp 2', '2022-02-02 12:00 UTC', 6));
+    await db.recordAllData(
+      createData('Exp 2', '2022-02-02 10:00 UTC', 4),
+      true
+    );
+    await db.recordAllData(
+      createData('Exp 2', '2022-02-02 12:00 UTC', 6),
+      true
+    );
 
     const result = await dashResults(4, db);
 
