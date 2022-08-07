@@ -45,7 +45,10 @@ function formatCommitMessages(messages) {
   }
 }
 
-export function renderProjectDataOverview(data: any[]): void {
+export function renderProjectDataOverview(
+  data: any[],
+  projectSlug: string
+): void {
   const tBody = $('#data-overview');
 
   let hasDesc = false;
@@ -70,7 +73,7 @@ export function renderProjectDataOverview(data: any[]): void {
     )}</p></td>
         <td>${row.hostnames}</td>
         <td class="num-col">${row.runs}</td>
-        <td class="num-col"><a href="/rebenchdb/get-exp-data/${row.expid}">${
+        <td class="num-col"><a href="/${projectSlug}/data/${row.expid}">${
       row.measurements
     }</a></td>
       </tr>`);

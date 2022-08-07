@@ -84,6 +84,12 @@ function respondProjectNotFound(ctx, projectSlug: string) {
   ctx.type = 'text';
 }
 
+function respondExpIdNotFound(ctx, expId: string) {
+  ctx.body = `Requested experiment ${expId} not found`;
+  ctx.status = 404;
+  ctx.type = 'text';
+}
+
 router.get('/timeline/:projectId', async (ctx) => {
   const project = await db.getProject(Number(ctx.params.projectId));
   if (project) {
@@ -127,6 +133,15 @@ router.get('/:projectSlug/data', async (ctx) => {
     ctx.type = 'html';
   } else {
     respondProjectNotFound(ctx, ctx.params.projectSlug);
+  }
+});
+
+router.get('/rebenchdb/get-exp-data/:expId', async (ctx) => {
+  const project = await db.getProjectByExpId(Number(ctx.params.expId));
+  if (project) {
+    ctx.redirect(`/${project.slug}/data/${ctx.params.expId}`);
+  } else {
+    respondExpIdNotFound(ctx, ctx.params.expId);
   }
 });
 
