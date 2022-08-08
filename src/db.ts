@@ -420,7 +420,11 @@ export abstract class Database {
                 exe.id as execId, exe.name as execName,
                 b.id as benchId, b.name as benchmark,
                 r.cmdline,
-                r.id as runId
+                r.id as runId,
+                r.varValue,
+                r.cores,
+                r.inputSize,
+                r.extraArgs
               FROM Project p
                 JOIN Experiment exp    ON exp.projectId = p.id
                 JOIN Trial t           ON t.expId = exp.id
@@ -1350,7 +1354,11 @@ export abstract class Database {
         benchId: r.benchid,
         benchName: r.benchmark,
         cmdline: simplifyCmdline(r.cmdline),
-        runId: r.runid
+        runId: r.runid,
+        varValue: r.varvalue,
+        cores: r.cores,
+        inputSize: r.inputsize,
+        extraArgs: r.extraargs
       });
     }
 

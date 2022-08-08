@@ -23,7 +23,8 @@ import {
   dashGetExpData,
   reportCompletion,
   dashDeleteOldReport,
-  dashProfile
+  dashProfile,
+  dashLatestBenchmarksForTimelineView
 } from './dashboard.js';
 import { processTemplate } from './templates.js';
 import {
@@ -105,7 +106,7 @@ router.get('/:projectSlug/timeline', async (ctx) => {
   if (project) {
     ctx.body = processTemplate('timeline.html', {
       project,
-      benchmarks: await db.getLatestBenchmarksForTimelineView(project.id)
+      benchmarks: await dashLatestBenchmarksForTimelineView(project.id, db)
     });
     ctx.type = 'html';
   } else {

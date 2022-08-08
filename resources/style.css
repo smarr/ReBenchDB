@@ -87,6 +87,14 @@ nav.compare.show {
   }
 }
 
+.benchmark .arguments {
+  font-size: 80%;
+}
+
+.benchmark code {
+  font-size: 75%;
+}
+
 .card {
   margin-top: 1em;
 }

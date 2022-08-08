@@ -64,8 +64,8 @@
 
     {{#benchmarks}}
     <div class="benchmark">
-    <h4>{{benchName}}</h4>
-    <p>{{cmdline}}</p>
+    <h4>{{benchName}}<span class="arguments">{{varValue}} {{cores}} {{inputSize}} {{extraArgs}}</span></h4>
+    <p><code>{{cmdline}}</code></p>
 
     <div class="timeline-plot" data-runid="{{runId}}"></div>
     </div>

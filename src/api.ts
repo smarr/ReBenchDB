@@ -260,6 +260,10 @@ export interface TimelineBenchmark {
   benchName: string;
   cmdline: string;
   runId: number;
+  varValue?: string;
+  cores?: string;
+  inputSize?: string;
+  extraArgs?: string;
 }
 
 export interface TimelineJob {
