@@ -828,6 +828,29 @@ export abstract class Database {
     }
   }
 
+  public async getSourceById(
+    projectSlug: string,
+    sourceId: string
+  ): Promise<Source | null> {
+    const q: QueryConfig = {
+      name: 'get-source-by-slug-id',
+      text: `SELECT DISTINCT s.*
+              FROM Source s
+                JOIN Trial t       ON t.sourceId = s.id
+                JOIN Experiment e  ON e.id = t.expId
+                JOIN Project p     ON p.id = e.projectId
+              WHERE p.name = $1 AND s.id = $2
+              LIMIT 1`,
+      values: [projectSlug, sourceId]
+    };
+
+    const result = await this.query(q);
+    if (result.rowCount < 1) {
+      return null;
+    }
+    return result.rows[0];
+  }
+
   public async getSourceByNames(
     projectName: string,
     experimentName: string

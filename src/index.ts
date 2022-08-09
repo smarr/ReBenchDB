@@ -85,6 +85,18 @@ function respondProjectNotFound(ctx, projectSlug: string) {
   ctx.type = 'text';
 }
 
+function respondProjectAndSourceNotFound(
+  ctx,
+  projectSlug: string,
+  sourceId: string
+) {
+  ctx.body =
+    `Requested combination of project "${projectSlug}"` +
+    ` and source ${sourceId} not found`;
+  ctx.status = 404;
+  ctx.type = 'text';
+}
+
 function respondExpIdNotFound(ctx, expId: string) {
   ctx.body = `Requested experiment ${expId} not found`;
   ctx.status = 404;
@@ -236,6 +248,24 @@ router.get('/compare/:project/:baseline/:change', async (ctx) => {
     );
   } else {
     respondProjectNotFound(ctx, ctx.params.project);
+  }
+});
+
+router.get('/:projectSlug/source/:sourceId', async (ctx) => {
+  const result = await db.getSourceById(
+    ctx.params.projectSlug,
+    ctx.params.sourceId
+  );
+
+  if (result !== null) {
+    ctx.body = result;
+    ctx.type = 'application/json';
+  } else {
+    respondProjectAndSourceNotFound(
+      ctx,
+      ctx.params.projectSlug,
+      ctx.params.sourceId
+    );
   }
 });
 
