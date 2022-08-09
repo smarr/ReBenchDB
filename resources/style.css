@@ -87,6 +87,18 @@ nav.compare.show {
   }
 }
 
+.benchmark .arguments {
+  font-size: 80%;
+}
+
+.benchmark code {
+  font-size: 75%;
+}
+
+.benchmark h4 a {
+  color: initial;
+}
+
 .card {
   margin-top: 1em;
 }
@@ -494,4 +506,16 @@ td.warmup-plot {
 .u-cursor-y.u-off,
 .u-cursor-pt.u-off {
 	display: none;
+}
+
+.u-tooltip {
+  font-size: 10pt;
+  position: absolute;
+  background: #fff;
+  display: none;
+  border: 2px solid black;
+  padding: 4px;
+  pointer-events: none;
+  z-index: 100;
+  min-width: 250px;
 }

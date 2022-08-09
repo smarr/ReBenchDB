@@ -1,7 +1,7 @@
 import type { AllResults } from 'api.js';
 import { renderResultsPlots } from './plots.js';
 
-function filterCommitMessage(msg) {
+export function filterCommitMessage(msg: string): string {
   const result = msg.replace(/Signed-off-by:.*?\n/g, '');
   return result;
 }

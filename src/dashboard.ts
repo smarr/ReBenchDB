@@ -2,7 +2,7 @@ import { readFileSync, existsSync, unlinkSync, rmSync } from 'fs';
 import { execFile, ChildProcessPromise } from 'promisify-child-process';
 import { TimedCacheValidity, Database, DatabaseConfig, Source } from './db.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
-import { AllResults, BenchmarkCompletion } from './api.js';
+import { AllResults, BenchmarkCompletion, TimelineSuite } from './api.js';
 import { GitHub } from './github.js';
 import { robustPath, siteConfig } from './util.js';
 import { getDirname } from './util.js';
@@ -624,4 +624,71 @@ Summary Over All Benchmarks
       `;
       github.postCommitComment(details.owner, details.repo, changeSha, msg);
     });
+}
+
+export async function dashLatestBenchmarksForTimelineView(
+  projectId: number,
+  db: Database
+): Promise<TimelineSuite[] | null> {
+  const results = await db.getLatestBenchmarksForTimelineView(projectId);
+  if (results === null) {
+    return null;
+  }
+
+  // filter out things we do not want to show
+  // per grouping and the same benchmark:
+  //  - remove cores, varValue, inputSize, or extraArgs when always the same
+  for (const t of results) {
+    for (const e of t.exec) {
+      const allTheSame = new Map();
+
+      for (const b of e.benchmarks) {
+        let sameDesc = allTheSame.get(b.benchName);
+        if (!sameDesc) {
+          sameDesc = {
+            varValue: true,
+            varValueValue: b.varValue,
+            cores: true,
+            coresValue: b.cores,
+            inputSize: true,
+            inputSizeValue: b.inputSize,
+            extraArgs: true,
+            extraArgsValue: b.extraArgs
+          };
+          allTheSame.set(b.benchName, sameDesc);
+        } else {
+          if (sameDesc.varValue && sameDesc.varValueValue != b.varValue) {
+            sameDesc.varValue = false;
+          }
+          if (sameDesc.cores && sameDesc.coresValue != b.cores) {
+            sameDesc.cores = false;
+          }
+          if (sameDesc.inputSize && sameDesc.inputSizeValue != b.inputSize) {
+            sameDesc.inputSize = false;
+          }
+          if (sameDesc.extraArgs && sameDesc.extraArgsValue != b.extraArgs) {
+            sameDesc.extraArgs = false;
+          }
+        }
+      }
+
+      for (const b of e.benchmarks) {
+        const sameDesc = allTheSame.get(b.benchName);
+        if (sameDesc.varValue) {
+          b.varValue = undefined;
+        }
+        if (sameDesc.cores) {
+          b.cores = undefined;
+        }
+        if (sameDesc.inputSize) {
+          b.inputSize = undefined;
+        }
+        if (sameDesc.extraArgs) {
+          b.extraArgs = undefined;
+        }
+      }
+    }
+  }
+
+  return results;
 }

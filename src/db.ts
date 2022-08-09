@@ -113,7 +113,7 @@ export interface Source {
   commitmessage: string;
   authorname: string;
   authoremail: string;
-  committereame: string;
+  committername: string;
   committeremail: string;
 }
 
@@ -420,7 +420,11 @@ export abstract class Database {
                 exe.id as execId, exe.name as execName,
                 b.id as benchId, b.name as benchmark,
                 r.cmdline,
-                r.id as runId
+                r.id as runId,
+                r.varValue,
+                r.cores,
+                r.inputSize,
+                r.extraArgs
               FROM Project p
                 JOIN Experiment exp    ON exp.projectId = p.id
                 JOIN Trial t           ON t.expId = exp.id
@@ -822,6 +826,29 @@ export abstract class Database {
     } else {
       return result.rows[0];
     }
+  }
+
+  public async getSourceById(
+    projectSlug: string,
+    sourceId: string
+  ): Promise<Source | null> {
+    const q: QueryConfig = {
+      name: 'get-source-by-slug-id',
+      text: `SELECT DISTINCT s.*
+              FROM Source s
+                JOIN Trial t       ON t.sourceId = s.id
+                JOIN Experiment e  ON e.id = t.expId
+                JOIN Project p     ON p.id = e.projectId
+              WHERE p.name = $1 AND s.id = $2
+              LIMIT 1`,
+      values: [projectSlug, sourceId]
+    };
+
+    const result = await this.query(q);
+    if (result.rowCount < 1) {
+      return null;
+    }
+    return result.rows[0];
   }
 
   public async getSourceByNames(
@@ -1350,7 +1377,11 @@ export abstract class Database {
         benchId: r.benchid,
         benchName: r.benchmark,
         cmdline: simplifyCmdline(r.cmdline),
-        runId: r.runid
+        runId: r.runid,
+        varValue: r.varvalue,
+        cores: r.cores,
+        inputSize: r.inputsize,
+        extraArgs: r.extraargs
       });
     }
 
@@ -1407,6 +1438,7 @@ export abstract class Database {
   ): TimelineResponse {
     let baseTimestamp: number | null = null;
     let changeTimestamp: number | null = null;
+    const sourceIds: number[] = [];
     const data: PlotData =
       baseBranchName !== null
         ? [
@@ -1427,6 +1459,7 @@ export abstract class Database {
 
     for (const row of rows) {
       data[0].push(row.starttime);
+      sourceIds.push(<number>parseInt(row.sourceid));
       if (baseBranchName === null || row.branch == baseBranchName) {
         if (baseBranchName !== null && row.iscurrent) {
           baseTimestamp = row.starttime;
@@ -1459,7 +1492,8 @@ export abstract class Database {
       changeBranchName,
       baseTimestamp,
       changeTimestamp,
-      data
+      data,
+      sourceIds
     };
   }
 
@@ -1471,6 +1505,7 @@ export abstract class Database {
       SELECT
         extract(epoch from tr.startTime at time zone 'UTC')::int as startTime,
         s.branchOrTag as branch,
+        s.id as sourceId,
         ti.median, ti.bci95low, ti.bci95up
       FROM Timeline ti
         JOIN Trial      tr ON tr.id = ti.trialId
@@ -1502,6 +1537,7 @@ export abstract class Database {
       SELECT
         extract(epoch from tr.startTime at time zone 'UTC')::int as startTime,
         s.branchOrTag as branch, s.commitid IN ($1, $2) as isCurrent,
+        s.id as sourceId,
         ti.median, ti.bci95low, ti.bci95up
       FROM Timeline ti
         JOIN Trial      tr ON tr.id = ti.trialId

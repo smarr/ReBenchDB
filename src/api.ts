@@ -193,6 +193,7 @@ export interface TimelineResponse {
   baseTimestamp: number | null;
   changeTimestamp: number | null;
   data: PlotData;
+  sourceIds: number[];
 }
 
 export type FullPlotData = [
@@ -260,6 +261,10 @@ export interface TimelineBenchmark {
   benchName: string;
   cmdline: string;
   runId: number;
+  varValue?: string;
+  cores?: string;
+  inputSize?: string;
+  extraArgs?: string;
 }
 
 export interface TimelineJob {

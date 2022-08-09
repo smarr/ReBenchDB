@@ -203,7 +203,11 @@ describe('Test Dashboard with basic test data loaded', () => {
                 benchName: 'NBody',
                 cmdline:
                   'som -t1   core-lib/Benchmarks/Harness.ns NBody  1 0 10000',
-                runId: 1
+                runId: 1,
+                cores: '1',
+                extraArgs: '1 0 10000',
+                inputSize: null,
+                varValue: null
               }
             ],
             execId: 1,
@@ -230,7 +234,8 @@ describe('Test Dashboard with basic test data loaded', () => {
         [null, null],
         [432.783, 432.783],
         [null, null]
-      ]
+      ],
+      sourceIds: [1, 3]
     });
   });
 
