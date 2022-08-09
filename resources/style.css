@@ -95,6 +95,10 @@ nav.compare.show {
   font-size: 75%;
 }
 
+.benchmark h4 a {
+  color: initial;
+}
+
 .card {
   margin-top: 1em;
 }

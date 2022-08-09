@@ -64,8 +64,8 @@
     <div class="title-executor">Executor: {{execName}}</div>
 
     {{#benchmarks}}
-    <div class="benchmark">
-    <h4>{{benchName}}<span class="arguments">{{varValue}} {{cores}} {{inputSize}} {{extraArgs}}</span></h4>
+    <div class="benchmark" id="b-{{suiteId}}-{{execId}}-{{benchId}}-{{runId}}">
+    <h4><a href="#b-{{suiteId}}-{{execId}}-{{benchId}}-{{runId}}">{{benchName}}<span class="arguments">{{varValue}} {{cores}} {{inputSize}} {{extraArgs}}</span></a></h4>
     <p><code>{{cmdline}}</code></p>
 
     <div class="timeline-plot" data-runid="{{runId}}"></div>
