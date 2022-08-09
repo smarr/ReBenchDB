@@ -186,10 +186,7 @@ function tooltipPlugin({
   const tooltip = document.createElement('div');
   tooltip.className = 'u-tooltip';
 
-  const fmtDate = uPlot.fmtDate('{YYYY}-{MM}-{DD} {HH}:{mm}:{ss}');
-
   let over;
-
   let tooltipVisible = false;
 
   function showTooltip() {
@@ -269,11 +266,11 @@ function tooltipPlugin({
         }
       ],
       setSeries: [
-        (u, sidx) => {
-          if (seriesIdx != sidx) {
-            seriesIdx = sidx;
+        (u, sIdx) => {
+          if (seriesIdx != sIdx) {
+            seriesIdx = sIdx;
 
-            if (sidx === null) {
+            if (sIdx === null) {
               hideTooltip();
             } else if (dataIdx !== null && seriesIdx !== null) {
               setTooltip(u, seriesIdx, dataIdx);
