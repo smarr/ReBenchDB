@@ -3,6 +3,7 @@ import { initializeFilters } from './filter.js';
 import { renderTimelinePlot } from './plots.js';
 
 const projectId = $('#project-id').attr('value');
+const projectSlug = <string>$('#project-slug').attr('value');
 
 async function loadPlotOnce(this: any) {
   const thisJq = $(this);
@@ -17,7 +18,7 @@ async function loadPlotOnce(this: any) {
     `/rebenchdb/dash/${projectId}/timeline/${runId}`
   );
   const response = <TimelineResponse>await timelineP.json();
-  renderTimelinePlot(response, thisJq);
+  renderTimelinePlot(response, thisJq, projectSlug);
   thisJq.off('appear', onPlotAppearing);
 }
 

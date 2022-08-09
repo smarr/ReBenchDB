@@ -1,4 +1,6 @@
 import type { AllResults, PlotData, TimelineResponse } from 'api';
+import type { Source } from 'db.js';
+import { filterCommitMessage } from './render.js';
 import uPlot from '/static/uPlot.esm.min.js';
 
 function simpleSlug(str) {
@@ -143,9 +145,150 @@ function addDataSeriesToHighlightResult(
   }
 }
 
+const sourceCache = new Map();
+
+async function getSource(
+  projectSlug: string,
+  sourceId: number
+): Promise<Source> {
+  let project = sourceCache.get(projectSlug);
+  if (!project) {
+    project = new Map();
+    sourceCache.set(projectSlug, project);
+  }
+
+  let source: Source | undefined = project.get(sourceId);
+  if (!source) {
+    const p = await fetch(`/${projectSlug}/source/${sourceId}`);
+    source = <Source>await p.json();
+    source.commitmessage = filterCommitMessage(source.commitmessage);
+    project.set(sourceId, source);
+  }
+  return source;
+}
+
+async function tooltipOnClick(projectSlug: string, sourceId: number) {
+  const source = await getSource(projectSlug, sourceId);
+  window.open(`${source.repourl}/commit/${source.commitid}`);
+}
+
+function tooltipPlugin({
+  onclick,
+  sourceIds,
+  projectSlug,
+  series,
+  shiftX = 10,
+  shiftY = 10
+}) {
+  let tooltipLeftOffset = 0;
+  let tooltipTopOffset = 0;
+
+  const tooltip = document.createElement('div');
+  tooltip.className = 'u-tooltip';
+
+  const fmtDate = uPlot.fmtDate('{YYYY}-{MM}-{DD} {HH}:{mm}:{ss}');
+
+  let over;
+
+  let tooltipVisible = false;
+
+  function showTooltip() {
+    if (!tooltipVisible) {
+      tooltip.style.display = 'block';
+      over.style.cursor = 'pointer';
+      tooltipVisible = true;
+    }
+  }
+
+  function hideTooltip() {
+    if (tooltipVisible) {
+      tooltip.style.display = 'none';
+      over.style.cursor = null;
+      tooltipVisible = false;
+    }
+  }
+
+  async function setTooltip(u, seriesIdx: number, dataIdx: number) {
+    const source = await getSource(projectSlug, sourceIds[dataIdx]);
+    showTooltip();
+
+    const top = u.valToPos(u.data[seriesIdx][dataIdx], 'y');
+    const lft = u.valToPos(u.data[0][dataIdx], 'x');
+
+    tooltip.style.top = tooltipTopOffset + top + shiftX + 'px';
+    tooltip.style.left = tooltipLeftOffset + lft + shiftY + 'px';
+
+    tooltip.style.borderColor = series[seriesIdx].stroke;
+
+    tooltip.innerHTML = `${source.commitid.substring(0, 10)}
+       ${source.authorname}<br>
+       ${source.commitmessage}`;
+  }
+
+  let seriesIdx = null;
+  let dataIdx = null;
+
+  return {
+    hooks: {
+      ready: [
+        (u) => {
+          over = u.over;
+          tooltipLeftOffset = parseFloat(over.style.left);
+          tooltipTopOffset = parseFloat(over.style.top);
+          u.root.querySelector('.u-wrap').appendChild(tooltip);
+
+          let clientX;
+          let clientY;
+
+          over.addEventListener('mousedown', (e) => {
+            clientX = e.clientX;
+            clientY = e.clientY;
+          });
+
+          over.addEventListener('mouseup', (e) => {
+            // clicked in-place
+            if (e.clientX == clientX && e.clientY == clientY) {
+              if (seriesIdx != null && dataIdx != null) {
+                onclick(u, seriesIdx, dataIdx);
+              }
+            }
+          });
+        }
+      ],
+      setCursor: [
+        (u) => {
+          const c = u.cursor;
+
+          if (dataIdx != c.idx) {
+            dataIdx = c.idx;
+
+            if (seriesIdx !== null && dataIdx !== null) {
+              setTooltip(u, seriesIdx, dataIdx);
+            }
+          }
+        }
+      ],
+      setSeries: [
+        (u, sidx) => {
+          if (seriesIdx != sidx) {
+            seriesIdx = sidx;
+
+            if (sidx === null) {
+              hideTooltip();
+            } else if (dataIdx !== null && seriesIdx !== null) {
+              setTooltip(u, seriesIdx, dataIdx);
+            }
+          }
+        }
+      ]
+    }
+  };
+}
+
 export function renderTimelinePlot(
   response: TimelineResponse,
-  jqInsert: any
+  jqInsert: any,
+  projectSlug: string
 ): any {
   const series = [
     {},
@@ -161,6 +304,12 @@ export function renderTimelinePlot(
     tzDate: (ts: number) => uPlot.tzDate(new Date(ts * 1000), 'UTC'),
     scales: { x: {}, y: {} },
     series,
+    // legend: { live: false },
+    focus: { alpha: 0.3 },
+    cursor: {
+      focus: { prox: 5 },
+      drag: { x: true, y: true }
+    },
     bands: [
       { series: [1, 2], fill: baselineLight, dir: 1 },
       { series: [2, 3], fill: baselineLight, dir: 1 }
@@ -171,6 +320,16 @@ export function renderTimelinePlot(
         values: (_, vals) => vals.map((v) => v + 'ms'),
         size: computeAxisLabelSpace
       }
+    ],
+    plugins: [
+      tooltipPlugin({
+        async onclick(u, seriesIdx, dataIdx) {
+          await tooltipOnClick(projectSlug, response.sourceIds[dataIdx]);
+        },
+        sourceIds: response.sourceIds,
+        projectSlug,
+        series
+      })
     ]
   };
 

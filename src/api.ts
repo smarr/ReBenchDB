@@ -193,6 +193,7 @@ export interface TimelineResponse {
   baseTimestamp: number | null;
   changeTimestamp: number | null;
   data: PlotData;
+  sourceIds: number[];
 }
 
 export type FullPlotData = [
