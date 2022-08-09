@@ -113,7 +113,7 @@ export interface Source {
   commitmessage: string;
   authorname: string;
   authoremail: string;
-  committereame: string;
+  committername: string;
   committeremail: string;
 }
 
