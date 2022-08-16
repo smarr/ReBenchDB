@@ -31,7 +31,7 @@ common_string_start <- function(x) {
     substr(s, 1, n)
   })
   x <- unique(x)
-  
+
   # split the first and last element by character
   d_x <- strsplit(x[c(1, length(x))], "")
   # search for the first not common element and so, get the last matching one
@@ -45,7 +45,7 @@ common_string_start <- function(x) {
   if (is.na(der_com)) {
     n + 1
   } else {
-    der_com  
+    der_com
   }
 }
 
@@ -64,6 +64,6 @@ pro <- function(val) {
   if (length(val) == 0 || is.na(val)) {
     ""
   } else {
-    as.character(round(val * 100))  
+    as.character(round(val * 100))
   }
 }
