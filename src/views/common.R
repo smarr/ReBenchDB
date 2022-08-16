@@ -9,7 +9,7 @@ source("stats.R", chdir = TRUE)
 options(scipen=999)
 
 # prints stack trace on error, using rlang (tidyverse) backtraces
-options(warn = 2, keep.source = TRUE, error = quote(rlang:::entrace()))
+options(warn = 0, keep.source = TRUE, error = quote(rlang:::entrace()))
 
 timing_data <- NULL
 timing.start <- function() {
