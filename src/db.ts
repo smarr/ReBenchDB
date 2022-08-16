@@ -300,12 +300,8 @@ export abstract class Database {
     return nums.join(',\n');
   }
 
-  public abstract query<
-    R extends pg.QueryResultRow = any,
-    I extends any[] = any[]
-  >(
-    queryTextOrConfig: string | pg.QueryConfig<I>,
-    values?: I
+  public abstract query<R extends pg.QueryResultRow = any>(
+    queryConfig: QueryConfig<any[]>
   ): Promise<pg.QueryResult<R>>;
 
   public clearCache(): void {
@@ -322,16 +318,19 @@ export abstract class Database {
   }
 
   private async needsTables() {
-    const result = await this.query(`SELECT *
-      FROM   information_schema.tables
-      WHERE  table_name = 'executor'`);
+    const result = await this.query({
+      name: 'doTableExist',
+      text: `SELECT *
+                FROM   information_schema.tables
+                WHERE  table_name = 'executor'`
+    });
     return result.rowCount <= 0;
   }
 
   public async initializeDatabase(): Promise<void> {
     if (await this.needsTables()) {
       const schema = loadScheme();
-      await this.query(schema);
+      await this.query({ text: schema });
     }
   }
 
@@ -342,8 +341,9 @@ export abstract class Database {
     base: string,
     change: string
   ): Promise<{ dataFound: boolean; base?: any; change?: any }> {
-    const result = await this.query(
-      `SELECT DISTINCT
+    const result = await this.query({
+      name: 'fetchRevisionsInProjectByCommitIds',
+      text: `SELECT DISTINCT
           p.id, e.name, s.id,
           s.commitid, s.repoUrl, s.branchOrTag,
           s.commitMessage, s.authorName
@@ -354,8 +354,8 @@ export abstract class Database {
         WHERE lower(p.slug) = lower($1)
           AND s.commitid = $2
           OR s.commitid = $3`,
-      [projectSlug, base, change]
-    );
+      values: [projectSlug, base, change]
+    });
 
     // we can have multiple experiments with the same revisions
     if (result.rowCount >= 2) {
@@ -382,12 +382,12 @@ export abstract class Database {
     }
   }
 
-  private async getCached(cache, cacheKey, fetchQ, qVals): Promise<any> {
+  private async getCached(cache, cacheKey, fetchQ: QueryConfig): Promise<any> {
     if (cache.has(cacheKey)) {
       return cache.get(cacheKey);
     }
 
-    const result = await this.query(fetchQ, qVals);
+    const result = await this.query(fetchQ);
     if (result.rowCount === 1) {
       return result[0];
     }
@@ -666,14 +666,11 @@ export abstract class Database {
   }
 
   public async getProjectByName(projectName: string): Promise<Project | null> {
-    return <Promise<Project | null>>(
-      this.getCached(
-        this.projects,
-        projectName,
-        this.queries.fetchProjectByName,
-        [projectName]
-      )
-    );
+    return <Promise<Project | null>>this.getCached(this.projects, projectName, {
+      name: 'fetchProjectByName',
+      text: this.queries.fetchProjectByName,
+      values: [projectName]
+    });
   }
 
   public async getAllProjects(): Promise<Project[]> {
@@ -685,9 +682,11 @@ export abstract class Database {
   }
 
   public async getProject(projectId: number): Promise<Project | undefined> {
-    const result = await this.query('SELECT * FROM Project WHERE id = $1', [
-      projectId
-    ]);
+    const result = await this.query({
+      name: 'fetchProjectById',
+      text: 'SELECT * FROM Project WHERE id = $1',
+      values: [projectId]
+    });
 
     if (result.rowCount !== 1) {
       return undefined;
@@ -700,13 +699,12 @@ export abstract class Database {
     projectName: string,
     baseBranch: string
   ): Promise<boolean> {
-    const result = await this.query(
-      `
-      UPDATE Project
-        SET baseBranch = $2
-        WHERE name = $1`,
-      [projectName, baseBranch]
-    );
+    const result = await this.query({
+      text: `UPDATE Project
+                SET baseBranch = $2
+                WHERE name = $1`,
+      values: [projectName, baseBranch]
+    });
     return result.rowCount === 1;
   }
 
@@ -714,22 +712,22 @@ export abstract class Database {
     projectName: string,
     currentCommitId: string
   ): Promise<Baseline | undefined> {
-    const result = await this.query(
-      `
-      SELECT DISTINCT s.*, min(t.startTime) as firstStart
-        FROM Source s
-          JOIN Trial t ON s.id = t.sourceId
-          JOIN Experiment e ON e.id = t.expId
-          JOIN Project p ON p.id = e.projectId
-        WHERE p.name = $1 AND
-          s.branchOrTag = p.baseBranch AND
-          s.commitId <> $2 AND
-          p.baseBranch IS NOT NULL
-        GROUP BY e.id, s.id
-        ORDER BY firstStart DESC
-        LIMIT 1`,
-      [projectName, currentCommitId]
-    );
+    const result = await this.query({
+      name: 'fetchBaselineCommit',
+      text: `SELECT DISTINCT s.*, min(t.startTime) as firstStart
+              FROM Source s
+                JOIN Trial t ON s.id = t.sourceId
+                JOIN Experiment e ON e.id = t.expId
+                JOIN Project p ON p.id = e.projectId
+              WHERE p.name = $1 AND
+                s.branchOrTag = p.baseBranch AND
+                s.commitId <> $2 AND
+                p.baseBranch IS NOT NULL
+              GROUP BY e.id, s.id
+              ORDER BY firstStart DESC
+              LIMIT 1`,
+      values: [projectName, currentCommitId]
+    });
 
     if (result.rowCount < 1) {
       return undefined;
@@ -765,16 +763,16 @@ export abstract class Database {
     projectName: string,
     experimentName: string
   ): Promise<Source | undefined> {
-    const result = await this.query(
-      `
-      SELECT DISTINCT s.*
-        FROM Source s
-          JOIN Trial t ON s.id = t.sourceId
-          JOIN Experiment e ON e.id = t.expId
-          JOIN Project p ON p.id = e.projectId
-        WHERE p.name = $1 AND e.name = $2`,
-      [projectName, experimentName]
-    );
+    const result = await this.query({
+      name: 'fetchSourceByProjectNameExpName',
+      text: `SELECT DISTINCT s.*
+              FROM Source s
+                JOIN Trial t ON s.id = t.sourceId
+                JOIN Experiment e ON e.id = t.expId
+                JOIN Project p ON p.id = e.projectId
+              WHERE p.name = $1 AND e.name = $2`,
+      values: [projectName, experimentName]
+    });
 
     if (result.rowCount < 1) {
       return undefined;
@@ -818,12 +816,14 @@ export abstract class Database {
       return this.exps.get(cacheKey);
     }
 
-    const result = await this.query(
-      `SELECT e.* FROM Experiment e
-        JOIN Project p ON p.id = e.projectId
-        WHERE p.name = $1 AND e.name = $2`,
-      [projectName, experimentName]
-    );
+    const result = await this.query({
+      name: 'fetchExperimentByProjectNameExpName',
+      text: `SELECT e.* FROM Experiment e
+              JOIN Project p ON p.id = e.projectId
+              WHERE p.name = $1 AND e.name = $2`,
+      values: [projectName, experimentName]
+    });
+
     if (result.rowCount < 1) {
       return undefined;
     }
@@ -834,12 +834,13 @@ export abstract class Database {
     expId: number,
     endTime: string
   ): Promise<void> {
-    await this.query(
-      `UPDATE Trial t
-    SET endTime = $2
-    WHERE expId = $1 AND endTime IS NULL`,
-      [expId, endTime]
-    );
+    await this.query({
+      name: 'setTrialEndTime',
+      text: `UPDATE Trial t
+              SET endTime = $2
+              WHERE expId = $1 AND endTime IS NULL`,
+      values: [expId, endTime]
+    });
   }
 
   public async reportCompletion(
@@ -865,11 +866,17 @@ export abstract class Database {
   }
 
   private async recordUnit(unitName: string) {
-    const result = await this.query('SELECT * from Unit WHERE name = $1', [
-      unitName
-    ]);
+    const result = await this.query({
+      name: 'fetchUnitByName',
+      text: 'SELECT * from Unit WHERE name = $1',
+      values: [unitName]
+    });
     if (result.rowCount === 0) {
-      await this.query('INSERT INTO Unit (name) VALUES ($1)', [unitName]);
+      await this.query({
+        name: 'insertUnit',
+        text: 'INSERT INTO Unit (name) VALUES ($1)',
+        values: [unitName]
+      });
     }
   }
 
@@ -908,15 +915,17 @@ export abstract class Database {
   }
 
   private async retrieveAvailableMeasurements(trialId: number) {
-    const results = await this.query(
-      `SELECT
-          runId, criterion, invocation as inv, max(iteration) as ite
-        FROM Measurement
-        WHERE trialId = $1
-        GROUP BY runId, criterion, invocation
-        ORDER BY runId, inv, ite, criterion`,
-      [trialId]
-    );
+    const results = await this.query({
+      name: 'fetchAvailableMeasurements',
+      text: `SELECT
+              runId, criterion, invocation as inv, max(iteration) as ite
+            FROM Measurement
+            WHERE trialId = $1
+            GROUP BY runId, criterion, invocation
+            ORDER BY runId, inv, ite, criterion`,
+      values: [trialId]
+    });
+
     const measurements = {};
     for (const r of results.rows) {
       // runid, criterion, inv, ite
@@ -1217,12 +1226,13 @@ export abstract class Database {
   }
 
   public async recordTimelineJob(values: number[]): Promise<void> {
-    await this.query(
-      `INSERT INTO TimelineCalcJob
-          (trialId, runId, criterion)
-        VALUES ($1, $2, $3)`,
+    await this.query({
+      name: 'insertTimelineCalcJob',
+      text: `INSERT INTO TimelineCalcJob
+                (trialId, runId, criterion)
+              VALUES ($1, $2, $3)`,
       values
-    );
+    });
   }
 
   private generateTimeline() {
@@ -1649,11 +1659,10 @@ export class DatabaseWithPool extends Database {
     this.pool = new pg.Pool(config);
   }
 
-  public async query<R extends QueryResultRow = any, I extends any[] = any[]>(
-    queryTextOrConfig: string | QueryConfig<I>,
-    values?: I
+  public async query<R extends QueryResultRow = any>(
+    queryConfig: QueryConfig<any[]>
   ): Promise<pg.QueryResult<R>> {
-    return this.pool.query(queryTextOrConfig, values);
+    return this.pool.query(queryConfig);
   }
 
   public async close(): Promise<void> {

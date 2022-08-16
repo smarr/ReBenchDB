@@ -83,22 +83,24 @@ export async function dashProfile(
   trialId: number,
   db: Database
 ): Promise<any> {
-  const result = await db.query(
-    ` SELECT substring(commitId, 1, 6) as commitid,
-        benchmark.name as bench, executor.name as exe, suite.name as suite,
-        cmdline, varValue, cores, inputSize, extraArgs,
-        invocation, numIterations, warmup, value as profile
-      FROM ProfileData
-        JOIN Trial ON trialId = Trial.id
-        JOIN Experiment ON expId = Experiment.id
-        JOIN Source ON source.id = sourceId
-        JOIN Run ON runId = run.id
-        JOIN Suite ON suiteId = suite.id
-        JOIN Benchmark ON benchmarkId = benchmark.id
-        JOIN Executor ON execId = executor.id
-      WHERE runId = $1 AND trialId = $2`,
-    [runId, trialId]
-  );
+  const result = await db.query({
+    name: 'fetchProfileDataByRunIdTrialId',
+    text: `
+          SELECT substring(commitId, 1, 6) as commitid,
+            benchmark.name as bench, executor.name as exe, suite.name as suite,
+            cmdline, varValue, cores, inputSize, extraArgs,
+            invocation, numIterations, warmup, value as profile
+          FROM ProfileData
+            JOIN Trial ON trialId = Trial.id
+            JOIN Experiment ON expId = Experiment.id
+            JOIN Source ON source.id = sourceId
+            JOIN Run ON runId = run.id
+            JOIN Suite ON suiteId = suite.id
+            JOIN Benchmark ON benchmarkId = benchmark.id
+            JOIN Executor ON execId = executor.id
+          WHERE runId = $1 AND trialId = $2`,
+    values: [runId, trialId]
+  });
 
   const data = result.rows[0];
   try {
@@ -127,27 +129,30 @@ export async function dashStatistics(db: Database): Promise<{ stats: any[] }> {
 
   statsCacheValid = db.getStatsCacheValidity();
 
-  const result = await db.query(`
-    SELECT * FROM (
-      SELECT 'Experiments' as table, count(*) as cnt FROM experiment
-      UNION ALL
-      SELECT 'Trials' as table, count(*) as cnt FROM trial
-      UNION ALL
-      SELECT 'Executors' as table, count(*) as cnt FROM executor
-      UNION ALL
-      SELECT 'Benchmarks' as table, count(*) as cnt FROM benchmark
-      UNION ALL
-      SELECT 'Projects' as table, count(*) as cnt FROM project
-      UNION ALL
-      SELECT 'Suites' as table, count(*) as cnt FROM suite
-      UNION ALL
-      SELECT 'Environments' as table, count(*) as cnt FROM environment
-      UNION ALL
-      SELECT 'Runs' as table, count(*) as cnt FROM run
-      UNION ALL
-      SELECT 'Measurements' as table, count(*) as cnt FROM measurement
-    ) as counts
-    ORDER BY counts.table`);
+  const result = await db.query({
+    name: 'fetchStats',
+    text: `
+        SELECT * FROM (
+          SELECT 'Experiments' as table, count(*) as cnt FROM experiment
+          UNION ALL
+          SELECT 'Trials' as table, count(*) as cnt FROM trial
+          UNION ALL
+          SELECT 'Executors' as table, count(*) as cnt FROM executor
+          UNION ALL
+          SELECT 'Benchmarks' as table, count(*) as cnt FROM benchmark
+          UNION ALL
+          SELECT 'Projects' as table, count(*) as cnt FROM project
+          UNION ALL
+          SELECT 'Suites' as table, count(*) as cnt FROM suite
+          UNION ALL
+          SELECT 'Environments' as table, count(*) as cnt FROM environment
+          UNION ALL
+          SELECT 'Runs' as table, count(*) as cnt FROM run
+          UNION ALL
+          SELECT 'Measurements' as table, count(*) as cnt FROM measurement
+        ) as counts
+        ORDER BY counts.table`
+  });
   statisticsCache = { stats: result.rows };
   return statisticsCache;
 }
@@ -156,18 +161,19 @@ export async function dashChanges(
   projectId: number,
   db: Database
 ): Promise<{ changes: any[] }> {
-  const result = await db.query(
-    ` SELECT commitId, branchOrTag, projectId, repoURL, commitMessage,
-             max(startTime) as experimentTime
-      FROM experiment
-        JOIN Trial ON expId = experiment.id
-        JOIN Source ON sourceId = source.id
-        JOIN Project ON projectId = project.id
-      WHERE project.id = $1
-      GROUP BY commitId, branchOrTag, projectId, repoURL, commitMessage
-      ORDER BY max(startTime) DESC`,
-    [projectId]
-  );
+  const result = await db.query({
+    name: 'fetchAllChangesByProjectId',
+    text: ` SELECT commitId, branchOrTag, projectId, repoURL, commitMessage,
+                max(startTime) as experimentTime
+            FROM experiment
+            JOIN Trial ON expId = experiment.id
+            JOIN Source ON sourceId = source.id
+            JOIN Project ON projectId = project.id
+            WHERE project.id = $1
+            GROUP BY commitId, branchOrTag, projectId, repoURL, commitMessage
+            ORDER BY max(startTime) DESC`,
+    values: [projectId]
+  });
   return { changes: result.rows };
 }
 
@@ -175,38 +181,39 @@ export async function dashDataOverview(
   projectId: number,
   db: Database
 ): Promise<{ data: any[] }> {
-  const result = await db.query(
-    `
-      SELECT
-        exp.id as expId, exp.name, exp.description,
-        min(t.startTime) as minStartTime,
-        max(t.endTime) as maxEndTime,
-        ARRAY_TO_STRING(ARRAY_AGG(DISTINCT t.username), ', ') as users,
-        ARRAY_TO_STRING(ARRAY_AGG(DISTINCT src.commitId), ' ') as commitIds,
-        ARRAY_TO_STRING(ARRAY_AGG(DISTINCT src.commitMessage), '\n\n')
-          as commitMsgs,
-        ARRAY_TO_STRING(ARRAY_AGG(DISTINCT env.hostName), ', ') as hostNames,
+  const result = await db.query({
+    name: 'fetchDataOverview',
+    text: `
+        SELECT
+          exp.id as expId, exp.name, exp.description,
+          min(t.startTime) as minStartTime,
+          max(t.endTime) as maxEndTime,
+          ARRAY_TO_STRING(ARRAY_AGG(DISTINCT t.username), ', ') as users,
+          ARRAY_TO_STRING(ARRAY_AGG(DISTINCT src.commitId), ' ') as commitIds,
+          ARRAY_TO_STRING(ARRAY_AGG(DISTINCT src.commitMessage), '\n\n')
+            as commitMsgs,
+          ARRAY_TO_STRING(ARRAY_AGG(DISTINCT env.hostName), ', ') as hostNames,
 
-        -- Accessing measurements and timeline should give the same results,
-        -- but the counting in measurements is of course a lot slower
-        --	count(m.*) as measurements,
-        --	count(DISTINCT m.runId) as runs
-        SUM(tl.numSamples) as measurements,
-        count(DISTINCT tl.runId) as runs
-      FROM experiment exp
-      JOIN Trial t         ON exp.id = t.expId
-      JOIN Source src      ON t.sourceId = src.id
-      JOIN Environment env ON env.id = t.envId
+          -- Accessing measurements and timeline should give the same results,
+          -- but the counting in measurements is of course a lot slower
+          --	count(m.*) as measurements,
+          --	count(DISTINCT m.runId) as runs
+          SUM(tl.numSamples) as measurements,
+          count(DISTINCT tl.runId) as runs
+        FROM experiment exp
+        JOIN Trial t         ON exp.id = t.expId
+        JOIN Source src      ON t.sourceId = src.id
+        JOIN Environment env ON env.id = t.envId
 
-      --JOIN Measurement m   ON m.trialId = t.id
-      JOIN Timeline tl     ON tl.trialId = t.id
+        --JOIN Measurement m   ON m.trialId = t.id
+        JOIN Timeline tl     ON tl.trialId = t.id
 
-      WHERE exp.projectId = $1
+        WHERE exp.projectId = $1
 
-      GROUP BY exp.name, exp.description, exp.id
-      ORDER BY minStartTime DESC;`,
-    [projectId]
-  );
+        GROUP BY exp.name, exp.description, exp.id
+        ORDER BY minStartTime DESC;`,
+    values: [projectId]
+  });
   return { data: result.rows };
 }
 
@@ -392,22 +399,22 @@ export async function dashGetExpData(
   dbConfig: DatabaseConfig,
   db: Database
 ): Promise<any> {
-  const result = await db.query(
-    `
-      SELECT
-        exp.name as expName,
-        exp.description as expDesc,
-        p.id as pId,
-        p.name as pName,
-        p.description as pDesc
-      FROM
-        Experiment exp
-      JOIN Project p ON exp.projectId = p.id
+  const result = await db.query({
+    name: 'fetchExpDataByIdAndProjectSlug',
+    text: `SELECT
+                exp.name as expName,
+                exp.description as expDesc,
+                p.id as pId,
+                p.name as pName,
+                p.description as pDesc
+              FROM
+                Experiment exp
+              JOIN Project p ON exp.projectId = p.id
 
-      WHERE exp.id = $1 AND
-        lower(p.slug) = lower($2)`,
-    [expId, projectSlug]
-  );
+              WHERE exp.id = $1 AND
+                lower(p.slug) = lower($2)`,
+    values: [expId, projectSlug]
+  });
 
   let data: any;
   if (!result || result.rows.length !== 1) {
@@ -500,25 +507,26 @@ export async function dashBenchmarksForProject(
   db: Database,
   projectId: number
 ): Promise<{ benchmarks }> {
-  const result = await db.query(
-    `
-    SELECT DISTINCT p.name, env.hostname, r.cmdline, b.name as benchmark,
-        b.id as benchId, s.name as suiteName, s.id as suiteId,
-        exe.name as execName, exe.id as execId
-      FROM Project p
-      JOIN Experiment exp    ON exp.projectId = p.id
-      JOIN Trial t           ON t.expId = exp.id
-      JOIN Source src        ON t.sourceId = src.id
-      JOIN Environment env   ON t.envId = env.id
-      JOIN Timeline tl       ON tl.trialId = t.id
-      JOIN Run r             ON tl.runId = r.id
-      JOIN Benchmark b       ON r.benchmarkId = b.id
-      JOIN Suite s           ON r.suiteId = s.id
-      JOIN Executor exe      ON r.execId = exe.id
-      WHERE p.id = $1
-    ORDER BY suiteName, execName, benchmark, hostname`,
-    [projectId]
-  );
+  const result = await db.query({
+    name: 'fetchBenchmarksByProjectId',
+    text: `
+        SELECT DISTINCT p.name, env.hostname, r.cmdline, b.name as benchmark,
+            b.id as benchId, s.name as suiteName, s.id as suiteId,
+            exe.name as execName, exe.id as execId
+          FROM Project p
+          JOIN Experiment exp    ON exp.projectId = p.id
+          JOIN Trial t           ON t.expId = exp.id
+          JOIN Source src        ON t.sourceId = src.id
+          JOIN Environment env   ON t.envId = env.id
+          JOIN Timeline tl       ON tl.trialId = t.id
+          JOIN Run r             ON tl.runId = r.id
+          JOIN Benchmark b       ON r.benchmarkId = b.id
+          JOIN Suite s           ON r.suiteId = s.id
+          JOIN Executor exe      ON r.execId = exe.id
+          WHERE p.id = $1
+        ORDER BY suiteName, execName, benchmark, hostname`,
+    values: [projectId]
+  });
   return { benchmarks: result.rows };
 }
 

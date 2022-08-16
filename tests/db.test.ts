@@ -30,14 +30,14 @@ describe('Record Trial', () => {
   });
 
   it('the database should not have any trials', async () => {
-    const result = await db.query('SELECT * FROM Trial');
+    const result = await db.query({ text: 'SELECT * FROM Trial' });
     expect(result.rowCount).toEqual(0);
   });
 
   it('should record a new trial in the database', async () => {
     const result = await db.recordTrial(basicTestData, env, exp);
 
-    const tResult = await db.query('SELECT * FROM Trial');
+    const tResult = await db.query({ text: 'SELECT * FROM Trial' });
     expect(tResult.rowCount).toEqual(1);
     expect(tResult.rows[0].username).toEqual('smarr');
 
@@ -47,7 +47,7 @@ describe('Record Trial', () => {
   it('recording the same, again, should not add it to the db', async () => {
     const result = await db.recordTrial(basicTestData, env, exp);
 
-    const tResult = await db.query('SELECT * FROM Trial');
+    const tResult = await db.query({ text: 'SELECT * FROM Trial' });
     expect(tResult.rowCount).toEqual(1);
     expect(tResult.rows[0].username).toEqual('smarr');
 
@@ -62,7 +62,7 @@ describe('Record Trial', () => {
     const result = await db.recordTrial(basicTestData, env, exp2);
     expect(result.expid).toEqual(exp2.id);
 
-    const tResult = await db.query('SELECT * FROM Trial');
+    const tResult = await db.query({ text: 'SELECT * FROM Trial' });
     expect(tResult.rowCount).toEqual(2);
     expect(tResult.rows[0].expid).toEqual(exp.id);
     expect(tResult.rows[1].expid).toEqual(exp2.id);

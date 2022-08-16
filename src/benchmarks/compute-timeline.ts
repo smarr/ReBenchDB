@@ -37,9 +37,9 @@ export default class ComputeTimeline extends RebenchDbBenchmark {
     this.testData.source.commitId = 'commit-2';
     await this.db?.recordAllData(this.testData);
 
-    const result = await this.db?.query(
-      `DELETE FROM TimelineCalcJob RETURNING *`
-    );
+    const result = await this.db?.query({
+      text: `DELETE FROM TimelineCalcJob RETURNING *`
+    });
     this.jobs = <TimelineJob[]>result?.rows;
   }
 
@@ -48,9 +48,11 @@ export default class ComputeTimeline extends RebenchDbBenchmark {
       await this.db?.recordTimelineJob([j.trialid, j.runid, j.criterion]);
     }
     await this.db?.performTimelineUpdate();
-    const result = await this.db?.query(`SELECT count(*) FROM Timeline`);
+    const result = await this.db?.query({
+      text: `SELECT count(*) FROM Timeline`
+    });
 
-    await this.db?.query(`TRUNCATE Timeline, TimelineCalcJob`);
+    await this.db?.query({ text: `TRUNCATE Timeline, TimelineCalcJob` });
 
     return {
       timelineEntries: result?.rows[0],
