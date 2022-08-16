@@ -546,7 +546,6 @@ export abstract class Database {
 
     let result = await this.query(fetchQ, qVals);
     if (result.rowCount === 0) {
-      result = await this.query(insertQ, insertVals);
       try {
         result = await this.query(insertQ, insertVals);
       } catch (e) {
