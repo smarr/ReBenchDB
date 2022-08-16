@@ -241,61 +241,7 @@ export abstract class Database {
 
   private readonly queries = {
     fetchProjectByName: 'SELECT * FROM Project WHERE name = $1',
-
-    fetchExpByNames: `SELECT e.* FROM Experiment e
-                        JOIN Project p ON p.id = e.projectId
-                        WHERE p.name = $1 AND e.name = $2`,
-    fetchExpByProjectIdName: `SELECT * FROM Experiment
-                              WHERE projectId = $1 AND name = $2`,
-    insertExp: `INSERT INTO Experiment (name, projectId, description)
-                VALUES ($1, $2, $3) RETURNING *`,
-
-    insertMeasurement: {
-      name: 'insertMeasurement',
-      text: `INSERT INTO Measurement
-          (runId, trialId, invocation, iteration, criterion, value)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        ON CONFLICT DO NOTHING`,
-      values: <any[]>[]
-    },
-
-    insertMeasurementBatched10: {
-      name: 'insertMeasurement10',
-      text: `INSERT INTO Measurement
-          (runId, trialId, invocation, iteration, criterion, value)
-        VALUES
-          ($1, $2, $3, $4, $5, $6),
-          ($7, $8, $9, $10, $11, $12),
-          ($13, $14, $15, $16, $17, $18),
-          ($19, $20, $21, $22, $23, $24),
-          ($25, $26, $27, $28, $29, $30),
-          ($31, $32, $33, $34, $35, $36),
-          ($37, $38, $39, $40, $41, $42),
-          ($43, $44, $45, $46, $47, $48),
-          ($49, $50, $51, $52, $53, $54),
-          ($55, $56, $57, $58, $59, $60)
-          ON CONFLICT DO NOTHING`,
-      values: <any[]>[]
-    },
-
-    insertMeasurementBatchedN: {
-      name: 'insertMeasurementN',
-      text: `INSERT INTO Measurement
-          (runId, trialId, invocation, iteration, criterion, value)
-        VALUES
-          GENERATED`,
-      values: <any[]>[]
-    },
-
-    insertProfile: {
-      name: 'insertProfile',
-      text: `INSERT INTO ProfileData
-          (runId, trialId, invocation, numIterations, value)
-        VALUES
-          ($1, $2, $3, $4, $5)
-        ON CONFLICT DO NOTHING`,
-      values: <any[]>[]
-    },
+    insertMeasurementBatchedN: 'GENERATED',
 
     fetchMaxMeasurements: `SELECT
         runId, criterion, invocation as inv, max(iteration) as ite
@@ -408,7 +354,7 @@ export abstract class Database {
     this.projects = new Map();
     this.statsValid = new TimedCacheValidity(cacheInvalidationDelay);
 
-    this.queries.insertMeasurementBatchedN.text = `INSERT INTO Measurement
+    this.queries.insertMeasurementBatchedN = `INSERT INTO Measurement
          (runId, trialId, invocation, iteration, criterion, value)
        VALUES ${this.generateBatchInsert(Database.batchN, 6)}
        ON CONFLICT DO NOTHING`;
@@ -878,9 +824,10 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
     return this.recordCached(
       this.exps,
       cacheKey,
-      this.queries.fetchExpByProjectIdName,
+      'SELECT * FROM Experiment WHERE projectId = $1 AND name = $2',
       [project.id, data.experimentName],
-      this.queries.insertExp,
+      `INSERT INTO Experiment (name, projectId, description)
+          VALUES ($1, $2, $3) RETURNING *`,
       [data.experimentName, project.id, data.experimentDesc]
     );
   }
@@ -894,10 +841,12 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
       return this.exps.get(cacheKey);
     }
 
-    const result = await this.query(this.queries.fetchExpByNames, [
-      projectName,
-      experimentName
-    ]);
+    const result = await this.query(
+      `SELECT e.* FROM Experiment e
+        JOIN Project p ON p.id = e.projectId
+        WHERE p.name = $1 AND e.name = $2`,
+      [projectName, experimentName]
+    );
     if (result.rowCount < 1) {
       return undefined;
     }
@@ -1208,23 +1157,52 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
   }
 
   public async recordMeasurementBatched10(values: any[]): Promise<number> {
-    const q = this.queries.insertMeasurementBatched10;
-    // [runId, trialId, invocation, iteration, critId, value];
-    q.values = values;
+    const q = {
+      name: 'insertMeasurement10',
+      text: `INSERT INTO Measurement
+          (runId, trialId, invocation, iteration, criterion, value)
+        VALUES
+          ($1, $2, $3, $4, $5, $6),
+          ($7, $8, $9, $10, $11, $12),
+          ($13, $14, $15, $16, $17, $18),
+          ($19, $20, $21, $22, $23, $24),
+          ($25, $26, $27, $28, $29, $30),
+          ($31, $32, $33, $34, $35, $36),
+          ($37, $38, $39, $40, $41, $42),
+          ($43, $44, $45, $46, $47, $48),
+          ($49, $50, $51, $52, $53, $54),
+          ($55, $56, $57, $58, $59, $60)
+          ON CONFLICT DO NOTHING`,
+      // [runId, trialId, invocation, iteration, critId, value];
+      values
+    };
+
     return (await this.query(q)).rowCount;
   }
 
   public async recordMeasurementBatchedN(values: any[]): Promise<number> {
-    const q = this.queries.insertMeasurementBatchedN;
-    // [runId, trialId, invocation, iteration, critId, value];
+    const q = {
+      name: 'insertMeasurementN',
+      text: this.queries.insertMeasurementBatchedN,
+      // [runId, trialId, invocation, iteration, critId, value];
+      values
+    };
+
     q.values = values;
     return (await this.query(q)).rowCount;
   }
 
   public async recordMeasurement(values: any[]): Promise<number> {
-    const q = this.queries.insertMeasurement;
-    // [runId, trialId, invocation, iteration, critId, value];
-    q.values = values;
+    const q = {
+      name: 'insertMeasurement',
+      text: `INSERT INTO Measurement
+          (runId, trialId, invocation, iteration, criterion, value)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT DO NOTHING`,
+      // [runId, trialId, invocation, iteration, critId, value];
+      values
+    };
+
     return (await this.query(q)).rowCount;
   }
 
@@ -1235,8 +1213,15 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
     numIterations: number,
     value: string
   ): Promise<number> {
-    const q = this.queries.insertProfile;
-    q.values = [runId, trialId, invocation, numIterations, value];
+    const q = {
+      name: 'insertProfile',
+      text: `INSERT INTO ProfileData
+          (runId, trialId, invocation, numIterations, value)
+        VALUES
+          ($1, $2, $3, $4, $5)
+        ON CONFLICT DO NOTHING`,
+      values: [runId, trialId, invocation, numIterations, value]
+    };
     return (await this.query(q)).rowCount;
   }
 
