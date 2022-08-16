@@ -240,47 +240,6 @@ export abstract class Database {
   private readonly timelineUpdater: SingleRequestOnly;
 
   private readonly queries = {
-    fetchExecutorByName: 'SELECT * from Executor WHERE name = $1',
-    insertExecutor: `INSERT INTO Executor (name, description)
-                     VALUES ($1, $2) RETURNING *`,
-
-    fetchSuiteByName: 'SELECT * from Suite WHERE name = $1',
-    insertSuite: `INSERT INTO Suite (name, description)
-                  VALUES ($1, $2) RETURNING *`,
-
-    fetchBenchmarkByName: 'SELECT * from Benchmark WHERE name = $1',
-    insertBenchmark: `INSERT INTO Benchmark (name, description)
-                      VALUES ($1, $2) RETURNING *`,
-
-    fetchRunByCmd: 'SELECT * from Run WHERE cmdline = $1',
-    insertRun: `INSERT INTO Run (
-        cmdline,
-        benchmarkId, execId, suiteId,
-        location,
-        cores, inputSize, varValue, extraArgs,
-        maxInvocationTime, minIterationTime, warmup)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
-
-    fetchSourceByCommitId: 'SELECT * from Source WHERE commitId = $1',
-    insertSource: `INSERT INTO Source (
-        repoURL, branchOrTag, commitId, commitMessage,
-        authorName, authorEmail, committerName, committerEmail)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-    fetchEnvByHostName: 'SELECT * from Environment WHERE hostname =  $1',
-    insertEnv: `INSERT INTO Environment (
-                  hostname, osType, memory, cpu, clockSpeed)
-                VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-
-    fetchTrialByUserEnvStartExp: `SELECT * FROM Trial
-                               WHERE username = $1 AND envId = $2 AND
-                                     startTime = $3 AND expId = $4`,
-    insertTrial: `INSERT INTO Trial (manualRun, startTime, expId, username,
-                                     envId, sourceId, denoise)
-                  VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-    updateTrialEndTime: `UPDATE Trial t
-                         SET endTime = $2
-                         WHERE expId = $1 AND endTime IS NULL`,
-
     fetchProjectByName: 'SELECT * FROM Project WHERE name = $1',
     fetchProjectBySlugName: {
       name: 'fetchProjectBySlugName',
@@ -616,8 +575,9 @@ export abstract class Database {
     return this.recordNameDesc(
       e,
       this.executors,
-      this.queries.fetchExecutorByName,
-      this.queries.insertExecutor
+      'SELECT * from Executor WHERE name = $1',
+      `INSERT INTO Executor (name, description)
+                     VALUES ($1, $2) RETURNING *`
     );
   }
 
@@ -625,8 +585,9 @@ export abstract class Database {
     return this.recordNameDesc(
       s,
       this.suites,
-      this.queries.fetchSuiteByName,
-      this.queries.insertSuite
+      'SELECT * from Suite WHERE name = $1',
+      `INSERT INTO Suite (name, description)
+                  VALUES ($1, $2) RETURNING *`
     );
   }
 
@@ -634,8 +595,9 @@ export abstract class Database {
     return this.recordNameDesc(
       b,
       this.benchmarks,
-      this.queries.fetchBenchmarkByName,
-      this.queries.insertBenchmark
+      'SELECT * from Benchmark WHERE name = $1',
+      `INSERT INTO Benchmark (name, description)
+                      VALUES ($1, $2) RETURNING *`
     );
   }
 
@@ -651,9 +613,15 @@ export abstract class Database {
     return this.recordCached(
       this.runs,
       run.cmdline,
-      this.queries.fetchRunByCmd,
+      'SELECT * from Run WHERE cmdline = $1',
       [run.cmdline],
-      this.queries.insertRun,
+      `INSERT INTO Run (
+        cmdline,
+        benchmarkId, execId, suiteId,
+        location,
+        cores, inputSize, varValue, extraArgs,
+        maxInvocationTime, minIterationTime, warmup)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
       [
         run.cmdline,
         benchmark.id,
@@ -675,9 +643,12 @@ export abstract class Database {
     return this.recordCached(
       this.sources,
       s.commitId,
-      this.queries.fetchSourceByCommitId,
+      'SELECT * from Source WHERE commitId = $1',
       [s.commitId],
-      this.queries.insertSource,
+      `INSERT INTO Source (
+        repoURL, branchOrTag, commitId, commitMessage,
+        authorName, authorEmail, committerName, committerEmail)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
       [
         s.repoURL,
         s.branchOrTag,
@@ -695,9 +666,11 @@ export abstract class Database {
     return this.recordCached(
       this.envs,
       e.hostName,
-      this.queries.fetchEnvByHostName,
+      'SELECT * from Environment WHERE hostname =  $1',
       [e.hostName],
-      this.queries.insertEnv,
+      `INSERT INTO Environment (
+        hostname, osType, memory, cpu, clockSpeed)
+      VALUES ($1, $2, $3, $4, $5) RETURNING *`,
       [e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed]
     );
   }
@@ -718,9 +691,13 @@ export abstract class Database {
     return this.recordCached(
       this.trials,
       cacheKey,
-      this.queries.fetchTrialByUserEnvStartExp,
+      `SELECT * FROM Trial
+                               WHERE username = $1 AND envId = $2 AND
+                                     startTime = $3 AND expId = $4`,
       [e.userName, env.id, data.startTime, exp.id],
-      this.queries.insertTrial,
+      `INSERT INTO Trial (manualRun, startTime, expId, username,
+        envId, sourceId, denoise)
+VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
       [
         e.manualRun,
         data.startTime,
@@ -925,7 +902,12 @@ export abstract class Database {
     expId: number,
     endTime: string
   ): Promise<void> {
-    await this.query(this.queries.updateTrialEndTime, [expId, endTime]);
+    await this.query(
+      `UPDATE Trial t
+    SET endTime = $2
+    WHERE expId = $1 AND endTime IS NULL`,
+      [expId, endTime]
+    );
   }
 
   public async reportCompletion(
