@@ -1,6 +1,7 @@
 import { Octokit } from '@octokit/rest';
 import { createAppAuth } from '@octokit/auth-app';
 import { existsSync, readFileSync } from 'fs';
+import { log } from './logging.js';
 
 export interface Repo {
   owner: string;
@@ -70,12 +71,16 @@ export class GitHub {
   ): Promise<boolean> {
     const repoAppInstall = await this.getRepoAuthorization(owner, repo);
 
-    const result = await repoAppInstall.repos.createCommitComment({
+    const request = {
       owner: owner,
       repo: repo,
       commit_sha: commitSha,
       body: message
-    });
+    };
+    const result = await repoAppInstall.repos.createCommitComment(request);
+    if (result.status !== 201) {
+      log.error('GitHub request failed. (details above in log)', request);
+    }
     return result.status === 201; // HTTP 201 Created
   }
 
