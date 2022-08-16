@@ -397,23 +397,21 @@ export abstract class Database {
   private async recordCached(
     cache,
     cacheKey,
-    fetchQ,
-    qVals,
-    insertQ,
-    insertVals
+    fetchQ: QueryConfig,
+    insertQ: QueryConfig
   ) {
     if (cache.has(cacheKey)) {
       return cache.get(cacheKey);
     }
 
-    let result = await this.query(fetchQ, qVals);
+    let result = await this.query(fetchQ);
     if (result.rowCount === 0) {
       try {
-        result = await this.query(insertQ, insertVals);
+        result = await this.query(insertQ);
       } catch (e) {
         // there may have been a racy insert,
         // which causes us to fail on unique constraints
-        result = await this.query(fetchQ, qVals);
+        result = await this.query(fetchQ);
         if (result.rowCount === 0) {
           throw e;
         }
@@ -425,40 +423,57 @@ export abstract class Database {
     return result.rows[0];
   }
 
-  private async recordNameDesc(item, cache, fetchQ, insertQ) {
-    return this.recordCached(cache, item.name, fetchQ, [item.name], insertQ, [
-      item.name,
-      item.desc
-    ]);
-  }
-
   public async recordExecutor(e: ApiExecutor): Promise<Executor> {
-    return this.recordNameDesc(
-      e,
+    return this.recordCached(
       this.executors,
-      'SELECT * from Executor WHERE name = $1',
-      `INSERT INTO Executor (name, description)
-                     VALUES ($1, $2) RETURNING *`
+      e.name,
+      {
+        name: 'fetchExecutorByName',
+        text: 'SELECT * from Executor WHERE name = $1',
+        values: [e.name]
+      },
+      {
+        name: 'insertExecutor',
+        text: `INSERT INTO Executor (name, description)
+                  VALUES ($1, $2) RETURNING *`,
+        values: [e.name, e.desc]
+      }
     );
   }
 
   public async recordSuite(s: ApiSuite): Promise<Suite> {
-    return this.recordNameDesc(
-      s,
+    return this.recordCached(
       this.suites,
-      'SELECT * from Suite WHERE name = $1',
-      `INSERT INTO Suite (name, description)
-                  VALUES ($1, $2) RETURNING *`
+      s.name,
+      {
+        name: 'fetchSuiteByName',
+        text: 'SELECT * from Suite WHERE name = $1',
+        values: [s.name]
+      },
+      {
+        name: 'insertSuite',
+        text: `INSERT INTO Suite (name, description)
+                  VALUES ($1, $2) RETURNING *`,
+        values: [s.name, s.desc]
+      }
     );
   }
 
   public async recordBenchmark(b: ApiBenchmark): Promise<Benchmark> {
-    return this.recordNameDesc(
-      b,
+    return this.recordCached(
       this.benchmarks,
-      'SELECT * from Benchmark WHERE name = $1',
-      `INSERT INTO Benchmark (name, description)
-                      VALUES ($1, $2) RETURNING *`
+      b.name,
+      {
+        name: 'fetchBenchmarkByName',
+        text: 'SELECT * from Benchmark WHERE name = $1',
+        values: [b.name]
+      },
+      {
+        name: 'insertBenchmark',
+        text: `INSERT INTO Benchmark (name, description)
+                  VALUES ($1, $2) RETURNING *`,
+        values: [b.name, b.desc]
+      }
     );
   }
 
@@ -474,29 +489,36 @@ export abstract class Database {
     return this.recordCached(
       this.runs,
       run.cmdline,
-      'SELECT * from Run WHERE cmdline = $1',
-      [run.cmdline],
-      `INSERT INTO Run (
-        cmdline,
-        benchmarkId, execId, suiteId,
-        location,
-        cores, inputSize, varValue, extraArgs,
-        maxInvocationTime, minIterationTime, warmup)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
-      [
-        run.cmdline,
-        benchmark.id,
-        exec.id,
-        suite.id,
-        run.location,
-        run.cores,
-        run.inputSize,
-        run.varValue,
-        run.extraArgs,
-        run.benchmark.runDetails.maxInvocationTime,
-        run.benchmark.runDetails.minIterationTime,
-        run.benchmark.runDetails.warmup
-      ]
+      {
+        name: 'fetchRunByCmdline',
+        text: 'SELECT * from Run WHERE cmdline = $1',
+        values: [run.cmdline]
+      },
+      {
+        name: 'insertRun',
+        text: `INSERT INTO Run (
+                  cmdline,
+                  benchmarkId, execId, suiteId,
+                  location,
+                  cores, inputSize, varValue, extraArgs,
+                  maxInvocationTime, minIterationTime, warmup)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                RETURNING *`,
+        values: [
+          run.cmdline,
+          benchmark.id,
+          exec.id,
+          suite.id,
+          run.location,
+          run.cores,
+          run.inputSize,
+          run.varValue,
+          run.extraArgs,
+          run.benchmark.runDetails.maxInvocationTime,
+          run.benchmark.runDetails.minIterationTime,
+          run.benchmark.runDetails.warmup
+        ]
+      }
     );
   }
 
@@ -504,22 +526,28 @@ export abstract class Database {
     return this.recordCached(
       this.sources,
       s.commitId,
-      'SELECT * from Source WHERE commitId = $1',
-      [s.commitId],
-      `INSERT INTO Source (
-        repoURL, branchOrTag, commitId, commitMessage,
-        authorName, authorEmail, committerName, committerEmail)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [
-        s.repoURL,
-        s.branchOrTag,
-        s.commitId,
-        s.commitMsg,
-        s.authorName,
-        s.authorEmail,
-        s.committerName,
-        s.committerEmail
-      ]
+      {
+        name: 'fetchSourceById',
+        text: 'SELECT * from Source WHERE commitId = $1',
+        values: [s.commitId]
+      },
+      {
+        name: 'insertSource',
+        text: `INSERT INTO Source (
+                  repoURL, branchOrTag, commitId, commitMessage,
+                  authorName, authorEmail, committerName, committerEmail)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+        values: [
+          s.repoURL,
+          s.branchOrTag,
+          s.commitId,
+          s.commitMsg,
+          s.authorName,
+          s.authorEmail,
+          s.committerName,
+          s.committerEmail
+        ]
+      }
     );
   }
 
@@ -527,12 +555,18 @@ export abstract class Database {
     return this.recordCached(
       this.envs,
       e.hostName,
-      'SELECT * from Environment WHERE hostname =  $1',
-      [e.hostName],
-      `INSERT INTO Environment (
-        hostname, osType, memory, cpu, clockSpeed)
-      VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed]
+      {
+        name: 'fetchEnvironmentByHostname',
+        text: 'SELECT * from Environment WHERE hostname =  $1',
+        values: [e.hostName]
+      },
+      {
+        name: 'insertEnvironment',
+        text: `INSERT INTO Environment (
+                  hostname, osType, memory, cpu, clockSpeed)
+                VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+        values: [e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed]
+      }
     );
   }
 
@@ -552,22 +586,28 @@ export abstract class Database {
     return this.recordCached(
       this.trials,
       cacheKey,
-      `SELECT * FROM Trial
-                               WHERE username = $1 AND envId = $2 AND
-                                     startTime = $3 AND expId = $4`,
-      [e.userName, env.id, data.startTime, exp.id],
-      `INSERT INTO Trial (manualRun, startTime, expId, username,
-        envId, sourceId, denoise)
-VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [
-        e.manualRun,
-        data.startTime,
-        exp.id,
-        e.userName,
-        env.id,
-        source.id,
-        e.denoise
-      ]
+      {
+        name: 'fetchTrialByUserEnvIdStartTimeExpId',
+        text: `SELECT * FROM Trial
+                  WHERE username = $1 AND envId = $2 AND
+                        startTime = $3 AND expId = $4`,
+        values: [e.userName, env.id, data.startTime, exp.id]
+      },
+      {
+        name: 'insertTrial',
+        text: `INSERT INTO Trial (manualRun, startTime, expId, username,
+                        envId, sourceId, denoise)
+                VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        values: [
+          e.manualRun,
+          data.startTime,
+          exp.id,
+          e.userName,
+          env.id,
+          source.id,
+          e.denoise
+        ]
+      }
     );
   }
 
@@ -575,12 +615,18 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
     return this.recordCached(
       this.projects,
       projectName,
-      this.queries.fetchProjectByName,
-      [projectName],
-      `INSERT INTO Project (name, slug)
-                      VALUES ($1, regexp_replace($2, '[^0-9a-zA-Z-]', '-', 'g'))
-                    RETURNING *`,
-      [projectName, projectName]
+      {
+        name: 'fetchProjectByName',
+        text: this.queries.fetchProjectByName,
+        values: [projectName]
+      },
+      {
+        name: 'insertProject',
+        text: `INSERT INTO Project (name, slug)
+                  VALUES ($1, regexp_replace($2, '[^0-9a-zA-Z-]', '-', 'g'))
+                RETURNING *`,
+        values: [projectName, projectName]
+      }
     );
   }
 
@@ -749,11 +795,17 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
     return this.recordCached(
       this.exps,
       cacheKey,
-      'SELECT * FROM Experiment WHERE projectId = $1 AND name = $2',
-      [project.id, data.experimentName],
-      `INSERT INTO Experiment (name, projectId, description)
-          VALUES ($1, $2, $3) RETURNING *`,
-      [data.experimentName, project.id, data.experimentDesc]
+      {
+        name: 'fetchExperimentByProjectIdAndName',
+        text: 'SELECT * FROM Experiment WHERE projectId = $1 AND name = $2',
+        values: [project.id, data.experimentName]
+      },
+      {
+        name: 'insertExperiment',
+        text: `INSERT INTO Experiment (name, projectId, description)
+                  VALUES ($1, $2, $3) RETURNING *`,
+        values: [data.experimentName, project.id, data.experimentDesc]
+      }
     );
   }
 
@@ -832,10 +884,16 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
     return this.recordCached(
       this.criteria,
       cacheKey,
-      'SELECT * FROM Criterion WHERE name = $1 AND unit = $2',
-      [c.c, c.u],
-      'INSERT INTO Criterion (name, unit) VALUES ($1, $2) RETURNING *',
-      [c.c, c.u]
+      {
+        name: 'fetchCriterionByNameAndUnit',
+        text: 'SELECT * FROM Criterion WHERE name = $1 AND unit = $2',
+        values: [c.c, c.u]
+      },
+      {
+        name: 'insertCriterion',
+        text: 'INSERT INTO Criterion (name, unit) VALUES ($1, $2) RETURNING *',
+        values: [c.c, c.u]
+      }
     );
   }
 
