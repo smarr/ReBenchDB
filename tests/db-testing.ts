@@ -85,9 +85,7 @@ export class TestDatabase extends Database {
   private async release(): Promise<void> {
     const mainDB = getMainDB();
     await mainDB.query({
-      name: 'dropDB',
-      text: 'DROP DATABASE IF EXISTS $1',
-      values: [this.dbConfig.database]
+      text: `DROP DATABASE IF EXISTS ${this.dbConfig.database}`
     });
   }
 
@@ -147,14 +145,10 @@ export async function createDB(
   const db = getMainDB();
   const dbNameForSuite = `${cfg.database}_${testSuite}`;
   await db.query({
-    name: 'dropDB',
-    text: 'DROP DATABASE IF EXISTS $1',
-    values: [dbNameForSuite]
+    text: `DROP DATABASE IF EXISTS ${dbNameForSuite}`
   });
   await db.query({
-    name: 'createDB',
-    text: 'CREATE DATABASE $1',
-    values: [dbNameForSuite]
+    text: `CREATE DATABASE ${dbNameForSuite}`
   });
 
   cfg.database = dbNameForSuite;
