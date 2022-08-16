@@ -241,91 +241,7 @@ export abstract class Database {
 
   private readonly queries = {
     fetchProjectByName: 'SELECT * FROM Project WHERE name = $1',
-    insertMeasurementBatchedN: 'GENERATED',
-
-    fetchMaxMeasurements: `SELECT
-        runId, criterion, invocation as inv, max(iteration) as ite
-      FROM Measurement
-      WHERE trialId = $1
-      GROUP BY runId, criterion, invocation
-      ORDER BY runId, inv, ite, criterion`,
-
-    insertTimelineJob: `INSERT INTO TimelineCalcJob
-                          (trialId, runId, criterion)
-                        VALUES ($1, $2, $3)`,
-
-    fetchCriterionByNameUnit: `SELECT * FROM Criterion
-                               WHERE name = $1 AND unit = $2`,
-    insertCriterion: `INSERT INTO Criterion (name, unit)
-                      VALUES ($1, $2) RETURNING *`,
-    fetchUnit: 'SELECT * from Unit WHERE name = $1',
-    insertUnit: 'INSERT INTO Unit (name) VALUES ($1)',
-
-    fetchRevsInProject: `SELECT DISTINCT
-                           p.id, e.name, s.id,
-                           s.commitid, s.repoUrl, s.branchOrTag,
-                           s.commitMessage, s.authorName
-                         FROM Project p
-                            JOIN Experiment e ON e.projectId = p.id
-                            JOIN Trial t ON e.id = t.expId
-                            JOIN Source s ON t.sourceId = s.id
-                          WHERE lower(p.slug) = lower($1)
-                            AND s.commitid = $2
-                            OR s.commitid = $3`,
-
-    fetchBranchNamesForChange: {
-      name: 'fetchBranchNamesForChange',
-      text: `SELECT DISTINCT branchOrTag, s.commitId
-             FROM Source s
-               JOIN Trial      tr ON tr.sourceId = s.id
-               JOIN Experiment e  ON tr.expId = e.id
-               JOIN Project    p  ON p.id = e.projectId
-             WHERE
-               p.name = $1 AND
-               (s.commitid = $2 OR s.commitid = $3)`,
-      values: <any[]>[]
-    },
-    fetchLatestBenchmarksForProject: {
-      name: 'fetchLatestBenchmarksForProject',
-      text: `WITH LatestExperiment AS (
-                SELECT exp.id as expId, max(t.startTime) as newest
-                FROM Project p
-                  JOIN Experiment exp    ON exp.projectId = p.id
-                  JOIN Trial t           ON t.expId = exp.id
-                  JOIN Source src        ON t.sourceId = src.id
-                WHERE p.id = $1 AND
-                  p.baseBranch = src.branchOrTag
-                GROUP BY exp.id
-                ORDER BY newest DESC
-                LIMIT 1
-              )
-              SELECT DISTINCT
-                s.id as suiteId, s.name as suiteName,
-                exe.id as execId, exe.name as execName,
-                b.id as benchId, b.name as benchmark,
-                r.cmdline,
-                r.id as runId,
-                r.varValue,
-                r.cores,
-                r.inputSize,
-                r.extraArgs
-              FROM Project p
-                JOIN Experiment exp    ON exp.projectId = p.id
-                JOIN Trial t           ON t.expId = exp.id
-                JOIN Source src        ON t.sourceId = src.id
-                JOIN Environment env   ON t.envId = env.id
-                JOIN Timeline tl       ON tl.trialId = t.id
-                JOIN Run r             ON tl.runId = r.id
-                JOIN Benchmark b       ON r.benchmarkId = b.id
-                JOIN Suite s           ON r.suiteId = s.id
-                JOIN Executor exe      ON r.execId = exe.id
-                JOIN LatestExperiment le ON exp.id = le.expId
-              WHERE
-                p.id = $1 AND
-                p.baseBranch = src.branchOrTag
-              ORDER BY suiteName, execName, benchmark, cmdline;`,
-      values: <number[]>[]
-    }
+    insertMeasurementBatchedN: 'GENERATED'
   };
 
   private static readonly batchN = 50;
@@ -426,11 +342,20 @@ export abstract class Database {
     base: string,
     change: string
   ): Promise<{ dataFound: boolean; base?: any; change?: any }> {
-    const result = await this.query(this.queries.fetchRevsInProject, [
-      projectSlug,
-      base,
-      change
-    ]);
+    const result = await this.query(
+      `SELECT DISTINCT
+          p.id, e.name, s.id,
+          s.commitid, s.repoUrl, s.branchOrTag,
+          s.commitMessage, s.authorName
+        FROM Project p
+          JOIN Experiment e ON e.projectId = p.id
+          JOIN Trial t ON e.id = t.expId
+          JOIN Source s ON t.sourceId = s.id
+        WHERE lower(p.slug) = lower($1)
+          AND s.commitid = $2
+          OR s.commitid = $3`,
+      [projectSlug, base, change]
+    );
 
     // we can have multiple experiments with the same revisions
     if (result.rowCount >= 2) {
@@ -888,9 +813,11 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
   }
 
   private async recordUnit(unitName: string) {
-    const result = await this.query(this.queries.fetchUnit, [unitName]);
+    const result = await this.query('SELECT * from Unit WHERE name = $1', [
+      unitName
+    ]);
     if (result.rowCount === 0) {
-      await this.query(this.queries.insertUnit, [unitName]);
+      await this.query('INSERT INTO Unit (name) VALUES ($1)', [unitName]);
     }
   }
 
@@ -905,9 +832,9 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
     return this.recordCached(
       this.criteria,
       cacheKey,
-      this.queries.fetchCriterionByNameUnit,
+      'SELECT * FROM Criterion WHERE name = $1 AND unit = $2',
       [c.c, c.u],
-      this.queries.insertCriterion,
+      'INSERT INTO Criterion (name, unit) VALUES ($1, $2) RETURNING *',
       [c.c, c.u]
     );
   }
@@ -923,9 +850,15 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
   }
 
   private async retrieveAvailableMeasurements(trialId: number) {
-    const results = await this.query(this.queries.fetchMaxMeasurements, [
-      trialId
-    ]);
+    const results = await this.query(
+      `SELECT
+          runId, criterion, invocation as inv, max(iteration) as ite
+        FROM Measurement
+        WHERE trialId = $1
+        GROUP BY runId, criterion, invocation
+        ORDER BY runId, inv, ite, criterion`,
+      [trialId]
+    );
     const measurements = {};
     for (const r of results.rows) {
       // runid, criterion, inv, ite
@@ -1226,7 +1159,12 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
   }
 
   public async recordTimelineJob(values: number[]): Promise<void> {
-    await this.query(this.queries.insertTimelineJob, values);
+    await this.query(
+      `INSERT INTO TimelineCalcJob
+          (trialId, runId, criterion)
+        VALUES ($1, $2, $3)`,
+      values
+    );
   }
 
   private generateTimeline() {
@@ -1287,8 +1225,18 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
     base: string,
     change: string
   ): Promise<null | { baseBranchName: string; changeBranchName: string }> {
-    const q = { ...this.queries.fetchBranchNamesForChange };
-    q.values = [projectName, base, change];
+    const q = {
+      name: 'fetchBranchNamesForChange',
+      text: `SELECT DISTINCT branchOrTag, s.commitId
+             FROM Source s
+               JOIN Trial      tr ON tr.sourceId = s.id
+               JOIN Experiment e  ON tr.expId = e.id
+               JOIN Project    p  ON p.id = e.projectId
+             WHERE
+               p.name = $1 AND
+               (s.commitid = $2 OR s.commitid = $3)`,
+      values: [projectName, base, change]
+    };
     const result = await this.query(q);
 
     if (result.rowCount < 1) {
@@ -1320,8 +1268,47 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
   public async getLatestBenchmarksForTimelineView(
     projectId: number
   ): Promise<TimelineSuite[] | null> {
-    const q = { ...this.queries.fetchLatestBenchmarksForProject };
-    q.values = [projectId];
+    const q = {
+      name: 'fetchLatestBenchmarksForProject',
+      text: `WITH LatestExperiment AS (
+                SELECT exp.id as expId, max(t.startTime) as newest
+                FROM Project p
+                  JOIN Experiment exp    ON exp.projectId = p.id
+                  JOIN Trial t           ON t.expId = exp.id
+                  JOIN Source src        ON t.sourceId = src.id
+                WHERE p.id = $1 AND
+                  p.baseBranch = src.branchOrTag
+                GROUP BY exp.id
+                ORDER BY newest DESC
+                LIMIT 1
+              )
+              SELECT DISTINCT
+                s.id as suiteId, s.name as suiteName,
+                exe.id as execId, exe.name as execName,
+                b.id as benchId, b.name as benchmark,
+                r.cmdline,
+                r.id as runId,
+                r.varValue,
+                r.cores,
+                r.inputSize,
+                r.extraArgs
+              FROM Project p
+                JOIN Experiment exp    ON exp.projectId = p.id
+                JOIN Trial t           ON t.expId = exp.id
+                JOIN Source src        ON t.sourceId = src.id
+                JOIN Environment env   ON t.envId = env.id
+                JOIN Timeline tl       ON tl.trialId = t.id
+                JOIN Run r             ON tl.runId = r.id
+                JOIN Benchmark b       ON r.benchmarkId = b.id
+                JOIN Suite s           ON r.suiteId = s.id
+                JOIN Executor exe      ON r.execId = exe.id
+                JOIN LatestExperiment le ON exp.id = le.expId
+              WHERE
+                p.id = $1 AND
+                p.baseBranch = src.branchOrTag
+              ORDER BY suiteName, execName, benchmark, cmdline;`,
+      values: [projectId]
+    };
 
     const result = await this.query(q);
     if (result.rowCount < 1) {
