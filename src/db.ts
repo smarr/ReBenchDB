@@ -532,6 +532,18 @@ export abstract class Database {
     }
   }
 
+  private async getCached(cache, cacheKey, fetchQ, qVals): Promise<any> {
+    if (cache.has(cacheKey)) {
+      return cache.get(cacheKey);
+    }
+
+    const result = await this.query(fetchQ, qVals);
+    if (result.rowCount === 1) {
+      return result[0];
+    }
+    return null;
+  }
+
   private async recordCached(
     cache,
     cacheKey,
@@ -744,17 +756,15 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
     return result.rows[0];
   }
 
-  public async getProjectByName(
-    projectName: string
-  ): Promise<Project | undefined> {
-    const result = await this.query(this.queries.fetchProjectByName, [
-      projectName
-    ]);
-
-    if (result.rowCount !== 1) {
-      return undefined;
-    }
-    return result.rows[0];
+  public async getProjectByName(projectName: string): Promise<Project | null> {
+    return <Promise<Project | null>>(
+      this.getCached(
+        this.projects,
+        projectName,
+        this.queries.fetchProjectByName,
+        [projectName]
+      )
+    );
   }
 
   public async getAllProjects(): Promise<Project[]> {
