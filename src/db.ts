@@ -241,27 +241,6 @@ export abstract class Database {
 
   private readonly queries = {
     fetchProjectByName: 'SELECT * FROM Project WHERE name = $1',
-    fetchProjectBySlugName: {
-      name: 'fetchProjectBySlugName',
-      text: `SELECT * FROM Project
-              WHERE lower($1) = lower(slug)`,
-      values: ['']
-    },
-    fetchProjectByExpId: {
-      name: 'fetchProjectByExpId',
-      text: `SELECT p.* FROM Project p
-              JOIN Experiment e ON e.projectId = p.id
-              WHERE e.id = $1`,
-      values: [0]
-    },
-    fetchProjectById: 'SELECT * FROM Project WHERE id = $1',
-    fetchAllProjects: {
-      name: 'fetchAllProjects',
-      text: 'SELECT * FROM Project'
-    },
-    insertProject: `INSERT INTO Project (name, slug)
-                      VALUES ($1, regexp_replace($2, '[^0-9a-zA-Z-]', '-', 'g'))
-                    RETURNING *`,
 
     fetchExpByNames: `SELECT e.* FROM Experiment e
                         JOIN Project p ON p.id = e.projectId
@@ -727,7 +706,9 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
       projectName,
       this.queries.fetchProjectByName,
       [projectName],
-      this.queries.insertProject,
+      `INSERT INTO Project (name, slug)
+                      VALUES ($1, regexp_replace($2, '[^0-9a-zA-Z-]', '-', 'g'))
+                    RETURNING *`,
       [projectName, projectName]
     );
   }
@@ -735,8 +716,13 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
   public async getProjectBySlug(
     projectNameSlug: string
   ): Promise<Project | undefined> {
-    const q = { ...this.queries.fetchProjectBySlugName };
-    q.values = [projectNameSlug];
+    const q = {
+      name: 'fetchProjectBySlugName',
+      text: `SELECT * FROM Project
+              WHERE lower($1) = lower(slug)`,
+      values: [projectNameSlug]
+    };
+
     const result = await this.query(q);
 
     if (result.rowCount !== 1) {
@@ -746,8 +732,14 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
   }
 
   public async getProjectByExpId(expId: number): Promise<Project | undefined> {
-    const q = { ...this.queries.fetchProjectByExpId };
-    q.values = [expId];
+    const q = {
+      name: 'fetchProjectByExpId',
+      text: `SELECT p.* FROM Project p
+              JOIN Experiment e ON e.projectId = p.id
+              WHERE e.id = $1`,
+      values: [expId]
+    };
+
     const result = await this.query(q);
 
     if (result.rowCount !== 1) {
@@ -768,12 +760,17 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
   }
 
   public async getAllProjects(): Promise<Project[]> {
-    const result = await this.query(this.queries.fetchAllProjects);
+    const result = await this.query({
+      name: 'fetchAllProjects',
+      text: 'SELECT * FROM Project'
+    });
     return result.rows;
   }
 
   public async getProject(projectId: number): Promise<Project | undefined> {
-    const result = await this.query(this.queries.fetchProjectById, [projectId]);
+    const result = await this.query('SELECT * FROM Project WHERE id = $1', [
+      projectId
+    ]);
 
     if (result.rowCount !== 1) {
       return undefined;
