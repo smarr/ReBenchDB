@@ -588,6 +588,16 @@ export abstract class Database {
     let result = await this.query(fetchQ, qVals);
     if (result.rowCount === 0) {
       result = await this.query(insertQ, insertVals);
+      try {
+        result = await this.query(insertQ, insertVals);
+      } catch (e) {
+        // there may have been a racy insert,
+        // which causes us to fail on unique constraints
+        result = await this.query(fetchQ, qVals);
+        if (result.rowCount === 0) {
+          throw e;
+        }
+      }
     }
 
     assert(result.rowCount === 1);
