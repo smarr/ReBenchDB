@@ -220,6 +220,10 @@ slower_category <- function(data) {
 }
 
 as_human_mem <- function(x, digits = 3) {
+  if (is.na(x) || length(x) == 0) {
+    return("")
+  }
+
   m <- x
   mem <- c("b", "kb", "MB", "GB")
   i <- 1
@@ -231,6 +235,10 @@ as_human_mem <- function(x, digits = 3) {
 }
 
 as_human_hz <- function(x) {
+  if (is.na(x) || length(x) == 0) {
+    return("")
+  }
+  
   h <- x
   hz <- c("Hz", "kHz", "MHz", "GHz")
   i <- 1
