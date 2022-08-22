@@ -240,208 +240,8 @@ export abstract class Database {
   private readonly timelineUpdater: SingleRequestOnly;
 
   private readonly queries = {
-    fetchExecutorByName: 'SELECT * from Executor WHERE name = $1',
-    insertExecutor: `INSERT INTO Executor (name, description)
-                     VALUES ($1, $2) RETURNING *`,
-
-    fetchSuiteByName: 'SELECT * from Suite WHERE name = $1',
-    insertSuite: `INSERT INTO Suite (name, description)
-                  VALUES ($1, $2) RETURNING *`,
-
-    fetchBenchmarkByName: 'SELECT * from Benchmark WHERE name = $1',
-    insertBenchmark: `INSERT INTO Benchmark (name, description)
-                      VALUES ($1, $2) RETURNING *`,
-
-    fetchRunByCmd: 'SELECT * from Run WHERE cmdline = $1',
-    insertRun: `INSERT INTO Run (
-        cmdline,
-        benchmarkId, execId, suiteId,
-        location,
-        cores, inputSize, varValue, extraArgs,
-        maxInvocationTime, minIterationTime, warmup)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
-
-    fetchSourceByCommitId: 'SELECT * from Source WHERE commitId = $1',
-    insertSource: `INSERT INTO Source (
-        repoURL, branchOrTag, commitId, commitMessage,
-        authorName, authorEmail, committerName, committerEmail)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-    fetchEnvByHostName: 'SELECT * from Environment WHERE hostname =  $1',
-    insertEnv: `INSERT INTO Environment (
-                  hostname, osType, memory, cpu, clockSpeed)
-                VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-
-    fetchTrialByUserEnvStartExp: `SELECT * FROM Trial
-                               WHERE username = $1 AND envId = $2 AND
-                                     startTime = $3 AND expId = $4`,
-    insertTrial: `INSERT INTO Trial (manualRun, startTime, expId, username,
-                                     envId, sourceId, denoise)
-                  VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-    updateTrialEndTime: `UPDATE Trial t
-                         SET endTime = $2
-                         WHERE expId = $1 AND endTime IS NULL`,
-
     fetchProjectByName: 'SELECT * FROM Project WHERE name = $1',
-    fetchProjectBySlugName: {
-      name: 'fetchProjectBySlugName',
-      text: `SELECT * FROM Project
-              WHERE lower($1) = lower(slug)`,
-      values: ['']
-    },
-    fetchProjectByExpId: {
-      name: 'fetchProjectByExpId',
-      text: `SELECT p.* FROM Project p
-              JOIN Experiment e ON e.projectId = p.id
-              WHERE e.id = $1`,
-      values: [0]
-    },
-    fetchProjectById: 'SELECT * FROM Project WHERE id = $1',
-    fetchAllProjects: {
-      name: 'fetchAllProjects',
-      text: 'SELECT * FROM Project'
-    },
-    insertProject: `INSERT INTO Project (name, slug)
-                      VALUES ($1, regexp_replace($2, '[^0-9a-zA-Z-]', '-', 'g'))
-                    RETURNING *`,
-
-    fetchExpByNames: `SELECT e.* FROM Experiment e
-                        JOIN Project p ON p.id = e.projectId
-                        WHERE p.name = $1 AND e.name = $2`,
-    fetchExpByProjectIdName: `SELECT * FROM Experiment
-                              WHERE projectId = $1 AND name = $2`,
-    insertExp: `INSERT INTO Experiment (name, projectId, description)
-                VALUES ($1, $2, $3) RETURNING *`,
-
-    insertMeasurement: {
-      name: 'insertMeasurement',
-      text: `INSERT INTO Measurement
-          (runId, trialId, invocation, iteration, criterion, value)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        ON CONFLICT DO NOTHING`,
-      values: <any[]>[]
-    },
-
-    insertMeasurementBatched10: {
-      name: 'insertMeasurement10',
-      text: `INSERT INTO Measurement
-          (runId, trialId, invocation, iteration, criterion, value)
-        VALUES
-          ($1, $2, $3, $4, $5, $6),
-          ($7, $8, $9, $10, $11, $12),
-          ($13, $14, $15, $16, $17, $18),
-          ($19, $20, $21, $22, $23, $24),
-          ($25, $26, $27, $28, $29, $30),
-          ($31, $32, $33, $34, $35, $36),
-          ($37, $38, $39, $40, $41, $42),
-          ($43, $44, $45, $46, $47, $48),
-          ($49, $50, $51, $52, $53, $54),
-          ($55, $56, $57, $58, $59, $60)
-          ON CONFLICT DO NOTHING`,
-      values: <any[]>[]
-    },
-
-    insertMeasurementBatchedN: {
-      name: 'insertMeasurementN',
-      text: `INSERT INTO Measurement
-          (runId, trialId, invocation, iteration, criterion, value)
-        VALUES
-          GENERATED`,
-      values: <any[]>[]
-    },
-
-    insertProfile: {
-      name: 'insertProfile',
-      text: `INSERT INTO ProfileData
-          (runId, trialId, invocation, numIterations, value)
-        VALUES
-          ($1, $2, $3, $4, $5)
-        ON CONFLICT DO NOTHING`,
-      values: <any[]>[]
-    },
-
-    fetchMaxMeasurements: `SELECT
-        runId, criterion, invocation as inv, max(iteration) as ite
-      FROM Measurement
-      WHERE trialId = $1
-      GROUP BY runId, criterion, invocation
-      ORDER BY runId, inv, ite, criterion`,
-
-    insertTimelineJob: `INSERT INTO TimelineCalcJob
-                          (trialId, runId, criterion)
-                        VALUES ($1, $2, $3)`,
-
-    fetchCriterionByNameUnit: `SELECT * FROM Criterion
-                               WHERE name = $1 AND unit = $2`,
-    insertCriterion: `INSERT INTO Criterion (name, unit)
-                      VALUES ($1, $2) RETURNING *`,
-    fetchUnit: 'SELECT * from Unit WHERE name = $1',
-    insertUnit: 'INSERT INTO Unit (name) VALUES ($1)',
-
-    fetchRevsInProject: `SELECT DISTINCT
-                           p.id, e.name, s.id,
-                           s.commitid, s.repoUrl, s.branchOrTag,
-                           s.commitMessage, s.authorName
-                         FROM Project p
-                            JOIN Experiment e ON e.projectId = p.id
-                            JOIN Trial t ON e.id = t.expId
-                            JOIN Source s ON t.sourceId = s.id
-                          WHERE lower(p.slug) = lower($1)
-                            AND s.commitid = $2
-                            OR s.commitid = $3`,
-
-    fetchBranchNamesForChange: {
-      name: 'fetchBranchNamesForChange',
-      text: `SELECT DISTINCT branchOrTag, s.commitId
-             FROM Source s
-               JOIN Trial      tr ON tr.sourceId = s.id
-               JOIN Experiment e  ON tr.expId = e.id
-               JOIN Project    p  ON p.id = e.projectId
-             WHERE
-               p.name = $1 AND
-               (s.commitid = $2 OR s.commitid = $3)`,
-      values: <any[]>[]
-    },
-    fetchLatestBenchmarksForProject: {
-      name: 'fetchLatestBenchmarksForProject',
-      text: `WITH LatestExperiment AS (
-                SELECT exp.id as expId, max(t.startTime) as newest
-                FROM Project p
-                  JOIN Experiment exp    ON exp.projectId = p.id
-                  JOIN Trial t           ON t.expId = exp.id
-                  JOIN Source src        ON t.sourceId = src.id
-                WHERE p.id = $1 AND
-                  p.baseBranch = src.branchOrTag
-                GROUP BY exp.id
-                ORDER BY newest DESC
-                LIMIT 1
-              )
-              SELECT DISTINCT
-                s.id as suiteId, s.name as suiteName,
-                exe.id as execId, exe.name as execName,
-                b.id as benchId, b.name as benchmark,
-                r.cmdline,
-                r.id as runId,
-                r.varValue,
-                r.cores,
-                r.inputSize,
-                r.extraArgs
-              FROM Project p
-                JOIN Experiment exp    ON exp.projectId = p.id
-                JOIN Trial t           ON t.expId = exp.id
-                JOIN Source src        ON t.sourceId = src.id
-                JOIN Environment env   ON t.envId = env.id
-                JOIN Timeline tl       ON tl.trialId = t.id
-                JOIN Run r             ON tl.runId = r.id
-                JOIN Benchmark b       ON r.benchmarkId = b.id
-                JOIN Suite s           ON r.suiteId = s.id
-                JOIN Executor exe      ON r.execId = exe.id
-                JOIN LatestExperiment le ON exp.id = le.expId
-              WHERE
-                p.id = $1 AND
-                p.baseBranch = src.branchOrTag
-              ORDER BY suiteName, execName, benchmark, cmdline;`,
-      values: <number[]>[]
-    }
+    insertMeasurementBatchedN: 'GENERATED'
   };
 
   private static readonly batchN = 50;
@@ -470,7 +270,7 @@ export abstract class Database {
     this.projects = new Map();
     this.statsValid = new TimedCacheValidity(cacheInvalidationDelay);
 
-    this.queries.insertMeasurementBatchedN.text = `INSERT INTO Measurement
+    this.queries.insertMeasurementBatchedN = `INSERT INTO Measurement
          (runId, trialId, invocation, iteration, criterion, value)
        VALUES ${this.generateBatchInsert(Database.batchN, 6)}
        ON CONFLICT DO NOTHING`;
@@ -500,12 +300,8 @@ export abstract class Database {
     return nums.join(',\n');
   }
 
-  public abstract query<
-    R extends pg.QueryResultRow = any,
-    I extends any[] = any[]
-  >(
-    queryTextOrConfig: string | pg.QueryConfig<I>,
-    values?: I
+  public abstract query<R extends pg.QueryResultRow = any>(
+    queryConfig: QueryConfig<any[]>
   ): Promise<pg.QueryResult<R>>;
 
   public clearCache(): void {
@@ -522,16 +318,19 @@ export abstract class Database {
   }
 
   private async needsTables() {
-    const result = await this.query(`SELECT *
-      FROM   information_schema.tables
-      WHERE  table_name = 'executor'`);
+    const result = await this.query({
+      name: 'doTableExist',
+      text: `SELECT *
+                FROM   information_schema.tables
+                WHERE  table_name = 'executor'`
+    });
     return result.rowCount <= 0;
   }
 
   public async initializeDatabase(): Promise<void> {
     if (await this.needsTables()) {
       const schema = loadScheme();
-      await this.query(schema);
+      await this.query({ text: schema });
     }
   }
 
@@ -542,11 +341,21 @@ export abstract class Database {
     base: string,
     change: string
   ): Promise<{ dataFound: boolean; base?: any; change?: any }> {
-    const result = await this.query(this.queries.fetchRevsInProject, [
-      projectSlug,
-      base,
-      change
-    ]);
+    const result = await this.query({
+      name: 'fetchRevisionsInProjectByCommitIds',
+      text: `SELECT DISTINCT
+          p.id, e.name, s.id,
+          s.commitid, s.repoUrl, s.branchOrTag,
+          s.commitMessage, s.authorName
+        FROM Project p
+          JOIN Experiment e ON e.projectId = p.id
+          JOIN Trial t ON e.id = t.expId
+          JOIN Source s ON t.sourceId = s.id
+        WHERE lower(p.slug) = lower($1)
+          AND s.commitid = $2
+          OR s.commitid = $3`,
+      values: [projectSlug, base, change]
+    });
 
     // we can have multiple experiments with the same revisions
     if (result.rowCount >= 2) {
@@ -573,21 +382,40 @@ export abstract class Database {
     }
   }
 
+  private async getCached(cache, cacheKey, fetchQ: QueryConfig): Promise<any> {
+    if (cache.has(cacheKey)) {
+      return cache.get(cacheKey);
+    }
+
+    const result = await this.query(fetchQ);
+    if (result.rowCount === 1) {
+      return result[0];
+    }
+    return null;
+  }
+
   private async recordCached(
     cache,
     cacheKey,
-    fetchQ,
-    qVals,
-    insertQ,
-    insertVals
+    fetchQ: QueryConfig,
+    insertQ: QueryConfig
   ) {
     if (cache.has(cacheKey)) {
       return cache.get(cacheKey);
     }
 
-    let result = await this.query(fetchQ, qVals);
+    let result = await this.query(fetchQ);
     if (result.rowCount === 0) {
-      result = await this.query(insertQ, insertVals);
+      try {
+        result = await this.query(insertQ);
+      } catch (e) {
+        // there may have been a racy insert,
+        // which causes us to fail on unique constraints
+        result = await this.query(fetchQ);
+        if (result.rowCount === 0) {
+          throw e;
+        }
+      }
     }
 
     assert(result.rowCount === 1);
@@ -595,37 +423,57 @@ export abstract class Database {
     return result.rows[0];
   }
 
-  private async recordNameDesc(item, cache, fetchQ, insertQ) {
-    return this.recordCached(cache, item.name, fetchQ, [item.name], insertQ, [
-      item.name,
-      item.desc
-    ]);
-  }
-
   public async recordExecutor(e: ApiExecutor): Promise<Executor> {
-    return this.recordNameDesc(
-      e,
+    return this.recordCached(
       this.executors,
-      this.queries.fetchExecutorByName,
-      this.queries.insertExecutor
+      e.name,
+      {
+        name: 'fetchExecutorByName',
+        text: 'SELECT * from Executor WHERE name = $1',
+        values: [e.name]
+      },
+      {
+        name: 'insertExecutor',
+        text: `INSERT INTO Executor (name, description)
+                  VALUES ($1, $2) RETURNING *`,
+        values: [e.name, e.desc]
+      }
     );
   }
 
   public async recordSuite(s: ApiSuite): Promise<Suite> {
-    return this.recordNameDesc(
-      s,
+    return this.recordCached(
       this.suites,
-      this.queries.fetchSuiteByName,
-      this.queries.insertSuite
+      s.name,
+      {
+        name: 'fetchSuiteByName',
+        text: 'SELECT * from Suite WHERE name = $1',
+        values: [s.name]
+      },
+      {
+        name: 'insertSuite',
+        text: `INSERT INTO Suite (name, description)
+                  VALUES ($1, $2) RETURNING *`,
+        values: [s.name, s.desc]
+      }
     );
   }
 
   public async recordBenchmark(b: ApiBenchmark): Promise<Benchmark> {
-    return this.recordNameDesc(
-      b,
+    return this.recordCached(
       this.benchmarks,
-      this.queries.fetchBenchmarkByName,
-      this.queries.insertBenchmark
+      b.name,
+      {
+        name: 'fetchBenchmarkByName',
+        text: 'SELECT * from Benchmark WHERE name = $1',
+        values: [b.name]
+      },
+      {
+        name: 'insertBenchmark',
+        text: `INSERT INTO Benchmark (name, description)
+                  VALUES ($1, $2) RETURNING *`,
+        values: [b.name, b.desc]
+      }
     );
   }
 
@@ -641,23 +489,36 @@ export abstract class Database {
     return this.recordCached(
       this.runs,
       run.cmdline,
-      this.queries.fetchRunByCmd,
-      [run.cmdline],
-      this.queries.insertRun,
-      [
-        run.cmdline,
-        benchmark.id,
-        exec.id,
-        suite.id,
-        run.location,
-        run.cores,
-        run.inputSize,
-        run.varValue,
-        run.extraArgs,
-        run.benchmark.runDetails.maxInvocationTime,
-        run.benchmark.runDetails.minIterationTime,
-        run.benchmark.runDetails.warmup
-      ]
+      {
+        name: 'fetchRunByCmdline',
+        text: 'SELECT * from Run WHERE cmdline = $1',
+        values: [run.cmdline]
+      },
+      {
+        name: 'insertRun',
+        text: `INSERT INTO Run (
+                  cmdline,
+                  benchmarkId, execId, suiteId,
+                  location,
+                  cores, inputSize, varValue, extraArgs,
+                  maxInvocationTime, minIterationTime, warmup)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                RETURNING *`,
+        values: [
+          run.cmdline,
+          benchmark.id,
+          exec.id,
+          suite.id,
+          run.location,
+          run.cores,
+          run.inputSize,
+          run.varValue,
+          run.extraArgs,
+          run.benchmark.runDetails.maxInvocationTime,
+          run.benchmark.runDetails.minIterationTime,
+          run.benchmark.runDetails.warmup
+        ]
+      }
     );
   }
 
@@ -665,19 +526,28 @@ export abstract class Database {
     return this.recordCached(
       this.sources,
       s.commitId,
-      this.queries.fetchSourceByCommitId,
-      [s.commitId],
-      this.queries.insertSource,
-      [
-        s.repoURL,
-        s.branchOrTag,
-        s.commitId,
-        s.commitMsg,
-        s.authorName,
-        s.authorEmail,
-        s.committerName,
-        s.committerEmail
-      ]
+      {
+        name: 'fetchSourceById',
+        text: 'SELECT * from Source WHERE commitId = $1',
+        values: [s.commitId]
+      },
+      {
+        name: 'insertSource',
+        text: `INSERT INTO Source (
+                  repoURL, branchOrTag, commitId, commitMessage,
+                  authorName, authorEmail, committerName, committerEmail)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+        values: [
+          s.repoURL,
+          s.branchOrTag,
+          s.commitId,
+          s.commitMsg,
+          s.authorName,
+          s.authorEmail,
+          s.committerName,
+          s.committerEmail
+        ]
+      }
     );
   }
 
@@ -685,10 +555,18 @@ export abstract class Database {
     return this.recordCached(
       this.envs,
       e.hostName,
-      this.queries.fetchEnvByHostName,
-      [e.hostName],
-      this.queries.insertEnv,
-      [e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed]
+      {
+        name: 'fetchEnvironmentByHostname',
+        text: 'SELECT * from Environment WHERE hostname =  $1',
+        values: [e.hostName]
+      },
+      {
+        name: 'insertEnvironment',
+        text: `INSERT INTO Environment (
+                  hostname, osType, memory, cpu, clockSpeed)
+                VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+        values: [e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed]
+      }
     );
   }
 
@@ -708,18 +586,28 @@ export abstract class Database {
     return this.recordCached(
       this.trials,
       cacheKey,
-      this.queries.fetchTrialByUserEnvStartExp,
-      [e.userName, env.id, data.startTime, exp.id],
-      this.queries.insertTrial,
-      [
-        e.manualRun,
-        data.startTime,
-        exp.id,
-        e.userName,
-        env.id,
-        source.id,
-        e.denoise
-      ]
+      {
+        name: 'fetchTrialByUserEnvIdStartTimeExpId',
+        text: `SELECT * FROM Trial
+                  WHERE username = $1 AND envId = $2 AND
+                        startTime = $3 AND expId = $4`,
+        values: [e.userName, env.id, data.startTime, exp.id]
+      },
+      {
+        name: 'insertTrial',
+        text: `INSERT INTO Trial (manualRun, startTime, expId, username,
+                        envId, sourceId, denoise)
+                VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        values: [
+          e.manualRun,
+          data.startTime,
+          exp.id,
+          e.userName,
+          env.id,
+          source.id,
+          e.denoise
+        ]
+      }
     );
   }
 
@@ -727,18 +615,31 @@ export abstract class Database {
     return this.recordCached(
       this.projects,
       projectName,
-      this.queries.fetchProjectByName,
-      [projectName],
-      this.queries.insertProject,
-      [projectName, projectName]
+      {
+        name: 'fetchProjectByName',
+        text: this.queries.fetchProjectByName,
+        values: [projectName]
+      },
+      {
+        name: 'insertProject',
+        text: `INSERT INTO Project (name, slug)
+                  VALUES ($1, regexp_replace($2, '[^0-9a-zA-Z-]', '-', 'g'))
+                RETURNING *`,
+        values: [projectName, projectName]
+      }
     );
   }
 
   public async getProjectBySlug(
     projectNameSlug: string
   ): Promise<Project | undefined> {
-    const q = { ...this.queries.fetchProjectBySlugName };
-    q.values = [projectNameSlug];
+    const q = {
+      name: 'fetchProjectBySlugName',
+      text: `SELECT * FROM Project
+              WHERE lower($1) = lower(slug)`,
+      values: [projectNameSlug]
+    };
+
     const result = await this.query(q);
 
     if (result.rowCount !== 1) {
@@ -748,8 +649,14 @@ export abstract class Database {
   }
 
   public async getProjectByExpId(expId: number): Promise<Project | undefined> {
-    const q = { ...this.queries.fetchProjectByExpId };
-    q.values = [expId];
+    const q = {
+      name: 'fetchProjectByExpId',
+      text: `SELECT p.* FROM Project p
+              JOIN Experiment e ON e.projectId = p.id
+              WHERE e.id = $1`,
+      values: [expId]
+    };
+
     const result = await this.query(q);
 
     if (result.rowCount !== 1) {
@@ -758,26 +665,28 @@ export abstract class Database {
     return result.rows[0];
   }
 
-  public async getProjectByName(
-    projectName: string
-  ): Promise<Project | undefined> {
-    const result = await this.query(this.queries.fetchProjectByName, [
-      projectName
-    ]);
-
-    if (result.rowCount !== 1) {
-      return undefined;
-    }
-    return result.rows[0];
+  public async getProjectByName(projectName: string): Promise<Project | null> {
+    return <Promise<Project | null>>this.getCached(this.projects, projectName, {
+      name: 'fetchProjectByName',
+      text: this.queries.fetchProjectByName,
+      values: [projectName]
+    });
   }
 
   public async getAllProjects(): Promise<Project[]> {
-    const result = await this.query(this.queries.fetchAllProjects);
+    const result = await this.query({
+      name: 'fetchAllProjects',
+      text: 'SELECT * FROM Project'
+    });
     return result.rows;
   }
 
   public async getProject(projectId: number): Promise<Project | undefined> {
-    const result = await this.query(this.queries.fetchProjectById, [projectId]);
+    const result = await this.query({
+      name: 'fetchProjectById',
+      text: 'SELECT * FROM Project WHERE id = $1',
+      values: [projectId]
+    });
 
     if (result.rowCount !== 1) {
       return undefined;
@@ -790,13 +699,12 @@ export abstract class Database {
     projectName: string,
     baseBranch: string
   ): Promise<boolean> {
-    const result = await this.query(
-      `
-      UPDATE Project
-        SET baseBranch = $2
-        WHERE name = $1`,
-      [projectName, baseBranch]
-    );
+    const result = await this.query({
+      text: `UPDATE Project
+                SET baseBranch = $2
+                WHERE name = $1`,
+      values: [projectName, baseBranch]
+    });
     return result.rowCount === 1;
   }
 
@@ -804,22 +712,22 @@ export abstract class Database {
     projectName: string,
     currentCommitId: string
   ): Promise<Baseline | undefined> {
-    const result = await this.query(
-      `
-      SELECT DISTINCT s.*, min(t.startTime) as firstStart
-        FROM Source s
-          JOIN Trial t ON s.id = t.sourceId
-          JOIN Experiment e ON e.id = t.expId
-          JOIN Project p ON p.id = e.projectId
-        WHERE p.name = $1 AND
-          s.branchOrTag = p.baseBranch AND
-          s.commitId <> $2 AND
-          p.baseBranch IS NOT NULL
-        GROUP BY e.id, s.id
-        ORDER BY firstStart DESC
-        LIMIT 1`,
-      [projectName, currentCommitId]
-    );
+    const result = await this.query({
+      name: 'fetchBaselineCommit',
+      text: `SELECT DISTINCT s.*, min(t.startTime) as firstStart
+              FROM Source s
+                JOIN Trial t ON s.id = t.sourceId
+                JOIN Experiment e ON e.id = t.expId
+                JOIN Project p ON p.id = e.projectId
+              WHERE p.name = $1 AND
+                s.branchOrTag = p.baseBranch AND
+                s.commitId <> $2 AND
+                p.baseBranch IS NOT NULL
+              GROUP BY e.id, s.id
+              ORDER BY firstStart DESC
+              LIMIT 1`,
+      values: [projectName, currentCommitId]
+    });
 
     if (result.rowCount < 1) {
       return undefined;
@@ -855,16 +763,16 @@ export abstract class Database {
     projectName: string,
     experimentName: string
   ): Promise<Source | undefined> {
-    const result = await this.query(
-      `
-      SELECT DISTINCT s.*
-        FROM Source s
-          JOIN Trial t ON s.id = t.sourceId
-          JOIN Experiment e ON e.id = t.expId
-          JOIN Project p ON p.id = e.projectId
-        WHERE p.name = $1 AND e.name = $2`,
-      [projectName, experimentName]
-    );
+    const result = await this.query({
+      name: 'fetchSourceByProjectNameExpName',
+      text: `SELECT DISTINCT s.*
+              FROM Source s
+                JOIN Trial t ON s.id = t.sourceId
+                JOIN Experiment e ON e.id = t.expId
+                JOIN Project p ON p.id = e.projectId
+              WHERE p.name = $1 AND e.name = $2`,
+      values: [projectName, experimentName]
+    });
 
     if (result.rowCount < 1) {
       return undefined;
@@ -885,10 +793,17 @@ export abstract class Database {
     return this.recordCached(
       this.exps,
       cacheKey,
-      this.queries.fetchExpByProjectIdName,
-      [project.id, data.experimentName],
-      this.queries.insertExp,
-      [data.experimentName, project.id, data.experimentDesc]
+      {
+        name: 'fetchExperimentByProjectIdAndName',
+        text: 'SELECT * FROM Experiment WHERE projectId = $1 AND name = $2',
+        values: [project.id, data.experimentName]
+      },
+      {
+        name: 'insertExperiment',
+        text: `INSERT INTO Experiment (name, projectId, description)
+                  VALUES ($1, $2, $3) RETURNING *`,
+        values: [data.experimentName, project.id, data.experimentDesc]
+      }
     );
   }
 
@@ -901,10 +816,14 @@ export abstract class Database {
       return this.exps.get(cacheKey);
     }
 
-    const result = await this.query(this.queries.fetchExpByNames, [
-      projectName,
-      experimentName
-    ]);
+    const result = await this.query({
+      name: 'fetchExperimentByProjectNameExpName',
+      text: `SELECT e.* FROM Experiment e
+              JOIN Project p ON p.id = e.projectId
+              WHERE p.name = $1 AND e.name = $2`,
+      values: [projectName, experimentName]
+    });
+
     if (result.rowCount < 1) {
       return undefined;
     }
@@ -915,7 +834,13 @@ export abstract class Database {
     expId: number,
     endTime: string
   ): Promise<void> {
-    await this.query(this.queries.updateTrialEndTime, [expId, endTime]);
+    await this.query({
+      name: 'setTrialEndTime',
+      text: `UPDATE Trial t
+              SET endTime = $2
+              WHERE expId = $1 AND endTime IS NULL`,
+      values: [expId, endTime]
+    });
   }
 
   public async reportCompletion(
@@ -941,9 +866,17 @@ export abstract class Database {
   }
 
   private async recordUnit(unitName: string) {
-    const result = await this.query(this.queries.fetchUnit, [unitName]);
+    const result = await this.query({
+      name: 'fetchUnitByName',
+      text: 'SELECT * from Unit WHERE name = $1',
+      values: [unitName]
+    });
     if (result.rowCount === 0) {
-      await this.query(this.queries.insertUnit, [unitName]);
+      await this.query({
+        name: 'insertUnit',
+        text: 'INSERT INTO Unit (name) VALUES ($1)',
+        values: [unitName]
+      });
     }
   }
 
@@ -958,10 +891,16 @@ export abstract class Database {
     return this.recordCached(
       this.criteria,
       cacheKey,
-      this.queries.fetchCriterionByNameUnit,
-      [c.c, c.u],
-      this.queries.insertCriterion,
-      [c.c, c.u]
+      {
+        name: 'fetchCriterionByNameAndUnit',
+        text: 'SELECT * FROM Criterion WHERE name = $1 AND unit = $2',
+        values: [c.c, c.u]
+      },
+      {
+        name: 'insertCriterion',
+        text: 'INSERT INTO Criterion (name, unit) VALUES ($1, $2) RETURNING *',
+        values: [c.c, c.u]
+      }
     );
   }
 
@@ -976,9 +915,17 @@ export abstract class Database {
   }
 
   private async retrieveAvailableMeasurements(trialId: number) {
-    const results = await this.query(this.queries.fetchMaxMeasurements, [
-      trialId
-    ]);
+    const results = await this.query({
+      name: 'fetchAvailableMeasurements',
+      text: `SELECT
+              runId, criterion, invocation as inv, max(iteration) as ite
+            FROM Measurement
+            WHERE trialId = $1
+            GROUP BY runId, criterion, invocation
+            ORDER BY runId, inv, ite, criterion`,
+      values: [trialId]
+    });
+
     const measurements = {};
     for (const r of results.rows) {
       // runid, criterion, inv, ite
@@ -1210,23 +1157,52 @@ export abstract class Database {
   }
 
   public async recordMeasurementBatched10(values: any[]): Promise<number> {
-    const q = this.queries.insertMeasurementBatched10;
-    // [runId, trialId, invocation, iteration, critId, value];
-    q.values = values;
+    const q = {
+      name: 'insertMeasurement10',
+      text: `INSERT INTO Measurement
+          (runId, trialId, invocation, iteration, criterion, value)
+        VALUES
+          ($1, $2, $3, $4, $5, $6),
+          ($7, $8, $9, $10, $11, $12),
+          ($13, $14, $15, $16, $17, $18),
+          ($19, $20, $21, $22, $23, $24),
+          ($25, $26, $27, $28, $29, $30),
+          ($31, $32, $33, $34, $35, $36),
+          ($37, $38, $39, $40, $41, $42),
+          ($43, $44, $45, $46, $47, $48),
+          ($49, $50, $51, $52, $53, $54),
+          ($55, $56, $57, $58, $59, $60)
+          ON CONFLICT DO NOTHING`,
+      // [runId, trialId, invocation, iteration, critId, value];
+      values
+    };
+
     return (await this.query(q)).rowCount;
   }
 
   public async recordMeasurementBatchedN(values: any[]): Promise<number> {
-    const q = this.queries.insertMeasurementBatchedN;
-    // [runId, trialId, invocation, iteration, critId, value];
+    const q = {
+      name: 'insertMeasurementN',
+      text: this.queries.insertMeasurementBatchedN,
+      // [runId, trialId, invocation, iteration, critId, value];
+      values
+    };
+
     q.values = values;
     return (await this.query(q)).rowCount;
   }
 
   public async recordMeasurement(values: any[]): Promise<number> {
-    const q = this.queries.insertMeasurement;
-    // [runId, trialId, invocation, iteration, critId, value];
-    q.values = values;
+    const q = {
+      name: 'insertMeasurement',
+      text: `INSERT INTO Measurement
+          (runId, trialId, invocation, iteration, criterion, value)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT DO NOTHING`,
+      // [runId, trialId, invocation, iteration, critId, value];
+      values
+    };
+
     return (await this.query(q)).rowCount;
   }
 
@@ -1237,13 +1213,26 @@ export abstract class Database {
     numIterations: number,
     value: string
   ): Promise<number> {
-    const q = this.queries.insertProfile;
-    q.values = [runId, trialId, invocation, numIterations, value];
+    const q = {
+      name: 'insertProfile',
+      text: `INSERT INTO ProfileData
+          (runId, trialId, invocation, numIterations, value)
+        VALUES
+          ($1, $2, $3, $4, $5)
+        ON CONFLICT DO NOTHING`,
+      values: [runId, trialId, invocation, numIterations, value]
+    };
     return (await this.query(q)).rowCount;
   }
 
   public async recordTimelineJob(values: number[]): Promise<void> {
-    await this.query(this.queries.insertTimelineJob, values);
+    await this.query({
+      name: 'insertTimelineCalcJob',
+      text: `INSERT INTO TimelineCalcJob
+                (trialId, runId, criterion)
+              VALUES ($1, $2, $3)`,
+      values
+    });
   }
 
   private generateTimeline() {
@@ -1304,8 +1293,18 @@ export abstract class Database {
     base: string,
     change: string
   ): Promise<null | { baseBranchName: string; changeBranchName: string }> {
-    const q = { ...this.queries.fetchBranchNamesForChange };
-    q.values = [projectName, base, change];
+    const q = {
+      name: 'fetchBranchNamesForChange',
+      text: `SELECT DISTINCT branchOrTag, s.commitId
+             FROM Source s
+               JOIN Trial      tr ON tr.sourceId = s.id
+               JOIN Experiment e  ON tr.expId = e.id
+               JOIN Project    p  ON p.id = e.projectId
+             WHERE
+               p.name = $1 AND
+               (s.commitid = $2 OR s.commitid = $3)`,
+      values: [projectName, base, change]
+    };
     const result = await this.query(q);
 
     if (result.rowCount < 1) {
@@ -1337,8 +1336,47 @@ export abstract class Database {
   public async getLatestBenchmarksForTimelineView(
     projectId: number
   ): Promise<TimelineSuite[] | null> {
-    const q = { ...this.queries.fetchLatestBenchmarksForProject };
-    q.values = [projectId];
+    const q = {
+      name: 'fetchLatestBenchmarksForProject',
+      text: `WITH LatestExperiment AS (
+                SELECT exp.id as expId, max(t.startTime) as newest
+                FROM Project p
+                  JOIN Experiment exp    ON exp.projectId = p.id
+                  JOIN Trial t           ON t.expId = exp.id
+                  JOIN Source src        ON t.sourceId = src.id
+                WHERE p.id = $1 AND
+                  p.baseBranch = src.branchOrTag
+                GROUP BY exp.id
+                ORDER BY newest DESC
+                LIMIT 1
+              )
+              SELECT DISTINCT
+                s.id as suiteId, s.name as suiteName,
+                exe.id as execId, exe.name as execName,
+                b.id as benchId, b.name as benchmark,
+                r.cmdline,
+                r.id as runId,
+                r.varValue,
+                r.cores,
+                r.inputSize,
+                r.extraArgs
+              FROM Project p
+                JOIN Experiment exp    ON exp.projectId = p.id
+                JOIN Trial t           ON t.expId = exp.id
+                JOIN Source src        ON t.sourceId = src.id
+                JOIN Environment env   ON t.envId = env.id
+                JOIN Timeline tl       ON tl.trialId = t.id
+                JOIN Run r             ON tl.runId = r.id
+                JOIN Benchmark b       ON r.benchmarkId = b.id
+                JOIN Suite s           ON r.suiteId = s.id
+                JOIN Executor exe      ON r.execId = exe.id
+                JOIN LatestExperiment le ON exp.id = le.expId
+              WHERE
+                p.id = $1 AND
+                p.baseBranch = src.branchOrTag
+              ORDER BY suiteName, execName, benchmark, cmdline;`,
+      values: [projectId]
+    };
 
     const result = await this.query(q);
     if (result.rowCount < 1) {
@@ -1621,11 +1659,10 @@ export class DatabaseWithPool extends Database {
     this.pool = new pg.Pool(config);
   }
 
-  public async query<R extends QueryResultRow = any, I extends any[] = any[]>(
-    queryTextOrConfig: string | QueryConfig<I>,
-    values?: I
+  public async query<R extends QueryResultRow = any>(
+    queryConfig: QueryConfig<any[]>
   ): Promise<pg.QueryResult<R>> {
-    return this.pool.query(queryTextOrConfig, values);
+    return this.pool.query(queryConfig);
   }
 
   public async close(): Promise<void> {

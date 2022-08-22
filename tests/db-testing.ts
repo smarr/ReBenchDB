@@ -39,12 +39,11 @@ export class TestDatabase extends Database {
     };
   }
 
-  public query<R extends QueryResultRow = any, I extends any[] = any[]>(
-    queryTextOrConfig: string | QueryConfig<I>,
-    values?: I
+  public query<R extends QueryResultRow = any>(
+    queryConfig: QueryConfig<any[]>
   ): Promise<QueryResult<R>> {
     if (this.client) {
-      return this.client.query(queryTextOrConfig, values);
+      return this.client.query(queryConfig);
     } else {
       throw new Error(
         'Database is not yet initialized.' +
@@ -65,13 +64,13 @@ export class TestDatabase extends Database {
     await this.connectClient();
 
     if (this.usesTransactions) {
-      await this.query('BEGIN');
+      await this.query({ text: 'BEGIN' });
     }
 
     await this.initializeDatabase();
 
     if (this.usesTransactions) {
-      await this.query('SAVEPOINT freshDB');
+      await this.query({ text: 'SAVEPOINT freshDB' });
     }
   }
 
@@ -79,14 +78,15 @@ export class TestDatabase extends Database {
     this.clearCache();
 
     if (this.usesTransactions) {
-      await this.query('ROLLBACK TO SAVEPOINT freshDB');
+      await this.query({ text: 'ROLLBACK TO SAVEPOINT freshDB' });
     }
   }
 
   private async release(): Promise<void> {
     const mainDB = getMainDB();
-    const query = `DROP DATABASE IF EXISTS ${this.dbConfig.database};`;
-    await mainDB.query(query);
+    await mainDB.query({
+      text: `DROP DATABASE IF EXISTS ${this.dbConfig.database}`
+    });
   }
 
   public async close(): Promise<void> {
@@ -144,8 +144,12 @@ export async function createDB(
   const cfg = getConfig();
   const db = getMainDB();
   const dbNameForSuite = `${cfg.database}_${testSuite}`;
-  await db.query(`DROP DATABASE IF EXISTS ${dbNameForSuite};`);
-  await db.query(`CREATE DATABASE ${dbNameForSuite};`);
+  await db.query({
+    text: `DROP DATABASE IF EXISTS ${dbNameForSuite}`
+  });
+  await db.query({
+    text: `CREATE DATABASE ${dbNameForSuite}`
+  });
 
   cfg.database = dbNameForSuite;
 
