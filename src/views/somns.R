@@ -365,7 +365,7 @@ out('<h2 id="overview">Result Overview</h2>')
 out('<img src="', output_url, '/overview.svg">')
 
 out('<dl class="row">
-  <dt class="col-sm-3">Number of Benchmarks</dt>
+  <dt class="col-sm-3">Number of Run Configurations</dt>
   <dd class="col-sm-8">', stats_all_total$num_benchmarks, '</dd>
 
   <dt class="col-sm-3">Run time (geomean)</dt>
