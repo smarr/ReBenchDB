@@ -504,7 +504,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
         out('<td class="stats-samples">', stats_b_total$samples, '</td>\n')
         out('<td><span class="stats-median" title="median">', r2(stats_b_total$median), '</span></td>\n')
         out('<td><span class="stats-change" title="change over median run time">', pro(stats_b_total$change_m), '</span></td>\n')
-        out('<td><span class="stats-median" title="median">', r2(stats_b_gctime$median), '</span></td>\n')
+        out('<td><span class="stats-median" title="median">', r0(stats_b_gctime$median), '</span></td>\n')
         out('<td><span class="stats-gc-change" title="change over median GC time">', pro(stats_b_gctime$change_m), '</span></td>\n')
         out('<td><span class="stats-median" title="median">', as_human_mem(stats_b_allocated$median), '</span></td>\n')
         out('<td><span class="stats-alloc-change" title="change over median allocated memory">', pro(stats_b_allocated$change_m), '</span></td>\n')
@@ -557,7 +557,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
           } else {
             out('<br>\n')
           }
-          out(r2(filter(stats_b_gctime, exe == e)$median))
+          out(r0(filter(stats_b_gctime, exe == e)$median))
         }
         out('</span></td>\n')
 
