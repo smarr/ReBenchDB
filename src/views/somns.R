@@ -219,7 +219,11 @@ slower_category <- function(data) {
   return("indeterminate")
 }
 
-as_human_mem <- function(x) {
+as_human_mem <- function(x, digits = 3) {
+  if (is.na(x) || length(x) == 0) {
+    return("")
+  }
+
   m <- x
   mem <- c("b", "kb", "MB", "GB")
   i <- 1
@@ -227,10 +231,14 @@ as_human_mem <- function(x) {
     m <- m / 1024
     i <- i + 1
   }
-  paste0(format(m, digits = 3), mem[[i]])
+  paste0(format(m, digits = digits), mem[[i]])
 }
 
 as_human_hz <- function(x) {
+  if (is.na(x) || length(x) == 0) {
+    return("")
+  }
+  
   h <- x
   hz <- c("Hz", "kHz", "MHz", "GHz")
   i <- 1
@@ -279,6 +287,7 @@ stats_all <- stats_suite |>
 
 stats_all_total <- stats_all |> filter(criterion == "total")
 stats_all_gctime <- stats_all |> filter(criterion == "GC time")
+stats_all_allocated <- stats_all |> filter(criterion == "Allocated")
 
 data_chg <- stats |>
   filter(commitid == change_hash6) |>
@@ -364,7 +373,7 @@ out('<h2 id="overview">Result Overview</h2>')
 out('<img src="', output_url, '/overview.svg">')
 
 out('<dl class="row">
-  <dt class="col-sm-3">Number of Benchmarks</dt>
+  <dt class="col-sm-3">Number of Run Configurations</dt>
   <dd class="col-sm-8">', stats_all_total$num_benchmarks, '</dd>
 
   <dt class="col-sm-3">Run time (geomean)</dt>
@@ -374,6 +383,10 @@ out('<dl class="row">
   <dt class="col-sm-3">GC time (geomean)</dt>
   <dd class="col-sm-8">', round(stats_all_gctime$geomean, 3), ' (min. ', r2(stats_all_gctime$min),
   ', max. ', r2(stats_all_gctime$max), ')</dd>
+  
+  <dt class="col-sm-3">Allocated bytes (geomean)</dt>
+  <dd class="col-sm-8">', round(stats_all_allocated$geomean, 3), ' (min. ', r2(stats_all_allocated$min),
+  ', max. ', r2(stats_all_allocated$max), ')</dd>
 </dl>')
 
 
@@ -407,6 +420,8 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
 <th scope="col">time diff %</th>
 <th scope="col">median GC<br>time in ', levels((data_es |> filter(criterion == "GC time") |> droplevels())$unit), '</th>
 <th scope="col">GC diff %</th>
+<th scope="col">median <br>allocated ', levels((data_es |> filter(criterion == "Allocated") |> droplevels())$unit), '</th>
+<th scope="col">Alloc diff %</th>
 <th scope="col"></th>
 </tr></thead>')
 
@@ -453,6 +468,9 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
     stats_b_gctime <- stats_es |>
       ungroup() |>
       filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea, criterion == "GC time")
+    stats_b_allocated <- stats_es |>
+      ungroup() |>
+      filter(bench == b, varvalue == v, cores == c, inputsize == i, extraargs == ea, criterion == "Allocated")
 
     if ("commitid" %in% colnames(stats_b_total)) {
       stats_b_total <- stats_b_total |>
@@ -465,6 +483,12 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
         filter(commitid == change_hash6)
     }
     stats_b_gctime <- stats_b_gctime |> droplevels()
+    
+    if ("commitid" %in% colnames(stats_b_allocated)) {
+      stats_b_allocated <- stats_b_allocated |>
+        filter(commitid == change_hash6)
+    }
+    stats_b_allocated <- stats_b_allocated |> droplevels()
 
     group_size <- (data_en |>
                      filter(criterion == "total") |>
@@ -488,8 +512,10 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
         out('<td class="stats-samples">', stats_b_total$samples, '</td>\n')
         out('<td><span class="stats-median" title="median">', r2(stats_b_total$median), '</span></td>\n')
         out('<td><span class="stats-change" title="change over median run time">', pro(stats_b_total$change_m), '</span></td>\n')
-        out('<td><span class="stats-median" title="median">', r2(stats_b_gctime$median), '</span></td>\n')
+        out('<td><span class="stats-median" title="median">', r0(stats_b_gctime$median), '</span></td>\n')
         out('<td><span class="stats-gc-change" title="change over median GC time">', pro(stats_b_gctime$change_m), '</span></td>\n')
+        out('<td><span class="stats-median" title="median">', as_human_mem(stats_b_allocated$median), '</span></td>\n')
+        out('<td><span class="stats-alloc-change" title="change over median allocated memory">', pro(stats_b_allocated$change_m), '</span></td>\n')
       } else {
         exes <- levels(stats_b_total$exe)
         common_start <- common_string_start(exes)
@@ -539,7 +565,7 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
           } else {
             out('<br>\n')
           }
-          out(r2(filter(stats_b_gctime, exe == e)$median))
+          out(r0(filter(stats_b_gctime, exe == e)$median))
         }
         out('</span></td>\n')
 
@@ -552,6 +578,30 @@ perf_diff_table_es <- function(data_es, stats_es, warmup_es, profiles_es, start_
             out('<br>\n')
           }
           out('<span class="stats-change" title="change over median GC time">', pro(filter(stats_b_gctime, exe == e)$change_m), '</span>')
+        }
+        out('</td>\n')
+      
+        out('<td><span class="stats-median" title="median">')
+        first <- TRUE
+        for (e in exes) {
+          if (first) {
+            first <- FALSE
+          } else {
+            out('<br>\n')
+          }
+          out(as_human_mem(filter(stats_b_allocated, exe == e)$median))
+        }
+        out('</span></td>\n')
+        
+        out('<td>')
+        first <- TRUE
+        for (e in exes) {
+          if (first) {
+            first <- FALSE
+          } else {
+            out('<br>\n')
+          }
+          out('<span class="stats-change" title="change over median allocated">', pro(filter(stats_b_allocated, exe == e)$change_m), '</span>')
         }
         out('</td>\n')
       }

@@ -52,6 +52,14 @@ common_string_start <- function(x) {
 
 ## Output Formatting
 
+r0 <- function(val) {
+  if (length(val) == 0 || is.na(val)) {
+    ""
+  } else {
+    format(round(val, 0), digits = 1, nsmall = 0)
+  }
+}
+
 r2 <- function(val) {
   if (length(val) == 0 || is.na(val)) {
     ""
