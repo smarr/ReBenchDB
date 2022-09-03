@@ -26,10 +26,16 @@ export const dbConfig = {
 /** How long to still hold on to the cache after it became invalid. In ms. */
 export const cacheInvalidationDelay = 1000 * 60 * 5; /* 5 minutes */
 
+const _rebench_dev = 'https://rebench.dev';
+
+export function isReBenchDotDev(): boolean {
+  return siteConfig.publicUrl === _rebench_dev;
+}
+
 export const siteConfig = {
   reportsUrl: process.env.REPORTS_URL || '/static/reports',
   staticUrl: process.env.STATIC_URL || '/static',
-  publicUrl: process.env.PUBLIC_URL || 'https://rebench.stefan-marr.de',
+  publicUrl: process.env.PUBLIC_URL || _rebench_dev,
   appId: parseInt(process.env.GITHUB_APP_ID || '') || 76497,
   githubPrivateKey:
     process.env.GITHUB_PK || 'rebenchdb.2020-08-11.private-key.pem'

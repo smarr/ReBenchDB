@@ -4,9 +4,14 @@ import {
   renderChanges
 } from './render.js';
 
-const statsP = fetch(`/rebenchdb/stats`);
+async function showStatistics(): Promise<void> {
+  const statsP = fetch(`/rebenchdb/stats`);
+  await populateStatistics(statsP);
+  $('#stats-table-button').hide();
+}
 
 $(async () => {
+  $('#stats-table-button').on('click', showStatistics);
   $('.project-data').each((_i, elem) => {
     const elemJq = $(elem);
     const showChanges = elemJq.data('showchanges');
@@ -21,6 +26,4 @@ $(async () => {
       renderAllResults(projectId);
     }
   });
-
-  await populateStatistics(statsP);
 });

@@ -169,6 +169,9 @@ export async function populateStatistics(statsP: any): Promise<void> {
     table.append(`<tr><td>${t.table}</td><td>${t.cnt}</td></tr>`);
   }
   table.append(
-    `<tr class="table-info"><td>Version</td><td>${stats.version}</td></tr>`
+    `<tr class="table-info text-secondary">
+      <td>Version</td><td>${stats.version}</td></tr>`
   );
+
+  $('#stats-table-container').show();
 }

@@ -73,36 +73,31 @@
     {{/projects}}
   </div>
 
-  <div class="row">
-    <div class="col-sm-6">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">ReBenchDB Statistics</h5>
-          <table class="table table-sm">
-            <tbody id="stats-table">
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-6">
-      <div class="card">
-        <div class="card-body">
-          <!-- <h5 class="card-title">Special title treatment</h5>
-          <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
-          <a href="#" class="btn btn-primary">Go somewhere</a> -->
-        </div>
-      </div>
-    </div>
-  </div>
+{{#isReBenchDotDev}}
+<footer
+  class="bg-secondary text-light text-center"
+  style="font-size: 80%; padding: 1em 10% 1em 10%; position: relative; margin-top: 1em;">
+  <p>ReBench and ReBenchDB are supported by the
+    Engineering and Physical Sciences Research Council (EP/V007165/1)
+    and a Royal Society Industry Fellowship (INF\R1\211001).</p>
+  <p>Hosting is sponsored by <a href="https://stefan-marr.de/research/" class="text-white">stefan-marr.de</a></p>
+  <a href="#stats-table-container" class="text-white"
+    id="stats-table-button"
+    style="position: absolute; bottom: 1em; right: 1em;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard-data" viewBox="0 0 16 16">
+  <path d="M4 11a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0v-1zm6-4a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0V7zM7 9a1 1 0 0 1 2 0v3a1 1 0 1 1-2 0V9z"></path>
+  <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"></path>
+  <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"></path>
+</svg></a>
 
+<div id="stats-table-container" style="display: none;">
+  <h5>ReBenchDB Statistics</h5>
+  <table class="table table-sm text-white" style="max-width: 300px; margin: auto;">
+    <tbody id="stats-table">
+  </tbody>
+  </table>
+</div>
 
-  <!-- <div class="card">
-    <h5 class="card-header">ReBenchDB API Performance</h5>
-    <div class="card-body">
-      <div id="project-overview-rebenchdb"></div>
-    </div>
-  </div> -->
-
+</footer>
+{{/isReBenchDotDev}}
 </body>
 </html>
