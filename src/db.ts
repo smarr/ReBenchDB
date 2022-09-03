@@ -676,7 +676,7 @@ export abstract class Database {
   public async getAllProjects(): Promise<Project[]> {
     const result = await this.query({
       name: 'fetchAllProjects',
-      text: 'SELECT * FROM Project'
+      text: 'SELECT * FROM Project ORDER BY position DESC'
     });
     return result.rows;
   }
