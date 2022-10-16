@@ -73,6 +73,9 @@ CREATE TABLE Project (
   showChanges bool DEFAULT true,
   allResults bool DEFAULT false,
 
+  -- display projects in descending order of position
+  position integer DEFAULT 0,
+
   -- the bases for comparisons that we generate when a experiment is completed
   baseBranch varchar
 );

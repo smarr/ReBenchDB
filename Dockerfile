@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y apt-utils curl bash sudo
 RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
 
 # R, Node.js, PostgreSQL, headers for R packages
-RUN apt-get install -y \
+RUN apt-get update && apt-get install -y \
     r-base build-essential nodejs \
     postgresql \
     libfontconfig1-dev \

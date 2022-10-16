@@ -30,6 +30,7 @@ import { processTemplate } from './templates.js';
 import {
   cacheInvalidationDelay,
   dbConfig,
+  isReBenchDotDev,
   robustPath,
   siteConfig
 } from './util.js';
@@ -59,7 +60,10 @@ const db = new DatabaseWithPool(dbConfig, 1000, true, cacheInvalidationDelay);
 
 router.get('/', async (ctx) => {
   const projects = await db.getAllProjects();
-  ctx.body = processTemplate('index.html', { projects });
+  ctx.body = processTemplate('index.html', {
+    projects,
+    isReBenchDotDev: isReBenchDotDev()
+  });
   ctx.type = 'html';
 });
 
