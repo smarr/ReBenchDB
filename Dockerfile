@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:22.10
 # this allows the setup to ignore all of the ubuntu OS setup
 # thats not needed for this docker image (Time Zone for example)
 ARG DEBIAN_FRONTEND=noninteractive
@@ -6,8 +6,12 @@ ARG DEBIAN_FRONTEND=noninteractive
 # tools needed for docker setup
 RUN apt-get update && apt-get install -y apt-utils curl bash sudo
 
+# Add Postgres repo
+RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' && \
+    wget -qO- https://www.postgresql.org/media/keys/ACCC4CF8.asc | tee /etc/apt/trusted.gpg.d/pgdg.asc &>/dev/null
+
 # Add Node.js repo
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_19.x | bash -
 
 # R, Node.js, PostgreSQL, headers for R packages
 RUN apt-get update && apt-get install -y \
