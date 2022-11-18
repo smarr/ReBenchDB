@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 
 import Koa from 'koa';
-import koaBody from 'koa-body';
+import { koaBody } from 'koa-body';
 import Router from 'koa-router';
 import { DatabaseWithPool } from './db.js';
 import { BenchmarkData, BenchmarkCompletion, TimelineRequest } from './api.js';
