@@ -6,6 +6,9 @@ ARG DEBIAN_FRONTEND=noninteractive
 # tools needed for docker setup
 RUN apt-get update && apt-get install -y apt-utils curl bash sudo
 
+ENV TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # Add Node.js repo
 RUN curl -sL https://deb.nodesource.com/setup_19.x | bash -
 
@@ -56,8 +59,5 @@ DEV=true npm run start' > ./start-server.sh
 COPY . /project
 
 RUN npm run compile
-
-ENV TZ=UTC
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 CMD ["bash", "./start-server.sh" ]
