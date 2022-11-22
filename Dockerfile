@@ -9,6 +9,10 @@ RUN apt-get update && apt-get install -y apt-utils curl bash sudo
 # Add Node.js repo
 RUN curl -sL https://deb.nodesource.com/setup_19.x | bash -
 
+RUN sh -c 'echo "deb http://cloud.r-project.org/bin/linux/debian bullseye-cran40/" > /etc/apt/sources.list.d/r-project.list' && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-key '95C0FAF38DB3CCAD0C080A7BDC78B2DDEABC47B7'
+
+
 # R, Node.js, PostgreSQL, headers for R packages
 RUN apt-get update && apt-get install -y \
     r-base build-essential nodejs \
