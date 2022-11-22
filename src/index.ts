@@ -472,7 +472,9 @@ router.put(
     }
 
     try {
-      const recordedRuns = await db.recordMetaDataAndRuns(data);
+      const recRunsPromise = db.recordMetaDataAndRuns(data);
+      log.info(`/rebenchdb/results: Content-Length=${ctx.request.length}`);
+      const recordedRuns = await recRunsPromise;
       db.recordAllData(data)
         .then(([recMs, recPs]) =>
           log.info(
