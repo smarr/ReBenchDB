@@ -562,7 +562,9 @@ export async function reportCompletion(
        the comparison. There may be an issue with
        project (${data.projectName}) or
        experiment (${data.experimentName}) name.
-       The identified change commit is is ${changeSha}.`
+       The identified change commit is is ${changeSha}.
+       It could be that the baseBranch is not configured in the database
+       for this project.`
     );
   }
 
