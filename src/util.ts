@@ -32,6 +32,10 @@ export function isReBenchDotDev(): boolean {
   return siteConfig.publicUrl === _rebench_dev;
 }
 
+export const statsConfig = {
+  numberOfBootstrapSamples: 50
+};
+
 export const siteConfig = {
   reportsUrl: process.env.REPORTS_URL || '/static/reports',
   staticUrl: process.env.STATIC_URL || '/static',

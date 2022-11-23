@@ -32,7 +32,8 @@ import {
   dbConfig,
   isReBenchDotDev,
   robustPath,
-  siteConfig
+  siteConfig,
+  statsConfig
 } from './util.js';
 import { createGitHubClient } from './github.js';
 import { getDirname } from './util.js';
@@ -56,7 +57,12 @@ const refreshSecret =
 
 const app = new Koa();
 const router = new Router();
-const db = new DatabaseWithPool(dbConfig, 1000, true, cacheInvalidationDelay);
+const db = new DatabaseWithPool(
+  dbConfig,
+  statsConfig.numberOfBootstrapSamples,
+  true,
+  cacheInvalidationDelay
+);
 
 router.get('/', async (ctx) => {
   const projects = await db.getAllProjects();
@@ -466,7 +472,9 @@ router.put(
     }
 
     try {
-      const recordedRuns = await db.recordMetaDataAndRuns(data);
+      const recRunsPromise = db.recordMetaDataAndRuns(data);
+      log.info(`/rebenchdb/results: Content-Length=${ctx.request.length}`);
+      const recordedRuns = await recRunsPromise;
       db.recordAllData(data)
         .then(([recMs, recPs]) =>
           log.info(

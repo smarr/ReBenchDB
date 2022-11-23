@@ -16,7 +16,7 @@ get_bca <- function(data, num_replicates) {
 
   b <- boot(data, boot_median, num_replicates) # 1000
   tryCatch({
-    
+
     bb <- boot.ci(b, type="bca")
     # column 4 and 5 contain the lower and upper ends of the interval
     if (is.null(bb$bca[4])) {
@@ -27,8 +27,8 @@ get_bca <- function(data, num_replicates) {
   },
   error = function (cond) {
     tryCatch({
-      bb <- boot.ci(b, type="bca")
-      return(tibble(bci95low=bb$normal[2], bci95up=bb$normal[3]))  
+      bb <- boot.ci(b, type="norm")
+      return(tibble(bci95low=bb$normal[2], bci95up=bb$normal[3]))
     },
     error = function (cond) {
       return(tibble(bci95low=NA, bci95up=NA))
