@@ -50,7 +50,14 @@
   "jest": {
     "preset": "ts-jest/presets/default-esm",
     "testEnvironment": "node",
-    "transform": {},
+    "transform": {
+      "^.+\\.ts$": [
+        "ts-jest",
+        {
+          "useESM": true
+        }
+      ]
+    },
     "testPathIgnorePatterns": [
       "<rootDir>/dist/",
       "<rootDir>/node_modules/"
@@ -58,17 +65,16 @@
     "modulePathIgnorePatterns": [
       "<rootDir>/dist/"
     ],
-    "extensionsToTreatAsEsm": [".ts"],
-    "globals": {
-      "ts-jest": {
-        "useESM": true
-      }
-    },
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1",
       "/static/uPlot.esm.min.js": "<rootDir>/resources/uPlot.esm.min.js"
     },
-    "roots": ["tests/"]
+    "roots": [
+      "tests/"
+    ]
   },
   "scripts": {
     "postinstall": "npm run compile",
