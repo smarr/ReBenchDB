@@ -1,7 +1,11 @@
+import Decimal from 'decimal.js';
 import {
   basicSum,
   bootstrapMeans,
   bootstrapSampleWithReplacement,
+  confidence95SliceIndices,
+  confidenceSliceIndicesFast,
+  confidenceSliceIndicesPrecise,
   fullPrecisionSum,
   preciseMean
 } from '../src/stats';
@@ -83,5 +87,36 @@ describe('bootstrapMeans()', () => {
     const means = bootstrapMeans(input, 1001);
     expect(means).toHaveLength(1001);
     expect(means[500]).toBe(4.5);
+  });
+});
+
+describe('confidenceSliceIndices methods', () => {
+  const ninetyFive = new Decimal('0.95');
+
+  it('should produce same values for 0.95 confidence', () => {
+    for (let i = 1; i < 10_000; i += 1) {
+      const fast = confidenceSliceIndicesFast(i, 0.95);
+      const precise = confidenceSliceIndicesPrecise(i, ninetyFive);
+      expect(fast).toStrictEqual(precise);
+    }
+  });
+
+  it('should produce same values for 0.99 confidence', () => {
+    const ninetyNine = new Decimal('0.99');
+    for (let i = 1; i < 10_000; i += 1) {
+      const fast = confidenceSliceIndicesFast(i, 0.99);
+      const precise = confidenceSliceIndicesPrecise(i, ninetyNine);
+      expect(fast).toStrictEqual(precise);
+    }
+  });
+
+  describe('confidence95SliceIndices()', () => {
+    it('should produce the same values as the precise one', () => {
+      for (let i = 1; i < 10_000; i += 1) {
+        expect(confidence95SliceIndices(i)).toStrictEqual(
+          confidenceSliceIndicesPrecise(i, ninetyFive)
+        );
+      }
+    });
   });
 });

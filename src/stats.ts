@@ -1,3 +1,5 @@
+import Decimal from "decimal.js";
+
 /**
  * Calculate a full-precision sum.
  * We avoid loss of precision from IEEE doubles by tracking intermediate sums.
@@ -103,6 +105,86 @@ export function bootstrapMeans(data: number[], iterations = 1000): number[] {
 
   means.sort();
   return means;
+}
+
+
+export interface ConfidenceTriple {
+  lower: number;
+  mean: [number] | [number, number];
+  upper: number;
+}
+
+
+/**
+ * Return the indexes into an array of the given length, at which the confidence
+ * values for the desired confidence level can be found.
+ *
+ * @param length of the array
+ * @param confidenceLevel the desired level
+ * @returns object with the indexes into a data array
+ */
+export function confidenceSliceIndicesFast(length: number, confidenceLevel: number): ConfidenceTriple {
+  const exclude = (1 - confidenceLevel) / 2;
+
+  const midIndex = Math.floor(length / 2);
+
+  let meanIndices: [number] | [number, number];
+  if ((length % 2) == 0) {
+    meanIndices = [midIndex - 1, midIndex];
+  } else {
+    meanIndices = [midIndex];
+  }
+
+  const lower = Math.floor(exclude * length);
+  const upper = Math.ceil((1 - exclude) * length);
+
+  return { lower, mean: meanIndices, upper };
+}
+
+const one = new Decimal('1');
+const two = new Decimal('2');
+
+/**
+ * Return the indexes into an array of the given length, at which the confidence
+ * values for the desired confidence level can be found.
+ * @param length of the array
+ * @param confidenceLevel the desired level
+ * @returns object with the indexes into a data array
+ */
+export function confidenceSliceIndicesPrecise(
+  length: number,
+  confidenceLevel = new Decimal('0.95')
+): ConfidenceTriple {
+  if (typeof confidenceLevel === 'string') {
+    confidenceLevel = new Decimal(confidenceLevel);
+  }
+
+  const exclude = one.minus(confidenceLevel).dividedBy(two);
+  const midIndex = Math.floor(length / 2);
+
+  let meanIndices: [number] | [number, number];
+  if (length % 2 == 0) {
+    meanIndices = [midIndex - 1, midIndex];
+  } else {
+    meanIndices = [midIndex];
+  }
+
+  const l = new Decimal(length);
+  const lower = exclude.times(l).floor().toNumber();
+  const upper = one.minus(exclude).times(l).ceil().toNumber();
+
+  return { lower, mean: meanIndices, upper };
+}
+
+/**
+ * Return the indexes into an array of the given length,
+ * at which the confidence values for the 95th percentile can be found.
+ *
+ * @param length of the array
+ * @returns object with the indexes into a data array
+ */
+export function confidence95SliceIndices(length: number): ConfidenceTriple {
+  return confidenceSliceIndicesFast(length, 0.95);
 }
 
 export function confidence_slice() {
