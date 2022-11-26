@@ -15,6 +15,14 @@ export const robustPath = __dirname.includes('dist/')
       return `${__dirname}/${path}`;
     };
 
+export const robustSrcPath = !__dirname.includes('dist/')
+  ? function (path) {
+      return `${__dirname}/../dist/src/${path}`;
+    }
+  : function (path) {
+      return `${__dirname}/${path}`;
+    };
+
 export const dbConfig = {
   user: process.env.RDB_USER || '',
   password: process.env.RDB_PASS || '',

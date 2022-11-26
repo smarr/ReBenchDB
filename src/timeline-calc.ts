@@ -1,6 +1,6 @@
 import { Database } from './db.js';
 import { SummaryStatistics } from './stats.js';
-import { robustPath } from './util.js';
+import { robustSrcPath } from './util.js';
 import { Worker } from 'node:worker_threads';
 import { completeRequest, startRequest } from './perf-tracker.js';
 
@@ -41,7 +41,7 @@ export class TimelineUpdater extends AbstractTimelineUpdater {
     this.activeRequests = 0;
     this.shutdownResolve = null;
 
-    this.worker = new Worker(robustPath('timeline-calc-worker.js'), {
+    this.worker = new Worker(robustSrcPath('timeline-calc-worker.js'), {
       workerData: { numBootstrapSamples }
     });
 
