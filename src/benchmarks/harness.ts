@@ -21,6 +21,12 @@
 // THE SOFTWARE.
 import type { Benchmark } from './benchmark';
 
+class IncorrectResultError extends Error {
+  constructor() {
+    super('Benchmark failed with incorrect result');
+  }
+}
+
 class Run {
   public numIterations: number;
   public innerIterations: number;
@@ -67,7 +73,7 @@ class Run {
     const startTime = process.hrtime();
     const result = await bench.innerBenchmarkLoop(this.innerIterations);
     if (!result) {
-      throw 'Benchmark failed with incorrect result';
+      throw new IncorrectResultError();
     }
     const diff = process.hrtime(startTime);
 
@@ -149,5 +155,11 @@ if (process.argv.length < 3) {
 }
 
 const run = await processArguments(process.argv);
-await run.runBenchmark();
-run.printTotal();
+
+try {
+  await run.runBenchmark();
+  run.printTotal();
+} catch (e: any) {
+  console.error(e.message);
+  process.exit(1);
+}
