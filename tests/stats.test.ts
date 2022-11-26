@@ -1,9 +1,12 @@
 import Decimal from 'decimal.js';
 import {
   basicSum,
+  bootstrapConfidenceInterval,
   bootstrapMeans,
   bootstrapSampleWithReplacement,
   confidence95SliceIndices,
+  confidenceSlice,
+  confidenceSliceIndices,
   confidenceSliceIndicesFast,
   confidenceSliceIndicesPrecise,
   fullPrecisionSum,
@@ -86,7 +89,9 @@ describe('bootstrapMeans()', () => {
     const input = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
     const means = bootstrapMeans(input, 1001);
     expect(means).toHaveLength(1001);
-    expect(means[500]).toBe(4.5);
+
+    expect(means[500]).toBeGreaterThanOrEqual(4.4);
+    expect(means[500]).toBeLessThanOrEqual(4.6);
   });
 });
 
@@ -118,5 +123,94 @@ describe('confidenceSliceIndices methods', () => {
         );
       }
     });
+  });
+
+  describe('confidenceSliceIndices()', () => {
+    it('should determine the 0.95 indices for 1000 means', () => {
+      const { low, mid, high } = confidenceSliceIndices(1000, '0.95');
+      expect(low).toEqual(25);
+      expect(mid).toEqual([499, 500]);
+      expect(high).toEqual(975);
+    });
+
+    it('should determine the 0.95 indices for 1001 means', () => {
+      const { low, mid, high } = confidenceSliceIndices(1001, '0.95');
+      expect(low).toEqual(25);
+      expect(mid).toEqual([500]);
+      expect(high).toEqual(976);
+    });
+
+    it('should determine the indices for 0.8', () => {
+      const { low, mid, high } = confidenceSliceIndices(10, '0.8');
+      expect(low).toEqual(1);
+      expect(mid).toEqual([4, 5]);
+      expect(high).toEqual(9);
+    });
+
+    it('should determine the indices for 0.5', () => {
+      const { low, mid, high } = confidenceSliceIndices(1001, '0.5');
+      expect(low).toEqual(250);
+      expect(mid).toEqual([500]);
+      expect(high).toEqual(751);
+    });
+  });
+});
+
+describe('confidenceSlice()', () => {
+  it('should produce the expected values', () => {
+    const means: number[] = [];
+    for (let x = 0; x < 1000; x += 1) {
+      means.push(x + 15);
+    }
+
+    const lowIdx = 25; // based on the 1000 means for 0.95
+    const highIdx = 975 - 1; // idx is exclusive
+
+    const low = means[lowIdx];
+    const high = means[highIdx];
+
+    const mid = 514.5;
+
+    const conf = confidenceSlice(means);
+    expect(low).toEqual(conf.low);
+    expect(mid).toEqual(conf.mid);
+    expect(high).toEqual(conf.high);
+  });
+
+  it('should produce the expected values for values [0-9]', () => {
+    const means = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    const { low, mid, high } = confidenceSlice(means, '0.8');
+
+    expect(low).toEqual(1);
+    expect(mid).toEqual((4 + 5) / 2);
+    expect(high).toEqual(8);
+  });
+
+  it('should produce the expected values for values [0-10]', () => {
+    const means = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const { low, mid, high } = confidenceSlice(means, '0.8');
+
+    expect(low).toEqual(1);
+    expect(mid).toEqual(5);
+    expect(high).toEqual(9);
+  });
+});
+
+describe('bootstrapConfidenceInterval()', () => {
+  it('should give the expected values for known inputs', () => {
+    const data = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    const { low, mid, high } = bootstrapConfidenceInterval(
+      data,
+      100000,
+      '0.95'
+    );
+    expect(low).toBeGreaterThanOrEqual(2.5);
+    expect(low).toBeLessThanOrEqual(2.8);
+
+    expect(mid).toBeGreaterThanOrEqual(4.4);
+    expect(mid).toBeLessThanOrEqual(4.6);
+
+    expect(high).toBeGreaterThanOrEqual(6.2);
+    expect(high).toBeLessThanOrEqual(6.5);
   });
 });

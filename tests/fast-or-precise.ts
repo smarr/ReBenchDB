@@ -23,10 +23,10 @@ for (const level of confidenceLevels) {
     const precise = confidenceSliceIndicesPrecise(i, levelPrecise);
 
     if (
-      fast.lower !== precise.lower ||
-      fast.mean[0] !== precise.mean[0] ||
-      fast.mean[1] !== precise.mean[1] ||
-      fast.upper !== precise.upper
+      fast.low !== precise.low ||
+      fast.mid[0] !== precise.mid[0] ||
+      fast.mid[1] !== precise.mid[1] ||
+      fast.high !== precise.high
     ) {
       // differences.push({
       //   level,

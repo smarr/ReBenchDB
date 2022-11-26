@@ -1,4 +1,4 @@
-import Decimal from "decimal.js";
+import Decimal from 'decimal.js';
 
 /**
  * Calculate a full-precision sum.
@@ -103,17 +103,15 @@ export function bootstrapMeans(data: number[], iterations = 1000): number[] {
     means[i] = preciseMean(values);
   }
 
-  means.sort();
+  means.sort((a, b) => a - b);
   return means;
 }
 
-
 export interface ConfidenceTriple {
-  lower: number;
-  mean: [number] | [number, number];
-  upper: number;
+  low: number;
+  mid: number | [number] | [number, number];
+  high: number;
 }
-
 
 /**
  * Return the indexes into an array of the given length, at which the confidence
@@ -123,13 +121,16 @@ export interface ConfidenceTriple {
  * @param confidenceLevel the desired level
  * @returns object with the indexes into a data array
  */
-export function confidenceSliceIndicesFast(length: number, confidenceLevel: number): ConfidenceTriple {
+export function confidenceSliceIndicesFast(
+  length: number,
+  confidenceLevel: number
+): ConfidenceTriple {
   const exclude = (1 - confidenceLevel) / 2;
 
   const midIndex = Math.floor(length / 2);
 
   let meanIndices: [number] | [number, number];
-  if ((length % 2) == 0) {
+  if (length % 2 == 0) {
     meanIndices = [midIndex - 1, midIndex];
   } else {
     meanIndices = [midIndex];
@@ -138,7 +139,7 @@ export function confidenceSliceIndicesFast(length: number, confidenceLevel: numb
   const lower = Math.floor(exclude * length);
   const upper = Math.ceil((1 - exclude) * length);
 
-  return { lower, mean: meanIndices, upper };
+  return { low: lower, mid: meanIndices, high: upper };
 }
 
 const one = new Decimal('1');
@@ -147,6 +148,7 @@ const two = new Decimal('2');
 /**
  * Return the indexes into an array of the given length, at which the confidence
  * values for the desired confidence level can be found.
+ *
  * @param length of the array
  * @param confidenceLevel the desired level
  * @returns object with the indexes into a data array
@@ -173,7 +175,7 @@ export function confidenceSliceIndicesPrecise(
   const lower = exclude.times(l).floor().toNumber();
   const upper = one.minus(exclude).times(l).ceil().toNumber();
 
-  return { lower, mean: meanIndices, upper };
+  return { low: lower, mid: meanIndices, high: upper };
 }
 
 /**
@@ -187,6 +189,71 @@ export function confidence95SliceIndices(length: number): ConfidenceTriple {
   return confidenceSliceIndicesFast(length, 0.95);
 }
 
-export function confidence_slice() {
+/**
+ * Return the indexes into an array of the given length, at which the confidence
+ * values for the desired confidence level can be found.
+ *
+ * @param length of the array
+ * @param confidence the desired level
+ * @returns object with the indexes into a data array
+ */
+export function confidenceSliceIndices(
+  length: number,
+  confidence = '0.95'
+): ConfidenceTriple {
+  if (confidence === '0.95') {
+    return confidence95SliceIndices(length);
+  }
+  return confidenceSliceIndicesPrecise(length, new Decimal(confidence));
+}
 
+/**
+ * Determine the confidence triple from the bootstrapped means
+ * for the requested confidence level.
+ *
+ * @param means array of numbers, will be sorted afterwards
+ * @param confidence confidence level, as string to avoid float imprecision
+ * @returns lower bound, median, and upper bound of the confidence interval
+ */
+export function confidenceSlice(
+  means: number[],
+  confidence = '0.95'
+): ConfidenceTriple {
+  means.sort((a, b) => a - b);
+
+  // if there's an even number of means, we need to compute the median
+  const { low, mid, high } = confidenceSliceIndices(means.length, confidence);
+  const [midIdx1, midIdx2] = <[number, number]>mid;
+
+  let median;
+  if (midIdx2 === undefined) {
+    median = means[midIdx1];
+  } else {
+    median = preciseMean([means[midIdx1], means[midIdx2]]);
+  }
+
+  return {
+    low: means[low],
+    mid: median,
+
+    // the upper bound is exclusive, i.e., possibly outside of the array
+    high: means[high - 1]
+  };
+}
+
+/**
+ * Compute the confidence interval based on the bootstrapped mean of the data.
+ *
+ * @param data array of numbers
+ * @param iterations number of bootstrap iterations
+ * @param confidence confidence level, as string to avoid float imprecision
+ * @returns
+ */
+export function bootstrapConfidenceInterval(
+  data: number[],
+  iterations = 1000,
+  confidence = '0.95'
+): ConfidenceTriple {
+  const means = bootstrapMeans(data, iterations);
+  return confidenceSlice(means, confidence);
 }
