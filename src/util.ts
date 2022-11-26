@@ -44,3 +44,5 @@ export const siteConfig = {
   githubPrivateKey:
     process.env.GITHUB_PK || 'rebenchdb.2020-08-11.private-key.pem'
 };
+
+export const TotalCriterion = 'total';

@@ -20,7 +20,7 @@ import {
   Source
 } from '../src/api.js';
 import { readFileSync } from 'fs';
-import { getDirname } from '../src/util.js';
+import { getDirname, TotalCriterion } from '../src/util.js';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -344,7 +344,7 @@ describe('dashResults', () => {
 
   function createCriteria(): Criterion[] {
     return [
-      { i: 1, c: 'total', u: 'ms' },
+      { i: 1, c: TotalCriterion, u: 'ms' },
       { i: 2, c: 'somethingElse', u: 'ms' }
     ];
   }

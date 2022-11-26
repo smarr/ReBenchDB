@@ -21,8 +21,8 @@ import {
 import pg, { PoolConfig, QueryConfig, QueryResultRow } from 'pg';
 import { SingleRequestOnly } from './single-requester.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
-import { getDirname } from './util.js';
 import { assert, log } from './logging.js';
+import { getDirname, TotalCriterion } from './util.js';
 import { simplifyCmdline } from './views/util.js';
 
 const __dirname = getDirname(import.meta.url);
@@ -1556,7 +1556,7 @@ export abstract class Database {
         s.branchOrTag = p.baseBranch AND
         p.id = $1   AND
         r.id = $2   AND
-        c.name   = 'total'
+        c.name   = '${TotalCriterion}'
       ORDER BY tr.startTime ASC;
     `;
     return {
@@ -1593,7 +1593,7 @@ export abstract class Database {
         b.name = $6   AND
         su.name = $7  AND
         exe.name = $8 AND
-        c.name   = 'total'
+        c.name   = '${TotalCriterion}'
         ::ADDITIONAL-PARAMETERS::
       ORDER BY tr.startTime ASC;
     `;
