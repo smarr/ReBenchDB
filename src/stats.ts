@@ -113,6 +113,15 @@ export interface ConfidenceTriple {
   high: number;
 }
 
+function medianIndices(length: number): [number] | [number, number] {
+  const midIndex = Math.floor(length / 2);
+  if (length % 2 == 0) {
+    return [midIndex - 1, midIndex];
+  } else {
+    return [midIndex];
+  }
+}
+
 /**
  * Return the indexes into an array of the given length, at which the confidence
  * values for the desired confidence level can be found.
@@ -127,14 +136,7 @@ export function confidenceSliceIndicesFast(
 ): ConfidenceTriple {
   const exclude = (1 - confidenceLevel) / 2;
 
-  const midIndex = Math.floor(length / 2);
-
-  let meanIndices: [number] | [number, number];
-  if (length % 2 == 0) {
-    meanIndices = [midIndex - 1, midIndex];
-  } else {
-    meanIndices = [midIndex];
-  }
+  const meanIndices = medianIndices(length);
 
   const lower = Math.floor(exclude * length);
   const upper = Math.ceil((1 - exclude) * length);
@@ -189,6 +191,23 @@ export function confidence95SliceIndices(length: number): ConfidenceTriple {
   return confidenceSliceIndicesFast(length, 0.95);
 }
 
+function medianWithIndices(
+  sortedData: number[],
+  indices: [number] | [number, number]
+): number {
+  const [midIdx1, midIdx2] = indices;
+
+  if (midIdx2 === undefined) {
+    return sortedData[midIdx1];
+  } else {
+    return preciseMean([sortedData[midIdx1], sortedData[midIdx2]]);
+  }
+}
+
+function median(sortedData: number[]): number {
+  return medianWithIndices(sortedData, medianIndices(sortedData.length));
+}
+
 /**
  * Return the indexes into an array of the given length, at which the confidence
  * values for the desired confidence level can be found.
@@ -223,18 +242,11 @@ export function confidenceSlice(
 
   // if there's an even number of means, we need to compute the median
   const { low, mid, high } = confidenceSliceIndices(means.length, confidence);
-  const [midIdx1, midIdx2] = <[number, number]>mid;
-
-  let median;
-  if (midIdx2 === undefined) {
-    median = means[midIdx1];
-  } else {
-    median = preciseMean([means[midIdx1], means[midIdx2]]);
-  }
+  const med = medianWithIndices(means, <[number, number]>mid);
 
   return {
     low: means[low],
-    mid: median,
+    mid: med,
 
     // the upper bound is exclusive, i.e., possibly outside of the array
     high: means[high - 1]
@@ -256,4 +268,60 @@ export function bootstrapConfidenceInterval(
 ): ConfidenceTriple {
   const means = bootstrapMeans(data, iterations);
   return confidenceSlice(means, confidence);
+}
+
+export interface SummaryStatistics {
+  min: number;
+  max: number;
+  standardDeviation: number;
+  mean: number;
+  median: number;
+  numberOfSamples: number;
+  bci95low: number;
+  bci95up: number;
+}
+
+export function preciseVariance(data: number[]): number {
+  return preciseVarianceWithMean(data, preciseMean(data));
+}
+
+export function preciseVarianceWithMean(
+  data: number[],
+  precomputedMean: number
+): number {
+  const squareDiff = data.map((x) => (x - precomputedMean) ** 2);
+  return fullPrecisionSum(squareDiff) / (data.length - 1);
+}
+
+export function standardDeviation(data: number[]): number {
+  return Math.sqrt(preciseVariance(data));
+}
+
+export function standardDeviationWithMean(
+  data: number[],
+  precomputedMean: number
+): number {
+  return Math.sqrt(preciseVarianceWithMean(data, precomputedMean));
+}
+
+export function calculateSummaryStatistics(
+  data: number[],
+  iterations = 1000
+): SummaryStatistics {
+  data.sort((a, b) => a - b);
+  const { low, high } = bootstrapConfidenceInterval(data, iterations, '0.95');
+
+  const mean = preciseMean(data);
+  const med = median(data);
+
+  return {
+    min: data[0],
+    max: data[data.length - 1],
+    standardDeviation: standardDeviationWithMean(data, mean),
+    mean,
+    median: med,
+    numberOfSamples: data.length,
+    bci95low: low,
+    bci95up: high
+  };
 }

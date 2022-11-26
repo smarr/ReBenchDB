@@ -4,13 +4,15 @@ import {
   bootstrapConfidenceInterval,
   bootstrapMeans,
   bootstrapSampleWithReplacement,
+  calculateSummaryStatistics,
   confidence95SliceIndices,
   confidenceSlice,
   confidenceSliceIndices,
   confidenceSliceIndicesFast,
   confidenceSliceIndicesPrecise,
   fullPrecisionSum,
-  preciseMean
+  preciseMean,
+  standardDeviation
 } from '../src/stats';
 
 describe('basicSum()', () => {
@@ -212,5 +214,43 @@ describe('bootstrapConfidenceInterval()', () => {
 
     expect(high).toBeGreaterThanOrEqual(6.2);
     expect(high).toBeLessThanOrEqual(6.5);
+  });
+});
+
+describe('standardDeviation()', () => {
+  it('should give the expected value for known input', () => {
+    // taken from wikipedia
+    const data = [2, 4, 4, 4, 5, 5, 7, 9];
+
+    const mean = preciseMean(data);
+    expect(mean).toEqual(5);
+
+    const squareDiff = data.map((x) => (x - mean) ** 2);
+    expect(squareDiff).toEqual([9, 1, 1, 1, 0, 0, 4, 16]);
+
+    expect(standardDeviation(data)).toBeCloseTo(2.138, 3);
+  });
+});
+
+describe('calculateSummaryStatistics()', () => {
+  it('should produce expected values for known data', () => {
+    const data: number[] = [];
+    for (let i = 0; i < 1000; i += 1) {
+      data.push(i);
+    }
+
+    const result = calculateSummaryStatistics(data);
+
+    expect(result.min).toBe(0);
+    expect(result.max).toBe(999);
+    expect(result.standardDeviation).toBeCloseTo(288.819, 3);
+    expect(result.mean).toBe(499.5);
+    expect(result.median).toBeCloseTo(499.5, 2);
+    expect(result.numberOfSamples).toBe(1000);
+
+    expect(result.bci95low).toBeGreaterThanOrEqual(479);
+    expect(result.bci95low).toBeLessThanOrEqual(485);
+    expect(result.bci95up).toBeGreaterThanOrEqual(514);
+    expect(result.bci95up).toBeLessThanOrEqual(520);
   });
 });
