@@ -71,19 +71,19 @@ export default class ComputeTimeline extends RebenchDbBenchmark {
 
   public verifyResult(result: any): boolean {
     if (this.problemSize === 'small') {
-      return result.numJobs === 24 && result.timelineEntries.count === '24';
+      return result.numJobs === 20 && result.timelineEntries.count === '20';
     }
 
     if (this.problemSize === 'medium') {
-      return result.numJobs === 52 && result.timelineEntries.count === '52';
+      return result.numJobs === 40 && result.timelineEntries.count === '40';
     }
 
     if (this.problemSize === 'large') {
-      return result.numJobs === 152 && result.timelineEntries.count === '152';
+      return result.numJobs === 100 && result.timelineEntries.count === '100';
     }
 
     if (this.problemSize === 'full') {
-      return result.numJobs === 920 && result.timelineEntries.count === '920';
+      return result.numJobs === 632 && result.timelineEntries.count === '632';
     }
 
     throw new Error('not yet supported problem size ' + this.problemSize);

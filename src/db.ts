@@ -1039,7 +1039,11 @@ export abstract class Database {
           continue;
         }
 
-        if (this.timelineEnabled && this.timelineUpdater) {  // && criterion.name === TotalCriterion
+        if (
+          this.timelineEnabled &&
+          this.timelineUpdater &&
+          criterion.name === TotalCriterion
+        ) {
           this.timelineUpdater.addValue(run.id, trial.id, criterion.id, m.v);
         }
         batchedMs += 1;
