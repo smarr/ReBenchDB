@@ -1,11 +1,17 @@
-import { TimelineJob } from '../api.js';
+import { BatchingTimelineUpdater, ComputeRequest } from '../timeline-calc.js';
 import { RebenchDbBenchmark } from './rebenchdb-benchmark.js';
 
 export default class ComputeTimeline extends RebenchDbBenchmark {
-  private jobs: TimelineJob[] = [];
+  private updater: BatchingTimelineUpdater | null = null;
+  private jobs: ComputeRequest[] | null = null;
 
   public async oneTimeSetup(problemSize: string): Promise<void> {
+    this.enableTimeline = true;
     await super.oneTimeSetup(problemSize);
+
+    if (!this.db) {
+      throw new Error('Database is not initialized');
+    }
 
     if (problemSize === 'full') {
       // just use the testData as is
@@ -31,32 +37,35 @@ export default class ComputeTimeline extends RebenchDbBenchmark {
 
     this.testData.experimentName = 'Benchmark 1';
     this.testData.source.commitId = 'commit-1';
-    await this.db?.recordAllData(this.testData);
+    await this.db.recordAllData(this.testData, true);
 
     this.testData.experimentName = 'Benchmark 2';
     this.testData.source.commitId = 'commit-2';
-    await this.db?.recordAllData(this.testData);
+    await this.db.recordAllData(this.testData, true);
 
-    const result = await this.db?.query({
-      text: `DELETE FROM TimelineCalcJob RETURNING *`
-    });
-    this.jobs = <TimelineJob[]>result?.rows;
+    this.updater = this.db.getTimelineUpdater();
+    this.jobs = <ComputeRequest[]>this.updater?.getUpdateJobs();
   }
 
   public async benchmark(): Promise<any> {
-    for (const j of this.jobs) {
-      await this.db?.recordTimelineJob([j.trialid, j.runid, j.criterion]);
+    if (!this.updater || !this.jobs) {
+      throw new Error('Timeline updater not initialized');
     }
-    await this.db?.performTimelineUpdate();
-    const result = await this.db?.query({
+    if (!this.db) {
+      throw new Error('Database is not initialized');
+    }
+
+    const numJobs = await this.updater.processUpdateJobs(this.jobs);
+
+    const result = await this.db.query({
       text: `SELECT count(*) FROM Timeline`
     });
 
-    await this.db?.query({ text: `TRUNCATE Timeline, TimelineCalcJob` });
+    await this.db.query({ text: `TRUNCATE Timeline` });
 
     return {
       timelineEntries: result?.rows[0],
-      numJobs: this.jobs.length
+      numJobs: numJobs
     };
   }
 

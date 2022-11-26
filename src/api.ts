@@ -266,10 +266,3 @@ export interface TimelineBenchmark {
   inputSize?: string;
   extraArgs?: string;
 }
-
-export interface TimelineJob {
-  timelinejobid: number;
-  trialid: number;
-  runid: number;
-  criterion: number;
-}

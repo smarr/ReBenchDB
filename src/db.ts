@@ -1,4 +1,3 @@
-import { execFile } from 'child_process';
 import { readFileSync, existsSync } from 'fs';
 import {
   BenchmarkData,
@@ -17,13 +16,13 @@ import {
   PlotData,
   FullPlotData,
   TimelineSuite
-} from './api';
+} from './api.js';
 import pg, { PoolConfig, QueryConfig, QueryResultRow } from 'pg';
-import { SingleRequestOnly } from './single-requester.js';
-import { startRequest, completeRequest } from './perf-tracker.js';
-import { assert, log } from './logging.js';
 import { getDirname, TotalCriterion } from './util.js';
+import { assert } from './logging.js';
 import { simplifyCmdline } from './views/util.js';
+import { SummaryStatistics } from './stats.js';
+import { BatchingTimelineUpdater } from './timeline-calc.js';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -223,9 +222,6 @@ export abstract class Database {
   protected readonly dbConfig: PoolConfig;
   private readonly timelineEnabled: boolean;
 
-  /** Number of bootstrap samples to take for timeline. */
-  private readonly numBootstrapSamples: number;
-
   private readonly executors: Map<string, Executor>;
   private readonly suites: Map<string, Suite>;
   private readonly benchmarks: Map<string, Benchmark>;
@@ -237,7 +233,7 @@ export abstract class Database {
   private readonly criteria: Map<string, Criterion>;
   private readonly projects: Map<string, Project>;
 
-  private readonly timelineUpdater: SingleRequestOnly;
+  private readonly timelineUpdater: BatchingTimelineUpdater | null;
 
   private readonly queries = {
     fetchProjectByName: 'SELECT * FROM Project WHERE name = $1',
@@ -256,7 +252,6 @@ export abstract class Database {
   ) {
     assert(config !== undefined);
     this.dbConfig = config;
-    this.numBootstrapSamples = numBootstrapSamples;
     this.timelineEnabled = timelineEnabled;
     this.executors = new Map();
     this.suites = new Map();
@@ -275,9 +270,14 @@ export abstract class Database {
        VALUES ${this.generateBatchInsert(Database.batchN, 6)}
        ON CONFLICT DO NOTHING`;
 
-    this.timelineUpdater = new SingleRequestOnly(async () => {
-      return this.performTimelineUpdate();
-    });
+    if (timelineEnabled) {
+      this.timelineUpdater = new BatchingTimelineUpdater(
+        this,
+        numBootstrapSamples
+      );
+    } else {
+      this.timelineUpdater = null;
+    }
   }
 
   public getStatsCacheValidity(): TimedCacheValidity {
@@ -334,7 +334,11 @@ export abstract class Database {
     }
   }
 
-  public abstract close(): Promise<void>;
+  public async close(): Promise<void> {
+    if (this.timelineUpdater) {
+      await this.timelineUpdater.shutdown();
+    }
+  }
 
   public async revisionsExistInProject(
     projectSlug: string,
@@ -1017,32 +1021,27 @@ export abstract class Database {
     dataPoints: ApiDataPoint[],
     run: any,
     trial: any,
-    criteria: Map<any, any>,
+    criteria: Map<number, Criterion>,
     availableMs: any
   ): Promise<number> {
     let recordedMeasurements = 0;
     let batchedMs = 0;
     let batchedValues: any[] = [];
-    const updateJobs = new TimelineUpdates(this);
 
     for (const d of dataPoints) {
       for (const m of d.m) {
         // batched inserts are much faster
         // so let's do this
-        const values = [
-          run.id,
-          trial.id,
-          d.in,
-          d.it,
-          criteria.get(m.c).id,
-          m.v
-        ];
+        const criterion = <Criterion>criteria.get(m.c);
+        const values = [run.id, trial.id, d.in, d.it, criterion.id, m.v];
         if (this.alreadyRecorded(availableMs, values)) {
           // then,just skip this one.
           continue;
         }
 
-        updateJobs.recorded(values[1], values[0], values[4]);
+        if (this.timelineEnabled && this.timelineUpdater) {  // && criterion.name === TotalCriterion
+          this.timelineUpdater.addValue(run.id, trial.id, criterion.id, m.v);
+        }
         batchedMs += 1;
         batchedValues = batchedValues.concat(values);
         if (batchedMs === Database.batchN) {
@@ -1086,7 +1085,6 @@ export abstract class Database {
       batchedValues
     );
 
-    await updateJobs.submitUpdateJobs();
     return recordedMeasurements;
   }
 
@@ -1112,7 +1110,7 @@ export abstract class Database {
 
   public async recordAllData(
     data: BenchmarkData,
-    suppressTimeline = false
+    suppressTimelineGeneration = false
   ): Promise<[number, number]> {
     this.invalidateStatsCache();
     const { trial, criteria } = await this.recordMetaData(data);
@@ -1139,11 +1137,19 @@ export abstract class Database {
       }
     }
 
-    if (recordedMeasurements > 0 && this.timelineEnabled && !suppressTimeline) {
+    if (
+      recordedMeasurements > 0 &&
+      this.timelineEnabled &&
+      !suppressTimelineGeneration
+    ) {
       this.generateTimeline();
     }
 
     return [recordedMeasurements, recordedProfiles];
+  }
+
+  public getTimelineUpdater(): BatchingTimelineUpdater | null {
+    return this.timelineUpdater;
   }
 
   public async recordMetaDataAndRuns(data: BenchmarkData): Promise<number> {
@@ -1206,6 +1212,47 @@ export abstract class Database {
     return (await this.query(q)).rowCount;
   }
 
+  public async recordTimeline(
+    runId: number,
+    trialId: number,
+    criterion: number,
+    stats: SummaryStatistics
+  ): Promise<number> {
+    const q = {
+      name: 'insertTimelineStats',
+      text: `INSERT INTO timeline
+              (runid, trialid, criterion,
+               minval, maxval, sdval, mean, median,
+               numsamples, bci95low, bci95up)
+             VALUES
+              ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+             ON CONFLICT (runid, trialid, criterion) DO UPDATE
+             SET
+               minval = EXCLUDED.minval,
+               maxval = EXCLUDED.maxval,
+               sdval  = EXCLUDED.sdval,
+               mean   = EXCLUDED.mean,
+               median = EXCLUDED.median,
+               numsamples = EXCLUDED.numsamples,
+               bci95low = EXCLUDED.bci95low,
+               bci95up = EXCLUDED.bci95up;`,
+      values: [
+        runId,
+        trialId,
+        criterion,
+        stats.min,
+        stats.max,
+        stats.standardDeviation,
+        stats.mean,
+        stats.median,
+        stats.numberOfSamples,
+        stats.bci95low,
+        stats.bci95up
+      ]
+    };
+    return (await this.query(q)).rowCount;
+  }
+
   public async recordProfile(
     runId: number,
     trialId: number,
@@ -1225,67 +1272,12 @@ export abstract class Database {
     return (await this.query(q)).rowCount;
   }
 
-  public async recordTimelineJob(values: number[]): Promise<void> {
-    await this.query({
-      name: 'insertTimelineCalcJob',
-      text: `INSERT INTO TimelineCalcJob
-                (trialId, runId, criterion)
-              VALUES ($1, $2, $3)`,
-      values
-    });
-  }
-
   private generateTimeline() {
-    this.timelineUpdater.trigger();
+    this.timelineUpdater?.submitUpdateJobs();
   }
 
   public async awaitQuiescentTimelineUpdater(): Promise<void> {
-    await this.timelineUpdater.getQuiescencePromise();
-  }
-
-  public performTimelineUpdate(): Promise<any> {
-    const prom = new Promise((resolve, reject) => {
-      let timelineR = `${__dirname}/stats/timeline.R`;
-      let workDir = `${__dirname}/stats/`;
-      if (!existsSync(timelineR)) {
-        timelineR = `${__dirname}/../../src/stats/timeline.R`;
-        workDir = `${__dirname}/../../src/stats/`;
-      }
-
-      const dbArgs = <string[]>[
-        this.dbConfig.database,
-        this.dbConfig.user,
-        this.dbConfig.password,
-        this.dbConfig.host,
-        this.dbConfig.port,
-        this.numBootstrapSamples
-      ];
-      const start = startRequest();
-      execFile(
-        timelineR,
-        dbArgs,
-        { cwd: workDir },
-        async (errorCode, stdout, stderr) => {
-          function handleResult() {
-            if (errorCode) {
-              log.debug(`timeline.R failed: ${errorCode}
-              Stdout:
-                ${stdout}
-
-              Stderr:
-                ${stderr}`);
-              reject(errorCode);
-            } else {
-              resolve(errorCode);
-            }
-          }
-          completeRequest(start, this, 'generate-timeline')
-            .then(handleResult)
-            .catch(handleResult);
-        }
-      );
-    });
-    return prom;
+    await this.timelineUpdater?.getQuiescencePromise();
   }
 
   public async getBranchNames(
@@ -1666,31 +1658,9 @@ export class DatabaseWithPool extends Database {
   }
 
   public async close(): Promise<void> {
+    await super.close();
     this.statsValid.invalidateAndNew();
     await this.pool.end();
     (<any>this).pool = null;
-  }
-}
-
-class TimelineUpdates {
-  private jobs: Map<string, number[]>;
-  private db: Database;
-
-  constructor(db: Database) {
-    this.jobs = new Map();
-    this.db = db;
-  }
-
-  public recorded(trialId: number, runId: number, criterionId: number) {
-    const id = `${trialId}-${runId}-${criterionId}`;
-    if (!this.jobs.has(id)) {
-      this.jobs.set(id, [trialId, runId, criterionId]);
-    }
-  }
-
-  public async submitUpdateJobs() {
-    for (const job of this.jobs.values()) {
-      await this.db.recordTimelineJob(job);
-    }
   }
 }

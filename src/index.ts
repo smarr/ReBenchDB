@@ -300,8 +300,11 @@ router.get('/:projectSlug/compare/:baseline..:change', async (ctx) => {
 });
 
 router.get('/admin/perform-timeline-update', async (ctx) => {
-  await db.performTimelineUpdate();
-  ctx.body = 'ok';
+  db.getTimelineUpdater()
+    ?.submitUpdateJobs()
+    .then((n) => n)
+    .catch((e) => e);
+  ctx.body = 'update process started';
   ctx.type = 'text';
   ctx.status = 200;
 });

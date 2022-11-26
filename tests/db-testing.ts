@@ -90,6 +90,8 @@ export class TestDatabase extends Database {
   }
 
   public async close(): Promise<void> {
+    await super.close();
+
     this.statsValid.invalidateAndNew();
 
     if (this.closingAttempted) {

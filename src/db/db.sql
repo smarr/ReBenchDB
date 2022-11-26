@@ -232,15 +232,3 @@ CREATE TABLE Timeline (
   foreign key (runId) references Run (id),
   foreign key (criterion) references Criterion (id)
 );
-
--- the specified run needs an update on the timeline
-CREATE SEQUENCE TimelineJobId AS smallint CYCLE;
-
-CREATE TABLE TimelineCalcJob (
-  timelineJobId smallint NOT NULL DEFAULT nextval('TimelineJobId') PRIMARY KEY,
-  trialId   smallint,
-  runId     smallint,
-  criterion smallint
-);
-
-ALTER SEQUENCE TimelineJobId OWNED BY TimelineCalcJob.timelineJobId;
