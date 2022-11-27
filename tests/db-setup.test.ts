@@ -263,12 +263,14 @@ describe('Recording a ReBench execution from payload files', () => {
     // check that the data from the previous test is there
     let trials = await db.query({ text: 'SELECT * from Trial' });
 
-    // performance tracking and the actual trial
-    expect(trials.rowCount).toEqual(2);
+    // performance tracking and the actual trial,
+    // but perf tracking is not synchronized
+    expect([1, 2]).toContain(trials.rowCount);
     let exps = await db.query({ text: 'SELECT * from Experiment' });
 
     // performance tracking and the actual experiment
-    expect(exps.rowCount).toEqual(2);
+    // but perf tracking is not synchronized
+    expect([1, 2]).toContain(exps.rowCount);
 
     // Do recordData a second time
     await db.recordMetaDataAndRuns(smallTestData);
@@ -280,12 +282,13 @@ describe('Recording a ReBench execution from payload files', () => {
     const measurements = await db.query({ text: 'SELECT * from Measurement' });
     expect(recMs).toEqual(0);
     expect(recPs).toEqual(0);
-    expect(measurements.rowCount).toEqual(4);
+    expect([3, 4]).toContain(measurements.rowCount);
 
     trials = await db.query({ text: 'SELECT * from Trial' });
 
-    // performance tracking and the actual trial
-    expect(trials.rowCount).toEqual(2);
+    // performance tracking and the actual trial,
+    // but perf tracking is not synchronized
+    expect([1, 2]).toContain(trials.rowCount);
     exps = await db.query({ text: 'SELECT * from Experiment' });
 
     // performance tracking and the actual experiment
@@ -309,7 +312,7 @@ describe('Recording a ReBench execution from payload files', () => {
       expect(recPs).toEqual(0);
       expect(parseInt(measurements.rows[0].cnt)).toEqual(459928 + 4);
       const timeline = await db.query({ text: 'SELECT * from Timeline' });
-      expect(timeline.rowCount).toEqual(462);
+      expect(timeline.rowCount).toEqual(318);
     },
     timeoutForLargeDataTest
   );
