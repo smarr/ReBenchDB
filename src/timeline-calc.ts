@@ -3,6 +3,7 @@ import { SummaryStatistics } from './stats.js';
 import { robustSrcPath } from './util.js';
 import { Worker } from 'node:worker_threads';
 import { completeRequest, startRequest } from './perf-tracker.js';
+import { log } from './logging.js';
 
 export interface ComputeRequest {
   runId: number;
@@ -48,6 +49,12 @@ export class BatchingTimelineUpdater {
     });
 
     this.worker.on('message', (message) => this.processResponse(message));
+    this.worker.on('error', (e) => {
+      log.error('Error on timeline worker', e);
+    });
+    this.worker.on('exit', (exitCode) => {
+      log.info(`Timeline worker exited with code: ${exitCode}`);
+    });
   }
 
   public shutdown(): Promise<void> {
