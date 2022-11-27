@@ -220,7 +220,6 @@ export class TimedCacheValidity {
 
 export abstract class Database {
   protected readonly dbConfig: PoolConfig;
-  private readonly timelineEnabled: boolean;
 
   private readonly executors: Map<string, Executor>;
   private readonly suites: Map<string, Suite>;
@@ -252,7 +251,6 @@ export abstract class Database {
   ) {
     assert(config !== undefined);
     this.dbConfig = config;
-    this.timelineEnabled = timelineEnabled;
     this.executors = new Map();
     this.suites = new Map();
     this.benchmarks = new Map();
@@ -1039,11 +1037,7 @@ export abstract class Database {
           continue;
         }
 
-        if (
-          this.timelineEnabled &&
-          this.timelineUpdater &&
-          criterion.name === TotalCriterion
-        ) {
+        if (this.timelineUpdater && criterion.name === TotalCriterion) {
           this.timelineUpdater.addValue(run.id, trial.id, criterion.id, m.v);
         }
         batchedMs += 1;
@@ -1143,10 +1137,10 @@ export abstract class Database {
 
     if (
       recordedMeasurements > 0 &&
-      this.timelineEnabled &&
+      this.timelineUpdater &&
       !suppressTimelineGeneration
     ) {
-      this.generateTimeline();
+      this.timelineUpdater.submitUpdateJobs();
     }
 
     return [recordedMeasurements, recordedProfiles];
@@ -1274,10 +1268,6 @@ export abstract class Database {
       values: [runId, trialId, invocation, numIterations, value]
     };
     return (await this.query(q)).rowCount;
-  }
-
-  private generateTimeline() {
-    this.timelineUpdater?.submitUpdateJobs();
   }
 
   public async awaitQuiescentTimelineUpdater(): Promise<void> {
