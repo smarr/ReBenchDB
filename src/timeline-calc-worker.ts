@@ -19,7 +19,8 @@ parentPort?.on('message', (message) => {
     runId: req.runId,
     trialId: req.trialId,
     criterion: req.criterion,
-    stats
+    stats,
+    requestStart: <number>req.requestStart
   };
   parentPort?.postMessage(result);
 });

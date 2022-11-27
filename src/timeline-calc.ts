@@ -9,6 +9,7 @@ export interface ComputeRequest {
   trialId: number;
   criterion: number;
   dataForCriterion: number[];
+  requestStart?: number;
 }
 
 export interface ComputeResult {
@@ -16,30 +17,31 @@ export interface ComputeResult {
   trialId: number;
   criterion: number;
   stats: SummaryStatistics;
+  requestStart: number;
 }
 
-export abstract class AbstractTimelineUpdater {
-  public abstract update(
-    runId: number,
-    trialId: number,
-    criterion: number,
-    dataForCriterion: number[]
-  ): void;
-}
+export class BatchingTimelineUpdater {
+  private readonly db: Database;
+  private readonly worker: Worker;
+  private readonly requests: Map<string, ComputeRequest>;
 
-export class TimelineUpdater extends AbstractTimelineUpdater {
-  protected readonly db: Database;
-  protected readonly worker: Worker;
+  private activeRequests: number;
 
-  protected activeRequests: number;
+  private requestsAtStart: number;
+  private promise: Promise<number> | null;
+  private resolve: ((value: number) => void) | null;
 
   private shutdownResolve: ((value: void) => void) | null;
 
   constructor(db: Database, numBootstrapSamples: number) {
-    super();
     this.db = db;
     this.activeRequests = 0;
     this.shutdownResolve = null;
+
+    this.requests = new Map();
+    this.resolve = null;
+    this.requestsAtStart = 0;
+    this.promise = null;
 
     this.worker = new Worker(robustSrcPath('timeline-calc-worker.js'), {
       workerData: { numBootstrapSamples }
@@ -74,42 +76,20 @@ export class TimelineUpdater extends AbstractTimelineUpdater {
     );
 
     this.activeRequests -= 1;
-  }
 
-  public update(
-    runId: number,
-    trialId: number,
-    criterion: number,
-    dataForCriterion: number[]
-  ): void {
-    const req: ComputeRequest = {
-      runId,
-      trialId,
-      criterion,
-      dataForCriterion
-    };
-    this.worker.postMessage(req);
-    this.activeRequests += 1;
-  }
-}
-
-export class BatchingTimelineUpdater extends TimelineUpdater {
-  private readonly requests: Map<string, ComputeRequest>;
-
-  private requestsAtStart: number | null;
-  private promise: Promise<number> | null;
-  private resolve: ((value: number) => void) | null;
-
-  private requestStart: number | null;
-
-  constructor(db: Database, numBootstrapSamples: number) {
-    super(db, numBootstrapSamples);
-
-    this.requests = new Map();
-    this.resolve = null;
-    this.requestsAtStart = null;
-    this.promise = null;
-    this.requestStart = null;
+    if (this.activeRequests === 0) {
+      if (this.resolve && message.requestStart) {
+        this.resolve(this.requestsAtStart);
+        this.resolve = null;
+        completeRequest(
+          <number>message.requestStart,
+          this.db,
+          'generate-timeline'
+        )
+          .then((val) => val)
+          .catch((e) => e);
+      }
+    }
   }
 
   public addValue(
@@ -133,19 +113,6 @@ export class BatchingTimelineUpdater extends TimelineUpdater {
     }
   }
 
-  protected async processResponse(message: any): Promise<void> {
-    await super.processResponse(message);
-
-    if (this.activeRequests === 0) {
-      if (this.resolve && this.requestsAtStart) {
-        this.resolve(this.requestsAtStart);
-        completeRequest(<number>this.requestStart, this.db, 'generate-timeline')
-          .then((val) => val)
-          .catch((e) => e);
-      }
-    }
-  }
-
   public getUpdateJobs(): ComputeRequest[] {
     const requests = Array.from(this.requests.values());
     this.requests.clear();
@@ -153,18 +120,21 @@ export class BatchingTimelineUpdater extends TimelineUpdater {
   }
 
   public submitUpdateJobs(): Promise<number> {
-    this.requestStart = startRequest();
+    const requestStart = startRequest();
 
     const requests = this.getUpdateJobs();
-
-    return this.processUpdateJobs(requests);
+    return this.processUpdateJobs(requests, requestStart);
   }
 
-  public processUpdateJobs(jobs: ComputeRequest[]): Promise<number> {
-    this.activeRequests = jobs.length;
-    this.requestsAtStart = jobs.length;
+  public processUpdateJobs(
+    jobs: ComputeRequest[],
+    requestStart: number
+  ): Promise<number> {
+    this.activeRequests += jobs.length;
+    this.requestsAtStart = this.activeRequests;
 
     for (const r of jobs) {
+      r.requestStart = requestStart;
       this.worker.postMessage(r);
     }
 

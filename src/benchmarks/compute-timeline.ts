@@ -55,7 +55,9 @@ export default class ComputeTimeline extends RebenchDbBenchmark {
       throw new Error('Database is not initialized');
     }
 
-    const numJobs = await this.updater.processUpdateJobs(this.jobs);
+    // the processStart being 1 is just here for a consistent start time
+    // that's not zero
+    const numJobs = await this.updater.processUpdateJobs(this.jobs, 1);
 
     const result = await this.db.query({
       text: `SELECT count(*) FROM Timeline`
