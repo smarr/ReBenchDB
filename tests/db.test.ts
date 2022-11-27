@@ -215,15 +215,9 @@ describe('Timeline-plot Queries', () => {
       expect(result?.baseTimestamp).toEqual(1576450196);
       expect(result?.changeTimestamp).toEqual(1576363796);
 
-      expect(result?.data).toEqual([
-        [1576277396, 1576363796, 1576450196],
-        [null, null, null],
-        [432.783, null, 432.783],
-        [null, null, null],
-        [null, null, null],
-        [null, 432.783, null],
-        [null, null, null]
-      ]);
+      expect(result?.data[0]).toEqual([1576277396, 1576363796, 1576450196]);
+      expect(result?.data[2]).toEqual([432.783, null, 432.783]);
+      expect(result?.data[5]).toEqual([null, 432.783, null]);
     });
 
     it('should identify the current data points per branch', async () => {
@@ -242,15 +236,8 @@ describe('Timeline-plot Queries', () => {
       expect(result?.baseTimestamp).toEqual(1576450196);
       expect(result?.changeTimestamp).toBeNull();
 
-      expect(result?.data).toEqual([
-        [1576277396, 1576450196],
-        [null, null],
-        [432.783, 432.783],
-        [null, null],
-        [null, null],
-        [null, null],
-        [null, null]
-      ]);
+      expect(result?.data[0]).toEqual([1576277396, 1576450196]);
+      expect(result?.data[2]).toEqual([432.783, 432.783]);
     });
   });
 });

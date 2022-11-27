@@ -4,7 +4,7 @@ import { TimedCacheValidity, Database, DatabaseConfig, Source } from './db.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
 import { AllResults, BenchmarkCompletion, TimelineSuite } from './api.js';
 import { GitHub } from './github.js';
-import { robustPath, siteConfig } from './util.js';
+import { robustPath, siteConfig, TotalCriterion } from './util.js';
 import { getDirname } from './util.js';
 import { log } from './logging.js';
 import { QueryConfig } from 'pg';
@@ -59,7 +59,7 @@ export async function dashResults(
                       JOIN Benchmark b ON r.benchmarkId = b.id
                       JOIN Criterion c ON m.criterion = c.id
                     WHERE projectId = $1 AND
-                      c.name = 'total'
+                      c.name = '${TotalCriterion}'
                     ORDER BY t.startTime, m.invocation, m.iteration
             ),
             LastHundred AS (

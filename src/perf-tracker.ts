@@ -1,6 +1,7 @@
 import { performance } from 'perf_hooks';
-import { Database } from './db';
-import { BenchmarkData, DataPoint, Measure } from './api';
+import { Database } from './db.js';
+import { BenchmarkData, DataPoint, Measure } from './api.js';
+import { TotalCriterion } from './util.js';
 
 let startTime: string;
 const iterations = {
@@ -72,7 +73,7 @@ function constructData(time: number, it: number, benchmark: string) {
         }
       }
     ],
-    criteria: [{ i: 0, c: 'total', u: 'ms' }],
+    criteria: [{ i: 0, c: TotalCriterion, u: 'ms' }],
     env: {
       hostName: 'self',
       cpu: '',

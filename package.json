@@ -12,6 +12,7 @@
   "dependencies": {
     "@octokit/auth-app": "4.0.7",
     "@octokit/rest": "19.0.5",
+    "decimal.js": "10.4.2",
     "koa": "2.13.4",
     "koa-body": "6.0.1",
     "koa-router": "12.0.0",
@@ -50,7 +51,14 @@
   "jest": {
     "preset": "ts-jest/presets/default-esm",
     "testEnvironment": "node",
-    "transform": {},
+    "transform": {
+      "^.+\\.ts$": [
+        "ts-jest",
+        {
+          "useESM": true
+        }
+      ]
+    },
     "testPathIgnorePatterns": [
       "<rootDir>/dist/",
       "<rootDir>/node_modules/"
@@ -58,17 +66,16 @@
     "modulePathIgnorePatterns": [
       "<rootDir>/dist/"
     ],
-    "extensionsToTreatAsEsm": [".ts"],
-    "globals": {
-      "ts-jest": {
-        "useESM": true
-      }
-    },
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1",
       "/static/uPlot.esm.min.js": "<rootDir>/resources/uPlot.esm.min.js"
     },
-    "roots": ["tests/"]
+    "roots": [
+      "tests/"
+    ]
   },
   "scripts": {
     "postinstall": "npm run compile",
