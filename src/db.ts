@@ -101,6 +101,7 @@ export interface Project {
   logo: string;
   showchanges: boolean;
   allresults: boolean;
+  githubnotification: boolean;
   basebranch: string;
 }
 

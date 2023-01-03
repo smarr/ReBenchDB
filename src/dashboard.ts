@@ -538,6 +538,11 @@ export async function reportCompletion(
 ): Promise<void> {
   await db.reportCompletion(data);
 
+  const project = await db.getProjectByName(data.projectName);
+  if (!project) {
+    throw new Error(`No project with name ${data.projectName} found.`);
+  }
+
   const change = await db.getSourceByNames(
     data.projectName,
     data.experimentName
@@ -576,7 +581,7 @@ export async function reportCompletion(
     db
   );
 
-  if (github !== null) {
+  if (github !== null && project.githubnotification) {
     reportCompletionToGitHub(
       github,
       reportId,

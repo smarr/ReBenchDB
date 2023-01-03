@@ -72,6 +72,7 @@ CREATE TABLE Project (
   logo varchar,
   showChanges bool DEFAULT true,
   allResults bool DEFAULT false,
+  githubNotification bool DEFAULT true,
 
   -- display projects in descending order of position
   position integer DEFAULT 0,
