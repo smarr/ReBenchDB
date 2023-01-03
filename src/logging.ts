@@ -1,12 +1,14 @@
 import { Logger } from 'tslog';
 
-export const log = new Logger({ name: 'index' });
+// 0: silly, 1: trace, 2: debug, 3: info, 4: warn, 5: error, 6: fatal
+const trace = 2;
+const info = 3;
 
-if ('DEV' in process.env ? process.env.DEV === 'true' : false) {
-  log.setSettings({ minLevel: 'trace' });
-} else {
-  log.setSettings({ minLevel: 'info' });
-}
+const minLevel = ('DEV' in process.env ? process.env.DEV === 'true' : false)
+  ? trace
+  : info;
+
+export const log = new Logger({ name: 'index', minLevel });
 
 export function assert(
   condition: boolean,
