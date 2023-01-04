@@ -872,6 +872,59 @@ export abstract class Database {
     };
   }
 
+  public async getExperimentMeasurements(expId: number): Promise<
+    {
+      expid: number;
+      runid: number;
+      trialid: number;
+      commitid: string;
+      bench: string;
+      exe: string;
+      suite: string;
+      cmdline: string;
+      varvalue: string;
+      cores: string;
+      inputsize: string;
+      extraargs: string;
+      invocation: number;
+      iteration: number;
+      warmup: number;
+      criterion: string;
+      unit: string;
+      value: number;
+      envid: number;
+    }[]
+  > {
+    const result = await this.query({
+      name: 'fetchExpMeasurements',
+      text: `SELECT
+                expId, runId, trialId,
+                substring(commitId, 1, 6) as commitid,
+                benchmark.name as bench,
+                executor.name as exe,
+                suite.name as suite,
+                cmdline, varValue, cores, inputSize, extraArgs,
+                invocation, iteration, warmup,
+                criterion.name as criterion, criterion.unit as unit,
+                value, envid
+              FROM Measurement
+                JOIN Trial ON trialId = Trial.id
+                JOIN Experiment ON expId = Experiment.id
+                JOIN Source ON source.id = sourceId
+                JOIN Criterion ON criterion = criterion.id
+                JOIN Run ON runId = run.id
+                JOIN Suite ON suiteId = suite.id
+                JOIN Benchmark ON benchmarkId = benchmark.id
+                JOIN Executor ON execId = executor.id
+              WHERE
+                Experiment.id = $1
+              ORDER BY
+                runId, trialId, cmdline, invocation, iteration, criterion`,
+      values: [expId]
+    });
+    return result.rows;
+  }
+
   public async recordExperimentCompletion(
     expId: number,
     endTime: string

@@ -183,7 +183,6 @@ router.get('/:projectSlug/data/:expId', async (ctx) => {
     ctx.type = 'html';
     ctx.set('Cache-Control', 'no-cache');
   } else {
-    log.debug(data.downloadUrl);
     ctx.redirect(data.downloadUrl);
   }
 
@@ -384,6 +383,10 @@ if (DEV) {
     } else if (filename.endsWith('.svg')) {
       ctx.type = 'image/svg+xml';
       path = `${__dirname}/../../resources/${filename}`;
+    } else if (filename.endsWith('.json.gz')) {
+      ctx.type = 'application/json';
+      ctx.set('Content-Encoding', 'gzip');
+      path = `${__dirname}/../../resources/${filename}`;
     } else {
       throw new Error(`Unsupported file type. Filename: ${filename}`);
     }
@@ -400,16 +403,6 @@ if (DEV) {
       throw new Error(`Unsupported file type ${ctx.params.filename}`);
     }
     ctx.body = readFileSync(path);
-  });
-
-  router.get(`${siteConfig.staticUrl}/exp-data/:filename`, async (ctx) => {
-    log.debug(`serve ${ctx.params.filename}`);
-    ctx.body = readFileSync(
-      `${__dirname}/../../resources/exp-data/${ctx.params.filename}`
-    );
-    if (ctx.params.filename.endsWith('.qs')) {
-      ctx.type = 'application/octet-stream';
-    }
   });
 
   router.get(
