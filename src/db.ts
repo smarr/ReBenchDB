@@ -833,6 +833,45 @@ export abstract class Database {
     return result.rows[0];
   }
 
+  public async getExperimentDetails(
+    expId: number,
+    projectSlug: string
+  ): Promise<{
+    project: string;
+    expName: string;
+    expDesc: string;
+    projectId: number;
+    projectDesc: string;
+  } | null> {
+    const result = await this.query({
+      name: 'fetchExpDataByIdAndProjectSlug',
+      text: `SELECT
+                  exp.name as expName,
+                  exp.description as expDesc,
+                  p.id as pId,
+                  p.name as pName,
+                  p.description as pDesc
+                FROM
+                  Experiment exp
+                JOIN Project p ON exp.projectId = p.id
+
+                WHERE exp.id = $1 AND
+                  lower(p.slug) = lower($2)`,
+      values: [expId, projectSlug]
+    });
+    if (!result || result.rows.length !== 1) {
+      return null;
+    }
+
+    return {
+      project: result.rows[0].pname,
+      expName: result.rows[0].expname,
+      expDesc: result.rows[0].expDesc,
+      projectId: result.rows[0].pid,
+      projectDesc: result.rows[0].pdesc
+    };
+  }
+
   public async recordExperimentCompletion(
     expId: number,
     endTime: string

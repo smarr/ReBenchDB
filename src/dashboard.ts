@@ -399,38 +399,17 @@ export async function dashGetExpData(
   dbConfig: DatabaseConfig,
   db: Database
 ): Promise<any> {
-  const result = await db.query({
-    name: 'fetchExpDataByIdAndProjectSlug',
-    text: `SELECT
-                exp.name as expName,
-                exp.description as expDesc,
-                p.id as pId,
-                p.name as pName,
-                p.description as pDesc
-              FROM
-                Experiment exp
-              JOIN Project p ON exp.projectId = p.id
-
-              WHERE exp.id = $1 AND
-                lower(p.slug) = lower($2)`,
-    values: [expId, projectSlug]
-  });
+  const result = await db.getExperimentDetails(expId, projectSlug);
 
   let data: any;
-  if (!result || result.rows.length !== 1) {
+  if (!result) {
     data = {
       project: '',
       generationFailed: true,
       stdout: 'Experiment was not found'
     };
   } else {
-    data = {
-      project: result.rows[0].pname,
-      expName: result.rows[0].expname,
-      expDesc: result.rows[0].expDesc,
-      projectId: result.rows[0].pid,
-      projectDesc: result.rows[0].pdesc
-    };
+    data = result;
   }
 
   const expDataId = `${data.project}-${expId}`;
