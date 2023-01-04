@@ -472,27 +472,8 @@ export async function dashBenchmarksForProject(
   db: Database,
   projectId: number
 ): Promise<{ benchmarks }> {
-  const result = await db.query({
-    name: 'fetchBenchmarksByProjectId',
-    text: `
-        SELECT DISTINCT p.name, env.hostname, r.cmdline, b.name as benchmark,
-            b.id as benchId, s.name as suiteName, s.id as suiteId,
-            exe.name as execName, exe.id as execId
-          FROM Project p
-          JOIN Experiment exp    ON exp.projectId = p.id
-          JOIN Trial t           ON t.expId = exp.id
-          JOIN Source src        ON t.sourceId = src.id
-          JOIN Environment env   ON t.envId = env.id
-          JOIN Timeline tl       ON tl.trialId = t.id
-          JOIN Run r             ON tl.runId = r.id
-          JOIN Benchmark b       ON r.benchmarkId = b.id
-          JOIN Suite s           ON r.suiteId = s.id
-          JOIN Executor exe      ON r.execId = exe.id
-          WHERE p.id = $1
-        ORDER BY suiteName, execName, benchmark, hostname`,
-    values: [projectId]
-  });
-  return { benchmarks: result.rows };
+  const result = await db.getBenchmarksByProjectId(projectId);
+  return { benchmarks: result };
 }
 
 export async function reportCompletion(
