@@ -1,6 +1,21 @@
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
+import { promisify } from 'node:util';
+import { gzip as gzipCallback } from 'node:zlib';
+import { writeFile } from 'node:fs/promises';
+
+const gzip = promisify(gzipCallback);
+
+export async function storeJsonGzip(
+  data: any[],
+  filePath: string
+): Promise<void> {
+  const str = JSON.stringify(data);
+  const compressedData = await gzip(str);
+  await writeFile(filePath, compressedData);
+}
+
 export function getDirname(importMetaUrl: string): string {
   return dirname(fileURLToPath(importMetaUrl));
 }

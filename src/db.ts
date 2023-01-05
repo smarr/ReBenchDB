@@ -833,6 +833,98 @@ export abstract class Database {
     return result.rows[0];
   }
 
+  public async getExperimentDetails(
+    expId: number,
+    projectSlug: string
+  ): Promise<{
+    project: string;
+    expName: string;
+    expDesc: string;
+    projectId: number;
+    projectDesc: string;
+  } | null> {
+    const result = await this.query({
+      name: 'fetchExpDataByIdAndProjectSlug',
+      text: `SELECT
+                  exp.name as expName,
+                  exp.description as expDesc,
+                  p.id as pId,
+                  p.name as pName,
+                  p.description as pDesc
+                FROM
+                  Experiment exp
+                JOIN Project p ON exp.projectId = p.id
+
+                WHERE exp.id = $1 AND
+                  lower(p.slug) = lower($2)`,
+      values: [expId, projectSlug]
+    });
+    if (!result || result.rows.length !== 1) {
+      return null;
+    }
+
+    return {
+      project: result.rows[0].pname,
+      expName: result.rows[0].expname,
+      expDesc: result.rows[0].expDesc,
+      projectId: result.rows[0].pid,
+      projectDesc: result.rows[0].pdesc
+    };
+  }
+
+  public async getExperimentMeasurements(expId: number): Promise<
+    {
+      expid: number;
+      runid: number;
+      trialid: number;
+      commitid: string;
+      bench: string;
+      exe: string;
+      suite: string;
+      cmdline: string;
+      varvalue: string;
+      cores: string;
+      inputsize: string;
+      extraargs: string;
+      invocation: number;
+      iteration: number;
+      warmup: number;
+      criterion: string;
+      unit: string;
+      value: number;
+      envid: number;
+    }[]
+  > {
+    const result = await this.query({
+      name: 'fetchExpMeasurements',
+      text: `SELECT
+                expId, runId, trialId,
+                substring(commitId, 1, 6) as commitid,
+                benchmark.name as bench,
+                executor.name as exe,
+                suite.name as suite,
+                cmdline, varValue, cores, inputSize, extraArgs,
+                invocation, iteration, warmup,
+                criterion.name as criterion, criterion.unit as unit,
+                value, envid
+              FROM Measurement
+                JOIN Trial ON trialId = Trial.id
+                JOIN Experiment ON expId = Experiment.id
+                JOIN Source ON source.id = sourceId
+                JOIN Criterion ON criterion = criterion.id
+                JOIN Run ON runId = run.id
+                JOIN Suite ON suiteId = suite.id
+                JOIN Benchmark ON benchmarkId = benchmark.id
+                JOIN Executor ON execId = executor.id
+              WHERE
+                Experiment.id = $1
+              ORDER BY
+                runId, trialId, cmdline, invocation, iteration, criterion`,
+      values: [expId]
+    });
+    return result.rows;
+  }
+
   public async recordExperimentCompletion(
     expId: number,
     endTime: string

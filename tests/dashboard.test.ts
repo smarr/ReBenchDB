@@ -133,6 +133,7 @@ describe('Test Dashboard with basic test data loaded', () => {
     for (const table of result) {
       if (table.table === 'Measurements') {
         expect([
+          '' + 3 * numExperiments,
           '' + (3 * numExperiments + 1),
           '' + (3 * numExperiments + 2)
         ]).toContain(table.cnt);

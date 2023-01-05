@@ -72,18 +72,6 @@ get_measures_for_comparison <- function(rebenchdb, hash_1, hash_2) {
   factorize_result(result)
 }
 
-get_measures_for_experiment <- function(rebenchdb, exp_id) {
-  qry <- dbSendQuery(rebenchdb,
-                     paste0(main_data_select, main_data_from,
-                            "WHERE Experiment.id = $1
-                    ORDER BY runId, trialId, cmdline, invocation, iteration, criterion"))
-  dbBind(qry, list(exp_id))
-  result <- dbFetch(qry)
-  dbClearResult(qry)
-
-  factorize_result(result)
-}
-
 profile_available_select <- "
   SELECT expId, runId, trialId, substring(commitId, 1, 6) as commitid,
     benchmark.name as bench, executor.name as exe, suite.name as suite,

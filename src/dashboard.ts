@@ -4,7 +4,12 @@ import { TimedCacheValidity, Database, DatabaseConfig, Source } from './db.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
 import { AllResults, BenchmarkCompletion, TimelineSuite } from './api.js';
 import { GitHub } from './github.js';
-import { robustPath, siteConfig, TotalCriterion } from './util.js';
+import {
+  robustPath,
+  siteConfig,
+  storeJsonGzip,
+  TotalCriterion
+} from './util.js';
 import { getDirname } from './util.js';
 import { log } from './logging.js';
 import { QueryConfig } from 'pg';
@@ -399,46 +404,26 @@ export async function dashGetExpData(
   dbConfig: DatabaseConfig,
   db: Database
 ): Promise<any> {
-  const result = await db.query({
-    name: 'fetchExpDataByIdAndProjectSlug',
-    text: `SELECT
-                exp.name as expName,
-                exp.description as expDesc,
-                p.id as pId,
-                p.name as pName,
-                p.description as pDesc
-              FROM
-                Experiment exp
-              JOIN Project p ON exp.projectId = p.id
-
-              WHERE exp.id = $1 AND
-                lower(p.slug) = lower($2)`,
-    values: [expId, projectSlug]
-  });
+  const result = await db.getExperimentDetails(expId, projectSlug);
 
   let data: any;
-  if (!result || result.rows.length !== 1) {
+  if (!result) {
     data = {
       project: '',
       generationFailed: true,
       stdout: 'Experiment was not found'
     };
   } else {
-    data = {
-      project: result.rows[0].pname,
-      expName: result.rows[0].expname,
-      expDesc: result.rows[0].expDesc,
-      projectId: result.rows[0].pid,
-      projectDesc: result.rows[0].pdesc
-    };
+    data = result;
   }
 
   const expDataId = `${data.project}-${expId}`;
-  const expDataFile = `${__dirname}/../../resources/exp-data/${expDataId}.qs`;
+  const expFileName = `exp-data/${expDataId}.json.gz`;
+  const expDataFile = `${__dirname}/../../resources/${expFileName}`;
 
   if (existsSync(expDataFile)) {
     data.preparingData = false;
-    data.downloadUrl = `${siteConfig.staticUrl}/exp-data/${expDataId}.qs`;
+    data.downloadUrl = `${siteConfig.staticUrl}/${expFileName}`;
   } else {
     data.currentTime = new Date().toISOString();
 
@@ -449,42 +434,24 @@ export async function dashGetExpData(
       const start = startRequest();
 
       data.preparingData = true;
-      // start preparing data
-      const args: string[] = [
-        expId.toString(),
-        `${__dirname}/../../src/views/`, // R ReBenchDB library directory
-        dbConfig.user,
-        dbConfig.password,
-        dbConfig.database,
-        dbConfig.host,
-        String(dbConfig.port),
-        expDataFile
-      ];
 
-      log.debug(
-        `Prepare Data for Download:` +
-          `${__dirname}/../../src/stats/get-exp-data.R ${args.join(' ')}`
-      );
+      const resultP = db.getExperimentMeasurements(expId);
 
       expDataPreparation.set(expDataId, {
         inProgress: true
       });
 
-      execFile(`${__dirname}/../../src/stats/get-exp-data.R`, args)
-        .then(async (output) => {
+      resultP
+        .then(async (data: any[]) => {
+          await storeJsonGzip(data, expDataFile);
           expDataPreparation.set(expDataId, {
-            stdout: output.stdout,
-            stderr: output.stderr,
             inProgress: false
           });
-          await completeRequest(start, db, 'prep-exp-data');
         })
         .catch(async (error) => {
           log.error('Data preparation failed', error);
           expDataPreparation.set(expDataId, {
             error,
-            stdout: error.stdout,
-            stderr: error.stderr,
             inProgress: false
           });
         })
@@ -492,8 +459,6 @@ export async function dashGetExpData(
     } else if (prevPrepDetails.error) {
       // if previous attempt failed
       data.generationFailed = true;
-      data.stdout = prevPrepDetails.stdout;
-      data.stderr = prevPrepDetails.stderr;
       data.preparingData = false;
     } else {
       data.preparingData = true;
