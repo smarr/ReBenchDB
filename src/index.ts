@@ -24,7 +24,8 @@ import {
   reportCompletion,
   dashDeleteOldReport,
   dashProfile,
-  dashLatestBenchmarksForTimelineView
+  dashLatestBenchmarksForTimelineView,
+  dashCompareNew
 } from './dashboard.js';
 import { prepareTemplate, processTemplate } from './templates.js';
 import {
@@ -298,6 +299,22 @@ router.get('/:projectSlug/compare/:baseline..:change', async (ctx) => {
   }
 
   completeRequest(start, db, 'change');
+});
+
+router.get('/:projectSlug/compare-new/:baseline..:change', async (ctx) => {
+  const start = startRequest();
+
+  const data = await dashCompareNew(
+    ctx.params.baseline,
+    ctx.params.change,
+    ctx.params.projectSlug,
+    dbConfig,
+    db
+  );
+  ctx.body = processTemplate('compare-new.html', data);
+  ctx.type = 'html';
+
+  completeRequest(start, db, 'change-new');
 });
 
 router.get('/admin/perform-timeline-update', async (ctx) => {

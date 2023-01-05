@@ -179,6 +179,63 @@ export interface Baseline extends Source {
   firststart: string;
 }
 
+/** As returned from database queries */
+export interface MeasurementData {
+  expid: number;
+  runid: number;
+  trialid: number;
+  commitid: string;
+  bench: string;
+  exe: string;
+  suite: string;
+  cmdline: string;
+  varvalue: string;
+  cores: string;
+  inputsize: string;
+  extraargs: string;
+  invocation: number;
+  iteration: number;
+  warmup: number;
+  criterion: string;
+  unit: string;
+  value: number;
+  envid: number;
+}
+
+export interface RevisionData {
+  projectid: number;
+  name: string;
+  sourceid: number;
+  commitid: string;
+  repourl: string;
+  branchortag: string;
+  commitmessage: string;
+  authorname: string;
+}
+
+const measurementDataColumns = `
+        expId, runId, trialId,
+        substring(commitId, 1, 6) as commitid,
+        benchmark.name as bench,
+        executor.name as exe,
+        suite.name as suite,
+        cmdline, varValue, cores, inputSize, extraArgs,
+        invocation, iteration, warmup,
+        criterion.name as criterion,
+        criterion.unit as unit,
+        value, envid`;
+
+const measurementDataTableJoins = `
+        Measurement
+          JOIN Trial ON trialId = Trial.id
+          JOIN Experiment ON expId = Experiment.id
+          JOIN Source ON source.id = sourceId
+          JOIN Criterion ON criterion = criterion.id
+          JOIN Run ON runId = run.id
+          JOIN Suite ON suiteId = suite.id
+          JOIN Benchmark ON benchmarkId = benchmark.id
+          JOIN Executor ON execId = executor.id`;
+
 function filterCommitMessage(msg) {
   return msg
     .replaceAll('\\n', '\n') // resolve new lines
@@ -346,11 +403,17 @@ export abstract class Database {
     projectSlug: string,
     base: string,
     change: string
-  ): Promise<{ dataFound: boolean; base?: any; change?: any }> {
+  ): Promise<{
+    dataFound: boolean;
+    base?: RevisionData;
+    change?: RevisionData;
+  }> {
     const result = await this.query({
       name: 'fetchRevisionsInProjectByCommitIds',
       text: `SELECT DISTINCT
-          p.id, e.name, s.id,
+          p.id as projectId,
+          e.name,
+          s.id as sourceId,
           s.commitid, s.repoUrl, s.branchOrTag,
           s.commitMessage, s.authorName
         FROM Project p
@@ -365,18 +428,26 @@ export abstract class Database {
 
     // we can have multiple experiments with the same revisions
     if (result.rowCount >= 2) {
-      let baseData;
-      let changeData;
+      let baseData: RevisionData | undefined = undefined;
+      let changeData: RevisionData | undefined = undefined;
       for (const row of result.rows) {
+        const r: RevisionData = row;
         if (row.commitid === base) {
-          baseData = row;
+          baseData = r;
         } else if (row.commitid === change) {
-          changeData = row;
+          changeData = r;
         }
       }
 
-      baseData.commitmessage = filterCommitMessage(baseData.commitmessage);
-      changeData.commitmessage = filterCommitMessage(changeData.commitmessage);
+      if (baseData) {
+        baseData.commitmessage = filterCommitMessage(baseData.commitmessage);
+      }
+
+      if (changeData) {
+        changeData.commitmessage = filterCommitMessage(
+          changeData.commitmessage
+        );
+      }
 
       return {
         dataFound: true,
@@ -911,50 +982,32 @@ export abstract class Database {
     };
   }
 
-  public async getExperimentMeasurements(expId: number): Promise<
-    {
-      expid: number;
-      runid: number;
-      trialid: number;
-      commitid: string;
-      bench: string;
-      exe: string;
-      suite: string;
-      cmdline: string;
-      varvalue: string;
-      cores: string;
-      inputsize: string;
-      extraargs: string;
-      invocation: number;
-      iteration: number;
-      warmup: number;
-      criterion: string;
-      unit: string;
-      value: number;
-      envid: number;
-    }[]
-  > {
+  public async getMeasurementsForComparison(
+    commitHash1: string,
+    commitHash2: string
+  ): Promise<MeasurementData[]> {
+    const result = await this.query({
+      name: 'fetchMeasurementsForComparison',
+      text: `SELECT
+              ${measurementDataColumns}
+            FROM
+              ${measurementDataTableJoins}
+            WHERE commitId = $1 OR commitid = $2
+              ORDER BY expId, runId, invocation, iteration, criterion`,
+      values: [commitHash1, commitHash2]
+    });
+    return result.rows;
+  }
+
+  public async getExperimentMeasurements(
+    expId: number
+  ): Promise<MeasurementData[]> {
     const result = await this.query({
       name: 'fetchExpMeasurements',
       text: `SELECT
-                expId, runId, trialId,
-                substring(commitId, 1, 6) as commitid,
-                benchmark.name as bench,
-                executor.name as exe,
-                suite.name as suite,
-                cmdline, varValue, cores, inputSize, extraArgs,
-                invocation, iteration, warmup,
-                criterion.name as criterion, criterion.unit as unit,
-                value, envid
-              FROM Measurement
-                JOIN Trial ON trialId = Trial.id
-                JOIN Experiment ON expId = Experiment.id
-                JOIN Source ON source.id = sourceId
-                JOIN Criterion ON criterion = criterion.id
-                JOIN Run ON runId = run.id
-                JOIN Suite ON suiteId = suite.id
-                JOIN Benchmark ON benchmarkId = benchmark.id
-                JOIN Executor ON execId = executor.id
+                ${measurementDataColumns}
+              FROM
+                ${measurementDataTableJoins}
               WHERE
                 Experiment.id = $1
               ORDER BY

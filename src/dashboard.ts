@@ -1,6 +1,6 @@
 import { readFileSync, existsSync, unlinkSync, rmSync } from 'fs';
 import { execFile, ChildProcessPromise } from 'promisify-child-process';
-import { TimedCacheValidity, Database, DatabaseConfig, Source } from './db.js';
+import { TimedCacheValidity, Database, DatabaseConfig, Source, MeasurementData } from './db.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
 import { AllResults, BenchmarkCompletion, TimelineSuite } from './api.js';
 import { GitHub } from './github.js';
@@ -394,6 +394,97 @@ export async function dashCompare(
   }
 
   return data;
+}
+
+export async function dashCompareNew(
+  base: string,
+  change: string,
+  projectSlug: string,
+  dbConfig: DatabaseConfig,
+  db: Database
+): Promise<any> {
+  const baselineHash6 = base.substr(0, 6);
+  const changeHash6 = change.substr(0, 6);
+
+  const reportId = getReportId(projectSlug, base, change);
+
+  const revDetails = await db.revisionsExistInProject(
+    projectSlug,
+    base,
+    change
+  );
+
+  const data: any = {
+    project: projectSlug,
+    baselineHash: base,
+    changeHash: change,
+    baselineHash6,
+    changeHash6,
+    reportId,
+    renderData: false
+  };
+
+  if (!revDetails.dataFound) {
+    data.revisionNotFound = true;
+    return data;
+  }
+
+  data.base = revDetails.base;
+  data.change = revDetails.change;
+
+  data.renderData = true;
+
+  const results = await db.getMeasurementsForComparison(base, change);
+
+  const { nav, navExeComparison } = getNavigation(results);
+  data.nav = nav;
+  data.navExeComparison = navExeComparison;
+
+  return data;
+}
+
+function getNavigation(data: MeasurementData[]) {
+  const executors = new Map<string, Set<string>>();
+  const allSuites = new Map<string, Set<string>>();
+
+  for (const row of data) {
+    let suites: Set<string> | undefined = executors.get(row.exe);
+    if (!suites) {
+      suites = new Set();
+      executors.set(row.exe, suites);
+    }
+    suites.add(row.suite);
+
+    let execs: Set<string> | undefined = allSuites.get(row.suite);
+    if (!execs) {
+      execs = new Set();
+      allSuites.set(row.suite, execs);
+    }
+    execs.add(row.exe);
+  }
+
+  const result: { exeName: string; suites: string[] }[] = [];
+  const exes = Array.from(executors.entries());
+  exes.sort((a, b) => a[0].localeCompare(b[0]));
+  for (const [key, val] of exes) {
+    const suitesSorted = Array.from(val);
+    suitesSorted.sort((a, b) => a.localeCompare(b));
+    result.push({ exeName: key, suites: suitesSorted });
+  }
+
+  const suitesWithMultipleExecutors: string[] = [];
+  for (const [suite, execs] of allSuites) {
+    if (execs.size > 1) {
+      suitesWithMultipleExecutors.push(suite);
+    }
+  }
+
+  suitesWithMultipleExecutors.sort((a, b) => a.localeCompare(b));
+
+  return {
+    nav: result,
+    navExeComparison: { suites: suitesWithMultipleExecutors }
+  };
 }
 
 const expDataPreparation = new Map();
