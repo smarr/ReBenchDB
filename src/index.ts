@@ -301,6 +301,8 @@ router.get('/:projectSlug/compare/:baseline..:change', async (ctx) => {
   completeRequest(start, db, 'change');
 });
 
+const compareTpl = prepareTemplate('compare-new.html');
+
 router.get('/:projectSlug/compare-new/:baseline..:change', async (ctx) => {
   const start = startRequest();
 
@@ -311,7 +313,7 @@ router.get('/:projectSlug/compare-new/:baseline..:change', async (ctx) => {
     dbConfig,
     db
   );
-  ctx.body = processTemplate('compare-new.html', data);
+  ctx.body = compareTpl(data);
   ctx.type = 'html';
 
   completeRequest(start, db, 'change-new');
