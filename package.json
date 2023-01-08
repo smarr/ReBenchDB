@@ -42,9 +42,10 @@
     "eslint-plugin-jest": "27.2.2",
     "eslint-plugin-prettier": "5.0.0",
     "jest": "29.6.1",
+    "nodemon": "2.0.22",
     "prettier": "3.0.0",
     "source-map-support": "0.5.21",
-    "terser": "5.18.2",
+    "terser": "5.19.0",
     "ts-jest": "29.1.1",
     "typescript": "5.1.6",
     "typescript-json-schema": "0.58.1"
@@ -81,7 +82,7 @@
   "scripts": {
     "postinstall": "npm run compile",
     "start": "node --enable-source-maps --experimental-json-modules ./dist/src/index.js",
-    "nodemon": "DEV=true node --enable-source-maps --experimental-json-modules --watch ./dist/src/index.js",
+    "nodemon": "DEV=true nodemon --enable-source-maps --experimental-json-modules ./dist/src/index.js --watch ./dist/src --watch ./dist/package.json --watch ./src/views/ --ext js,json,html",
     "precompile": "terser --module --ecma 2018 --compress --mangle -o ./resources/uPlot.esm.min.js -- node_modules/uplot/dist/uPlot.esm.js",
     "compile": "tsc && npm run prep-reports && npm run prep-static",
     "prep-static": "cp dist/src/views/*.js ./resources/",
