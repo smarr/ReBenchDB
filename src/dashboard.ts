@@ -1,6 +1,16 @@
 import { readFileSync, existsSync, unlinkSync, rmSync } from 'fs';
 import { execFile, ChildProcessPromise } from 'promisify-child-process';
-import { TimedCacheValidity, Database, DatabaseConfig, Source, MeasurementData } from './db.js';
+import {
+  TimedCacheValidity,
+  Database,
+  DatabaseConfig,
+  Source,
+  MeasurementData,
+  ProcessedResult,
+  RunSettings,
+  CriterionData,
+  Measurements
+} from './db.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
 import { AllResults, BenchmarkCompletion, TimelineSuite } from './api.js';
 import { GitHub } from './github.js';
@@ -13,6 +23,8 @@ import {
 import { getDirname } from './util.js';
 import { log } from './logging.js';
 import { QueryConfig } from 'pg';
+import { calculateSummaryStatistics } from './stats.js';
+import { simplifyCmdline } from './views/util.js';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -396,6 +408,34 @@ export async function dashCompare(
   return data;
 }
 
+function asHumanMem(val: number, digits = 2): string {
+  if (!val || val === 0) {
+    return '';
+  }
+
+  let m = val;
+  let i = 0;
+  while (i < 4 && m > 1024) {
+    m /= 1024;
+    i += 1;
+  }
+  return m.toFixed(digits) + ['B', 'KB', 'MB', 'GB'][i];
+}
+
+function asHumanHz(val: number, digits = 2): string {
+  if (!val || val === 0) {
+    return '';
+  }
+
+  let h = val;
+  let i = 0;
+  while (i < 4 && h > 1000) {
+    h /= 1000;
+    i += 1;
+  }
+  return h.toFixed(digits) + ['Hz', 'kHz', 'MHz', 'GHz'][i];
+}
+
 export async function dashCompareNew(
   base: string,
   change: string,
@@ -435,12 +475,157 @@ export async function dashCompareNew(
   data.renderData = true;
 
   const results = await db.getMeasurementsForComparison(base, change);
+  const envs: any[] = await db.getEnvironmentsForComparison(base, change);
+
+  for (const e of envs) {
+    e.clockspeedHuman = asHumanHz(e.clockspeed);
+    e.memoryHuman = asHumanMem(e.memory);
+  }
 
   const { nav, navExeComparison } = getNavigation(results);
   data.nav = nav;
   data.navExeComparison = navExeComparison;
 
+  data.allMeasurements = collateMeasurements(results);
+  data.stats = calculateAllStatistics(data.allMeasurements);
+  data.envs = envs;
+
   return data;
+}
+
+function collateMeasurements(
+  data: MeasurementData[]
+): Map<string, Map<string, Map<string, ProcessedResult>>> {
+  const byExeSuiteBench = new Map<
+    string,
+    Map<string, Map<string, ProcessedResult>>
+  >();
+  const runSettings = new Map<string, RunSettings>();
+  const criteria = new Map<string, CriterionData>();
+
+  for (const row of data) {
+    const c = `${row.criterion}|${row.unit}`;
+
+    let criterion = criteria.get(c);
+    if (criterion === undefined) {
+      criterion = {
+        name: row.criterion,
+        unit: row.unit
+      };
+      criteria.set(c, criterion);
+    }
+
+    let runSetting = runSettings.get(row.cmdline);
+    if (runSetting === undefined) {
+      runSetting = {
+        cmdline: row.cmdline,
+        varValue: row.varvalue,
+        cores: row.cores,
+        inputSize: row.inputsize,
+        extraArgs: row.extraargs,
+        warmup: row.warmup,
+        simplifiedCmdline: simplifyCmdline(row.cmdline)
+      };
+      runSettings.set(row.cmdline, runSetting);
+    }
+
+    let forExeBySuiteBench = byExeSuiteBench.get(row.exe);
+    if (forExeBySuiteBench === undefined) {
+      forExeBySuiteBench = new Map();
+      byExeSuiteBench.set(row.exe, forExeBySuiteBench);
+    }
+
+    let forSuiteByBench = forExeBySuiteBench.get(row.suite);
+    if (forSuiteByBench === undefined) {
+      forSuiteByBench = new Map();
+      forExeBySuiteBench.set(row.suite, forSuiteByBench);
+    }
+
+    let benchResult = forSuiteByBench.get(row.bench);
+    if (benchResult === undefined) {
+      benchResult = {
+        exe: row.exe,
+        suite: row.suite,
+        bench: row.bench,
+        measurements: []
+      };
+      forSuiteByBench.set(row.bench, benchResult);
+    }
+
+    let m: Measurements | null = null;
+    for (const mm of benchResult.measurements) {
+      if (
+        mm.envId == row.envid &&
+        mm.commitId == row.commitid &&
+        mm.criterion.name == row.criterion
+      ) {
+        m = mm;
+        break;
+      }
+    }
+
+    if (!m) {
+      m = {
+        criterion,
+        values: [],
+        envId: row.envid,
+        commitId: row.commitid,
+        runSettings: runSetting
+      };
+      benchResult.measurements.push(m);
+    }
+
+    if (!m.values[row.invocation]) {
+      m.values[row.invocation] = [];
+    }
+    m.values[row.invocation][row.iteration] = row.value;
+  }
+
+  return byExeSuiteBench;
+}
+
+function compareMeasurementForSorting(a, b) {
+  let r = a.runSettings.varValue?.localeCompare(b.runSettings.varValue);
+  if (r !== 0) {
+    return r;
+  }
+
+  r = a.runSettings.cores?.localeCompare(b.runSettings.cores);
+  if (r !== 0) {
+    return r;
+  }
+
+  r = a.runSettings.inputSize?.localeCompare(b.runSettings.inputSize);
+  if (r !== 0) {
+    return r;
+  }
+
+  r = a.runSettings.extraArgs?.localeCompare(b.runSettings.extraArgs);
+  if (r !== 0) {
+    return r;
+  }
+
+  r = a.envId - b.envId;
+  if (r !== 0) {
+    return r;
+  }
+
+  return a.commitId.localeCompare(b.commitId);
+}
+
+function calculateAllStatistics(
+  byExeSuiteBench: Map<string, Map<string, Map<string, ProcessedResult>>>
+) {
+  for (const bySuite of byExeSuiteBench.values()) {
+    for (const byBench of bySuite.values()) {
+      for (const bench of byBench.values()) {
+        bench.measurements.sort(compareMeasurementForSorting);
+        for (const m of bench.measurements) {
+          m.stats = calculateSummaryStatistics(m.values.flat());
+        }
+      }
+    }
+  }
 }
 
 function getNavigation(data: MeasurementData[]) {

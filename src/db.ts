@@ -202,6 +202,41 @@ export interface MeasurementData {
   envid: number;
 }
 
+export interface RunSettings {
+  cmdline: string;
+
+  varValue: string;
+  cores: string;
+  inputSize: string;
+  extraArgs: string;
+  warmup: number;
+
+  simplifiedCmdline: string;
+}
+
+export interface CriterionData {
+  name: string;
+  unit: string;
+}
+
+export interface Measurements {
+  criterion: CriterionData;
+  values: number[][];
+
+  envId: number;
+  runSettings: RunSettings;
+  commitId: string;
+  stats?: SummaryStatistics;
+}
+
+export interface ProcessedResult {
+  exe: string;
+  suite: string;
+  bench: string;
+
+  measurements: Measurements[];
+}
+
 export interface RevisionData {
   projectid: number;
   name: string;
@@ -994,6 +1029,33 @@ export abstract class Database {
               ${measurementDataTableJoins}
             WHERE commitId = $1 OR commitid = $2
               ORDER BY expId, runId, invocation, iteration, criterion`,
+      values: [commitHash1, commitHash2]
+    });
+    return result.rows;
+  }
+
+  public async getEnvironmentsForComparison(
+    commitHash1: string,
+    commitHash2: string
+  ): Promise<
+    {
+      envid: number;
+      hostname: string;
+      ostype: string;
+      memory: number;
+      cpu: string;
+      clockspeed: number;
+    }[]
+  > {
+    const result = await this.query({
+      name: 'fetchEnvForComparison',
+      text: `SELECT
+                env.id as envid, env.hostname, env.ostype, env.memory,
+                env.cpu, env.clockspeed
+             FROM Source src
+                JOIN Trial t         ON t.sourceId = src.id
+                JOIN Environment env ON t.envId = env.id
+             WHERE commitId = $1 OR commitid = $2`,
       values: [commitHash1, commitHash2]
     });
     return result.rows;
