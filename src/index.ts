@@ -26,7 +26,7 @@ import {
   dashProfile,
   dashLatestBenchmarksForTimelineView
 } from './dashboard.js';
-import { processTemplate } from './templates.js';
+import { prepareTemplate, processTemplate } from './templates.js';
 import {
   cacheInvalidationDelay,
   dbConfig,
@@ -73,10 +73,12 @@ router.get('/', async (ctx) => {
   ctx.type = 'html';
 });
 
+const projectHtml = prepareTemplate('project.html');
+
 router.get('/:projectSlug', async (ctx) => {
   const project = await db.getProjectBySlug(ctx.params.projectSlug);
   if (project) {
-    ctx.body = processTemplate('project.html', { project });
+    ctx.body = projectHtml(project);
     ctx.type = 'html';
   } else {
     respondProjectNotFound(ctx, ctx.params.projectSlug);
