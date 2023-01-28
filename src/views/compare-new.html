@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>ReBenchDB for {%= it.project %}: Comparing {%= it.baselineHash6 %} with {%= it.changeHash6 %}</title>
+  <meta id="baseHash" value="{%= it.baselineHash %}">
+  <meta id="changeHash" value="{%= it.changeHash %}">
+  <meta id="project-name" value="{%= it.project %}">
+
+  {%- include('header.html') %}
+
+  <script src="/static/compare.js" type="module"></script>
+</head>
+<body class="compare timeline-multi">
+
+<header>
+<div class="jumbotron compare">
+  <h2>ReBenchDB for {%= it.project%}</h2>
+  {% if (it.revDetails) { %}
+  <h3>Comparing <a href="{%= it.base.repourl%}/compare/{%= it.baselineHash%}...{%= it.changeHash%}">{%= it.baselineHash6%} with {%= it.changeHash6%}</a></h3>
+  {% } else { %}
+  <h3>Comparing {%= it.baselineHash6%} with {%= it.changeHash6%}</h3>
+  {% } %}
+</div>
+
+<div class="refresh">
+  <div class="flex-nowrap navbar-light">
+    <button type="button" class="btn btn-outline-secondary btn-sm"
+        data-toggle="collapse" data-target="#filters" aria-controls="#filters"
+        aria-expanded="false" aria-label="Toggle Filters">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-funnel" viewBox="0 0 16 16">
+        <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2h-11z"/>
+      </svg>
+    </button>
+    <button id="show-refresh-form" type="button" class="btn btn-outline-secondary btn-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-repeat" viewBox="0 0 16 16">
+        <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/>
+        <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/>
+      </svg>
+    </button>
+    <button class="navbar-toggler" type="button" data-toggle="collapse"
+        data-target="nav.compare" aria-controls="nav.compare"
+        aria-expanded="false" aria-label="Toggle Outline"
+        id="report-nav-toggler">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <form method="post" action="/admin/refresh/{%= it.project%}/{%= it.baselineHash%}/{%= it.changeHash%}" class="input-group-sm">
+      <input type="password" class="form-control" name="password"
+        placeholder="Password" aria-label="Password">
+    </form>
+  </div>
+</div>
+</header>
+
+<div class="collapse card-columns" id="filters">
+  <div>
+    <button type="button" class="btn btn-secondary" id="filter-all">All</button>
+    <button type="button" class="btn btn-secondary" id="filter-none">None</button>
+  </div>
+  <div id="filter-groups"></div>
+</div>
+
+
+{% if (it.revisionNotFound) { %}
+<div class="alert alert-warning compare" role="alert">
+  <h4 class="alert-heading">Revisions Not Found</h4>
+
+  <p>The project {%= it.project %} does not seem to have data for at least one of the requested revisions.</p>
+  <ul>
+    <li>{%= it.baselineHash %}</li>
+    <li>{%= it.changeHash %}</li>
+  </ul>
+</div>
+{% } %}
+
+{% if (it.noData) { %}
+<div class="compare">
+  <h3>Issue with Unexpected Data</h3>
+  <p>The data provided for baseline and change does not seem to have a common benchmarks/executors.</p>
+  <p>This is known to happen for instance, when benchmarks or parameters are changed, or executors renamed.</p>
+</div>
+{% } %}
+
+{% if (it.renderData) { %}
+<div id="version-details" class="compare">
+  <h2>Version Details</h2>
+  <dl class="row">
+    <dt class="col-sm-2">Baseline</dt>
+    <dd class="col-sm-9">
+      <a href="{%= it.base.repourl%}/compare/{%= it.baselineHash%}"><span class="baseline-badge">{%= it.baselineHash6%}</span></a> {%= it.base.branchortag%}<br/>
+       {%= it.base.authorname%}
+      <pre>{%= it.base.commitmessage%}</pre>
+
+      {%= it.base.name%}
+    </dd>
+    <dt class="col-sm-2">Change</dt>
+    <dd class="col-sm-9">
+      <a href="{%= it.base.repourl%}/compare/{%= it.changeHash%}"><span class="change-badge">{%= it.changeHash6%}</span></a> {%= it.change.branchortag%}<br/>
+       {%= it.change.authorname%}
+      <pre>{%= it.change.commitmessage%}</pre>
+
+      {%= it.change.name%}
+    </dd>
+    <dt class="col-sm-2">Significant Change</dt>
+      <dd class="col-sm-9"><div class="form-row">
+        <input type="range" class="col-6 custom-range" min="0" max="15" step="0.5" id="significance" style="padding-top: 1.75ex; padding-right: 1em;" value="5">
+        <input type="text" readonly class="col-4 form-control-plaintext" id="significance-val" value="5%">
+      </div></dd>
+  </dl>
+</div>
+
+
+<div class="container-fluid"><div class="row flex-xl-nowrap">
+
+  <nav class="col-2 compare">
+  <a href="#overview">Result Overview</a>
+
+  {% for (const n of it.nav) { %}
+  <nav>
+    <span>{%= n.exeName %}</span>
+    {% for (const s of n.suites) { %}
+      <a href="#{%= s %}-{%= n.exeName %}">{%= s %}</a>
+    {% } %}
+  </nav>
+  {% } %}
+
+  {% if (it.navExeComparison && it.navExeComparison.suites) { %}
+  <a href="#exe-comparisons">Executor Comparisons</a>
+  <nav>
+    {% for (const s of it.navExeComparison.suites) { %}
+      <a href="#exe-comp-{%= s %}">{%= s %}</a>
+    {% } %}
+  </nav>
+  {% } %}
+</nav>
+
+<main class="col-8" role="main">
+
+<h2 id="overview">Result Overview</h2>
+<img src="output_url /overview.svg">
+
+<dl class="row">
+  <dt class="col-sm-3">Number of Run Configurations</dt>
+  <dd class="col-sm-8">{%= it.stats.all.numBenchmarks %}</dd>
+
+  <dt class="col-sm-3">Run time (geomean)</dt>
+  <dd class="col-sm-8">{%= it.stats.all.total.geomean %} (min. {%= it.stats.all.total.min %}, max. {%= it.stats.all.total.max %})</dd>
+
+  <dt class="col-sm-3">GC time (geomean)</dt>
+  <dd class="col-sm-8">{%= it.stats.all.gcTime.geomean %} (min. {%= it.stats.all.gcTime.min %}, max. {%= it.stats.all.gcTime.max %})</dd>
+
+  <dt class="col-sm-3">Allocated bytes (geomean)</dt>
+  <dd class="col-sm-8">{%= it.stats.all.allocatedBytes.geomean %} (min. {%= it.stats.all.allocatedBytes.min %}, max. {%= it.stats.all.allocatedBytes.max %})</dd>
+</dl>
+
+{% if (it.notInBoth) { %}
+<h3>Changes in Benchmark Set</h3>
+ TODO
+ show table with
+  commitid, exe, suite, bench, varvalue, cores, inputsize, extraargs
+
+{% } %}
+
+<h2>Benchmark Performance</h2>
+
+{%
+for (const [exeName, suites] of it.allMeasurements.entries()) {
+  for (const [suiteName, suite] of suites.entries()) {
+    if (suite.size > 0) {
+%}
+<div class="exe-suite-group">
+<h3 id="{%= suiteName %}-{%= exeName%}">{%= suiteName%}</h3>
+<div class="title-executor">Executor: {%= exeName%}</div>
+
+{%- include("performanceTable", {suite, envs: it.envs}) %}
+
+</div>
+{%
+    }
+  }
+}
+%}
+
+</main>
+</div></div>
+
+{% } /* if (it.renderData) */ %}
+
+</body>
+</html>
