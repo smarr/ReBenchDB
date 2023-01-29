@@ -616,9 +616,14 @@ function compareMeasurementForSorting(a, b) {
 function calculateAllStatistics(
   byExeSuiteBench: Map<string, Map<string, Map<string, ProcessedResult>>>
 ) {
+  let numBenchmarks = 0;
   for (const bySuite of byExeSuiteBench.values()) {
     for (const byBench of bySuite.values()) {
       for (const bench of byBench.values()) {
+        // TODO: what do we want this to mean?
+        // do we want this to be runIds? i.e., different command lines?
+        numBenchmarks += 1;
+
         bench.measurements.sort(compareMeasurementForSorting);
         for (const m of bench.measurements) {
           m.stats = calculateSummaryStatistics(m.values.flat());
@@ -626,6 +631,17 @@ function calculateAllStatistics(
       }
     }
   }
+
+  // TODO: ideally, we would want all but the total criterion's to be picked up
+  // dynamically, automatically
+  return {
+    all: {
+      numBenchmarks,
+      total: { geomean: 'TODO', min: 'TODO', max: 'TODO' },
+      gcTime: { geomean: 'TODO', min: 'TODO', max: 'TODO' },
+      allocatedBytes: { geomean: 'TODO', min: 'TODO', max: 'TODO' }
+    }
+  };
 }
 
 function getNavigation(data: MeasurementData[]) {
