@@ -22,7 +22,11 @@ const ejsConfig: Options = {
   localsName: 'it'
 };
 
-export function prepareTemplate(filename: string): TemplateFunction {
+export function prepareTemplate(
+  filename: string,
+  rmWhitespace = false
+): TemplateFunction {
   const fileContent = readFileSync(robustPath(`views/${filename}`)).toString();
-  return <TemplateFunction>compile(fileContent, ejsConfig);
+  const config = { ...ejsConfig, rmWhitespace };
+  return <TemplateFunction>compile(fileContent, config);
 }
