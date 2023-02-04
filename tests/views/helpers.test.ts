@@ -1,4 +1,8 @@
-import { commonStringStart, withoutStart } from '../../src/views/helpers';
+import {
+  commonStringStart,
+  PerIterationOutput,
+  withoutStart
+} from '../../src/views/helpers';
 
 describe('Helper functions for the views', () => {
   describe('commonStringStart()', () => {
@@ -85,6 +89,26 @@ describe('Helper functions for the views', () => {
           'TruffleSOM-native-interp-ast'
         )
       ).toBe('ast');
+    });
+  });
+
+  describe('PerIterationOutput', () => {
+    it('should return the first string on the first call', () => {
+      const output = new PerIterationOutput('first', 'second');
+      expect(output.next()).toBe('first');
+    });
+
+    it('should return the second string on the second call', () => {
+      const output = new PerIterationOutput('first', 'second');
+      output.next();
+      expect(output.next()).toBe('second');
+    });
+
+    it('should return the second string on the third call', () => {
+      const output = new PerIterationOutput('first', 'second');
+      output.next();
+      output.next();
+      expect(output.next()).toBe('second');
     });
   });
 });

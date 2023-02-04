@@ -28,3 +28,24 @@ export function withoutStart(prefix: string, str: string): string {
   }
   return str;
 }
+
+export class PerIterationOutput {
+  private readonly first: string;
+  private readonly allButFirst: string;
+
+  private isFirst: boolean;
+
+  constructor(first: string, allButFirst: string) {
+    this.first = first;
+    this.allButFirst = allButFirst;
+    this.isFirst = true;
+  }
+
+  public next(): string {
+    if (this.isFirst) {
+      this.isFirst = false;
+      return this.first;
+    }
+    return this.allButFirst;
+  }
+}
