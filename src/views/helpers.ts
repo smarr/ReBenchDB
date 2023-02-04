@@ -18,3 +18,13 @@ export function commonStringStart(strings: string[]): string {
 
   return first.slice(0, i);
 }
+
+/**
+ * Remove a prefix from a string.
+ */
+export function withoutStart(prefix: string, str: string): string {
+  if (str.startsWith(prefix)) {
+    return str.slice(prefix.length);
+  }
+  return str;
+}

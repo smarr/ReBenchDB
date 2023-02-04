@@ -1,4 +1,4 @@
-import { commonStringStart } from '../../src/views/helpers';
+import { commonStringStart, withoutStart } from '../../src/views/helpers';
 
 describe('Helper functions for the views', () => {
   describe('commonStringStart()', () => {
@@ -42,6 +42,49 @@ describe('Helper functions for the views', () => {
           'TruffleSOM-native-interp-bc'
         ])
       ).toBe('TruffleSOM-native-interp-');
+    });
+  });
+
+  describe('withoutStart()', () => {
+    it('should remove a prefix from a string', () => {
+      expect(withoutStart('foo', 'foobar')).toBe('bar');
+    });
+
+    it('should return the string if the prefix is not present', () => {
+      expect(withoutStart('foo', 'bar')).toBe('bar');
+    });
+
+    it('should return the string if the prefix is empty', () => {
+      expect(withoutStart('', 'bar')).toBe('bar');
+    });
+
+    it('should return an empty string if the string is empty', () => {
+      expect(withoutStart('foo', '')).toBe('');
+    });
+
+    it('should return string if prefix is longer than the it', () => {
+      expect(withoutStart('foobar', 'foo')).toBe('foo');
+    });
+
+    it('should return empty string if prefix is equal to the string', () => {
+      expect(withoutStart('foo', 'foo')).toBe('');
+    });
+
+    it('should work as expected for VM name examples', () => {
+      expect(
+        withoutStart('SomSom-native-interp-', 'SomSom-native-interp-ast')
+      ).toBe('ast');
+
+      expect(withoutStart('TruffleSOM-graal', 'TruffleSOM-graal-bc')).toBe(
+        '-bc'
+      );
+
+      expect(
+        withoutStart(
+          'TruffleSOM-native-interp-',
+          'TruffleSOM-native-interp-ast'
+        )
+      ).toBe('ast');
     });
   });
 });
