@@ -29,6 +29,9 @@ export function withoutStart(prefix: string, str: string): string {
   return str;
 }
 
+/**
+ * Return a string based on the iteration a loop is in.
+ */
 export class PerIterationOutput {
   private readonly first: string;
   private readonly allButFirst: string;
