@@ -140,7 +140,7 @@
 
 <dl class="row">
   <dt class="col-sm-3">Number of Run Configurations</dt>
-  <dd class="col-sm-8">{%= it.stats.all.numBenchmarks %}</dd>
+  <dd class="col-sm-8">{%= it.stats.all.numRunConfigs %}</dd>
 
   <dt class="col-sm-3">Run time (geomean)</dt>
   <dd class="col-sm-8">{%= it.stats.all.total.geomean %} (min. {%= it.stats.all.total.min %}, max. {%= it.stats.all.total.max %})</dd>
@@ -171,7 +171,7 @@ for (const [exeName, suites] of it.allMeasurements.entries()) {
 <h3 id="{%= suiteName %}-{%= exeName%}">{%= suiteName%}</h3>
 <div class="title-executor">Executor: {%= exeName%}</div>
 
-{%- include("performanceTable", {suite, envs: it.envs}) %}
+{%- include('performance-table.html', {suite, envs: it.envs}) %}
 
 </div>
 {%

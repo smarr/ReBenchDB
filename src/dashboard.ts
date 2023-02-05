@@ -616,13 +616,12 @@ function compareMeasurementForSorting(a, b) {
 function calculateAllStatistics(
   byExeSuiteBench: Map<string, Map<string, Map<string, ProcessedResult>>>
 ) {
-  let numBenchmarks = 0;
+  let numRunConfigs = 0;
   for (const bySuite of byExeSuiteBench.values()) {
     for (const byBench of bySuite.values()) {
       for (const bench of byBench.values()) {
-        // TODO: what do we want this to mean?
-        // do we want this to be runIds? i.e., different command lines?
-        numBenchmarks += 1;
+        // TODO: make sure this is really the numRunConfigs
+        numRunConfigs += 1;
 
         bench.measurements.sort(compareMeasurementForSorting);
         for (const m of bench.measurements) {
@@ -636,7 +635,7 @@ function calculateAllStatistics(
   // dynamically, automatically
   return {
     all: {
-      numBenchmarks,
+      numRunConfigs,
       total: { geomean: 'TODO', min: 'TODO', max: 'TODO' },
       gcTime: { geomean: 'TODO', min: 'TODO', max: 'TODO' },
       allocatedBytes: { geomean: 'TODO', min: 'TODO', max: 'TODO' }
