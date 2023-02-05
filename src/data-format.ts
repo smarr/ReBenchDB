@@ -1,3 +1,5 @@
+import type { Environment } from 'db';
+
 /**
  * Round to 0 decimal places.
  */
@@ -55,4 +57,20 @@ export function asHumanHz(val: number, digits = 0): string {
   }
 
   return `${h.toFixed(digits)}${hz[i]}`;
+}
+
+/**
+ * Return a string with the environment information for display.
+ */
+export function formatEnvironment(
+  envId: number,
+  environments: Environment[]
+): string | undefined {
+  const env = environments.find((e) => e.id === envId);
+  if (env === undefined) {
+    return undefined;
+  }
+  return `${env.hostname} | ${env.ostype} | ${asHumanMem(env.memory)} | ${
+    env.cpu
+  } | ${asHumanHz(env.clockspeed)}`;
 }

@@ -1,4 +1,5 @@
-import { asHumanHz, asHumanMem, per, r0, r2 } from '../src/num-format';
+import { Environment } from 'db';
+import { asHumanHz, asHumanMem, formatEnvironment, per, r0, r2 } from '../src/data-format';
 
 describe('Format Functions for Numerical Values', () => {
   describe('r0 - round to 0 decimal places', () => {
@@ -88,6 +89,34 @@ describe('Format Functions for Numerical Values', () => {
       expect(asHumanHz(1000 * 1000)).toBe('1MHz');
       expect(asHumanHz(1000 * 1000 * 1000)).toBe('1GHz');
       expect(asHumanHz(1000 * 1000 * 1000 * 1000)).toBe('1000GHz');
+    });
+  });
+
+  describe('formatEnvironment - for display to user', () => {
+    const envs: Environment[] = [
+      {
+        id: 1,
+        hostname: 'host',
+        ostype: 'Linux',
+        memory: 453454333,
+        cpu: 'Intel Something',
+        clockspeed: 10000000,
+        note: 'a note'
+      }
+    ];
+
+    it('should return a string, if the environment is found', () => {
+      expect(formatEnvironment(1, envs)).toBe(
+        'host | Linux | 432MB | Intel Something | 10MHz'
+      );
+    });
+
+    it('should return undefined, if the environment is not found', () => {
+      expect(formatEnvironment(2, envs)).toBe(undefined);
+    });
+
+    it('should return undefined, if the environment list is empty', () => {
+      expect(formatEnvironment(1, [])).toBe(undefined);
     });
   });
 });
