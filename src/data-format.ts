@@ -1,3 +1,4 @@
+import type { BenchmarkId } from 'api';
 import type { Environment } from 'db';
 
 /**
@@ -73,4 +74,37 @@ export function formatEnvironment(
   return `${env.hostname} | ${env.ostype} | ${asHumanMem(env.memory)} | ${
     env.cpu
   } | ${asHumanHz(env.clockspeed)}`;
+}
+
+/**
+ * Return a minimal object identifying the run id.
+ */
+export function benchmarkId(
+  benchmarkName: string,
+  exeName: string,
+  suiteName: string,
+  varValue: string,
+  numVarValues: number,
+  cores: string,
+  numCores: number,
+  inputSize: string,
+  numInputSizes: number,
+  extraArgs: string,
+  numExtraArgs: number
+): BenchmarkId {
+  const obj: BenchmarkId = { b: benchmarkName, e: exeName, s: suiteName };
+
+  if (numVarValues > 1) {
+    obj.v = varValue;
+  }
+  if (numCores > 1) {
+    obj.c = cores;
+  }
+  if (numInputSizes > 1) {
+    obj.i = inputSize;
+  }
+  if (numExtraArgs > 1) {
+    obj.ea = extraArgs;
+  }
+  return obj;
 }

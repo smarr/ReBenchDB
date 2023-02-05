@@ -160,13 +160,7 @@ export interface VersionInfo {
   version: string;
 }
 
-export interface TimelineRequest {
-  /** commit id for baseline */
-  baseline: string;
-
-  /** commit id for change */
-  change: string;
-
+export interface BenchmarkId {
   /** benchmark name */
   b: string;
 
@@ -187,6 +181,14 @@ export interface TimelineRequest {
 
   /** extra args */
   ea?: string;
+}
+
+export interface TimelineRequest extends BenchmarkId {
+  /** commit id for baseline */
+  baseline: string;
+
+  /** commit id for change */
+  change: string;
 }
 
 export interface TimelineResponse {
