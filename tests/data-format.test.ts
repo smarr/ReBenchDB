@@ -164,5 +164,13 @@ describe('Format Functions for Numerical Values', () => {
         benchmarkId('b', 'e', 's', 'v', 2, 'c', 2, 'i', 2, 'ea', 2)
       ).toEqual({ b: 'b', e: 'e', s: 's', v: 'v', c: 'c', i: 'i', ea: 'ea' });
     });
+
+    it('should JSON.stringify without extra characters', () => {
+      expect(
+        JSON.stringify(
+          benchmarkId('bench', 'exe', 'suite', 'v', 1, 'c', 1, 'i', 1, 'ea', 1)
+        )
+      ).toBe('{"b":"bench","e":"exe","s":"suite"}');
+    });
   });
 });

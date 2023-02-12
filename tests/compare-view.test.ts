@@ -3,6 +3,7 @@ import { prepareTemplate } from '../src/templates.js';
 import * as numFormat from '../src/data-format.js';
 import * as viewHelpers from '../src/views/helpers.js';
 import {
+  ButtonsAdditionalInfo,
   CompareStatsRowAcrossExes,
   CompareStatsRowAcrossVersions
 } from 'views/view-types.js';
@@ -120,6 +121,63 @@ bc 12
 <span class="stats-change" title="change over median allocated">604600</span>
 
 </td>`);
+    });
+  });
+
+  describe('Buttons for Additional Information', () => {
+    const tpl = prepareTemplate('compare/buttons-additional-info.html', true);
+
+    it('with full data, it should render all buttons', () => {
+      const data: ButtonsAdditionalInfo = {
+        cmdline: 'som/some-command with args',
+        environments: [
+          {
+            id: 1,
+            hostname: 'MyHost',
+            ostype: 'Linux',
+            memory: 123456,
+            cpu: 'Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz',
+            clockspeed: 2800000000,
+            note: 'Some notes'
+          }
+        ],
+        envId: 1,
+        hasProfileData: true,
+        base: {
+          commitId: '123456',
+          runId: 1,
+          trialId: 2
+        },
+        change: {
+          commitId: '123457',
+          runId: 3,
+          trialId: 4
+        },
+        numV: 0,
+        numC: 0,
+        numI: 0,
+        numEa: 0,
+        b: 'my-benchmark',
+        e: 'exe1',
+        s: 'suite2',
+        ...numFormat,
+        ...viewHelpers
+      };
+
+      const result = tpl(data);
+      console.log(result);
+      expect(result)
+        .toEqual(`<button type="button" class="btn btn-sm btn-cmdline btn-popover"
+data-content="<code>som/some-command with args</code>"></button>
+
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+data-content="MyHost | Linux | 121kb | Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz | 3GHz"></button>
+
+
+
+<button type="button" class="btn btn-sm btn-profile" data-content="123456/1/2,123457/3/4"></button>
+
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"my-benchmark","e":"exe1","s":"suite2"}'></button>`);
     });
   });
 });

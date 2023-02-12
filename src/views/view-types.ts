@@ -1,4 +1,5 @@
-import { BenchmarkId, Environment } from 'api';
+import { BenchmarkId } from 'api';
+import { Environment } from 'db';
 import { ComparisonStatistics } from 'stats';
 
 declare type DataFormat = typeof import('../data-format');
