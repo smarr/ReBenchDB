@@ -1,3 +1,4 @@
+logo
 dist
 node_modules
 .vscode
@@ -9,6 +10,9 @@ tmp/interm
 .Rhistory
 .Rproj.user
 *.Rproj
+*.qs
+*.swp
+/coverage
 /resources/exp-data
 /src/views/somns.html
 /src/views/test.html
