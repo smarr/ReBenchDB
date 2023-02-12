@@ -2,16 +2,20 @@
 import { prepareTemplate } from '../src/templates.js';
 import * as numFormat from '../src/data-format.js';
 import * as viewHelpers from '../src/views/helpers.js';
+import {
+  CompareStatsRowAcrossExes,
+  CompareStatsRowAcrossVersions
+} from 'views/view-types.js';
 
 describe('Compare View Parts', () => {
   describe('Statistics in Row for Comparison Across Versions', () => {
     const tpl = prepareTemplate('compare/stats-row-across-versions.html');
 
     it('should render <td> elements with the statistics', () => {
-      const data = {
+      const data: CompareStatsRowAcrossVersions = {
         total: { median: 0.333, samples: 43, change_m: 546 },
-        gcTime: { median: 0.111, change_m: 546 },
-        allocated: { median: 222, change_m: 646 },
+        gcTime: { median: 0.111, samples: 2, change_m: 546 },
+        allocated: { median: 222, samples: 2, change_m: 646 },
         ...numFormat,
         ...viewHelpers
       };
@@ -31,19 +35,19 @@ describe('Compare View Parts', () => {
     const tpl = prepareTemplate('compare/stats-row-across-exes.html', true);
 
     it('should render <td> elements with the statistics', () => {
-      const data = {
+      const data: CompareStatsRowAcrossExes = {
         exes: [
           {
             name: 'TruffleSOM-ast',
             total: { median: 0.333, samples: 43, change_m: 546 },
-            gcTime: { median: 0.111, change_m: 546 },
-            allocated: { median: 222, change_m: 646 }
+            gcTime: { median: 0.111, samples: 1, change_m: 546 },
+            allocated: { median: 222, samples: 1, change_m: 646 }
           },
           {
             name: 'TruffleSOM-bc',
             total: { median: 0.4534, samples: 12, change_m: 34 },
-            gcTime: { median: 0.256, change_m: 2323 },
-            allocated: { median: 675, change_m: 6046 }
+            gcTime: { median: 0.256, samples: 1, change_m: 2323 },
+            allocated: { median: 675, samples: 1, change_m: 6046 }
           }
         ],
         ...numFormat,

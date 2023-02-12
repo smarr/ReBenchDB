@@ -281,6 +281,12 @@ export interface SummaryStatistics {
   bci95up: number;
 }
 
+export interface ComparisonStatistics {
+  median: number;
+  samples: number;
+  change_m: number;
+}
+
 export function preciseVariance(data: number[]): number {
   return preciseVarianceWithMean(data, preciseMean(data));
 }
