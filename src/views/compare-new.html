@@ -135,22 +135,7 @@
 
 <main class="col-8" role="main">
 
-<h2 id="overview">Result Overview</h2>
-<img src="output_url /overview.svg">
-
-<dl class="row">
-  <dt class="col-sm-3">Number of Run Configurations</dt>
-  <dd class="col-sm-8">{%= it.stats.all.numRunConfigs %}</dd>
-
-  <dt class="col-sm-3">Run time (geomean)</dt>
-  <dd class="col-sm-8">{%= it.stats.all.total.geomean %} (min. {%= it.stats.all.total.min %}, max. {%= it.stats.all.total.max %})</dd>
-
-  <dt class="col-sm-3">GC time (geomean)</dt>
-  <dd class="col-sm-8">{%= it.stats.all.gcTime.geomean %} (min. {%= it.stats.all.gcTime.min %}, max. {%= it.stats.all.gcTime.max %})</dd>
-
-  <dt class="col-sm-3">Allocated bytes (geomean)</dt>
-  <dd class="col-sm-8">{%= it.stats.all.allocatedBytes.geomean %} (min. {%= it.stats.all.allocatedBytes.min %}, max. {%= it.stats.all.allocatedBytes.max %})</dd>
-</dl>
+{%- include('compare/stats-summary.html') %}
 
 {% if (it.notInBoth) { %}
 <h3>Changes in Benchmark Set</h3>

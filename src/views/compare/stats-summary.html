@@ -1,0 +1,16 @@
+<h2 id="overview">Result Overview</h2>
+<img src="{%= it.overviewUrl %}">
+
+<dl class="row">
+  <dt class="col-sm-3">Number of Run Configurations</dt>
+  <dd class="col-sm-8">{%= it.numRunConfigs %}</dd>
+
+  <dt class="col-sm-3">Run time (geomean)</dt>
+  <dd class="col-sm-8">{%= it.total.geomean %} (min. {%= it.total.min %}, max. {%= it.total.max %})</dd>
+
+  <dt class="col-sm-3">GC time (geomean)</dt>
+  <dd class="col-sm-8">{%= it.gcTime.geomean %} (min. {%= it.gcTime.min %}, max. {%= it.gcTime.max %})</dd>
+
+  <dt class="col-sm-3">Allocated bytes (geomean)</dt>
+  <dd class="col-sm-8">{%= it.allocated.geomean %} (min. {%= it.allocated.min %}, max. {%= it.allocated.max %})</dd>
+</dl>

@@ -1,9 +1,18 @@
 import { BenchmarkId } from 'api';
 import { Environment } from 'db';
-import { ComparisonStatistics } from 'stats';
+import { ComparisonStatistics, OverviewSummaryStatistics } from 'stats';
 
 declare type DataFormat = typeof import('../data-format');
 declare type ViewHelpers = typeof import('./helpers');
+
+/** Summary statistics for the overall comparison. */
+export interface StatsSummary {
+  overviewUrl: string;
+  numRunConfigs: number;
+  total: OverviewSummaryStatistics;
+  gcTime: OverviewSummaryStatistics;
+  allocated: OverviewSummaryStatistics;
+}
 
 /** Types for the Compare Partials */
 

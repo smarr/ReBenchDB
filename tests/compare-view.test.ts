@@ -5,7 +5,8 @@ import * as viewHelpers from '../src/views/helpers.js';
 import {
   ButtonsAdditionalInfo,
   CompareStatsRowAcrossExes,
-  CompareStatsRowAcrossVersions
+  CompareStatsRowAcrossVersions,
+  StatsSummary
 } from 'views/view-types.js';
 
 describe('Compare View Parts', () => {
@@ -165,7 +166,6 @@ bc 12
       };
 
       const result = tpl(data);
-      console.log(result);
       expect(result)
         .toEqual(`<button type="button" class="btn btn-sm btn-cmdline btn-popover"
 data-content="<code>som/some-command with args</code>"></button>
@@ -178,6 +178,34 @@ data-content="MyHost | Linux | 121kb | Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz
 <button type="button" class="btn btn-sm btn-profile" data-content="123456/1/2,123457/3/4"></button>
 
 <button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"my-benchmark","e":"exe1","s":"suite2"}'></button>`);
+    });
+  });
+
+  describe('Summary Statistics for Whole Comparison', () => {
+    const tpl = prepareTemplate('compare/stats-summary.html', true);
+
+    it('should render the data as expected', () => {
+      const data: StatsSummary = {
+        overviewUrl: 'some-url.svg',
+        numRunConfigs: 232,
+        total: { min: 0.1, max: 1.1, geomean: 0.5 },
+        gcTime: { min: 2.1, max: 3.1, geomean: 2.5 },
+        allocated: { min: 4.1, max: 5.1, geomean: 4.5 }
+      };
+
+      const result = tpl(data);
+      expect(result).toEqual(`<h2 id="overview">Result Overview</h2>
+<img src="some-url.svg">
+<dl class="row">
+<dt class="col-sm-3">Number of Run Configurations</dt>
+<dd class="col-sm-8">232</dd>
+<dt class="col-sm-3">Run time (geomean)</dt>
+<dd class="col-sm-8">0.5 (min. 0.1, max. 1.1)</dd>
+<dt class="col-sm-3">GC time (geomean)</dt>
+<dd class="col-sm-8">2.5 (min. 2.1, max. 3.1)</dd>
+<dt class="col-sm-3">Allocated bytes (geomean)</dt>
+<dd class="col-sm-8">4.5 (min. 4.1, max. 5.1)</dd>
+</dl>`);
     });
   });
 });

@@ -270,6 +270,14 @@ export function bootstrapConfidenceInterval(
   return confidenceSlice(means, confidence);
 }
 
+/** Summarizing multiple benchmarks. */
+export interface OverviewSummaryStatistics {
+  min: number;
+  max: number;
+  geomean: number;
+}
+
+/** Summarizing a single benchmark. */
 export interface SummaryStatistics {
   min: number;
   max: number;
