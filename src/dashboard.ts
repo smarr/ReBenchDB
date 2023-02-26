@@ -408,34 +408,6 @@ export async function dashCompare(
   return data;
 }
 
-function asHumanMem(val: number, digits = 2): string {
-  if (!val || val === 0) {
-    return '';
-  }
-
-  let m = val;
-  let i = 0;
-  while (i < 4 && m > 1024) {
-    m /= 1024;
-    i += 1;
-  }
-  return m.toFixed(digits) + ['B', 'KB', 'MB', 'GB'][i];
-}
-
-function asHumanHz(val: number, digits = 2): string {
-  if (!val || val === 0) {
-    return '';
-  }
-
-  let h = val;
-  let i = 0;
-  while (i < 4 && h > 1000) {
-    h /= 1000;
-    i += 1;
-  }
-  return h.toFixed(digits) + ['Hz', 'kHz', 'MHz', 'GHz'][i];
-}
-
 export async function dashCompareNew(
   base: string,
   change: string,
@@ -477,10 +449,6 @@ export async function dashCompareNew(
   const results = await db.getMeasurementsForComparison(base, change);
   const envs: any[] = await db.getEnvironmentsForComparison(base, change);
 
-  for (const e of envs) {
-    e.clockspeedHuman = asHumanHz(e.clockspeed);
-    e.memoryHuman = asHumanMem(e.memory);
-  }
 
   const { nav, navExeComparison } = getNavigation(results);
   data.nav = nav;
