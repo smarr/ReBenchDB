@@ -1,7 +1,8 @@
 import { Measurements, RunSettings } from '../src/db.js';
 import {
   compareStringOrNull,
-  compareToSortForSinglePassChangeStats
+  compareToSortForSinglePassChangeStats,
+  dropMeasurementsWhereBaseOrChangeIsMissing
 } from '../src/stats-data-prep.js';
 
 describe('compareStringOrNull()', () => {
@@ -30,17 +31,17 @@ describe('compareStringOrNull()', () => {
   });
 });
 
-describe('compareToSortForSinglePassChangeStats()', () => {
-  const runSettings: RunSettings = {
-    cmdline: 'Exec TestBenchmark1',
-    varValue: null,
-    cores: null,
-    inputSize: null,
-    extraArgs: null,
-    warmup: null,
-    simplifiedCmdline: 'Exec TestBenchmark1'
-  };
+const runSettings: RunSettings = {
+  cmdline: 'Exec TestBenchmark1',
+  varValue: null,
+  cores: null,
+  inputSize: null,
+  extraArgs: null,
+  warmup: null,
+  simplifiedCmdline: 'Exec TestBenchmark1'
+};
 
+describe('compareToSortForSinglePassChangeStats()', () => {
   it('should give expected order when just commitId different', () => {
     const data: Measurements[] = [
       {
@@ -201,5 +202,163 @@ describe('compareToSortForSinglePassChangeStats()', () => {
     expect(data[7].commitId).toBe('b');
     expect(data[7].envId).toBe(2);
     expect(data[7].criterion.name).toBe('total');
+  });
+});
+
+describe('dropMeasurementsWhereBaseOrChangeIsMissing()', () => {
+  it('should not drop anything from properly paired up list', () => {
+    const data: Measurements[] = [
+      {
+        criterion: { name: 'total', unit: 'ms' },
+        values: [[]],
+        envId: 1,
+        commitId: 'a',
+        runSettings
+      },
+      {
+        criterion: { name: 'total', unit: 'ms' },
+        values: [[]],
+        envId: 1,
+        commitId: 'b',
+        runSettings
+      },
+      {
+        criterion: { name: 'alloc', unit: 'byte' },
+        values: [[]],
+        envId: 1,
+        commitId: 'a',
+        runSettings
+      },
+      {
+        criterion: { name: 'alloc', unit: 'byte' },
+        values: [[]],
+        envId: 1,
+        commitId: 'b',
+        runSettings
+      }
+    ];
+
+    const dropped = dropMeasurementsWhereBaseOrChangeIsMissing(data);
+
+    expect(data.length).toBe(4);
+    expect(dropped).toBeUndefined();
+  });
+
+  it('should drop measurements where base is missing', () => {
+    const data: Measurements[] = [
+      {
+        criterion: { name: 'total', unit: 'ms' },
+        values: [[]],
+        envId: 1,
+        commitId: 'a',
+        runSettings
+      },
+      {
+        criterion: { name: 'total', unit: 'ms' },
+        values: [[]],
+        envId: 1,
+        commitId: 'b',
+        runSettings
+      },
+      {
+        criterion: { name: 'alloc', unit: 'byte' },
+        values: [[]],
+        envId: 1,
+        commitId: 'b',
+        runSettings
+      }
+    ];
+
+    const dropped = dropMeasurementsWhereBaseOrChangeIsMissing(data);
+
+    expect(data.length).toBe(2);
+    expect(dropped).toBeDefined();
+    if (dropped === undefined) throw new Error('dropped is undefined');
+    expect(dropped.length).toBe(1);
+    expect(dropped[0].commitId).toBe('b');
+    expect(dropped[0].criterion.name).toBe('alloc');
+  });
+
+  it('should drop measurements where change is missing', () => {
+    const data: Measurements[] = [
+      {
+        criterion: { name: 'total', unit: 'ms' },
+        values: [[]],
+        envId: 1,
+        commitId: 'a',
+        runSettings
+      },
+      {
+        criterion: { name: 'total', unit: 'ms' },
+        values: [[]],
+        envId: 1,
+        commitId: 'b',
+        runSettings
+      },
+      {
+        criterion: { name: 'alloc', unit: 'byte' },
+        values: [[]],
+        envId: 1,
+        commitId: 'a',
+        runSettings
+      }
+    ];
+
+    const dropped = dropMeasurementsWhereBaseOrChangeIsMissing(data);
+
+    expect(data.length).toBe(2);
+    expect(dropped).toBeDefined();
+    if (dropped === undefined) throw new Error('dropped is undefined');
+    expect(dropped.length).toBe(1);
+    expect(dropped[0].commitId).toBe('a');
+    expect(dropped[0].criterion.name).toBe('alloc');
+  });
+
+  it('should drop measurements that do not pair up', () => {
+    const data: Measurements[] = [
+      {
+        criterion: { name: 'total', unit: 'ms' },
+        values: [[]],
+        envId: 1,
+        commitId: 'a',
+        runSettings
+      },
+      {
+        criterion: { name: 'total', unit: 'ms' },
+        values: [[]],
+        envId: 2,
+        commitId: 'a',
+        runSettings
+      },
+      {
+        criterion: { name: 'alloc', unit: 'byte' },
+        values: [[]],
+        envId: 1,
+        commitId: 'a',
+        runSettings
+      },
+      {
+        criterion: { name: 'trace', unit: 'byte' },
+        values: [[]],
+        envId: 1,
+        commitId: 'c',
+        runSettings
+      }
+    ];
+
+    const dropped = dropMeasurementsWhereBaseOrChangeIsMissing(data);
+
+    expect(data.length).toBe(0);
+    expect(dropped).toBeDefined();
+    if (dropped === undefined) throw new Error('dropped is undefined');
+    expect(dropped.length).toBe(4);
+    expect(dropped[0].commitId).toBe('a');
+    expect(dropped[0].envId).toBe(1);
+    expect(dropped[1].commitId).toBe('a');
+    expect(dropped[1].envId).toBe(2);
+    expect(dropped[2].commitId).toBe('a');
+    expect(dropped[2].criterion.name).toBe('alloc');
+    expect(dropped[3].commitId).toBe('c');
+    expect(dropped[3].criterion.name).toBe('trace');
   });
 });
