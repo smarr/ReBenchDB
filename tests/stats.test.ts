@@ -5,7 +5,7 @@ import {
   bootstrapConfidenceInterval,
   bootstrapMeans,
   bootstrapSampleWithReplacement,
-  calculateDifferenceStatistics,
+  calculateChangeStatistics,
   calculateSummaryStatistics,
   ComparisonStatistics,
   confidence95SliceIndices,
@@ -258,9 +258,9 @@ describe('calculateSummaryStatistics()', () => {
   });
 });
 
-describe('calculateDifferenceStatistics()', () => {
+describe('calculateChangeStatistics()', () => {
   it('should produce expected values for known data', () => {
-    const stats: ComparisonStatistics = calculateDifferenceStatistics(
+    const stats: ComparisonStatistics = calculateChangeStatistics(
       [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
       [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     );
@@ -272,7 +272,7 @@ describe('calculateDifferenceStatistics()', () => {
 
   it('should given an error when base and change have different length', () => {
     expect(() => {
-      calculateDifferenceStatistics(
+      calculateChangeStatistics(
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       );
@@ -283,7 +283,7 @@ describe('calculateDifferenceStatistics()', () => {
   });
 
   it('should work on unordered data', () => {
-    const stats: ComparisonStatistics = calculateDifferenceStatistics(
+    const stats: ComparisonStatistics = calculateChangeStatistics(
       [0, 1, 2, 3, 4, 5, 6, 7, 8],
       [9, 8, 7, 6, 5, 4, 3, 2, 1]
     );

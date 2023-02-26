@@ -340,7 +340,7 @@ export function calculateSummaryStatistics(
   };
 }
 
-export function calculateDifferenceStatistics(
+export function calculateChangeStatistics(
   base: number[],
   change: number[]
 ): ComparisonStatistics {
