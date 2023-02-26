@@ -163,17 +163,17 @@ CREATE TABLE SoftwareUse (
 -- which we refer to as iterations of a run.
 CREATE TABLE Run (
   id serial primary key,
-  benchmarkId smallint,
-  suiteId smallint,
-  execId smallint,
-  cmdline text unique,
+  benchmarkId smallint NOT NULL,
+  suiteId smallint NOT NULL,
+  execId smallint NOT NULL,
+  cmdline text unique NOT NULL,
   location text,
   varValue varchar,
   cores varchar,
   inputSize varchar,
   extraArgs varchar,
-  maxInvocationTime int,
-  minIterationTime int,
+  maxInvocationTime int NOT NULL,
+  minIterationTime int NOT NULL,
   warmup int,
 
   foreign key (execId) references Executor (id),
