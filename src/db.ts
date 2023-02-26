@@ -162,7 +162,7 @@ export interface Run {
   extraargs: string | null;
   maxinvocationtime: number;
   miniterationtime: number;
-  warmup: number;
+  warmup: number | null;
 }
 
 export interface Measurement {
@@ -189,13 +189,13 @@ export interface MeasurementData {
   exe: string;
   suite: string;
   cmdline: string;
-  varvalue: string;
-  cores: string;
-  inputsize: string;
-  extraargs: string;
+  varvalue: string | null;
+  cores: string | null;
+  inputsize: string | null;
+  extraargs: string | null;
   invocation: number;
   iteration: number;
-  warmup: number;
+  warmup: number | null;
   criterion: string;
   unit: string;
   value: number;
@@ -205,11 +205,11 @@ export interface MeasurementData {
 export interface RunSettings {
   cmdline: string;
 
-  varValue: string;
-  cores: string;
-  inputSize: string;
-  extraArgs: string;
-  warmup: number;
+  varValue: string | null;
+  cores: string | null;
+  inputSize: string | null;
+  extraArgs: string | null;
+  warmup: number | null;
 
   simplifiedCmdline: string;
 }
@@ -221,6 +221,11 @@ export interface CriterionData {
 
 export interface Measurements {
   criterion: CriterionData;
+
+  /**
+   * Indexed first by invocation, than by iteration.
+   * Example to get the value of 3 invocation and 5 iteration: `values[3][5]`.
+   */
   values: number[][];
 
   envId: number;
