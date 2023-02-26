@@ -611,7 +611,7 @@ function calculateAllStatistics(
   };
 }
 
-function getNavigation(data: MeasurementData[]) {
+export function getNavigation(data: MeasurementData[]) {
   const executors = new Map<string, Set<string>>();
   const allSuites = new Map<string, Set<string>>();
 

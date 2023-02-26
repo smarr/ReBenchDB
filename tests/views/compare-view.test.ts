@@ -9,6 +9,7 @@ import {
   StatsSummary
 } from 'views/view-types.js';
 import { robustPath } from '../../src/util.js';
+import { getNavigation } from '../../src/dashboard.js';
 
 function loadResult(name: string): string {
   return readFileSync(
@@ -119,6 +120,81 @@ describe('Compare View Parts', () => {
 
       const result = tpl(data);
       expect(result).toEqual(loadResult('stats-summary'));
+    });
+  });
+});
+
+describe('Compare View Navigation', () => {
+  const dataJsSOM = JSON.parse(
+    readFileSync(
+      robustPath(`../tests/data/compare-view-data-jssom.json`)
+    ).toString()
+  );
+
+  const dataTruffleSOM = JSON.parse(
+    readFileSync(
+      robustPath(`../tests/data/compare-view-data-trufflesom.json`)
+    ).toString()
+  );
+
+  const resultJ = getNavigation(dataJsSOM.results);
+  const resultT = getNavigation(dataTruffleSOM.results);
+
+  it('should produce the correct navigation', () => {
+    expect(resultJ.nav).toEqual([
+      {
+        exeName: 'som',
+        suites: ['macro', 'micro']
+      }
+    ]);
+
+    expect(resultT.nav).toEqual([
+      { exeName: 'SomSom-native-interp-ast', suites: ['micro-somsom'] },
+      { exeName: 'SomSom-native-interp-bc', suites: ['micro-somsom'] },
+      {
+        exeName: 'TruffleSOM-graal',
+        suites: [
+          'macro-startup',
+          'macro-steady',
+          'micro-startup',
+          'micro-steady'
+        ]
+      },
+      {
+        exeName: 'TruffleSOM-graal-bc',
+        suites: [
+          'macro-startup',
+          'macro-steady',
+          'micro-startup',
+          'micro-steady'
+        ]
+      },
+      {
+        exeName: 'TruffleSOM-interp',
+        suites: ['macro-startup', 'micro-startup']
+      },
+      {
+        exeName: 'TruffleSOM-native-interp-ast',
+        suites: ['macro-startup', 'micro-startup']
+      },
+      {
+        exeName: 'TruffleSOM-native-interp-bc',
+        suites: ['macro-startup', 'micro-startup']
+      }
+    ]);
+  });
+
+  it('should produce the correct navigation for executor comparison', () => {
+    expect(resultJ.navExeComparison).toEqual({ suites: [] });
+
+    expect(resultT.navExeComparison).toEqual({
+      suites: [
+        'macro-startup',
+        'macro-steady',
+        'micro-somsom',
+        'micro-startup',
+        'micro-steady'
+      ]
     });
   });
 });
