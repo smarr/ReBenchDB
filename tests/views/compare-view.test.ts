@@ -9,13 +9,26 @@ import {
   StatsSummary
 } from 'views/view-types.js';
 import { robustPath } from '../../src/util.js';
-import { getNavigation } from '../../src/dashboard.js';
+import { calculateAllStatistics, getNavigation } from '../../src/dashboard.js';
+import { collateMeasurements } from '../../src/stats-data-prep.js';
 
 function loadResult(name: string): string {
   return readFileSync(
     robustPath(`../tests/views/expected-results/${name}.html`)
   ).toString();
 }
+
+const dataJsSOM = JSON.parse(
+  readFileSync(
+    robustPath(`../tests/data/compare-view-data-jssom.json`)
+  ).toString()
+);
+
+const dataTruffleSOM = JSON.parse(
+  readFileSync(
+    robustPath(`../tests/data/compare-view-data-trufflesom.json`)
+  ).toString()
+);
 
 describe('Compare View Parts', () => {
   describe('Statistics in Row for Comparison Across Versions', () => {
@@ -125,18 +138,6 @@ describe('Compare View Parts', () => {
 });
 
 describe('Compare View Navigation', () => {
-  const dataJsSOM = JSON.parse(
-    readFileSync(
-      robustPath(`../tests/data/compare-view-data-jssom.json`)
-    ).toString()
-  );
-
-  const dataTruffleSOM = JSON.parse(
-    readFileSync(
-      robustPath(`../tests/data/compare-view-data-trufflesom.json`)
-    ).toString()
-  );
-
   const resultJ = getNavigation(dataJsSOM.results);
   const resultT = getNavigation(dataTruffleSOM.results);
 
