@@ -449,7 +449,6 @@ export async function dashCompareNew(
   const results = await db.getMeasurementsForComparison(base, change);
   const envs: any[] = await db.getEnvironmentsForComparison(base, change);
 
-
   const { nav, navExeComparison } = getNavigation(results);
   data.nav = nav;
   data.navExeComparison = navExeComparison;
@@ -611,7 +610,10 @@ function calculateAllStatistics(
   };
 }
 
-export function getNavigation(data: MeasurementData[]) {
+export function getNavigation(data: MeasurementData[]): {
+  nav: { exeName: string; suites: string[] }[];
+  navExeComparison: { suites: string[] };
+} {
   const executors = new Map<string, Set<string>>();
   const allSuites = new Map<string, Set<string>>();
 
