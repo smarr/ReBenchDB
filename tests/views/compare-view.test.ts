@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
-import { prepareTemplate } from '../src/templates.js';
-import * as numFormat from '../src/data-format.js';
-import * as viewHelpers from '../src/views/helpers.js';
+import { prepareTemplate } from '../../src/templates.js';
+import * as numFormat from '../../src/data-format.js';
+import * as viewHelpers from '../../src/views/helpers.js';
 import {
   ButtonsAdditionalInfo,
   CompareStatsRowAcrossExes,
