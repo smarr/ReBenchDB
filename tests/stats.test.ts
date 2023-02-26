@@ -5,7 +5,9 @@ import {
   bootstrapConfidenceInterval,
   bootstrapMeans,
   bootstrapSampleWithReplacement,
+  calculateDifferenceStatistics,
   calculateSummaryStatistics,
+  ComparisonStatistics,
   confidence95SliceIndices,
   confidenceSlice,
   confidenceSliceIndices,
@@ -253,5 +255,41 @@ describe('calculateSummaryStatistics()', () => {
     expect(result.bci95low).toBeLessThanOrEqual(485);
     expect(result.bci95up).toBeGreaterThanOrEqual(514);
     expect(result.bci95up).toBeLessThanOrEqual(520);
+  });
+});
+
+describe('calculateDifferenceStatistics()', () => {
+  it('should produce expected values for known data', () => {
+    const stats: ComparisonStatistics = calculateDifferenceStatistics(
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    );
+
+    expect(stats.samples).toEqual(10);
+    expect(stats.median).toEqual(4.5);
+    expect(stats.change_m).toEqual(0);
+  });
+
+  it('should given an error when base and change have different length', () => {
+    expect(() => {
+      calculateDifferenceStatistics(
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      );
+    }).toThrow(
+      `The base and change arrays must have the same length, ` +
+        `but base has 10 and change has 11.`
+    );
+  });
+
+  it('should work on unordered data', () => {
+    const stats: ComparisonStatistics = calculateDifferenceStatistics(
+      [0, 1, 2, 3, 4, 5, 6, 7, 8],
+      [9, 8, 7, 6, 5, 4, 3, 2, 1]
+    );
+
+    expect(stats.samples).toEqual(9);
+    expect(stats.median).toEqual(5);
+    expect(stats.change_m).toEqual(0.25);
   });
 });

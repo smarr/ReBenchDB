@@ -339,3 +339,23 @@ export function calculateSummaryStatistics(
     bci95up: high
   };
 }
+
+export function calculateDifferenceStatistics(
+  base: number[],
+  change: number[]
+): ComparisonStatistics {
+  if (base.length !== change.length) {
+    throw new Error(
+      `The base and change arrays must have the same length, ` +
+        `but base has ${base.length} and change has ${change.length}.`
+    );
+  }
+
+  const baseMedian = median(base);
+  const changeMedian = median(change);
+  return {
+    median: changeMedian,
+    samples: base.length,
+    change_m: changeMedian / baseMedian - 1.0
+  };
+}
