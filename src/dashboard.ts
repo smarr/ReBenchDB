@@ -7,8 +7,6 @@ import {
   Source,
   MeasurementData,
   ProcessedResult,
-  RunSettings,
-  CriterionData,
   Measurements
 } from './db.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
@@ -23,8 +21,9 @@ import {
 import { getDirname } from './util.js';
 import { log } from './logging.js';
 import { QueryConfig } from 'pg';
-import { calculateSummaryStatistics } from './stats.js';
-import { simplifyCmdline } from './views/util.js';
+import { StatsSummary } from './views/view-types.js';
+import { calculateChangeStatistics } from './stats.js';
+import { collateMeasurements } from './stats-data-prep.js';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -454,135 +453,21 @@ export async function dashCompareNew(
   data.navExeComparison = navExeComparison;
 
   data.allMeasurements = collateMeasurements(results);
-  data.stats = calculateAllStatistics(data.allMeasurements);
+  data.stats = calculateAllStatistics(data.allMeasurements, base, change);
   data.envs = envs;
 
   return data;
 }
 
-function collateMeasurements(
-  data: MeasurementData[]
-): Map<string, Map<string, Map<string, ProcessedResult>>> {
-  const byExeSuiteBench = new Map<
-    string,
-    Map<string, Map<string, ProcessedResult>>
-  >();
-  const runSettings = new Map<string, RunSettings>();
-  const criteria = new Map<string, CriterionData>();
+export function calculateAllStatistics(
+  byExeSuiteBench: Map<string, Map<string, Map<string, ProcessedResult>>>,
+  base: string,
+  change: string
+): { all: StatsSummary } {
+  const baseCommitIdIsFirst = base.localeCompare(change) < 0;
+  const baseOffset = baseCommitIdIsFirst ? 0 : 1;
+  const changeOffset = baseCommitIdIsFirst ? 1 : 0;
 
-  for (const row of data) {
-    const c = `${row.criterion}|${row.unit}`;
-
-    let criterion = criteria.get(c);
-    if (criterion === undefined) {
-      criterion = {
-        name: row.criterion,
-        unit: row.unit
-      };
-      criteria.set(c, criterion);
-    }
-
-    let runSetting = runSettings.get(row.cmdline);
-    if (runSetting === undefined) {
-      runSetting = {
-        cmdline: row.cmdline,
-        varValue: row.varvalue,
-        cores: row.cores,
-        inputSize: row.inputsize,
-        extraArgs: row.extraargs,
-        warmup: row.warmup,
-        simplifiedCmdline: simplifyCmdline(row.cmdline)
-      };
-      runSettings.set(row.cmdline, runSetting);
-    }
-
-    let forExeBySuiteBench = byExeSuiteBench.get(row.exe);
-    if (forExeBySuiteBench === undefined) {
-      forExeBySuiteBench = new Map();
-      byExeSuiteBench.set(row.exe, forExeBySuiteBench);
-    }
-
-    let forSuiteByBench = forExeBySuiteBench.get(row.suite);
-    if (forSuiteByBench === undefined) {
-      forSuiteByBench = new Map();
-      forExeBySuiteBench.set(row.suite, forSuiteByBench);
-    }
-
-    let benchResult = forSuiteByBench.get(row.bench);
-    if (benchResult === undefined) {
-      benchResult = {
-        exe: row.exe,
-        suite: row.suite,
-        bench: row.bench,
-        measurements: []
-      };
-      forSuiteByBench.set(row.bench, benchResult);
-    }
-
-    let m: Measurements | null = null;
-    for (const mm of benchResult.measurements) {
-      if (
-        mm.envId == row.envid &&
-        mm.commitId == row.commitid &&
-        mm.criterion.name == row.criterion
-      ) {
-        m = mm;
-        break;
-      }
-    }
-
-    if (!m) {
-      m = {
-        criterion,
-        values: [],
-        envId: row.envid,
-        commitId: row.commitid,
-        runSettings: runSetting
-      };
-      benchResult.measurements.push(m);
-    }
-
-    if (!m.values[row.invocation]) {
-      m.values[row.invocation] = [];
-    }
-    m.values[row.invocation][row.iteration] = row.value;
-  }
-
-  return byExeSuiteBench;
-}
-
-function compareMeasurementForSorting(a, b) {
-  let r = a.runSettings.varValue?.localeCompare(b.runSettings.varValue);
-  if (r !== 0) {
-    return r;
-  }
-
-  r = a.runSettings.cores?.localeCompare(b.runSettings.cores);
-  if (r !== 0) {
-    return r;
-  }
-
-  r = a.runSettings.inputSize?.localeCompare(b.runSettings.inputSize);
-  if (r !== 0) {
-    return r;
-  }
-
-  r = a.runSettings.extraArgs?.localeCompare(b.runSettings.extraArgs);
-  if (r !== 0) {
-    return r;
-  }
-
-  r = a.envId - b.envId;
-  if (r !== 0) {
-    return r;
-  }
-
-  return a.commitId.localeCompare(b.commitId);
-}
-
-function calculateAllStatistics(
-  byExeSuiteBench: Map<string, Map<string, Map<string, ProcessedResult>>>
-) {
   let numRunConfigs = 0;
   for (const bySuite of byExeSuiteBench.values()) {
     for (const byBench of bySuite.values()) {
@@ -590,10 +475,9 @@ function calculateAllStatistics(
         // TODO: make sure this is really the numRunConfigs
         numRunConfigs += 1;
 
-        bench.measurements.sort(compareMeasurementForSorting);
-        for (const m of bench.measurements) {
-          m.stats = calculateSummaryStatistics(m.values.flat());
-        }
+
+
+
       }
     }
   }
@@ -603,9 +487,10 @@ function calculateAllStatistics(
   return {
     all: {
       numRunConfigs,
-      total: { geomean: 'TODO', min: 'TODO', max: 'TODO' },
-      gcTime: { geomean: 'TODO', min: 'TODO', max: 'TODO' },
-      allocatedBytes: { geomean: 'TODO', min: 'TODO', max: 'TODO' }
+      overviewUrl: 'TODO',
+      total: { geomean: <any>'TODO', min: <any>'TODO', max: <any>'TODO' },
+      gcTime: { geomean: <any>'TODO', min: <any>'TODO', max: <any>'TODO' },
+      allocated: { geomean: <any>'TODO', min: <any>'TODO', max: <any>'TODO' }
     }
   };
 }

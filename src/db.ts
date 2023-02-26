@@ -21,7 +21,7 @@ import pg, { PoolConfig, QueryConfig, QueryResultRow } from 'pg';
 import { getDirname, TotalCriterion } from './util.js';
 import { assert } from './logging.js';
 import { simplifyCmdline } from './views/util.js';
-import { SummaryStatistics } from './stats.js';
+import { ComparisonStatistics, SummaryStatistics } from './stats.js';
 import { BatchingTimelineUpdater } from './timeline-calc.js';
 
 const __dirname = getDirname(import.meta.url);
@@ -232,6 +232,7 @@ export interface Measurements {
   runSettings: RunSettings;
   commitId: string;
   stats?: SummaryStatistics;
+  changeStats?: ComparisonStatistics;
 }
 
 export interface ProcessedResult {
