@@ -152,11 +152,14 @@ export interface Run {
   suiteid: number;
   execid: number;
   cmdline: string;
+
+  /** The current working directory. */
   location: string;
-  varvalue: string;
-  cores: string;
-  inputsize: string;
-  extraargs: string;
+
+  varvalue: string | null;
+  cores: string | null;
+  inputsize: string | null;
+  extraargs: string | null;
   maxinvocationtime: number;
   miniterationtime: number;
   warmup: number;

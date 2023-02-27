@@ -25,6 +25,8 @@ export interface Benchmark {
 export interface RunId {
   benchmark: Benchmark;
   cmdline: string;
+
+  /** The current working directory. */
   location: string;
 
   varValue: number | string | null;
