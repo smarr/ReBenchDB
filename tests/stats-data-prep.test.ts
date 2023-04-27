@@ -1,3 +1,4 @@
+import { describe, expect, it } from '@jest/globals';
 import { Measurements, RunSettings } from '../src/db.js';
 import {
   compareStringOrNull,

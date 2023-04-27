@@ -1,3 +1,4 @@
+import { describe, expect, it } from '@jest/globals';
 import { readFileSync } from 'fs';
 import { prepareTemplate } from '../../src/templates.js';
 import * as numFormat from '../../src/data-format.js';
