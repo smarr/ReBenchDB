@@ -86,7 +86,7 @@
     "compile": "tsc && npm run prep-reports && npm run prep-static",
     "prep-static": "cp dist/src/views/*.js ./resources/",
     "prep-reports": "mkdir -p tmp/interm tmp/knit resources/reports resources/exp-data",
-    "format": "prettier --config .prettierrc '{src,tests}/**/*.{ts}' --write",
+    "format": "prettier --config .prettierrc '{src,tests}/**/*.ts' --write",
     "verify": "npm run lint",
     "lint": "eslint . --ext .ts,.tsx",
     "update": "git pull && npm install . && pm2 restart 0",
