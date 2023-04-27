@@ -1,3 +1,5 @@
+import { describe, expect, beforeAll, it } from '@jest/globals';
+
 import { readFileSync } from 'fs';
 import { ValidateFunction } from 'ajv';
 import { createValidator } from '../src/api-validator.js';

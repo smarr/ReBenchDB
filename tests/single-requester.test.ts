@@ -1,3 +1,4 @@
+import { describe, expect, it } from '@jest/globals';
 import { SingleRequestOnly } from '../src/single-requester.js';
 
 describe('Basic functionality of SingleRequestOnly', () => {
