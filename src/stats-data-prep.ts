@@ -75,9 +75,14 @@ export function compareToSortForSinglePassChangeStatsWithoutCommitId(
   return a.criterion.name.localeCompare(b.criterion.name);
 }
 
+export type ResultsByBenchmark = Map<string, ProcessedResult>;
+export type ResultsBySuiteBenchmark = Map<string, ResultsByBenchmark>;
+export type ResultsByExeSuiteBenchmark = Map<string, ResultsBySuiteBenchmark>;
+
+
 export function collateMeasurements(
   data: MeasurementData[]
-): Map<string, Map<string, Map<string, ProcessedResult>>> {
+): ResultsByExeSuiteBenchmark {
   const byExeSuiteBench = new Map<
     string,
     Map<string, Map<string, ProcessedResult>>

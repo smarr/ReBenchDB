@@ -23,7 +23,7 @@ import { log } from './logging.js';
 import { QueryConfig } from 'pg';
 import { StatsSummary } from './views/view-types.js';
 import { calculateChangeStatistics } from './stats.js';
-import { collateMeasurements } from './stats-data-prep.js';
+import { ResultsByExeSuiteBenchmark, collateMeasurements } from './stats-data-prep.js';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -460,7 +460,7 @@ export async function dashCompareNew(
 }
 
 export function calculateAllStatistics(
-  byExeSuiteBench: Map<string, Map<string, Map<string, ProcessedResult>>>,
+  byExeSuiteBench: ResultsByExeSuiteBenchmark,
   base: string,
   change: string
 ): { all: StatsSummary } {
