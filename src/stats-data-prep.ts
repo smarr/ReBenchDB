@@ -79,7 +79,6 @@ export type ResultsByBenchmark = Map<string, ProcessedResult>;
 export type ResultsBySuiteBenchmark = Map<string, ResultsByBenchmark>;
 export type ResultsByExeSuiteBenchmark = Map<string, ResultsBySuiteBenchmark>;
 
-
 export function collateMeasurements(
   data: MeasurementData[]
 ): ResultsByExeSuiteBenchmark {
