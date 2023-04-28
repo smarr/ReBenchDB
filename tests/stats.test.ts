@@ -1,10 +1,12 @@
 import { describe, expect, it } from '@jest/globals';
 import Decimal from 'decimal.js';
 import {
+  BasicStatistics,
   basicSum,
   bootstrapConfidenceInterval,
   bootstrapMeans,
   bootstrapSampleWithReplacement,
+  calculateBasicStatistics,
   calculateChangeStatistics,
   calculateSummaryStatistics,
   ComparisonStatistics,
@@ -255,6 +257,21 @@ describe('calculateSummaryStatistics()', () => {
     expect(result.bci95low).toBeLessThanOrEqual(485);
     expect(result.bci95up).toBeGreaterThanOrEqual(514);
     expect(result.bci95up).toBeLessThanOrEqual(520);
+  });
+});
+
+describe('calculateBasicStatistics()', () => {
+  it('should produce expected values for known data', () => {
+    const data: number[] = [];
+    for (let i = 0; i < 1000; i += 1) {
+      data.push(i);
+    }
+
+    const stats: BasicStatistics = calculateBasicStatistics(data);
+
+    expect(stats.min).toBe(0);
+    expect(stats.max).toBe(999);
+    expect(stats.median).toBeCloseTo(499.5, 2);
   });
 });
 

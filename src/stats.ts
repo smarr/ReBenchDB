@@ -277,6 +277,13 @@ export interface OverviewSummaryStatistics {
   geomean: number;
 }
 
+/** Summarizing a single set of measurements. */
+export interface BasicStatistics {
+  min: number;
+  max: number;
+  median: number;
+}
+
 /** Summarizing a single benchmark. */
 export interface SummaryStatistics {
   min: number;
@@ -338,6 +345,17 @@ export function calculateSummaryStatistics(
     bci95low: low,
     bci95up: high
   };
+}
+
+export function calculateBasicStatistics(
+  data: number[]
+): BasicStatistics {
+  data.sort((a, b) => a - b);
+  const min = data[0];
+  const max = data[data.length - 1];
+  const m = median(data);
+
+  return { min, max, median: m };
 }
 
 export function calculateChangeStatistics(
