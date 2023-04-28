@@ -1,3 +1,11 @@
+import {
+  describe,
+  expect,
+  beforeAll,
+  afterAll,
+  afterEach,
+  it
+} from '@jest/globals';
 import { BenchmarkData, Criterion, DataPoint } from '../src/api.js';
 import { loadScheme } from '../src/db.js';
 import { readFileSync } from 'fs';
