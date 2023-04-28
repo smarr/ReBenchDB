@@ -381,7 +381,9 @@ const dataJsSOM = JSON.parse(
 
 describe('collateMeasurements()', () => {
   describe('with data from JsSOM', () => {
-    const result: ResultsByExeSuiteBenchmark = collateMeasurements(dataJsSOM.results);
+    const result: ResultsByExeSuiteBenchmark = collateMeasurements(
+      dataJsSOM.results
+    );
 
     it('should have 1 exe', () => {
       expect(result.size).toBe(1);
@@ -399,9 +401,16 @@ describe('collateMeasurements()', () => {
       const som = <ResultsBySuiteBenchmark>result.get('som');
       const macro = <ResultsByBenchmark>som.get('macro');
       expect(macro.size).toBe(6);
-      
+
       const benchmarks = Array.from(macro.keys()).sort();
-      expect(benchmarks).toEqual(['DeltaBlue', 'GraphSearch', 'JsonSmall', 'NBody', 'PageRank', 'Richards']);
+      expect(benchmarks).toEqual([
+        'DeltaBlue',
+        'GraphSearch',
+        'JsonSmall',
+        'NBody',
+        'PageRank',
+        'Richards'
+      ]);
     });
 
     it('should have 20 micro benchmarks', () => {
@@ -414,7 +423,7 @@ describe('collateMeasurements()', () => {
       const som = <ResultsBySuiteBenchmark>result.get('som');
       const macro = <ResultsByBenchmark>som.get('macro');
       const nbody = <ProcessedResult>macro.get('NBody');
-      
+
       expect(nbody.bench).toEqual('NBody');
       expect(nbody.exe).toEqual('som');
       expect(nbody.suite).toEqual('macro');
@@ -451,19 +460,25 @@ describe('collateMeasurements()', () => {
 
 describe('calculateAllChangeStatistics()', () => {
   describe('with data from JsSOM', () => {
-    const result: ResultsByExeSuiteBenchmark = collateMeasurements(dataJsSOM.results);
+    const result: ResultsByExeSuiteBenchmark = collateMeasurements(
+      dataJsSOM.results
+    );
     const som = <ResultsBySuiteBenchmark>result.get('som');
     const macro = <ResultsByBenchmark>som.get('macro');
     const nbody = <ProcessedResult>macro.get('NBody');
 
     const changeOffset = 1;
-    const dropped = calculateAllChangeStatistics(nbody.measurements, 0, changeOffset);
+    const dropped = calculateAllChangeStatistics(
+      nbody.measurements,
+      0,
+      changeOffset
+    );
 
     it('should not have dropped any data', () => {
       expect(nbody.measurements).toHaveLength(2);
       expect(dropped).toBeUndefined();
     });
-    
+
     it('should have added the expected statistics', () => {
       const change = nbody.measurements[changeOffset];
       expect(change.changeStats).toBeDefined();
@@ -473,4 +488,3 @@ describe('calculateAllChangeStatistics()', () => {
     });
   });
 });
-
