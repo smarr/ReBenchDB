@@ -347,9 +347,7 @@ export function calculateSummaryStatistics(
   };
 }
 
-export function calculateBasicStatistics(
-  data: number[]
-): BasicStatistics {
+export function calculateBasicStatistics(data: number[]): BasicStatistics {
   data.sort((a, b) => a - b);
   const min = data[0];
   const max = data[data.length - 1];
