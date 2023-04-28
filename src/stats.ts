@@ -356,22 +356,26 @@ export function calculateBasicStatistics(data: number[]): BasicStatistics {
   return { min, max, median: m };
 }
 
+/**
+ * @param baseSorted is expected to be sorted, from lowest to highest value
+ * @param changeSorted is expected to be sorted, from lowest to highest value
+ */
 export function calculateChangeStatistics(
-  base: number[],
-  change: number[]
+  baseSorted: number[],
+  changeSorted: number[]
 ): ComparisonStatistics {
-  if (base.length !== change.length) {
+  if (baseSorted.length !== changeSorted.length) {
     throw new Error(
       `The base and change arrays must have the same length, ` +
-        `but base has ${base.length} and change has ${change.length}.`
+        `but base has ${baseSorted.length} and change has ${changeSorted.length}.`
     );
   }
 
-  const baseMedian = median(base);
-  const changeMedian = median(change);
+  const baseMedian = median(baseSorted);
+  const changeMedian = median(changeSorted);
   return {
     median: changeMedian,
-    samples: base.length,
+    samples: baseSorted.length,
     change_m: changeMedian / baseMedian - 1.0
   };
 }

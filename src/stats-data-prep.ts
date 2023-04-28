@@ -226,9 +226,15 @@ export function calculateAllChangeStatistics(
   }
 
   for (let i = 0; i < measurements.length; i += 2) {
+    const sortedBase = measurements[i + baseOffset].values.flat();
+    sortedBase.sort((a, b) => a - b);
+
+    const sortedChange = measurements[i + changeOffset].values.flat();
+    sortedChange.sort((a, b) => a - b);
+
     measurements[i + changeOffset].changeStats = calculateChangeStatistics(
-      measurements[i + baseOffset].values.flat(),
-      measurements[i + changeOffset].values.flat()
+      sortedBase,
+      sortedChange
     );
   }
 }

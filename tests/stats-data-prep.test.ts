@@ -482,8 +482,8 @@ describe('calculateAllChangeStatistics()', () => {
     it('should have added the expected statistics', () => {
       const change = nbody.measurements[changeOffset];
       expect(change.changeStats).toBeDefined();
-      expect(change.changeStats?.change_m).toBeCloseTo(-0.115855, 5);
-      expect(change.changeStats?.median).toBeCloseTo(79.489, 5);
+      expect(change.changeStats?.change_m).toBeCloseTo(-0.096325, 5);
+      expect(change.changeStats?.median).toBeCloseTo(81.384, 5);
       expect(change.changeStats?.samples).toBe(10);
     });
   });
