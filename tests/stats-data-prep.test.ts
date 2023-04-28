@@ -14,6 +14,7 @@ import {
   compareToSortForSinglePassChangeStats,
   dropMeasurementsWhereBaseOrChangeIsMissing
 } from '../src/stats-data-prep.js';
+import { ComparisonStatistics } from '../src/stats.js';
 
 describe('compareStringOrNull()', () => {
   it('should compare null and null', () => {
@@ -460,6 +461,8 @@ describe('collateMeasurements()', () => {
 
 describe('calculateAllChangeStatistics()', () => {
   describe('with data from JsSOM', () => {
+    const perCriteria = new Map<string, ComparisonStatistics[]>();
+
     const result: ResultsByExeSuiteBenchmark = collateMeasurements(
       dataJsSOM.results
     );
@@ -471,7 +474,8 @@ describe('calculateAllChangeStatistics()', () => {
     const dropped = calculateAllChangeStatistics(
       nbody.measurements,
       0,
-      changeOffset
+      changeOffset,
+      perCriteria
     );
 
     it('should not have dropped any data', () => {
@@ -485,6 +489,13 @@ describe('calculateAllChangeStatistics()', () => {
       expect(change.changeStats?.change_m).toBeCloseTo(-0.096325, 5);
       expect(change.changeStats?.median).toBeCloseTo(81.384, 5);
       expect(change.changeStats?.samples).toBe(10);
+      expect(perCriteria.size).toEqual(1);
+      expect(perCriteria.has('total')).toBe(true);
+
+      const total = <ComparisonStatistics[]>perCriteria.get('total');
+      expect(total).toHaveLength(1);
+
+      expect(total[0]).toBe(change.changeStats);
     });
   });
 });

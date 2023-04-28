@@ -1,5 +1,5 @@
 import { assert } from './logging.js';
-import { calculateChangeStatistics } from './stats.js';
+import { ComparisonStatistics, calculateChangeStatistics } from './stats.js';
 import {
   CriterionData,
   MeasurementData,
@@ -207,7 +207,8 @@ export function dropMeasurementsWhereBaseOrChangeIsMissing(
 export function calculateAllChangeStatistics(
   measurements: Measurements[],
   baseOffset: number,
-  changeOffset: number
+  changeOffset: number,
+  perCriteria: Map<string, ComparisonStatistics[]>
 ): Measurements[] | undefined {
   assert(
     measurements.length % 2 === 0,
@@ -231,9 +232,15 @@ export function calculateAllChangeStatistics(
     const sortedChange = measurements[i + changeOffset].values.flat();
     sortedChange.sort((a, b) => a - b);
 
-    measurements[i + changeOffset].changeStats = calculateChangeStatistics(
-      sortedBase,
-      sortedChange
-    );
+    const stats = calculateChangeStatistics(sortedBase, sortedChange);
+    measurements[i + changeOffset].changeStats = stats;
+
+    const criterionName = measurements[i + baseOffset].criterion.name;
+    let allStats = perCriteria.get(criterionName);
+    if (allStats === undefined) {
+      allStats = [];
+      perCriteria.set(criterionName, allStats);
+    }
+    allStats.push(stats);
   }
 }
