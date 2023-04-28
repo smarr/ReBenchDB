@@ -162,10 +162,10 @@ export function collateMeasurements(
       benchResult.measurements.push(m);
     }
 
-    if (!m.values[row.invocation]) {
-      m.values[row.invocation] = [];
+    if (!m.values[row.invocation - 1]) {
+      m.values[row.invocation - 1] = [];
     }
-    m.values[row.invocation][row.iteration] = row.value;
+    m.values[row.invocation - 1][row.iteration - 1] = row.value;
   }
 
   return byExeSuiteBench;
