@@ -8,6 +8,7 @@ import {
   ResultsByBenchmark,
   ResultsByExeSuiteBenchmark,
   ResultsBySuiteBenchmark,
+  calculateAllChangeStatistics,
   collateMeasurements,
   compareStringOrNull,
   compareToSortForSinglePassChangeStats,
@@ -447,3 +448,29 @@ describe('collateMeasurements()', () => {
     });
   });
 });
+
+describe('calculateAllChangeStatistics()', () => {
+  describe('with data from JsSOM', () => {
+    const result: ResultsByExeSuiteBenchmark = collateMeasurements(dataJsSOM.results);
+    const som = <ResultsBySuiteBenchmark>result.get('som');
+    const macro = <ResultsByBenchmark>som.get('macro');
+    const nbody = <ProcessedResult>macro.get('NBody');
+
+    const changeOffset = 1;
+    const dropped = calculateAllChangeStatistics(nbody.measurements, 0, changeOffset);
+
+    it('should not have dropped any data', () => {
+      expect(nbody.measurements).toHaveLength(2);
+      expect(dropped).toBeUndefined();
+    });
+    
+    it('should have added the expected statistics', () => {
+      const change = nbody.measurements[changeOffset];
+      expect(change.changeStats).toBeDefined();
+      expect(change.changeStats?.change_m).toBeCloseTo(-0.115855, 5);
+      expect(change.changeStats?.median).toBeCloseTo(79.489, 5);
+      expect(change.changeStats?.samples).toBe(10);
+    });
+  });
+});
+
