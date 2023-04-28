@@ -127,9 +127,9 @@ describe('Compare View Parts', () => {
       const data: StatsSummary = {
         overviewUrl: 'some-url.svg',
         numRunConfigs: 232,
-        total: { min: 0.1, max: 1.1, geomean: 0.5 },
-        gcTime: { min: 2.1, max: 3.1, geomean: 2.5 },
-        allocated: { min: 4.1, max: 5.1, geomean: 4.5 }
+        total: { min: 0.1, max: 1.1, median: 0.5 },
+        gcTime: { min: 2.1, max: 3.1, median: 2.5 },
+        allocated: { min: 4.1, max: 5.1, median: 4.5 }
       };
 
       const result = tpl(data);

@@ -1,6 +1,6 @@
 import { BenchmarkId } from 'api';
 import { Environment } from 'db';
-import { ComparisonStatistics, OverviewSummaryStatistics } from 'stats';
+import { ComparisonStatistics, BasicSummaryStatistics } from 'stats';
 
 declare type DataFormat = typeof import('../data-format');
 declare type ViewHelpers = typeof import('./helpers');
@@ -9,9 +9,9 @@ declare type ViewHelpers = typeof import('./helpers');
 export interface StatsSummary {
   overviewUrl: string;
   numRunConfigs: number;
-  total: OverviewSummaryStatistics;
-  gcTime: OverviewSummaryStatistics;
-  allocated: OverviewSummaryStatistics;
+  total: BasicSummaryStatistics;
+  gcTime: BasicSummaryStatistics;
+  allocated: BasicSummaryStatistics;
 }
 
 /** Types for the Compare Partials */

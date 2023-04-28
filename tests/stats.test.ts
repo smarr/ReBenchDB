@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 import Decimal from 'decimal.js';
 import {
-  BasicStatistics,
+  BasicSummaryStatistics,
   basicSum,
   bootstrapConfidenceInterval,
   bootstrapMeans,
@@ -17,7 +17,8 @@ import {
   confidenceSliceIndicesPrecise,
   fullPrecisionSum,
   preciseMean,
-  standardDeviation
+  standardDeviation,
+  calculateSummaryOfChangeSummaries
 } from '../src/stats';
 
 describe('basicSum()', () => {
@@ -267,7 +268,7 @@ describe('calculateBasicStatistics()', () => {
       data.push(i);
     }
 
-    const stats: BasicStatistics = calculateBasicStatistics(data);
+    const stats: BasicSummaryStatistics = calculateBasicStatistics(data);
 
     expect(stats.min).toBe(0);
     expect(stats.max).toBe(999);
@@ -308,5 +309,35 @@ describe('calculateChangeStatistics()', () => {
     expect(stats.samples).toEqual(9);
     expect(stats.median).toEqual(5);
     expect(stats.change_m).toEqual(0.25);
+  });
+});
+
+describe('calculateSummaryOfChangeSummaries()', () => {
+  const perCriteria = new Map<string, ComparisonStatistics[]>();
+
+  perCriteria.set('total', [
+    { samples: 10, median: 5, change_m: 10 },
+    { samples: 10, median: 5, change_m: 11 },
+    { samples: 10, median: 5, change_m: 12 },
+    { samples: 10, median: 5, change_m: 13 },
+    { samples: 10, median: 5, change_m: 14 }
+  ]);
+
+  perCriteria.set('criteria1', [
+    { samples: 10, median: 5, change_m: 3 },
+    { samples: 10, median: 5, change_m: 2 },
+    { samples: 10, median: 5, change_m: 1 }
+  ]);
+
+  const result = calculateSummaryOfChangeSummaries(perCriteria);
+
+  it('should produce the expected values', () => {
+    expect(result.total.median).toEqual(12);
+    expect(result.total.min).toEqual(10);
+    expect(result.total.max).toEqual(14);
+
+    expect(result.criteria1.median).toEqual(2);
+    expect(result.criteria1.min).toEqual(1);
+    expect(result.criteria1.max).toEqual(3);
   });
 });

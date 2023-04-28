@@ -270,27 +270,17 @@ export function bootstrapConfidenceInterval(
   return confidenceSlice(means, confidence);
 }
 
-/** Summarizing multiple benchmarks. */
-export interface OverviewSummaryStatistics {
-  min: number;
-  max: number;
-  geomean: number;
-}
-
-/** Summarizing a single set of measurements. */
-export interface BasicStatistics {
+/** Summarizing measurements. */
+export interface BasicSummaryStatistics {
   min: number;
   max: number;
   median: number;
 }
 
 /** Summarizing a single benchmark. */
-export interface SummaryStatistics {
-  min: number;
-  max: number;
+export interface SummaryStatistics extends BasicSummaryStatistics {
   standardDeviation: number;
   mean: number;
-  median: number;
   numberOfSamples: number;
   bci95low: number;
   bci95up: number;
@@ -347,7 +337,12 @@ export function calculateSummaryStatistics(
   };
 }
 
-export function calculateBasicStatistics(data: number[]): BasicStatistics {
+/**
+ * @param data - an unsorted array of numbers
+ */
+export function calculateBasicStatistics(
+  data: number[]
+): BasicSummaryStatistics {
   data.sort((a, b) => a - b);
   const min = data[0];
   const max = data[data.length - 1];
@@ -378,4 +373,15 @@ export function calculateChangeStatistics(
     samples: baseSorted.length,
     change_m: changeMedian / baseMedian - 1.0
   };
+}
+
+export function calculateSummaryOfChangeSummaries(
+  perCriteria: Map<string, ComparisonStatistics[]>
+): Record<string, BasicSummaryStatistics> {
+  const result: Record<string, BasicSummaryStatistics> = {};
+  for (const [key, value] of perCriteria.entries()) {
+    const changeMedians = value.map((x) => x.change_m);
+    result[key] = calculateBasicStatistics(changeMedians);
+  }
+  return result;
 }
