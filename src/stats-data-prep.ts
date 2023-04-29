@@ -204,11 +204,11 @@ export function dropMeasurementsWhereBaseOrChangeIsMissing(
   return dropped;
 }
 
-export function calculateAllChangeStatistics(
+export function calculateChangeStatsForBenchmark(
   measurements: Measurements[],
   baseOffset: number,
   changeOffset: number,
-  perCriteria: Map<string, ComparisonStatistics[]>
+  perCriteria: Map<string, ComparisonStatistics[]> | null
 ): Measurements[] | undefined {
   assert(
     measurements.length % 2 === 0,
@@ -235,12 +235,90 @@ export function calculateAllChangeStatistics(
     const stats = calculateChangeStatistics(sortedBase, sortedChange);
     measurements[i + changeOffset].changeStats = stats;
 
-    const criterionName = measurements[i + baseOffset].criterion.name;
-    let allStats = perCriteria.get(criterionName);
-    if (allStats === undefined) {
-      allStats = [];
-      perCriteria.set(criterionName, allStats);
+    if (perCriteria !== null) {
+      const criterionName = measurements[i + baseOffset].criterion.name;
+      let allStats = perCriteria.get(criterionName);
+      if (allStats === undefined) {
+        allStats = [];
+        perCriteria.set(criterionName, allStats);
+      }
+      allStats.push(stats);
     }
-    allStats.push(stats);
   }
+}
+
+export function calculateAllChangeStatistics(
+  byExeSuiteBench: ResultsByExeSuiteBenchmark,
+  baseOffset: number,
+  changeOffset: number,
+  criteria: Map<string, ComparisonStatistics[]> | null
+) {
+  let numRunConfigs = 0;
+  for (const bySuite of byExeSuiteBench.values()) {
+    for (const byBench of bySuite.values()) {
+      for (const bench of byBench.values()) {
+        // TODO: make sure this is really the numRunConfigs. For some reason, I am not quite sure this is correct
+        numRunConfigs += 1;
+
+        const dropped = calculateChangeStatsForBenchmark(
+          bench.measurements,
+          baseOffset,
+          changeOffset,
+          criteria
+        );
+
+        if (dropped) {
+          throw new Error(
+            'TODO: implement storing details about dropped data to show in the UI'
+          );
+        }
+      }
+    }
+  }
+  return numRunConfigs;
+}
+
+export interface ChangeData {
+  labels: string[];
+  data: number[][];
+}
+
+export type BySuiteChangeData = Map<string, ChangeData>;
+
+export function getChangeDataBySuiteAndExe(
+  byExeSuiteBench: ResultsByExeSuiteBenchmark,
+  criterion: string
+): BySuiteChangeData {
+  const bySuiteAndExe = new Map<string, ChangeData>();
+
+  for (const [exe, bySuite] of byExeSuiteBench.entries()) {
+    for (const [suite, byBench] of bySuite.entries()) {
+      let bySuiteChangeData = bySuiteAndExe.get(suite);
+      if (bySuiteChangeData === undefined) {
+        bySuiteChangeData = { labels: [], data: [] };
+        bySuiteAndExe.set(suite, bySuiteChangeData);
+      }
+
+      const changeDataForExe: number[] = [];
+
+      for (const bench of byBench.values()) {
+        for (const m of bench.measurements) {
+          if (m.changeStats === undefined) {
+            continue;
+          }
+
+          if (m.criterion.name !== criterion) {
+            continue;
+          }
+
+          changeDataForExe.push(m.changeStats.change_m);
+        }
+      }
+
+      bySuiteChangeData.labels.push(exe);
+      bySuiteChangeData.data.push(changeDataForExe);
+    }
+  }
+
+  return bySuiteAndExe;
 }

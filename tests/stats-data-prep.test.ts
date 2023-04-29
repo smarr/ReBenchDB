@@ -9,12 +9,15 @@ import {
   ResultsByExeSuiteBenchmark,
   ResultsBySuiteBenchmark,
   calculateAllChangeStatistics,
+  calculateChangeStatsForBenchmark,
   collateMeasurements,
   compareStringOrNull,
   compareToSortForSinglePassChangeStats,
-  dropMeasurementsWhereBaseOrChangeIsMissing
+  dropMeasurementsWhereBaseOrChangeIsMissing,
+  getChangeDataBySuiteAndExe
 } from '../src/stats-data-prep.js';
 import { ComparisonStatistics } from '../src/stats.js';
+import { calculateAllStatistics } from 'dashboard.js';
 
 describe('compareStringOrNull()', () => {
   it('should compare null and null', () => {
@@ -380,6 +383,12 @@ const dataJsSOM = JSON.parse(
   ).toString()
 );
 
+const dataTSOM = JSON.parse(
+  readFileSync(
+    robustPath(`../tests/data/compare-view-data-trufflesom.json`)
+  ).toString()
+);
+
 describe('collateMeasurements()', () => {
   describe('with data from JsSOM', () => {
     const result: ResultsByExeSuiteBenchmark = collateMeasurements(
@@ -459,7 +468,7 @@ describe('collateMeasurements()', () => {
   });
 });
 
-describe('calculateAllChangeStatistics()', () => {
+describe('calculateChangeStatsForBenchmark()', () => {
   describe('with data from JsSOM', () => {
     const perCriteria = new Map<string, ComparisonStatistics[]>();
 
@@ -471,7 +480,7 @@ describe('calculateAllChangeStatistics()', () => {
     const nbody = <ProcessedResult>macro.get('NBody');
 
     const changeOffset = 1;
-    const dropped = calculateAllChangeStatistics(
+    const dropped = calculateChangeStatsForBenchmark(
       nbody.measurements,
       0,
       changeOffset,
@@ -497,5 +506,120 @@ describe('calculateAllChangeStatistics()', () => {
 
       expect(total[0]).toBe(change.changeStats);
     });
+  });
+});
+
+describe('calculateAllChangeStatistics()', () => {
+  const resultJsSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
+    dataJsSOM.results
+  );
+  const resultTSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
+    dataTSOM.results
+  );
+
+  it('should assign changeStats to the changeOffset measurement for all elements of JsSOM data', () => {
+    const numRuns = calculateAllChangeStatistics(resultJsSOM, 0, 1, null);
+    expect(numRuns).toBe(26);
+
+    for (const bySuite of resultJsSOM.values()) {
+      for (const byBench of bySuite.values()) {
+        for (const bench of byBench.values()) {
+          for (let i = 0; i < bench.measurements.length; i += 1) {
+            const m = bench.measurements[i];
+            if (i % 2 === 1) {
+              expect(m.changeStats).toBeDefined();
+            } else {
+              expect(m.changeStats).toBeUndefined();
+            }
+          }
+        }
+      }
+    }
+  });
+
+  it('should assign changeStats to the changeOffset measurement for all elements of TruffleSOM data', () => {
+    const numRuns = calculateAllChangeStatistics(resultTSOM, 0, 1, null);
+    expect(numRuns).toBe(166);
+
+    for (const bySuite of resultJsSOM.values()) {
+      for (const byBench of bySuite.values()) {
+        for (const bench of byBench.values()) {
+          for (let i = 0; i < bench.measurements.length; i += 1) {
+            const m = bench.measurements[i];
+            if (i % 2 === 1) {
+              expect(m.changeStats).toBeDefined();
+            } else {
+              expect(m.changeStats).toBeUndefined();
+            }
+          }
+        }
+      }
+    }
+  });
+});
+
+describe('getChangeDataBySuiteAndExe()', () => {
+  const resultJsSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
+    dataJsSOM.results
+  );
+  const resultTSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
+    dataTSOM.results
+  );
+  const jsRuns = calculateAllChangeStatistics(resultJsSOM, 0, 1, null);
+  const tsRuns = calculateAllChangeStatistics(resultTSOM, 0, 1, null);
+
+  it('should return the expected data for JsSOM', () => {
+    const result = getChangeDataBySuiteAndExe(resultJsSOM, 'total');
+    expect(result.size).toEqual(2);
+    expect(result.has('micro')).toBe(true);
+    expect(result.has('macro')).toBe(true);
+
+    const micro = result.get('micro');
+    const macro = result.get('macro');
+
+    expect(micro?.labels).toEqual(['som']);
+    expect(macro?.labels).toEqual(['som']);
+
+    expect(micro?.data).toHaveLength(1);
+    expect(macro?.data).toHaveLength(1);
+
+    expect(micro?.data[0]).toHaveLength(20);
+    expect(macro?.data[0]).toHaveLength(6);
+
+    expect(jsRuns).toBe(20 + 6);
+  });
+
+  it('should return the expected data for TruffleSOM', () => {
+    const result = getChangeDataBySuiteAndExe(resultTSOM, 'total');
+    expect(result.size).toEqual(5);
+
+    expect(result.has('macro-startup')).toBe(true);
+    expect(result.has('micro-startup')).toBe(true);
+    expect(result.has('macro-steady')).toBe(true);
+    expect(result.has('micro-steady')).toBe(true);
+    expect(result.has('micro-somsom')).toBe(true);
+
+    const macroStartup = result.get('macro-startup');
+    const microSomSom = result.get('micro-somsom');
+
+    expect(macroStartup?.labels).toEqual([
+      'TruffleSOM-graal',
+      'TruffleSOM-interp',
+      'TruffleSOM-graal-bc',
+      'TruffleSOM-native-interp-bc',
+      'TruffleSOM-native-interp-ast'
+    ]);
+    expect(microSomSom?.labels).toEqual([
+      'SomSom-native-interp-ast',
+      'SomSom-native-interp-bc'
+    ]);
+
+    expect(macroStartup?.data).toHaveLength(5);
+    expect(microSomSom?.data).toHaveLength(2);
+
+    expect(macroStartup?.data[0]).toHaveLength(5);
+    expect(microSomSom?.data[0]).toHaveLength(5);
+
+    expect(tsRuns).toBe(166);
   });
 });
