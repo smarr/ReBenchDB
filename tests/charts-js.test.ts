@@ -2,34 +2,19 @@ import { describe, expect, beforeAll, afterAll, it } from '@jest/globals';
 
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 
-import Chart, { ChartType } from 'chart.js';
+import { ChartType } from 'chart.js';
 import { writeFileSync, readFileSync } from 'fs';
 import { PNG } from 'pngjs';
 import { robustPath } from '../src/util';
 import pixelmatch from 'pixelmatch';
-import {
-  ViolinController,
-  Violin
-  // BoxPlotController,
-  // BoxAndWiskers
-} from '@sgratzl/chartjs-chart-boxplot';
 import {
   calculateAllChangeStatistics,
   calculateRunTimeFactor,
   collateMeasurements,
   getChangeDataBySuiteAndExe
 } from '../src/stats-data-prep.js';
-import { renderOverviewComparison } from '../src/charts';
+import { renderOverviewComparison } from '../src/charts.js';
 import { joinImages } from 'join-images';
-// import annotationPlugin from 'chartjs-plugin-annotation';
-
-(<any>Chart).register(
-  ViolinController,
-  Violin
-  // BoxPlotController,
-  // BoxAndWiskers
-  // annotationPlugin
-);
 
 describe('Rendering a bar chart with chart.js', () => {
   const width = 800; //px
@@ -85,83 +70,6 @@ describe('Rendering a bar chart with chart.js', () => {
   });
 });
 
-describe('Render a box plot with chart.js', () => {
-  const width = 800; //px
-  const height = 800; //px
-  const backgroundColour = 'white'; // Uses https://www.w3schools.com/tags/canvas_fillstyle.asp
-  const chartJSNodeCanvas = new ChartJSNodeCanvas({
-    width,
-    height,
-    backgroundColour
-  });
-
-  let image: Buffer;
-
-  it('should render a chart', async () => {
-    // const configuration = {
-    //   type: <ChartType>'boxplot',
-    //   data: {
-    //     labels: ['Red', 'Blue', 'Yellow'],
-    //     datasets: [
-    //       {
-    //         label: '# of Votes',
-    //         data: <number[]>(<unknown>[
-    //           [
-    //             1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1,
-    //             1, 1, 1, 1, 10, 0
-    //           ],
-    //           [2, 3, 4, 5, 6, 7, 8, 9, 10],
-    //           [1, 1, 1, 1, 1, 2, 2, 3, 4, 5]
-    //         ])
-    //       }
-    //     ]
-    //   },
-    //   options: {
-    //     indexAxis: 'y'
-    //   }
-    // };
-    // image = await chartJSNodeCanvas.renderToBuffer(<any>configuration);
-    // writeFileSync('boxplot.png', image);
-  });
-});
-
-describe('Render a violin plot with chart.js', () => {
-  const width = 800; //px
-  const height = 800; //px
-  const backgroundColour = 'white'; // Uses https://www.w3schools.com/tags/canvas_fillstyle.asp
-  const chartJSNodeCanvas = new ChartJSNodeCanvas({
-    width,
-    height,
-    backgroundColour
-  });
-
-  let image: Buffer;
-
-  it('should render a chart', async () => {
-    const configuration = {
-      type: <ChartType>'violin',
-      data: {
-        labels: ['Red', 'Blue', 'Yellow'],
-        datasets: [
-          {
-            label: '# of Votes',
-            data: <number[]>(<unknown>[
-              [1, 2, 3, 4, 5],
-              [2, 3, 4, 5, 6, 7, 8, 9, 10],
-              [1, 1, 1, 1, 1, 2, 2, 3, 4, 5]
-            ])
-          }
-        ]
-      },
-      options: {
-        indexAxis: 'y'
-      }
-    };
-    image = await chartJSNodeCanvas.renderToBuffer(<any>configuration);
-    writeFileSync('violin.png', image);
-  });
-});
-
 const dataJsSOM = JSON.parse(
   readFileSync(
     robustPath(`../tests/data/compare-view-data-jssom.json`)
@@ -213,7 +121,25 @@ describe('Render a boxplot and violin plot for the JsSOM dataset', () => {
     result.toFile('boxplot-jssom.png');
   });
 
-  describe('a violin plot for the overview comparison', () => {});
+  it('a violin plot for the overview comparison', async () => {
+    const images: Buffer[] = [];
+
+    for (const [suite, data] of runTimeFactorJsSOM.entries()) {
+      const image = await renderOverviewComparison(
+        suite,
+        data,
+        undefined,
+        'violin'
+      );
+      images.push(image);
+
+      const svg = await renderOverviewComparison(suite, data, 'svg', 'violin');
+      writeFileSync(`violin-jssom-${suite}.svg`, svg);
+    }
+
+    const result = await joinImages(images, { direction: 'vertical' });
+    result.toFile('violin-jssom.png');
+  });
 });
 describe('Render a boxplot and violin plot for the TruffleSOM dataset', () => {
   // The original report is accessible at https://rebench.dev/TruffleSOM/compare/5820ec7d590013a9a47b06303cfff0cb7ccd9cea..5fa4bdb749d3b4a621362219420947e00e108580
@@ -232,5 +158,22 @@ describe('Render a boxplot and violin plot for the TruffleSOM dataset', () => {
     result.toFile('boxplot-tsom.png');
   });
 
-  describe('a violin plot for the overview comparison', () => {});
+  it('a violin plot for the overview comparison', async () => {
+    const images: Buffer[] = [];
+
+    for (const [suite, data] of runTimeFactorTruffleSOM.entries()) {
+      const image = await renderOverviewComparison(
+        suite,
+        data,
+        undefined,
+        'violin'
+      );
+      images.push(image);
+
+      // writeFileSync(`boxplot-tsom-${suite}.png`, image);
+    }
+
+    const result = await joinImages(images, { direction: 'vertical' });
+    result.toFile('violin-tsom.png');
+  });
 });

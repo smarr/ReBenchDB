@@ -4,8 +4,8 @@ import {
 } from 'chartjs-node-canvas';
 import { ChangeData } from '../src/stats-data-prep';
 import {
-  // ViolinController,
-  // Violin,
+  ViolinController,
+  Violin,
   BoxPlotController,
   BoxAndWiskers
 } from '@sgratzl/chartjs-chart-boxplot';
@@ -94,7 +94,8 @@ function getDataset(data: ChangeData) {
 export async function renderOverviewComparison(
   title: string | null,
   data: ChangeData,
-  type: 'svg' | 'png' = 'png'
+  type: 'svg' | 'png' = 'png',
+  plotType: 'boxplot' | 'violin' = 'boxplot'
 ): Promise<Buffer> {
   const width = 432;
   const height = calculatePlotHeight(title, data);
@@ -104,7 +105,13 @@ export async function renderOverviewComparison(
     height,
     backgroundColour,
     plugins: {
-      modern: ['chartjs-plugin-annotation', BoxPlotController, BoxAndWiskers]
+      modern: [
+        'chartjs-plugin-annotation',
+        BoxPlotController,
+        BoxAndWiskers,
+        ViolinController,
+        Violin
+      ]
     }
   };
   if (type === 'svg') {
@@ -112,8 +119,11 @@ export async function renderOverviewComparison(
   }
   const chartJSNodeCanvas = new ChartJSNodeCanvas(canvasOptions);
 
+  const plotTypeConst =
+    plotType === 'boxplot' ? ('boxplot' as const) : ('violin' as const);
+
   const configuration = {
-    type: 'boxplot' as const,
+    type: plotTypeConst,
     data: {
       labels: data.labels,
       datasets: getDataset(data)
@@ -161,4 +171,4 @@ export async function renderOverviewComparison(
 //  - [x] add plot title, i.e., the suite name
 //  - [ ] add logic to swap suite and exe if there's only a single exe in every suite so that
 //        that the suites are on the y-axis instead of the facets
-//  - [ ] try the violin plot
+//  - [x] try the violin plot
