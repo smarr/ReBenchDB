@@ -135,17 +135,19 @@ export async function renderOverviewComparison(
         legend: { display: false },
         annotation: getFivePercentLineAnnotations()
       },
-      // Not having any effect
-      // layout: {
-      //   padding: {
-      //     top: -100,
-      //     right: 1
-      //   }
-      // },
       scales: {
         x: {
           suggestedMin: 0,
-          suggestedMax: 2
+          suggestedMax: 2,
+          grid: {
+            drawOnChartArea: false,
+            drawTicks: true
+          }
+        },
+        y: {
+          grid: {
+            display: false
+          }
         }
       }
     }
