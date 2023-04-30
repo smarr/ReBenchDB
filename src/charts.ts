@@ -156,7 +156,7 @@ export async function renderOverviewComparison(
 
 // TODO:
 //  - [x] render SVG version
-//  - [ ] combine charts into single image
+//  - [x] combine charts into single image
 //  - [x] set background color if the median is below 0.95 or above 1.05
 //  - [x] add plot title, i.e., the suite name
 //  - [ ] add logic to swap suite and exe if there's only a single exe in every suite so that

@@ -20,6 +20,7 @@ import {
   getChangeDataBySuiteAndExe
 } from '../src/stats-data-prep.js';
 import { renderOverviewComparison } from '../src/charts';
+import { joinImages } from 'join-images';
 // import annotationPlugin from 'chartjs-plugin-annotation';
 
 (<any>Chart).register(
@@ -197,24 +198,38 @@ describe('Render a boxplot and violin plot for the JsSOM dataset', () => {
   calculateAllChangeStatistics(result, 0, 1, null);
 
   it('a boxplot for the overview comparison', async () => {
+    const images: Buffer[] = [];
+
     for (const [suite, data] of runTimeFactorJsSOM.entries()) {
       const image = await renderOverviewComparison(suite, data);
-      writeFileSync(`boxplot-jssom-${suite}.png`, image);
+      images.push(image);
+      // writeFileSync(`boxplot-jssom-${suite}.png`, image);
 
       const svg = await renderOverviewComparison(suite, data, 'svg');
       writeFileSync(`boxplot-jssom-${suite}.svg`, svg);
     }
+
+    const result = await joinImages(images, { direction: 'vertical' });
+    result.toFile('boxplot-jssom.png');
   });
+
   describe('a violin plot for the overview comparison', () => {});
 });
 describe('Render a boxplot and violin plot for the TruffleSOM dataset', () => {
   // The original report is accessible at https://rebench.dev/TruffleSOM/compare/5820ec7d590013a9a47b06303cfff0cb7ccd9cea..5fa4bdb749d3b4a621362219420947e00e108580
 
   it('a boxplot for the overview comparison', async () => {
+    const images: Buffer[] = [];
+
     for (const [suite, data] of runTimeFactorTruffleSOM.entries()) {
       const image = await renderOverviewComparison(suite, data);
-      writeFileSync(`boxplot-tsom-${suite}.png`, image);
+      images.push(image);
+
+      // writeFileSync(`boxplot-tsom-${suite}.png`, image);
     }
+
+    const result = await joinImages(images, { direction: 'vertical' });
+    result.toFile('boxplot-tsom.png');
   });
 
   describe('a violin plot for the overview comparison', () => {});

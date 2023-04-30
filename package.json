@@ -16,6 +16,8 @@
     "chartjs-node-canvas": "4.1.6",
     "@sgratzl/chartjs-chart-boxplot": "^3.10.0",
     "chartjs-plugin-annotation": "2.2.1",
+    "sharp": "0.32.2",
+    "join-images": "1.1.5",
     "decimal.js": "10.4.3",
     "ejs": "3.1.9",
     "koa": "2.14.2",
