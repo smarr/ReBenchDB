@@ -171,6 +171,6 @@ export async function renderOverviewComparison(
 //  - [x] combine charts into single image
 //  - [x] set background color if the median is below 0.95 or above 1.05
 //  - [x] add plot title, i.e., the suite name
-//  - [ ] add logic to swap suite and exe if there's only a single exe in every suite so that
+//  - [x] add logic to swap suite and exe if there's only a single exe in every suite so that
 //        that the suites are on the y-axis instead of the facets
 //  - [x] try the violin plot

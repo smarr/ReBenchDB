@@ -8,6 +8,7 @@ import { PNG } from 'pngjs';
 import { robustPath } from '../src/util';
 import pixelmatch from 'pixelmatch';
 import {
+  arrangeChangeDataForChart,
   calculateAllChangeStatistics,
   calculateRunTimeFactor,
   collateMeasurements,
@@ -108,13 +109,15 @@ describe('Render a boxplot and violin plot for the JsSOM dataset', () => {
   it('a boxplot for the overview comparison', async () => {
     const images: Buffer[] = [];
 
-    for (const [suite, data] of runTimeFactorJsSOM.entries()) {
-      const image = await renderOverviewComparison(suite, data);
+    const dataForChart = arrangeChangeDataForChart(runTimeFactorJsSOM);
+
+    for (const [group, data] of dataForChart.entries()) {
+      const image = await renderOverviewComparison(group, data);
       images.push(image);
       // writeFileSync(`boxplot-jssom-${suite}.png`, image);
 
-      const svg = await renderOverviewComparison(suite, data, 'svg');
-      writeFileSync(`boxplot-jssom-${suite}.svg`, svg);
+      const svg = await renderOverviewComparison(group, data, 'svg');
+      writeFileSync(`boxplot-jssom-${group}.svg`, svg);
     }
 
     const result = await joinImages(images, { direction: 'vertical' });

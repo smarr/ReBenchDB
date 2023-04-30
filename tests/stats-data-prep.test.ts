@@ -8,6 +8,8 @@ import {
   ResultsByBenchmark,
   ResultsByExeSuiteBenchmark,
   ResultsBySuiteBenchmark,
+  allExesAreTheSame,
+  arrangeChangeDataForChart,
   calculateAllChangeStatistics,
   calculateChangeStatsForBenchmark,
   collateMeasurements,
@@ -509,14 +511,14 @@ describe('calculateChangeStatsForBenchmark()', () => {
   });
 });
 
-describe('calculateAllChangeStatistics()', () => {
-  const resultJsSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
-    dataJsSOM.results
-  );
-  const resultTSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
-    dataTSOM.results
-  );
+const resultJsSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
+  dataJsSOM.results
+);
+const resultTSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
+  dataTSOM.results
+);
 
+describe('calculateAllChangeStatistics()', () => {
   it('should assign changeStats to the changeOffset measurement for all elements of JsSOM data', () => {
     const numRuns = calculateAllChangeStatistics(resultJsSOM, 0, 1, null);
     expect(numRuns).toBe(26);
@@ -621,5 +623,37 @@ describe('getChangeDataBySuiteAndExe()', () => {
     expect(microSomSom?.data[0]).toHaveLength(5);
 
     expect(tsRuns).toBe(166);
+  });
+});
+
+describe('allExesAreTheSame()', () => {
+  it('should return true for the JsSOM data', () => {
+    const result = getChangeDataBySuiteAndExe(resultJsSOM, 'total');
+    expect(allExesAreTheSame(result)).toEqual([true, 'som']);
+  });
+
+  it('should return false for the TruffleSOM data', () => {
+    const result = getChangeDataBySuiteAndExe(resultTSOM, 'total');
+    expect(allExesAreTheSame(result)).toEqual([false, null]);
+  });
+});
+
+describe('arrangeChangeDataForChart()', () => {
+  it('should transpose the JsSOM data from grouping by suite to grouping by exe', () => {
+    const changeData = getChangeDataBySuiteAndExe(resultJsSOM, 'total');
+    const result = arrangeChangeDataForChart(changeData);
+
+    expect(result.size).toEqual(1);
+    const data = result.get('som')!;
+
+    expect(data.labels).toEqual(['macro', 'micro']);
+    expect(data.data).toHaveLength(2);
+  });
+
+  it('should not have changed the TruffleSOM data', () => {
+    const changeData = getChangeDataBySuiteAndExe(resultTSOM, 'total');
+    const result = arrangeChangeDataForChart(changeData);
+
+    expect(result).toBe(changeData);
   });
 });

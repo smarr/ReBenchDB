@@ -284,6 +284,7 @@ export interface ChangeData {
 }
 
 export type BySuiteChangeData = Map<string, ChangeData>;
+export type ByGroupChangeData = Map<string, ChangeData>;
 
 export function getChangeDataBySuiteAndExe(
   byExeSuiteBench: ResultsByExeSuiteBenchmark,
@@ -338,4 +339,55 @@ export function calculateRunTimeFactor(
   }
 
   return bySuiteAndExe;
+}
+
+/**
+ * If there's only a single exe in each suite, flip the data around.
+ */
+export function arrangeChangeDataForChart(
+  changeData: BySuiteChangeData
+): ByGroupChangeData {
+  let [allAreTheSame, exeName] = allExesAreTheSame(changeData);
+
+  if (!allAreTheSame) {
+    return changeData;
+  }
+
+  const byExe = new Map<string, ChangeData>();
+  const newData: ChangeData = { labels: [], data: [] };
+  byExe.set(exeName!, newData);
+
+  for (const [suite, data] of changeData.entries()) {
+    newData.labels.push(suite);
+    newData.data.push(data.data[0]);
+  }
+
+  return byExe;
+}
+
+export function allExesAreTheSame(
+  changeData: BySuiteChangeData
+): [boolean, string | null] {
+  let allExesAreTheSame = true;
+  let exeName: string | null = null;
+
+  for (const data of changeData.values()) {
+    if (data.labels.length !== 1) {
+      allExesAreTheSame = false;
+      break;
+    }
+
+    if (exeName === null) {
+      exeName = data.labels[0];
+    } else if (exeName !== data.labels[0]) {
+      allExesAreTheSame = false;
+      break;
+    }
+  }
+
+  if (!allExesAreTheSame) {
+    exeName = null;
+  }
+
+  return [allExesAreTheSame, exeName];
 }
