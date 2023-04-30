@@ -322,3 +322,20 @@ export function getChangeDataBySuiteAndExe(
 
   return bySuiteAndExe;
 }
+
+export function calculateRunTimeFactor(
+  changeData: BySuiteChangeData
+): BySuiteChangeData {
+  const bySuiteAndExe = new Map<string, ChangeData>();
+
+  for (const [suite, data] of changeData.entries()) {
+    const bySuiteChangeData: ChangeData = { labels: data.labels, data: [] };
+    bySuiteAndExe.set(suite, bySuiteChangeData);
+
+    for (const exe of data.data) {
+      bySuiteChangeData.data.push(exe.map((v) => v + 1));
+    }
+  }
+
+  return bySuiteAndExe;
+}
