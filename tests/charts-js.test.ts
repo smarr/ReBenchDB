@@ -198,10 +198,10 @@ describe('Render a boxplot and violin plot for the JsSOM dataset', () => {
 
   it('a boxplot for the overview comparison', async () => {
     for (const [suite, data] of runTimeFactorJsSOM.entries()) {
-      const image = await renderOverviewComparison(data);
+      const image = await renderOverviewComparison(suite, data);
       writeFileSync(`boxplot-jssom-${suite}.png`, image);
 
-      const svg = await renderOverviewComparison(data, 'svg');
+      const svg = await renderOverviewComparison(suite, data, 'svg');
       writeFileSync(`boxplot-jssom-${suite}.svg`, svg);
     }
   });
@@ -212,7 +212,7 @@ describe('Render a boxplot and violin plot for the TruffleSOM dataset', () => {
 
   it('a boxplot for the overview comparison', async () => {
     for (const [suite, data] of runTimeFactorTruffleSOM.entries()) {
-      const image = await renderOverviewComparison(data);
+      const image = await renderOverviewComparison(suite, data);
       writeFileSync(`boxplot-tsom-${suite}.png`, image);
     }
   });

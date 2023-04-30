@@ -18,19 +18,25 @@ const baseColorLight = '#97c4f0';
 const fullyTransparent = 'rgba(0, 0, 0, 0)';
 
 const marginTop = 12;
+const marginTopWithTitle = 34;
 const marginBottom = 28;
 const perEntryHeight = 34;
 
-function calculatePlotHeight(data: ChangeData): number {
-  return marginTop + marginBottom + data.labels.length * perEntryHeight;
+function calculatePlotHeight(title: string | null, data: ChangeData): number {
+  const result = marginBottom + data.labels.length * perEntryHeight;
+  if (title) {
+    return result + marginTopWithTitle;
+  }
+  return result + marginTop;
 }
 
 export async function renderOverviewComparison(
+  title: string | null,
   data: ChangeData,
   type: 'svg' | 'png' = 'png'
 ): Promise<Buffer> {
   const width = 432;
-  const height = calculatePlotHeight(data);
+  const height = calculatePlotHeight(title, data);
   const backgroundColour = 'white'; // Uses https://www.w3schools.com/tags/canvas_fillstyle.asp
   const canvasOptions: ChartJSNodeCanvasOptions = {
     width,
@@ -111,6 +117,13 @@ export async function renderOverviewComparison(
     }
   };
 
+  if (title) {
+    (<any>configuration.options.plugins).title = {
+      text: title,
+      display: true
+    };
+  }
+
   if (type === 'svg') {
     return chartJSNodeCanvas.renderToBufferSync(configuration, 'image/svg+xml');
   }
@@ -118,10 +131,10 @@ export async function renderOverviewComparison(
 }
 
 // TODO:
-//  - [ ] render SVG version
+//  - [x] render SVG version
 //  - [ ] combine charts into single image
 //  - [ ] set background color if the median is below 0.95 or above 1.05
-//  - [ ] add plot title, i.e., the suite name
+//  - [x] add plot title, i.e., the suite name
 //  - [ ] add logic to swap suite and exe if there's only a single exe in every suite so that
 //        that the suites are on the y-axis instead of the facets
 //  - [ ] try the violin plot
