@@ -208,6 +208,11 @@ function median(sortedData: number[]): number {
   return medianWithIndices(sortedData, medianIndices(sortedData.length));
 }
 
+export function medianUnsorted(data: number[]): number {
+  const sortedData = data.slice().sort((a, b) => a - b);
+  return median(sortedData);
+}
+
 /**
  * Return the indexes into an array of the given length, at which the confidence
  * values for the desired confidence level can be found.

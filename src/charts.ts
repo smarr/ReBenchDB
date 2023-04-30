@@ -9,12 +9,17 @@ import {
   BoxPlotController,
   BoxAndWiskers
 } from '@sgratzl/chartjs-chart-boxplot';
+import { medianUnsorted } from '../src/stats';
 
 const changeColor = '#e9b96e';
 const baseColor = '#729fcf';
 
 const changeColorLight = '#efd0a7';
 const baseColorLight = '#97c4f0';
+
+const fastColor = '#e4ffc7';
+const slowColor = '#ffcccc';
+
 const fullyTransparent = 'rgba(0, 0, 0, 0)';
 
 const marginTop = 12;
@@ -28,6 +33,62 @@ function calculatePlotHeight(title: string | null, data: ChangeData): number {
     return result + marginTopWithTitle;
   }
   return result + marginTop;
+}
+
+function getFivePercentLineAnnotations() {
+  return {
+    annotations: {
+      line1: {
+        type: 'line' as const,
+        xMin: 1,
+        xMax: 1,
+        borderColor: '#000',
+        borderWidth: 1,
+        drawTime: 'beforeDatasetsDraw'
+      },
+      line095: {
+        type: 'line' as const,
+        xMin: 0.95,
+        xMax: 0.95,
+        borderDash: [5, 5],
+        borderColor: '#ccc',
+        borderWidth: 1,
+        drawTime: 'beforeDatasetsDraw'
+      },
+      line105: {
+        type: 'line' as const,
+        xMin: 1.05,
+        xMax: 1.05,
+        borderDash: [5, 5],
+        borderColor: '#ccc',
+        borderWidth: 1,
+        drawTime: 'beforeDatasetsDraw'
+      }
+    }
+  };
+}
+
+function getDataset(data: ChangeData) {
+  const medianPerLabel = data.data.map((d) => medianUnsorted(d));
+
+  const backgroundColors = medianPerLabel.map((d) => {
+    if (d < 0.95) {
+      return fastColor;
+    } else if (d > 1.05) {
+      return slowColor;
+    }
+    return fullyTransparent;
+  });
+
+  return [
+    {
+      backgroundColor: backgroundColors,
+      borderColor: changeColor,
+      borderWidth: 1.5,
+      itemRadius: 2,
+      data: <number[]>(<unknown>data.data)
+    }
+  ];
 }
 
 export async function renderOverviewComparison(
@@ -55,51 +116,14 @@ export async function renderOverviewComparison(
     type: 'boxplot' as const,
     data: {
       labels: data.labels,
-      datasets: [
-        {
-          backgroundColor: fullyTransparent,
-          borderColor: changeColor,
-          borderWidth: 1.5,
-          itemRadius: 2,
-          data: <number[]>(<unknown>data.data)
-        }
-      ]
+      datasets: getDataset(data)
     },
     options: {
       devicePixelRatio: 2,
       indexAxis: 'y' as const,
       plugins: {
         legend: { display: false },
-        annotation: {
-          annotations: {
-            line1: {
-              type: 'line' as const,
-              xMin: 1,
-              xMax: 1,
-              borderColor: '#000',
-              borderWidth: 1,
-              drawTime: 'beforeDatasetsDraw'
-            },
-            line095: {
-              type: 'line' as const,
-              xMin: 0.95,
-              xMax: 0.95,
-              borderDash: [5, 5],
-              borderColor: '#ccc',
-              borderWidth: 1,
-              drawTime: 'beforeDatasetsDraw'
-            },
-            line105: {
-              type: 'line' as const,
-              xMin: 1.05,
-              xMax: 1.05,
-              borderDash: [5, 5],
-              borderColor: '#ccc',
-              borderWidth: 1,
-              drawTime: 'beforeDatasetsDraw'
-            }
-          }
-        }
+        annotation: getFivePercentLineAnnotations()
       },
       // Not having any effect
       // layout: {
@@ -133,7 +157,7 @@ export async function renderOverviewComparison(
 // TODO:
 //  - [x] render SVG version
 //  - [ ] combine charts into single image
-//  - [ ] set background color if the median is below 0.95 or above 1.05
+//  - [x] set background color if the median is below 0.95 or above 1.05
 //  - [x] add plot title, i.e., the suite name
 //  - [ ] add logic to swap suite and exe if there's only a single exe in every suite so that
 //        that the suites are on the y-axis instead of the facets
