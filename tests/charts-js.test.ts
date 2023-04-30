@@ -200,6 +200,9 @@ describe('Render a boxplot and violin plot for the JsSOM dataset', () => {
     for (const [suite, data] of runTimeFactorJsSOM.entries()) {
       const image = await renderOverviewComparison(data);
       writeFileSync(`boxplot-jssom-${suite}.png`, image);
+
+      const svg = await renderOverviewComparison(data, 'svg');
+      writeFileSync(`boxplot-jssom-${suite}.svg`, svg);
     }
   });
   describe('a violin plot for the overview comparison', () => {});

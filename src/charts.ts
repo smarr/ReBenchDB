@@ -1,4 +1,7 @@
-import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
+import {
+  ChartJSNodeCanvas,
+  ChartJSNodeCanvasOptions
+} from 'chartjs-node-canvas';
 import { ChangeData } from '../src/stats-data-prep';
 import {
   // ViolinController,
@@ -23,19 +26,24 @@ function calculatePlotHeight(data: ChangeData): number {
 }
 
 export async function renderOverviewComparison(
-  data: ChangeData
+  data: ChangeData,
+  type: 'svg' | 'png' = 'png'
 ): Promise<Buffer> {
   const width = 432;
   const height = calculatePlotHeight(data);
   const backgroundColour = 'white'; // Uses https://www.w3schools.com/tags/canvas_fillstyle.asp
-  const chartJSNodeCanvas = new ChartJSNodeCanvas({
+  const canvasOptions: ChartJSNodeCanvasOptions = {
     width,
     height,
     backgroundColour,
     plugins: {
       modern: ['chartjs-plugin-annotation', BoxPlotController, BoxAndWiskers]
     }
-  });
+  };
+  if (type === 'svg') {
+    (<any>canvasOptions).type = 'svg'; // work around the readonly property
+  }
+  const chartJSNodeCanvas = new ChartJSNodeCanvas(canvasOptions);
 
   const configuration = {
     type: 'boxplot' as const,
@@ -102,6 +110,10 @@ export async function renderOverviewComparison(
       }
     }
   };
+
+  if (type === 'svg') {
+    return chartJSNodeCanvas.renderToBufferSync(configuration, 'image/svg+xml');
+  }
   return chartJSNodeCanvas.renderToBuffer(configuration);
 }
 
