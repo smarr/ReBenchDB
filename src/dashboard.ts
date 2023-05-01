@@ -278,8 +278,8 @@ export function getReportId(
   base: string,
   change: string
 ): string {
-  const baselineHash6 = base.substr(0, 6);
-  const changeHash6 = change.substr(0, 6);
+  const baselineHash6 = base.substring(0, 6);
+  const changeHash6 = change.substring(0, 6);
   return `${project}-${baselineHash6}-${changeHash6}`;
 }
 
@@ -311,8 +311,8 @@ export async function dashCompare(
   dbConfig: DatabaseConfig,
   db: Database
 ): Promise<any> {
-  const baselineHash6 = base.substr(0, 6);
-  const changeHash6 = change.substr(0, 6);
+  const baselineHash6 = base.substring(0, 6);
+  const changeHash6 = change.substring(0, 6);
 
   const reportId = getReportId(projectSlug, base, change);
 
@@ -414,8 +414,8 @@ export async function dashCompareNew(
   dbConfig: DatabaseConfig,
   db: Database
 ): Promise<any> {
-  const baselineHash6 = base.substr(0, 6);
-  const changeHash6 = change.substr(0, 6);
+  const baselineHash6 = base.substring(0, 6);
+  const changeHash6 = change.substring(0, 6);
 
   const reportId = getReportId(projectSlug, base, change);
 

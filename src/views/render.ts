@@ -7,7 +7,7 @@ export function filterCommitMessage(msg: string): string {
 }
 
 function shortCommitId(commitId) {
-  return commitId.substr(0, 6);
+  return commitId.substring(0, 6);
 }
 
 function shortenCommitIds(commitIds) {
@@ -35,7 +35,7 @@ function formatCommitMessages(messages) {
   messages = filterCommitMessage(messages);
   const newLineIdx = messages.indexOf('\n');
   if (newLineIdx > -1) {
-    const firstLine = messages.substr(0, newLineIdx);
+    const firstLine = messages.substring(0, newLineIdx);
     return (
       `${firstLine} <a href="#" onclick="expandMessage(event)"` +
       ` data-fulltext="${messages.replace('"', '\x22')}">&hellip;</a>`
@@ -107,7 +107,7 @@ async function renderChangeDetails(changesDetailsResponse, projectId: string) {
       list-min-padding"
       data-toggle="list" data-hash="${change.commitid}" href="">
         <div class="exp-date" title="Experiment Start Date">${date}</div>
-        ${change.commitid.substr(0, 6)} ${change.branchortag}<br>
+        ${change.commitid.substring(0, 6)} ${change.branchortag}<br>
         <div class="change-msg">${msg}</div>
       </a>`;
 
