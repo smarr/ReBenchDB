@@ -83,11 +83,12 @@ jobs:
           npm test
       
       - name: Upload image difference, if there are any
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v3
         with:
-          name: diff-images
+          name: Image Differences of charts.test.ts
           path: diff-*.png
+          if-no-files-found: ignore
 
       - name: Lint and Formatting
         run: |
