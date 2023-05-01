@@ -19,7 +19,6 @@ import {
   getChangeDataBySuiteAndExe
 } from '../src/stats-data-prep.js';
 import { ComparisonStatistics } from '../src/stats.js';
-import { calculateAllStatistics } from 'dashboard.js';
 
 describe('compareStringOrNull()', () => {
   it('should compare null and null', () => {

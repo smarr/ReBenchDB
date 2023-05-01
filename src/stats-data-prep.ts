@@ -391,3 +391,12 @@ export function allExesAreTheSame(
 
   return [allExesAreTheSame, exeName];
 }
+
+export function calculateDataForOverviewPlot(
+  byExeSuiteBench: ResultsByExeSuiteBenchmark,
+  criterion: string
+): ByGroupChangeData {
+  const changeData = getChangeDataBySuiteAndExe(byExeSuiteBench, criterion);
+  const runTimeFactor = calculateRunTimeFactor(changeData);
+  return arrangeChangeDataForChart(runTimeFactor);
+}

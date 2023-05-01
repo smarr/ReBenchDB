@@ -1,8 +1,11 @@
+import { writeFileSync } from 'fs';
+import { joinImages } from 'join-images';
+
 import {
   ChartJSNodeCanvas,
   ChartJSNodeCanvasOptions
 } from 'chartjs-node-canvas';
-import { ChangeData } from '../src/stats-data-prep';
+import { ByGroupChangeData, ChangeData } from '../src/stats-data-prep';
 import {
   ViolinController,
   Violin,
@@ -99,21 +102,35 @@ export async function renderOverviewComparison(
 ): Promise<Buffer> {
   const width = 432;
   const height = calculatePlotHeight(title, data);
-  const backgroundColour = 'white'; // Uses https://www.w3schools.com/tags/canvas_fillstyle.asp
+  const backgroundColour = '#fff'; // Uses https://www.w3schools.com/tags/canvas_fillstyle.asp
+
+  const plugins: any[] = ['chartjs-plugin-annotation'];
+
+  if (plotType === 'boxplot') {
+    plugins.push(BoxPlotController, BoxAndWiskers);
+  } else {
+    plugins.push(ViolinController, Violin);
+  }
+
   const canvasOptions: ChartJSNodeCanvasOptions = {
     width,
     height,
     backgroundColour,
-    plugins: {
-      modern: [
-        'chartjs-plugin-annotation',
-        BoxPlotController,
-        BoxAndWiskers,
-        ViolinController,
-        Violin
-      ]
+    plugins: { modern: plugins },
+    chartCallback: (ChartJS) => {
+      ChartJS.register({
+        id: 'my_background_color',
+        beforeDraw: (chart, _options) => {
+          const ctx = chart.ctx;
+          ctx.save();
+          ctx.fillStyle = backgroundColour;
+          ctx.fillRect(0, 0, width, chart.height);
+          ctx.restore();
+        }
+      });
     }
   };
+
   if (type === 'svg') {
     (<any>canvasOptions).type = 'svg'; // work around the readonly property
   }
@@ -166,11 +183,28 @@ export async function renderOverviewComparison(
   return chartJSNodeCanvas.renderToBuffer(configuration);
 }
 
-// TODO:
-//  - [x] render SVG version
-//  - [x] combine charts into single image
-//  - [x] set background color if the median is below 0.95 or above 1.05
-//  - [x] add plot title, i.e., the suite name
-//  - [x] add logic to swap suite and exe if there's only a single exe in every suite so that
-//        that the suites are on the y-axis instead of the facets
-//  - [x] try the violin plot
+export async function renderOverviewPlots(
+  outputFolder: string,
+  plotName: string,
+  plotData: ByGroupChangeData
+): Promise<{ png: string; svg: string[] }> {
+  const images: Buffer[] = [];
+  const svgUrls: string[] = [];
+
+  for (const [group, data] of plotData.entries()) {
+    const image = await renderOverviewComparison(group, data);
+    images.push(image);
+    writeFileSync(`${outputFolder}/${plotName}-${group}.png`, image);
+
+    const fileName = `${outputFolder}/${plotName}-${group}.svg`;
+    svgUrls.push(fileName);
+    const svg = await renderOverviewComparison(group, data, 'svg');
+    writeFileSync(fileName, svg);
+  }
+
+  const result = await joinImages(images, { direction: 'vertical' });
+  const pngFileName = `${outputFolder}/${plotName}.png`;
+  await result.toFile(pngFileName);
+
+  return { png: pngFileName, svg: svgUrls };
+}

@@ -7,7 +7,12 @@ declare type ViewHelpers = typeof import('./helpers');
 
 /** Summary statistics for the overall comparison. */
 export interface StatsSummary {
-  overviewUrl: string;
+  /** The URL to a PNG with the overview statistics. */
+  overviewPngUrl: string;
+
+  /** The URLs to SVGs with the overview statistics. */
+  overviewSvgUrls: string[];
+
   numRunConfigs: number;
   total: BasicSummaryStatistics;
   gcTime: BasicSummaryStatistics;
