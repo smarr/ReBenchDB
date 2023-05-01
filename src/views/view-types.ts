@@ -21,6 +21,12 @@ export interface StatsSummary {
 
 /** Types for the Compare Partials */
 
+export interface CompareStatsTableHeader extends DataFormat, ViewHelpers {
+  totalUnit: string;
+  gcUnit?: string;
+  allocUnit?: string;
+}
+
 export interface CompareStatsRowAcrossExes extends DataFormat, ViewHelpers {
   exes: {
     name: string;

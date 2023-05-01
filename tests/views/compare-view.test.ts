@@ -7,6 +7,7 @@ import {
   ButtonsAdditionalInfo,
   CompareStatsRowAcrossExes,
   CompareStatsRowAcrossVersions,
+  CompareStatsTableHeader,
   StatsSummary
 } from 'views/view-types.js';
 import { robustPath } from '../../src/util.js';
@@ -138,6 +139,23 @@ describe('Compare View Parts', () => {
 
       const result = tpl(data);
       expect(result).toEqual(loadResult('stats-summary'));
+    });
+  });
+
+  describe('Header for Statistics Table', () => {
+    const tpl = prepareTemplate('compare/stats-tbl-header.html', true);
+
+    it('should render the data as expected', () => {
+      const data: CompareStatsTableHeader = {
+        totalUnit: 'ms',
+        gcUnit: 'ms',
+        allocUnit: 'bytes',
+        ...numFormat,
+        ...viewHelpers
+      };
+
+      const result = tpl(data);
+      expect(result).toEqual(loadResult('stats-tbl-header'));
     });
   });
 });
