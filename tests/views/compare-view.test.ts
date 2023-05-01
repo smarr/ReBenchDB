@@ -10,7 +10,10 @@ import {
   StatsSummary
 } from 'views/view-types.js';
 import { robustPath } from '../../src/util.js';
-import { calculateAllStatistics, getNavigation } from '../../src/dashboard.js';
+import {
+  calculateAllStatisticsAndRenderPlots,
+  getNavigation
+} from '../../src/dashboard.js';
 import { collateMeasurements } from '../../src/stats-data-prep.js';
 
 function loadResult(name: string): string {
@@ -125,7 +128,8 @@ describe('Compare View Parts', () => {
 
     it('should render the data as expected', () => {
       const data: StatsSummary = {
-        overviewUrl: 'some-url.svg',
+        overviewPngUrl: 'some-url.svg',
+        overviewSvgUrls: ['some-url1.svg', 'some-url2.svg'],
         numRunConfigs: 232,
         total: { min: 0.1, max: 1.1, median: 0.5 },
         gcTime: { min: 2.1, max: 3.1, median: 2.5 },
@@ -197,6 +201,80 @@ describe('Compare View Navigation', () => {
         'micro-startup',
         'micro-steady'
       ]
+    });
+  });
+});
+
+describe('Compare View Statistics', () => {
+  const resultsJ = collateMeasurements(dataJsSOM.results);
+  const resultsT = collateMeasurements(dataTruffleSOM.results);
+  let statsJ: { all: StatsSummary };
+  let statsT: { all: StatsSummary };
+
+  it('should calculate statistics without throwing exception', async () => {
+    statsJ = await calculateAllStatisticsAndRenderPlots(
+      resultsJ,
+      'bc1105',
+      '4dff7e',
+      'testJ'
+    );
+    statsT = await calculateAllStatisticsAndRenderPlots(
+      resultsT,
+      '5fa4bd',
+      '5820ec',
+      'testT'
+    );
+
+    expect(statsJ).toBeDefined();
+    expect(statsT).toBeDefined();
+  });
+
+
+  it('should get the summary statistics for JsSOM', () => {
+    const stats: StatsSummary = statsJ.all;
+    expect(stats).toEqual({
+      numRunConfigs: 26,
+      overviewPngUrl: `${robustPath(
+        '../resources/reports/'
+      )}/testJ/overview.png`,
+      overviewSvgUrls: [
+        `${robustPath('../resources/reports/')}/testJ/overview-som.svg`
+      ],
+      total: {
+        min: -0.08187505715653631,
+        max: 0.1445205479452054,
+        median: -0.007853258247567385
+      }
+    });
+  });
+
+  it('should get the summary statistics for TruffleSOM', () => {
+    const stats = statsT.all;
+    expect(stats).toEqual({
+      numRunConfigs: 166,
+      overviewPngUrl: `${robustPath(
+        '../resources/reports/'
+      )}/testT/overview.png`,
+      overviewSvgUrls: [
+        `${robustPath(
+          '../resources/reports/'
+        )}/testT/overview-macro-steady.svg`,
+        `${robustPath(
+          '../resources/reports/'
+        )}/testT/overview-micro-steady.svg`,
+        `${robustPath(
+          '../resources/reports/'
+        )}/testT/overview-macro-startup.svg`,
+        `${robustPath(
+          '../resources/reports/'
+        )}/testT/overview-micro-startup.svg`,
+        `${robustPath('../resources/reports/')}/testT/overview-micro-somsom.svg`
+      ],
+      total: {
+        min: -0.14266018907563016,
+        max: 0.41233051093656736,
+        median: -0.0009242240366887366
+      }
     });
   });
 });

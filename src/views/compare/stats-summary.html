@@ -1,6 +1,9 @@
 <h2 id="overview">Result Overview</h2>
-<img src="{%= it.overviewUrl %}">
-
+<div id="overview-plots">
+{% for (const url of it.overviewSvgUrls) { %}
+  <img src="{%= url %}">
+{% } %}
+</div>
 <dl class="row">
   <dt class="col-sm-3">Number of Run Configurations</dt>
   <dd class="col-sm-8">{%= it.numRunConfigs %}</dd>

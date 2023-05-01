@@ -1,13 +1,11 @@
-import { readFileSync, existsSync, unlinkSync, rmSync } from 'fs';
+import { readFileSync, existsSync, unlinkSync, rmSync, mkdirSync } from 'fs';
 import { execFile, ChildProcessPromise } from 'promisify-child-process';
 import {
   TimedCacheValidity,
   Database,
   DatabaseConfig,
   Source,
-  MeasurementData,
-  ProcessedResult,
-  Measurements
+  MeasurementData
 } from './db.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
 import { AllResults, BenchmarkCompletion, TimelineSuite } from './api.js';
@@ -22,8 +20,17 @@ import { getDirname } from './util.js';
 import { log } from './logging.js';
 import { QueryConfig } from 'pg';
 import { StatsSummary } from './views/view-types.js';
-import { calculateChangeStatistics } from './stats.js';
-import { ResultsByExeSuiteBenchmark, collateMeasurements } from './stats-data-prep.js';
+import {
+  ComparisonStatistics,
+  calculateSummaryOfChangeSummaries
+} from './stats.js';
+import {
+  ResultsByExeSuiteBenchmark,
+  calculateAllChangeStatistics,
+  calculateDataForOverviewPlot,
+  collateMeasurements
+} from './stats-data-prep.js';
+import { renderOverviewPlots } from './charts.js';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -287,6 +294,10 @@ export function getReportFilename(reportId: string): string {
   return `${reportOutputFolder}/${reportId}.html`;
 }
 
+export function getReportFolder(reportId: string): string {
+  return `${reportOutputFolder}/${reportId}`;
+}
+
 export function dashDeleteOldReport(
   project: string,
   base: string,
@@ -453,45 +464,58 @@ export async function dashCompareNew(
   data.navExeComparison = navExeComparison;
 
   data.allMeasurements = collateMeasurements(results);
-  data.stats = calculateAllStatistics(data.allMeasurements, base, change);
+  data.stats = calculateAllStatisticsAndRenderPlots(
+    data.allMeasurements,
+    base,
+    change,
+    reportId
+  );
   data.envs = envs;
 
   return data;
 }
 
-export function calculateAllStatistics(
+export async function calculateAllStatisticsAndRenderPlots(
   byExeSuiteBench: ResultsByExeSuiteBenchmark,
   base: string,
-  change: string
-): { all: StatsSummary } {
-  const baseCommitIdIsFirst = base.localeCompare(change) < 0;
+  change: string,
+  reportId: string
+): Promise<{ all: StatsSummary }> {
+  const cmp = base.localeCompare(change);
+  if (cmp === 0) {
+    throw new Error('base and change are the same');
+  }
+  const baseCommitIdIsFirst = cmp < 0;
+
   const baseOffset = baseCommitIdIsFirst ? 0 : 1;
   const changeOffset = baseCommitIdIsFirst ? 1 : 0;
 
-  let numRunConfigs = 0;
-  for (const bySuite of byExeSuiteBench.values()) {
-    for (const byBench of bySuite.values()) {
-      for (const bench of byBench.values()) {
-        // TODO: make sure this is really the numRunConfigs
-        numRunConfigs += 1;
+  const criteria = new Map<string, ComparisonStatistics[]>();
 
+  const numRunConfigs = calculateAllChangeStatistics(
+    byExeSuiteBench,
+    baseOffset,
+    changeOffset,
+    criteria
+  );
 
+  const summary = <StatsSummary>(
+    (<unknown>calculateSummaryOfChangeSummaries(criteria))
+  );
+  summary.numRunConfigs = numRunConfigs;
 
+  const folderName = getReportFolder(reportId);
+  mkdirSync(folderName, { recursive: true });
 
-      }
-    }
-  }
+  const plotData = calculateDataForOverviewPlot(byExeSuiteBench, 'total');
 
-  // TODO: ideally, we would want all but the total criterion's to be picked up
-  // dynamically, automatically
+  const files = await renderOverviewPlots(folderName, 'overview', plotData);
+
+  summary.overviewPngUrl = files.png;
+  summary.overviewSvgUrls = files.svg;
+
   return {
-    all: {
-      numRunConfigs,
-      overviewUrl: 'TODO',
-      total: { geomean: <any>'TODO', min: <any>'TODO', max: <any>'TODO' },
-      gcTime: { geomean: <any>'TODO', min: <any>'TODO', max: <any>'TODO' },
-      allocated: { geomean: <any>'TODO', min: <any>'TODO', max: <any>'TODO' }
-    }
+    all: summary
   };
 }
 
