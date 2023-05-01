@@ -13,15 +13,7 @@ import {
   BoxAndWiskers
 } from '@sgratzl/chartjs-chart-boxplot';
 import { medianUnsorted } from '../src/stats';
-
-const changeColor = '#e9b96e';
-const baseColor = '#729fcf';
-
-const changeColorLight = '#efd0a7';
-const baseColorLight = '#97c4f0';
-
-const fastColor = '#e4ffc7';
-const slowColor = '#ffcccc';
+import { siteAesthetics } from './util';
 
 const fullyTransparent = 'rgba(0, 0, 0, 0)';
 
@@ -76,9 +68,9 @@ function getDataset(data: ChangeData) {
 
   const backgroundColors = medianPerLabel.map((d) => {
     if (d < 0.95) {
-      return fastColor;
+      return siteAesthetics.fastColor;
     } else if (d > 1.05) {
-      return slowColor;
+      return siteAesthetics.slowColor;
     }
     return fullyTransparent;
   });
@@ -86,7 +78,7 @@ function getDataset(data: ChangeData) {
   return [
     {
       backgroundColor: backgroundColors,
-      borderColor: changeColor,
+      borderColor: siteAesthetics.changeColor,
       borderWidth: 1.5,
       itemRadius: 2,
       data: <number[]>(<unknown>data.data)
@@ -102,7 +94,6 @@ export async function renderOverviewComparison(
 ): Promise<Buffer> {
   const width = 432;
   const height = calculatePlotHeight(title, data);
-  const backgroundColour = '#fff'; // Uses https://www.w3schools.com/tags/canvas_fillstyle.asp
 
   const plugins: any[] = ['chartjs-plugin-annotation'];
 
@@ -115,7 +106,7 @@ export async function renderOverviewComparison(
   const canvasOptions: ChartJSNodeCanvasOptions = {
     width,
     height,
-    backgroundColour,
+    backgroundColour: siteAesthetics.backgroundColor,
     plugins: { modern: plugins },
     chartCallback: (ChartJS) => {
       ChartJS.register({
@@ -123,7 +114,7 @@ export async function renderOverviewComparison(
         beforeDraw: (chart, _options) => {
           const ctx = chart.ctx;
           ctx.save();
-          ctx.fillStyle = backgroundColour;
+          ctx.fillStyle = siteAesthetics.backgroundColor;
           ctx.fillRect(0, 0, width, chart.height);
           ctx.restore();
         }

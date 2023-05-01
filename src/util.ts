@@ -68,4 +68,15 @@ export const siteConfig = {
     process.env.GITHUB_PK || 'rebenchdb.2020-08-11.private-key.pem'
 };
 
+export const siteAesthetics = {
+  changeColor: '#e9b96e',
+  baseColor: '#729fcf',
+
+  changeColorLight: '#efd0a7',
+  baseColorLight: '#97c4f0',
+
+  fastColor: '#e4ffc7',
+  slowColor: '#ffcccc'
+};
+
 export const TotalCriterion = 'total';
