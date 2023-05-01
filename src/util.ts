@@ -42,7 +42,7 @@ export const dbConfig = {
   user: process.env.RDB_USER || '',
   password: process.env.RDB_PASS || '',
   host: process.env.RDB_HOST || 'localhost',
-  database: process.env.RDB_DB || 'test_rdb4',
+  database: process.env.RDB_DB || 'rdb_smde',
   port: 5432
 };
 
@@ -76,7 +76,9 @@ export const siteAesthetics = {
   baseColorLight: '#97c4f0',
 
   fastColor: '#e4ffc7',
-  slowColor: '#ffcccc'
+  slowColor: '#ffcccc',
+
+  backgroundColor: '#ffffff'
 };
 
 export const TotalCriterion = 'total';
