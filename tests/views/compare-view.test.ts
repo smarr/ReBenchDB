@@ -147,9 +147,11 @@ describe('Compare View Parts', () => {
 
     it('should render the data as expected', () => {
       const data: CompareStatsTableHeader = {
-        totalUnit: 'ms',
-        gcUnit: 'ms',
-        allocUnit: 'bytes',
+        criteria: {
+          total: { name: 'total', unit: 'ms' },
+          'GC time': { name: 'GC time', unit: 'ms' },
+          Allocated: { name: 'Allocated', unit: 'bytes' }
+        },
         ...numFormat,
         ...viewHelpers
       };

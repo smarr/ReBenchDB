@@ -75,17 +75,18 @@ export function compareToSortForSinglePassChangeStatsWithoutCommitId(
   return a.criterion.name.localeCompare(b.criterion.name);
 }
 
-export type ResultsByBenchmark = Map<string, ProcessedResult>;
+export interface ResultsByBenchmark {
+  benchmarks: Map<string, ProcessedResult>;
+  criteria: Record<string, CriterionData>;
+}
+
 export type ResultsBySuiteBenchmark = Map<string, ResultsByBenchmark>;
 export type ResultsByExeSuiteBenchmark = Map<string, ResultsBySuiteBenchmark>;
 
 export function collateMeasurements(
   data: MeasurementData[]
 ): ResultsByExeSuiteBenchmark {
-  const byExeSuiteBench = new Map<
-    string,
-    Map<string, Map<string, ProcessedResult>>
-  >();
+  const byExeSuiteBench = new Map<string, Map<string, ResultsByBenchmark>>();
   const runSettings = new Map<string, RunSettings>();
   const criteria = new Map<string, CriterionData>();
 
@@ -123,11 +124,14 @@ export function collateMeasurements(
 
     let forSuiteByBench = forExeBySuiteBench.get(row.suite);
     if (forSuiteByBench === undefined) {
-      forSuiteByBench = new Map();
+      forSuiteByBench = {
+        benchmarks: new Map(),
+        criteria: {}
+      };
       forExeBySuiteBench.set(row.suite, forSuiteByBench);
     }
 
-    let benchResult = forSuiteByBench.get(row.bench);
+    let benchResult = forSuiteByBench.benchmarks.get(row.bench);
     if (benchResult === undefined) {
       benchResult = {
         exe: row.exe,
@@ -135,7 +139,7 @@ export function collateMeasurements(
         bench: row.bench,
         measurements: []
       };
-      forSuiteByBench.set(row.bench, benchResult);
+      forSuiteByBench.benchmarks.set(row.bench, benchResult);
     }
 
     let m: Measurements | null = null;
@@ -159,6 +163,7 @@ export function collateMeasurements(
         runSettings: runSetting
       };
       benchResult.measurements.push(m);
+      forSuiteByBench.criteria[criterion.name] = criterion;
     }
 
     if (!m.values[row.invocation - 1]) {
@@ -258,7 +263,7 @@ export function calculateAllChangeStatistics(
   let numRunConfigs = 0;
   for (const bySuite of byExeSuiteBench.values()) {
     for (const byBench of bySuite.values()) {
-      for (const bench of byBench.values()) {
+      for (const bench of byBench.benchmarks.values()) {
         // TODO: make sure this is really the numRunConfigs.
         // For some reason, I am not quite sure this is correct
         numRunConfigs += 1;
@@ -305,7 +310,7 @@ export function getChangeDataBySuiteAndExe(
 
       const changeDataForExe: number[] = [];
 
-      for (const bench of byBench.values()) {
+      for (const bench of byBench.benchmarks.values()) {
         for (const m of bench.measurements) {
           if (m.changeStats === undefined) {
             continue;

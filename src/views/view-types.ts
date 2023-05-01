@@ -1,5 +1,5 @@
 import { BenchmarkId } from 'api';
-import { Environment } from 'db';
+import { CriterionData, Environment } from 'db';
 import { ComparisonStatistics, BasicSummaryStatistics } from 'stats';
 
 declare type DataFormat = typeof import('../data-format');
@@ -22,9 +22,7 @@ export interface StatsSummary {
 /** Types for the Compare Partials */
 
 export interface CompareStatsTableHeader extends DataFormat, ViewHelpers {
-  totalUnit: string;
-  gcUnit?: string;
-  allocUnit?: string;
+  criteria: Record<string, CriterionData>;
 }
 
 export interface CompareStatsRowAcrossExes extends DataFormat, ViewHelpers {

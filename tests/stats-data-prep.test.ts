@@ -411,9 +411,9 @@ describe('collateMeasurements()', () => {
     it('should have the expected macro benchmarks', () => {
       const som = <ResultsBySuiteBenchmark>result.get('som');
       const macro = <ResultsByBenchmark>som.get('macro');
-      expect(macro.size).toBe(6);
+      expect(macro.benchmarks.size).toBe(6);
 
-      const benchmarks = Array.from(macro.keys()).sort();
+      const benchmarks = Array.from(macro.benchmarks.keys()).sort();
       expect(benchmarks).toEqual([
         'DeltaBlue',
         'GraphSearch',
@@ -427,13 +427,13 @@ describe('collateMeasurements()', () => {
     it('should have 20 micro benchmarks', () => {
       const som = <ResultsBySuiteBenchmark>result.get('som');
       const micro = <ResultsByBenchmark>som.get('micro');
-      expect(micro.size).toBe(20);
+      expect(micro.benchmarks.size).toBe(20);
     });
 
     it('should have the expected high-level details for NBody', () => {
       const som = <ResultsBySuiteBenchmark>result.get('som');
       const macro = <ResultsByBenchmark>som.get('macro');
-      const nbody = <ProcessedResult>macro.get('NBody');
+      const nbody = <ProcessedResult>macro.benchmarks.get('NBody');
 
       expect(nbody.bench).toEqual('NBody');
       expect(nbody.exe).toEqual('som');
@@ -445,7 +445,7 @@ describe('collateMeasurements()', () => {
     it('should have the expected measurements for NBody', () => {
       const som = <ResultsBySuiteBenchmark>result.get('som');
       const macro = <ResultsByBenchmark>som.get('macro');
-      const nbody = <ProcessedResult>macro.get('NBody');
+      const nbody = <ProcessedResult>macro.benchmarks.get('NBody');
 
       const m1 = nbody.measurements[0];
       const m2 = nbody.measurements[1];
@@ -478,7 +478,7 @@ describe('calculateChangeStatsForBenchmark()', () => {
     );
     const som = <ResultsBySuiteBenchmark>result.get('som');
     const macro = <ResultsByBenchmark>som.get('macro');
-    const nbody = <ProcessedResult>macro.get('NBody');
+    const nbody = <ProcessedResult>macro.benchmarks.get('NBody');
 
     const changeOffset = 1;
     const dropped = calculateChangeStatsForBenchmark(
@@ -527,7 +527,7 @@ describe('calculateAllChangeStatistics()', () => {
 
       for (const bySuite of resultJsSOM.values()) {
         for (const byBench of bySuite.values()) {
-          for (const bench of byBench.values()) {
+          for (const bench of byBench.benchmarks.values()) {
             for (let i = 0; i < bench.measurements.length; i += 1) {
               const m = bench.measurements[i];
               if (i % 2 === 1) {
@@ -551,7 +551,7 @@ describe('calculateAllChangeStatistics()', () => {
 
       for (const bySuite of resultJsSOM.values()) {
         for (const byBench of bySuite.values()) {
-          for (const bench of byBench.values()) {
+          for (const bench of byBench.benchmarks.values()) {
             for (let i = 0; i < bench.measurements.length; i += 1) {
               const m = bench.measurements[i];
               if (i % 2 === 1) {
