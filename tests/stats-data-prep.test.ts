@@ -518,45 +518,53 @@ const resultTSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
 );
 
 describe('calculateAllChangeStatistics()', () => {
-  it('should assign changeStats to the changeOffset measurement for all elements of JsSOM data', () => {
-    const numRuns = calculateAllChangeStatistics(resultJsSOM, 0, 1, null);
-    expect(numRuns).toBe(26);
+  it(
+    'should assign changeStats to the changeOffset ' +
+      'measurement for all elements of JsSOM data',
+    () => {
+      const numRuns = calculateAllChangeStatistics(resultJsSOM, 0, 1, null);
+      expect(numRuns).toBe(26);
 
-    for (const bySuite of resultJsSOM.values()) {
-      for (const byBench of bySuite.values()) {
-        for (const bench of byBench.values()) {
-          for (let i = 0; i < bench.measurements.length; i += 1) {
-            const m = bench.measurements[i];
-            if (i % 2 === 1) {
-              expect(m.changeStats).toBeDefined();
-            } else {
-              expect(m.changeStats).toBeUndefined();
+      for (const bySuite of resultJsSOM.values()) {
+        for (const byBench of bySuite.values()) {
+          for (const bench of byBench.values()) {
+            for (let i = 0; i < bench.measurements.length; i += 1) {
+              const m = bench.measurements[i];
+              if (i % 2 === 1) {
+                expect(m.changeStats).toBeDefined();
+              } else {
+                expect(m.changeStats).toBeUndefined();
+              }
             }
           }
         }
       }
     }
-  });
+  );
 
-  it('should assign changeStats to the changeOffset measurement for all elements of TruffleSOM data', () => {
-    const numRuns = calculateAllChangeStatistics(resultTSOM, 0, 1, null);
-    expect(numRuns).toBe(166);
+  it(
+    'should assign changeStats to the changeOffset ' +
+      'measurement for all elements of TruffleSOM data',
+    () => {
+      const numRuns = calculateAllChangeStatistics(resultTSOM, 0, 1, null);
+      expect(numRuns).toBe(166);
 
-    for (const bySuite of resultJsSOM.values()) {
-      for (const byBench of bySuite.values()) {
-        for (const bench of byBench.values()) {
-          for (let i = 0; i < bench.measurements.length; i += 1) {
-            const m = bench.measurements[i];
-            if (i % 2 === 1) {
-              expect(m.changeStats).toBeDefined();
-            } else {
-              expect(m.changeStats).toBeUndefined();
+      for (const bySuite of resultJsSOM.values()) {
+        for (const byBench of bySuite.values()) {
+          for (const bench of byBench.values()) {
+            for (let i = 0; i < bench.measurements.length; i += 1) {
+              const m = bench.measurements[i];
+              if (i % 2 === 1) {
+                expect(m.changeStats).toBeDefined();
+              } else {
+                expect(m.changeStats).toBeUndefined();
+              }
             }
           }
         }
       }
     }
-  });
+  );
 });
 
 describe('getChangeDataBySuiteAndExe()', () => {
@@ -638,16 +646,26 @@ describe('allExesAreTheSame()', () => {
 });
 
 describe('arrangeChangeDataForChart()', () => {
-  it('should transpose the JsSOM data from grouping by suite to grouping by exe', () => {
-    const changeData = getChangeDataBySuiteAndExe(resultJsSOM, 'total');
-    const result = arrangeChangeDataForChart(changeData);
+  it(
+    'should transpose the JsSOM data ' +
+      'from grouping by suite to grouping by exe',
+    () => {
+      const changeData = getChangeDataBySuiteAndExe(resultJsSOM, 'total');
+      const result = arrangeChangeDataForChart(changeData);
 
-    expect(result.size).toEqual(1);
-    const data = result.get('som')!;
+      expect(result.size).toEqual(1);
+      const data = result.get('som');
 
-    expect(data.labels).toEqual(['macro', 'micro']);
-    expect(data.data).toHaveLength(2);
-  });
+      expect(data).toBeDefined();
+
+      if (!data) {
+        return;
+      }
+
+      expect(data.labels).toEqual(['macro', 'micro']);
+      expect(data.data).toHaveLength(2);
+    }
+  );
 
   it('should not have changed the TruffleSOM data', () => {
     const changeData = getChangeDataBySuiteAndExe(resultTSOM, 'total');

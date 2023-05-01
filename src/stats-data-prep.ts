@@ -245,6 +245,8 @@ export function calculateChangeStatsForBenchmark(
       allStats.push(stats);
     }
   }
+
+  return undefined;
 }
 
 export function calculateAllChangeStatistics(
@@ -252,12 +254,13 @@ export function calculateAllChangeStatistics(
   baseOffset: number,
   changeOffset: number,
   criteria: Map<string, ComparisonStatistics[]> | null
-) {
+): number {
   let numRunConfigs = 0;
   for (const bySuite of byExeSuiteBench.values()) {
     for (const byBench of bySuite.values()) {
       for (const bench of byBench.values()) {
-        // TODO: make sure this is really the numRunConfigs. For some reason, I am not quite sure this is correct
+        // TODO: make sure this is really the numRunConfigs.
+        // For some reason, I am not quite sure this is correct
         numRunConfigs += 1;
 
         const dropped = calculateChangeStatsForBenchmark(
@@ -269,7 +272,7 @@ export function calculateAllChangeStatistics(
 
         if (dropped) {
           throw new Error(
-            'TODO: implement storing details about dropped data to show in the UI'
+            'TODO: storing details about dropped data to show in the UI'
           );
         }
       }
@@ -347,15 +350,15 @@ export function calculateRunTimeFactor(
 export function arrangeChangeDataForChart(
   changeData: BySuiteChangeData
 ): ByGroupChangeData {
-  let [allAreTheSame, exeName] = allExesAreTheSame(changeData);
+  const [allAreTheSame, exeName] = allExesAreTheSame(changeData);
 
-  if (!allAreTheSame) {
+  if (!allAreTheSame || exeName === null) {
     return changeData;
   }
 
   const byExe = new Map<string, ChangeData>();
   const newData: ChangeData = { labels: [], data: [] };
-  byExe.set(exeName!, newData);
+  byExe.set(exeName, newData);
 
   for (const [suite, data] of changeData.entries()) {
     newData.labels.push(suite);

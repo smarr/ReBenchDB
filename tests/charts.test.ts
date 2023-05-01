@@ -1,4 +1,4 @@
-import { describe, expect, beforeAll, afterAll, it } from '@jest/globals';
+import { describe, expect, afterAll, it } from '@jest/globals';
 import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
 import { tmpdir } from 'node:os';
@@ -96,6 +96,7 @@ describe('renderOverviewPlots()', () => {
     let result: { png: string; svg: string[] };
     it('should not error when rendering the plots', async () => {
       result = await renderOverviewPlots(outputFolder, 'jssom', plotDataJsSOM);
+      expect(result).toBeDefined();
     });
 
     it('should return a png', () => {
@@ -109,6 +110,7 @@ describe('renderOverviewPlots()', () => {
       expect(result.svg[0]).toEqual(`${outputFolder}/jssom-som.svg`);
     });
 
+    // eslint-disable-next-line jest/expect-expect
     it('should match the png expected', () => {
       expectImageToBeMostlyIdentical(
         result.png,
@@ -116,6 +118,7 @@ describe('renderOverviewPlots()', () => {
       );
     });
 
+    // eslint-disable-next-line jest/expect-expect
     it('should match the svg expected', () => {
       expectSvgToBeIdentical(
         result.svg[0],
@@ -132,6 +135,7 @@ describe('renderOverviewPlots()', () => {
         'trufflesom',
         plotDataTSOM
       );
+      expect(result).toBeDefined();
     });
 
     it('should return a png', () => {
@@ -139,6 +143,7 @@ describe('renderOverviewPlots()', () => {
       expect(result.png).toEqual(`${outputFolder}/trufflesom.png`);
     });
 
+    // eslint-disable-next-line jest/expect-expect
     it('should match the png expected', () => {
       expectImageToBeMostlyIdentical(
         result.png,
@@ -158,6 +163,7 @@ describe('renderOverviewPlots()', () => {
       ]);
     });
 
+    // eslint-disable-next-line jest/expect-expect
     it('should match the svg expected', () => {
       expectSvgToBeIdentical(
         result.svg[0],

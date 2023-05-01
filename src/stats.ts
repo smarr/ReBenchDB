@@ -366,8 +366,8 @@ export function calculateChangeStatistics(
 ): ComparisonStatistics {
   if (baseSorted.length !== changeSorted.length) {
     throw new Error(
-      `The base and change arrays must have the same length, ` +
-        `but base has ${baseSorted.length} and change has ${changeSorted.length}.`
+      `The base and change arrays must have the same length, but ` +
+        `base has ${baseSorted.length} and change has ${changeSorted.length}.`
     );
   }
 
