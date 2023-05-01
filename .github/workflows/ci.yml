@@ -81,6 +81,13 @@ jobs:
       - name: Run Tests
         run: |
           npm test
+      
+      - name: Upload image difference, if there are any
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: diff-images
+          path: diff-*.png
 
       - name: Lint and Formatting
         run: |
