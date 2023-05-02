@@ -13,6 +13,15 @@ import {
 import { robustPath } from '../src/util.js';
 import { renderOverviewPlots } from '../src/charts.js';
 
+declare module 'expect' {
+  interface AsymmetricMatchers {
+    toBeMostlyIdenticalImage(expectedFile: string): void;
+  }
+  interface Matchers<R> {
+    toBeMostlyIdenticalImage(expectedFile: string): R;
+  }
+}
+
 function createTmpDirectory(): string {
   const tmpDir = tmpdir();
   return mkdtempSync(`${tmpDir}${sep}rebenchdb-charts-tests`);
@@ -42,10 +51,14 @@ describe('renderOverviewPlots()', () => {
 
   const outputFolder = createTmpDirectory();
 
-  async function expectImageToBeMostlyIdentical(
-    actualFile: string,
-    expectedFile: string
-  ) {
+  function toBeMostlyIdenticalImage(actualFile: string, expectedFile: string) {
+    if (typeof actualFile !== 'string' || typeof expectedFile !== 'string') {
+      throw new Error(
+        `toBeMostlyIdenticalImage() expects two strings,` +
+          ` got ${typeof actualFile} and ${typeof expectedFile}`
+      );
+    }
+
     const actualPng = PNG.sync.read(readFileSync(actualFile));
     const expectedPng = PNG.sync.read(readFileSync(expectedFile));
 
@@ -55,11 +68,17 @@ describe('renderOverviewPlots()', () => {
       height: expectedPng.height
     };
 
-    try {
-      expect(actualSize).toEqual(expectedSize);
-    } catch (exception) {
-      console.log({ actualFile, expectedFile, actualSize, expectedSize });
-      throw exception;
+    if (
+      actualSize.width !== expectedSize.width ||
+      actualSize.height !== expectedSize.height
+    ) {
+      return {
+        message: () =>
+          `expected ${actualFile} to have the same size as ${expectedFile}.
+           Expected: ${actualSize.width}x${actualSize.height}
+           Actual:   ${expectedSize.width}x${expectedSize.height}`,
+        pass: false
+      };
     }
 
     const diff = new PNG({
@@ -75,16 +94,33 @@ describe('renderOverviewPlots()', () => {
       actualSize.height,
       { threshold: 0.01 }
     );
-    try {
-      expect(numMismatchedPixel).toBe(0);
-    } catch (exception) {
-      writeFileSync(
-        `diff-${basename(expectedFile)}-${basename(actualFile)}.png`,
-        PNG.sync.write(diff)
-      );
-      throw exception;
+
+    if (numMismatchedPixel > 0) {
+      const diffFileName = `diff-${basename(expectedFile)}-${basename(
+        actualFile
+      )}.png`;
+      writeFileSync(diffFileName, PNG.sync.write(diff));
+
+      return {
+        message: () =>
+          `expected ${actualFile} to be mostly identical to ${expectedFile},
+           but ${numMismatchedPixel} pixels were different.
+           See ${diffFileName} for a diff.`,
+        pass: false
+      };
     }
+
+    return {
+      pass: true,
+      message: () =>
+        `Expected ${actualFile} to be different ` +
+        `from ${expectedFile}, but were mostly identical.`
+    };
   }
+
+  expect.extend({
+    toBeMostlyIdenticalImage
+  });
 
   function expectSvgToBeIdentical(actualFile: string, expectedFile: string) {
     const actual: string = readFileSync(actualFile, 'utf8');
@@ -110,10 +146,8 @@ describe('renderOverviewPlots()', () => {
       expect(result.svg[0]).toEqual(`${outputFolder}/jssom-som.svg`);
     });
 
-    // eslint-disable-next-line jest/expect-expect
     it('should match the png expected', () => {
-      expectImageToBeMostlyIdentical(
-        result.png,
+      expect(result.png).toBeMostlyIdenticalImage(
         robustPath('../tests/data/charts/jssom.png')
       );
     });
@@ -143,10 +177,8 @@ describe('renderOverviewPlots()', () => {
       expect(result.png).toEqual(`${outputFolder}/trufflesom.png`);
     });
 
-    // eslint-disable-next-line jest/expect-expect
     it('should match the png expected', () => {
-      expectImageToBeMostlyIdentical(
-        result.png,
+      expect(result.png).toBeMostlyIdenticalImage(
         robustPath('../tests/data/charts/trufflesom.png')
       );
     });
