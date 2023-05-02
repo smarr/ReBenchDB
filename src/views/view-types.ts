@@ -21,11 +21,11 @@ export interface StatsSummary {
 
 /** Types for the Compare Partials */
 
-export interface CompareStatsTableHeader extends DataFormat, ViewHelpers {
+export interface CompareStatsTableHeader {
   criteria: Record<string, CriterionData>;
 }
 
-export interface CompareStatsRowAcrossExes extends DataFormat, ViewHelpers {
+export interface CompareStatsRowAcrossExes {
   exes: {
     name: string;
     total: ComparisonStatistics;
@@ -34,16 +34,18 @@ export interface CompareStatsRowAcrossExes extends DataFormat, ViewHelpers {
   }[];
 }
 
-export interface CompareStatsRowAcrossVersions extends DataFormat, ViewHelpers {
+export interface CompareStatsRowAcrossVersions {
   total: ComparisonStatistics;
   gcTime: ComparisonStatistics;
   allocated: ComparisonStatistics;
 }
 
-export interface ButtonsAdditionalInfo
-  extends BenchmarkId,
-    DataFormat,
-    ViewHelpers {
+export interface CompareStatsRowAcrossVersionsPartial {
+  stats: CompareStatsRowAcrossVersions;
+  dataFormatters: DataFormat;
+}
+
+export interface DetailedInfo {
   cmdline: string;
 
   environments: Environment[];
@@ -76,4 +78,26 @@ export interface ButtonsAdditionalInfo
 
   /** Number of Extra Argument */
   numEa: number;
+}
+
+export interface StatsRowPartial {
+  benchId: BenchmarkId;
+  details: DetailedInfo;
+
+  inlinePlot: string;
+
+  /** The commit id for which data is missing for the comparison. */
+  missingCommitId?: string;
+
+  versionStats?: CompareStatsRowAcrossVersions;
+  exeStats?: CompareStatsRowAcrossExes;
+
+  dataFormatters: DataFormat;
+  viewHelpers: ViewHelpers;
+}
+
+export interface ButtonsAdditionalInfoPartial {
+  details: DetailedInfo;
+  benchId: BenchmarkId;
+  dataFormatters: DataFormat;
 }

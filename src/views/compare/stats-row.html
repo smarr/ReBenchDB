@@ -1,0 +1,37 @@
+<tr>
+{% if (it.missingCommitId) { %}
+  <th scope="row">{%= it.benchId.b %}</th>
+  <td colspan="4">missing in the {%= it.missingCommitId %} data sets</td>
+{% } else {
+  let args = '';
+
+  if (it.details.numV  > 0) { args += it.benchId.v + ' '; }
+  if (it.details.numC  > 0) { args += it.benchId.c + ' '; }
+  if (it.details.numI  > 0) { args += it.benchId.i + ' '; }
+  if (it.details.numEa > 0) { args += it.benchId.ea + ' '; }
+
+  if (args.length > 0) {
+    args = `<span class="all-args">${args.trim()}</span>`;
+  }
+%}
+  <th scope="row">{%= it.benchId.b %}{%= args %}</th>
+  <td class="inline-cmp"><img src="{%= it.inlinePlot %}"></td>
+{%    if (it.exeStats) { %}
+      {%- include('compare/stats-row-across-exes.html', {
+        ...it.exeStats,
+        ...it.dataFormatters,
+        ...it.viewHelpers}
+      ) %}
+{%   } else { %}
+      {%- include('compare/stats-row-across-versions.html', {
+        stats: it.versionStats,
+        dataFormatters: it.dataFormatters}
+      ) %}
+{%   } %}
+<td>{%- include('compare/buttons-additional-info.html', {
+            benchId: it.benchId,
+            details: it.details,
+            dataFormatters: it.dataFormatters}
+     ) %}</td>
+{% } %}
+</tr>

@@ -1,18 +1,22 @@
-<button type="button" class="btn btn-sm btn-cmdline btn-popover"
-  data-content="<code>{%= it.cmdline %}</code>"></button>
+{%
+const d = it.details;
+const b = it.benchId;
+const f = it.dataFormatters;
+%}<button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>{%= d.cmdline %}</code>"></button>
+{%
+   if (d.environments) {
+%}<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content="{%= f.formatEnvironment(d.envId, d.environments) %}"></button>
+{% }
 
-{% if (it.environments) { %}
-  <button type="button" class="btn btn-sm btn-environment btn-popover"
-    data-content="{%= it.formatEnvironment(it.envId, it.environments) %}"></button>
-{% } %}
+   if (d.warmupPlotUrl) {
+%}<button type="button" class="btn btn-sm btn-light btn-expand" data-img="{%= d.warmupPlotUrl %}"></button>
+{% } 
 
-{% if (it.warmupPlotUrl) { %}
-  <button type="button" class="btn btn-sm btn-light btn-expand" data-img="{%= it.warmupPlotUrl %}"></button>
-{% } %}
-
-{% if (it.hasProfileData) { %}
-  <button type="button" class="btn btn-sm btn-profile" data-content="{%= it.base.commitId %}/{%= it.base.runId %}/{%= it.base.trialId %},{%= it.change.commitId %}/{%= it.change.runId %}/{%= it.change.trialId %}"></button>
-{% } %}
-
+   if (d.hasProfileData) {
+%}<button type="button" class="btn btn-sm btn-profile" data-content="{%= d.base.commitId %}/{%= d.base.runId %}/{%= d.base.trialId %},{%= d.change.commitId %}/{%= d.change.runId %}/{%= d.change.trialId %}"></button>{%
+   }
+%}
 <button type="button" class="btn btn-sm btn-timeline" data-content='{%- JSON.stringify(
-  it.benchmarkId(it.b, it.e, it.s, it.v, it.numV, it.c, it.numC, it.i, it.numI, it.ea, it.numEa)) %}'></button>
+  f.benchmarkId(b.b, b.e, b.s, b.v, d.numV, b.c, d.numC, b.i, d.numI, b.ea, d.numEa)) %}'></button>
