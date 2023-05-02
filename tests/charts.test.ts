@@ -16,9 +16,11 @@ import { renderOverviewPlots } from '../src/charts.js';
 declare module 'expect' {
   interface AsymmetricMatchers {
     toBeMostlyIdenticalImage(expectedFile: string): void;
+    toBeIdenticalSvgFiles(expectedFile: string): void;
   }
   interface Matchers<R> {
     toBeMostlyIdenticalImage(expectedFile: string): R;
+    toBeIdenticalSvgFiles(expectedFile: string): R;
   }
 }
 
@@ -26,6 +28,101 @@ function createTmpDirectory(): string {
   const tmpDir = tmpdir();
   return mkdtempSync(`${tmpDir}${sep}rebenchdb-charts-tests`);
 }
+
+function toBeMostlyIdenticalImage(actualFile: string, expectedFile: string) {
+  if (typeof actualFile !== 'string' || typeof expectedFile !== 'string') {
+    throw new Error(
+      `toBeMostlyIdenticalImage() expects two strings,` +
+        ` got ${typeof actualFile} and ${typeof expectedFile}`
+    );
+  }
+
+  const actualPng = PNG.sync.read(readFileSync(actualFile));
+  const expectedPng = PNG.sync.read(readFileSync(expectedFile));
+
+  const actualSize = { width: actualPng.width, height: actualPng.height };
+  const expectedSize = {
+    width: expectedPng.width,
+    height: expectedPng.height
+  };
+
+  if (
+    actualSize.width !== expectedSize.width ||
+    actualSize.height !== expectedSize.height
+  ) {
+    return {
+      message: () =>
+        `expected ${actualFile} to have the same size as ${expectedFile}.
+         Expected: ${actualSize.width}x${actualSize.height}
+         Actual:   ${expectedSize.width}x${expectedSize.height}`,
+      pass: false
+    };
+  }
+
+  const diff = new PNG({
+    width: actualSize.width,
+    height: actualSize.height
+  });
+
+  const numMismatchedPixel = pixelmatch(
+    expectedPng.data,
+    actualPng.data,
+    diff.data,
+    actualSize.width,
+    actualSize.height,
+    { threshold: 0.01 }
+  );
+
+  if (numMismatchedPixel > 0) {
+    const diffFileName = `diff-${basename(expectedFile)}-${basename(
+      actualFile
+    )}.png`;
+    writeFileSync(diffFileName, PNG.sync.write(diff));
+
+    return {
+      message: () =>
+        `expected ${actualFile} to be mostly identical to ${expectedFile},
+         but ${numMismatchedPixel} pixels were different.
+         See ${diffFileName} for a diff.`,
+      pass: false
+    };
+  }
+
+  return {
+    pass: true,
+    message: () =>
+      `Expected ${actualFile} to be different ` +
+      `from ${expectedFile}, but were mostly identical.`
+  };
+}
+
+function toBeIdenticalSvgFiles(actualFile: string, expectedFile: string) {
+  const actual: string = readFileSync(actualFile, 'utf8');
+  const expected: string = readFileSync(expectedFile, 'utf8');
+
+  if (actual !== expected) {
+    writeFileSync(basename(actualFile), actual);
+
+    return {
+      message: () =>
+        `expected ${actualFile} to be identical to ${expectedFile},
+         but they were different.
+         See ${basename(actualFile)}.`,
+      pass: false
+    };
+  }
+  return {
+    pass: true,
+    message: () =>
+      `Expected ${actualFile} to be different ` +
+      `from ${expectedFile}, but both were identical.`
+  };
+}
+
+expect.extend({
+  toBeMostlyIdenticalImage,
+  toBeIdenticalSvgFiles
+});
 
 describe('renderOverviewPlots()', () => {
   const dataJsSOM = JSON.parse(
@@ -51,83 +148,6 @@ describe('renderOverviewPlots()', () => {
 
   const outputFolder = createTmpDirectory();
 
-  function toBeMostlyIdenticalImage(actualFile: string, expectedFile: string) {
-    if (typeof actualFile !== 'string' || typeof expectedFile !== 'string') {
-      throw new Error(
-        `toBeMostlyIdenticalImage() expects two strings,` +
-          ` got ${typeof actualFile} and ${typeof expectedFile}`
-      );
-    }
-
-    const actualPng = PNG.sync.read(readFileSync(actualFile));
-    const expectedPng = PNG.sync.read(readFileSync(expectedFile));
-
-    const actualSize = { width: actualPng.width, height: actualPng.height };
-    const expectedSize = {
-      width: expectedPng.width,
-      height: expectedPng.height
-    };
-
-    if (
-      actualSize.width !== expectedSize.width ||
-      actualSize.height !== expectedSize.height
-    ) {
-      return {
-        message: () =>
-          `expected ${actualFile} to have the same size as ${expectedFile}.
-           Expected: ${actualSize.width}x${actualSize.height}
-           Actual:   ${expectedSize.width}x${expectedSize.height}`,
-        pass: false
-      };
-    }
-
-    const diff = new PNG({
-      width: actualSize.width,
-      height: actualSize.height
-    });
-
-    const numMismatchedPixel = pixelmatch(
-      expectedPng.data,
-      actualPng.data,
-      diff.data,
-      actualSize.width,
-      actualSize.height,
-      { threshold: 0.01 }
-    );
-
-    if (numMismatchedPixel > 0) {
-      const diffFileName = `diff-${basename(expectedFile)}-${basename(
-        actualFile
-      )}.png`;
-      writeFileSync(diffFileName, PNG.sync.write(diff));
-
-      return {
-        message: () =>
-          `expected ${actualFile} to be mostly identical to ${expectedFile},
-           but ${numMismatchedPixel} pixels were different.
-           See ${diffFileName} for a diff.`,
-        pass: false
-      };
-    }
-
-    return {
-      pass: true,
-      message: () =>
-        `Expected ${actualFile} to be different ` +
-        `from ${expectedFile}, but were mostly identical.`
-    };
-  }
-
-  expect.extend({
-    toBeMostlyIdenticalImage
-  });
-
-  function expectSvgToBeIdentical(actualFile: string, expectedFile: string) {
-    const actual: string = readFileSync(actualFile, 'utf8');
-    const expected: string = readFileSync(expectedFile, 'utf8');
-    expect(actual).toEqual(expected);
-  }
-
   describe('with JsSOM data', () => {
     let result: { png: string; svg: string[] };
     it('should not error when rendering the plots', async () => {
@@ -152,10 +172,8 @@ describe('renderOverviewPlots()', () => {
       );
     });
 
-    // eslint-disable-next-line jest/expect-expect
     it('should match the svg expected', () => {
-      expectSvgToBeIdentical(
-        result.svg[0],
+      expect(result.svg[0]).toBeIdenticalSvgFiles(
         robustPath('../tests/data/charts/jssom-som.svg')
       );
     });
@@ -195,30 +213,24 @@ describe('renderOverviewPlots()', () => {
       ]);
     });
 
-    // eslint-disable-next-line jest/expect-expect
     it('should match the svg expected', () => {
-      expectSvgToBeIdentical(
-        result.svg[0],
+      expect(result.svg[0]).toBeIdenticalSvgFiles(
         robustPath('../tests/data/charts/trufflesom-macro-steady.svg')
       );
 
-      expectSvgToBeIdentical(
-        result.svg[1],
+      expect(result.svg[1]).toBeIdenticalSvgFiles(
         robustPath('../tests/data/charts/trufflesom-micro-steady.svg')
       );
 
-      expectSvgToBeIdentical(
-        result.svg[2],
+      expect(result.svg[2]).toBeIdenticalSvgFiles(
         robustPath('../tests/data/charts/trufflesom-macro-startup.svg')
       );
 
-      expectSvgToBeIdentical(
-        result.svg[3],
+      expect(result.svg[3]).toBeIdenticalSvgFiles(
         robustPath('../tests/data/charts/trufflesom-micro-startup.svg')
       );
 
-      expectSvgToBeIdentical(
-        result.svg[4],
+      expect(result.svg[4]).toBeIdenticalSvgFiles(
         robustPath('../tests/data/charts/trufflesom-micro-somsom.svg')
       );
     });

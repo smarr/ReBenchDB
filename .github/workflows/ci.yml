@@ -87,7 +87,9 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: Image Differences of charts.test.ts
-          path: diff-*.png
+          path: |
+            diff-*.png
+            *.svg
           if-no-files-found: ignore
 
       - name: Lint and Formatting
