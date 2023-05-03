@@ -10,7 +10,10 @@ import {
   CompareStatsTableHeaderPartial,
   CompareStatsRowPartial,
   StatsSummary,
-  CompareStatsTablePartial
+  CompareStatsTablePartial,
+  CompareVersionsPartial,
+  CompareStatsTable,
+  BySuiteComparison
 } from 'views/view-types.js';
 import { robustPath } from '../../src/util.js';
 import {
@@ -235,80 +238,111 @@ describe('Compare View Parts', () => {
       expect(result).toEqual(loadResult('stats-tbl'));
     });
   });
-});
 
-describe('Compare View Navigation', () => {
-  const resultJ = getNavigation(dataJsSOM.results);
-  const resultT = getNavigation(dataTruffleSOM.results);
+  describe('Compare View Navigation', () => {
+    const resultJ = getNavigation(dataJsSOM.results);
+    const resultT = getNavigation(dataTruffleSOM.results);
 
-  it('should produce the correct navigation', () => {
-    expect(resultJ.nav).toEqual([
-      {
-        exeName: 'som',
-        suites: ['macro', 'micro']
-      }
-    ]);
+    it('should produce the correct navigation', () => {
+      expect(resultJ.nav).toEqual([
+        {
+          exeName: 'som',
+          suites: ['macro', 'micro']
+        }
+      ]);
 
-    expect(resultT.nav).toEqual([
-      { exeName: 'SomSom-native-interp-ast', suites: ['micro-somsom'] },
-      { exeName: 'SomSom-native-interp-bc', suites: ['micro-somsom'] },
-      {
-        exeName: 'TruffleSOM-graal',
+      expect(resultT.nav).toEqual([
+        { exeName: 'SomSom-native-interp-ast', suites: ['micro-somsom'] },
+        { exeName: 'SomSom-native-interp-bc', suites: ['micro-somsom'] },
+        {
+          exeName: 'TruffleSOM-graal',
+          suites: [
+            'macro-startup',
+            'macro-steady',
+            'micro-startup',
+            'micro-steady'
+          ]
+        },
+        {
+          exeName: 'TruffleSOM-graal-bc',
+          suites: [
+            'macro-startup',
+            'macro-steady',
+            'micro-startup',
+            'micro-steady'
+          ]
+        },
+        {
+          exeName: 'TruffleSOM-interp',
+          suites: ['macro-startup', 'micro-startup']
+        },
+        {
+          exeName: 'TruffleSOM-native-interp-ast',
+          suites: ['macro-startup', 'micro-startup']
+        },
+        {
+          exeName: 'TruffleSOM-native-interp-bc',
+          suites: ['macro-startup', 'micro-startup']
+        }
+      ]);
+    });
+
+    it('should produce the correct navigation for executor comparison', () => {
+      expect(resultJ.navExeComparison).toEqual({ suites: [] });
+
+      expect(resultT.navExeComparison).toEqual({
         suites: [
           'macro-startup',
           'macro-steady',
+          'micro-somsom',
           'micro-startup',
           'micro-steady'
         ]
-      },
-      {
-        exeName: 'TruffleSOM-graal-bc',
-        suites: [
-          'macro-startup',
-          'macro-steady',
-          'micro-startup',
-          'micro-steady'
-        ]
-      },
-      {
-        exeName: 'TruffleSOM-interp',
-        suites: ['macro-startup', 'micro-startup']
-      },
-      {
-        exeName: 'TruffleSOM-native-interp-ast',
-        suites: ['macro-startup', 'micro-startup']
-      },
-      {
-        exeName: 'TruffleSOM-native-interp-bc',
-        suites: ['macro-startup', 'micro-startup']
-      }
-    ]);
-  });
+      });
+    });
 
-  it('should produce the correct navigation for executor comparison', () => {
-    expect(resultJ.navExeComparison).toEqual({ suites: [] });
+    const tpl = prepareTemplate('compare/navigation.html', true);
 
-    expect(resultT.navExeComparison).toEqual({
-      suites: [
-        'macro-startup',
-        'macro-steady',
-        'micro-somsom',
-        'micro-startup',
-        'micro-steady'
-      ]
+    it('should render the JsSOM nav correctly to html', () => {
+      const result = tpl(resultJ);
+      expect(result).toEqual(loadResult('navigation-jssom'));
+    });
+
+    it('should render the TruffleSOM nav correctly to html', () => {
+      const result = tpl(resultT);
+      expect(result).toEqual(loadResult('navigation-tsom'));
     });
   });
 
-  const tpl = prepareTemplate('compare/navigation.html', true);
+  describe('Full Compare Across Versions', () => {
+    const tpl = prepareTemplate('compare/compare-versions.html', true);
 
-  it('should render the JsSOM nav correctly to html', () => {
-    const result = tpl(resultJ);
-    expect(result).toEqual(loadResult('navigation-jssom'));
-  });
+    it('should render the data as expected', () => {
+      const benchmarks: CompareStatsTable = {
+        criteria,
+        benchmarks: [
+          {
+            benchId,
+            details,
+            inlinePlot: 'todo.png',
+            versionStats
+          }
+        ]
+      };
 
-  it('should render the TruffleSOM nav correctly to html', () => {
-    const result = tpl(resultT);
-    expect(result).toEqual(loadResult('navigation-tsom'));
+      const data: CompareVersionsPartial = {
+        allMeasurements: new Map(),
+        dataFormatters,
+        viewHelpers
+      };
+
+      const suites: BySuiteComparison = new Map();
+      data.allMeasurements.set('exe1', suites);
+      suites.set('suite1', benchmarks);
+
+      const result = tpl(data);
+      expect(result).toEqual(loadResult('compare-versions'));
+    });
   });
 });
 

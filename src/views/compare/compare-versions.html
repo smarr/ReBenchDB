@@ -1,0 +1,23 @@
+<h2>Performance Change between Versions</h2>
+{%
+for (const [exeName, suites] of it.allMeasurements.entries()) {
+  for (const [suiteName, suite] of suites.entries()) {
+    if (suite.benchmarks.length > 0) {
+%}
+<div class="exe-suite-group">
+<h3 id="{%= suiteName %}-{%= exeName%}">{%= suiteName %}</h3>
+<div class="title-executor">Executor: {%= exeName %}</div>
+
+{%- include('compare/stats-tbl.html', {
+      criteria: suite.criteria,
+      benchmarks: suite.benchmarks,
+      dataFormatters: it.dataFormatters,
+      viewHelpers: it.viewHelpers
+    }) %}
+
+</div>
+{%
+    }
+  }
+}
+%}

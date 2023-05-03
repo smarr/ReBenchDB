@@ -111,10 +111,12 @@ export interface ButtonsAdditionalInfoPartial {
   dataFormatters: DataFormat;
 }
 
-export interface CompareStatsTablePartial {
+export interface CompareStatsTable {
   criteria: CompareStatsTableHeader;
   benchmarks: CompareStatsRow[];
+}
 
+export interface CompareStatsTablePartial extends CompareStatsTable {
   dataFormatters: DataFormat;
   viewHelpers: ViewHelpers;
 }
@@ -122,4 +124,13 @@ export interface CompareStatsTablePartial {
 export interface CompareNavPartial {
   nav: { exeName: string; suites: string[] }[];
   navExeComparison: { suites: string[] };
+}
+
+export type BySuiteComparison = Map<string, CompareStatsTable>;
+export type ByExeSuiteComparison = Map<string, BySuiteComparison>;
+
+export interface CompareVersionsPartial {
+  allMeasurements: ByExeSuiteComparison;
+  dataFormatters: DataFormat;
+  viewHelpers: ViewHelpers;
 }
