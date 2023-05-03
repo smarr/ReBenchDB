@@ -298,6 +298,18 @@ describe('Compare View Navigation', () => {
       ]
     });
   });
+
+  const tpl = prepareTemplate('compare/navigation.html', true);
+
+  it('should render the JsSOM nav correctly to html', () => {
+    const result = tpl(resultJ);
+    expect(result).toEqual(loadResult('navigation-jssom'));
+  });
+
+  it('should render the TruffleSOM nav correctly to html', () => {
+    const result = tpl(resultT);
+    expect(result).toEqual(loadResult('navigation-tsom'));
+  });
 });
 
 describe('Compare View Statistics', () => {

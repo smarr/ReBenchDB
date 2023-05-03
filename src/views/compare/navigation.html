@@ -1,0 +1,20 @@
+<nav class="col-2 compare">
+<a href="#overview">Result Overview</a>
+{% for (const n of it.nav) {
+%}<nav>
+<span>{%= n.exeName %}</span>{%
+     for (const s of n.suites) { %}
+    <a href="#{%= s %}-{%= n.exeName %}">{%= s %}</a>{%
+     }
+%}
+</nav>
+{% }
+   if (it.navExeComparison && it.navExeComparison.suites && it.navExeComparison.suites.length > 0) {
+%}<a href="#exe-comparisons">Executor Comparisons</a>
+<nav>
+  {% for (const s of it.navExeComparison.suites) {
+  %}<a href="#exe-comp-{%= s %}">{%= s %}</a>
+  {% }
+%}</nav>
+{% }
+%}</nav>

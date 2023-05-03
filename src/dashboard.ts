@@ -19,7 +19,7 @@ import {
 import { getDirname } from './util.js';
 import { log } from './logging.js';
 import { QueryConfig } from 'pg';
-import { StatsSummary } from './views/view-types.js';
+import { CompareNavPartial, StatsSummary } from './views/view-types.js';
 import {
   ComparisonStatistics,
   calculateSummaryOfChangeSummaries
@@ -519,10 +519,7 @@ export async function calculateAllStatisticsAndRenderPlots(
   };
 }
 
-export function getNavigation(data: MeasurementData[]): {
-  nav: { exeName: string; suites: string[] }[];
-  navExeComparison: { suites: string[] };
-} {
+export function getNavigation(data: MeasurementData[]): CompareNavPartial {
   const executors = new Map<string, Set<string>>();
   const allSuites = new Map<string, Set<string>>();
 

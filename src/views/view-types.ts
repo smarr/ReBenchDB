@@ -118,3 +118,8 @@ export interface CompareStatsTablePartial {
   dataFormatters: DataFormat;
   viewHelpers: ViewHelpers;
 }
+
+export interface CompareNavPartial {
+  nav: { exeName: string; suites: string[] }[];
+  navExeComparison: { suites: string[] };
+}
