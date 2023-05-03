@@ -6,11 +6,11 @@ import * as viewHelpers from '../../src/views/helpers.js';
 import {
   ButtonsAdditionalInfoPartial,
   CompareStatsRowAccrossExesPartial,
-  CompareStatsRowAcrossExes,
   CompareStatsRowAcrossVersionsPartial,
-  CompareStatsTableHeader,
-  StatsRowPartial,
-  StatsSummary
+  CompareStatsTableHeaderPartial,
+  CompareStatsRowPartial,
+  StatsSummary,
+  CompareStatsTablePartial
 } from 'views/view-types.js';
 import { robustPath } from '../../src/util.js';
 import {
@@ -36,6 +36,12 @@ const dataTruffleSOM = JSON.parse(
     robustPath(`../tests/data/compare-view-data-trufflesom.json`)
   ).toString()
 );
+
+const criteria = {
+  total: { name: 'total', unit: 'ms' },
+  'GC time': { name: 'GC time', unit: 'ms' },
+  Allocated: { name: 'Allocated', unit: 'bytes' }
+};
 
 const benchId = {
   b: 'my-benchmark',
@@ -160,14 +166,8 @@ describe('Compare View Parts', () => {
     const tpl = prepareTemplate('compare/stats-tbl-header.html', true);
 
     it('should render the data as expected', () => {
-      const data: CompareStatsTableHeader = {
-        criteria: {
-          total: { name: 'total', unit: 'ms' },
-          'GC time': { name: 'GC time', unit: 'ms' },
-          Allocated: { name: 'Allocated', unit: 'bytes' }
-        },
-        ...dataFormatters,
-        ...viewHelpers
+      const data: CompareStatsTableHeaderPartial = {
+        criteria
       };
 
       const result = tpl(data);
@@ -179,11 +179,13 @@ describe('Compare View Parts', () => {
     const tpl = prepareTemplate('compare/stats-row.html', true);
 
     it('should render the version comparison as expected', () => {
-      const data: StatsRowPartial = {
-        benchId,
-        details,
-        inlinePlot: 'todo.png',
-        versionStats,
+      const data: CompareStatsRowPartial = {
+        stats: {
+          benchId,
+          details,
+          inlinePlot: 'todo.png',
+          versionStats
+        },
         dataFormatters,
         viewHelpers
       };
@@ -193,17 +195,44 @@ describe('Compare View Parts', () => {
     });
 
     it('should render the exe comparison as expected', () => {
-      const data: StatsRowPartial = {
-        benchId,
-        details,
-        inlinePlot: 'todo.png',
-        exeStats,
+      const data: CompareStatsRowPartial = {
+        stats: {
+          benchId,
+          details,
+          inlinePlot: 'todo.png',
+          exeStats
+        },
         dataFormatters,
         viewHelpers
       };
 
       const result = tpl(data);
       expect(result).toEqual(loadResult('stats-row-exe'));
+    });
+
+    it.todo('should create the inline plot');
+  });
+
+  describe('Statistics Table', () => {
+    const tpl = prepareTemplate('compare/stats-tbl.html', true);
+
+    it('should render the data as expected', () => {
+      const data: CompareStatsTablePartial = {
+        criteria,
+        benchmarks: [
+          {
+            benchId,
+            details,
+            inlinePlot: 'todo.png',
+            versionStats
+          }
+        ],
+        dataFormatters,
+        viewHelpers
+      };
+
+      const result = tpl(data);
+      expect(result).toEqual(loadResult('stats-tbl'));
     });
   });
 });

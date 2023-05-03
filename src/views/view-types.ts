@@ -21,8 +21,10 @@ export interface StatsSummary {
 
 /** Types for the Compare Partials */
 
-export interface CompareStatsTableHeader {
-  criteria: Record<string, CriterionData>;
+export type CompareStatsTableHeader = Record<string, CriterionData>;
+
+export interface CompareStatsTableHeaderPartial {
+  criteria: CompareStatsTableHeader;
 }
 
 export interface CompareStatsRowAcrossExes {
@@ -84,7 +86,7 @@ export interface DetailedInfo {
   numEa: number;
 }
 
-export interface StatsRowPartial {
+export interface CompareStatsRow {
   benchId: BenchmarkId;
   details: DetailedInfo;
 
@@ -95,7 +97,10 @@ export interface StatsRowPartial {
 
   versionStats?: CompareStatsRowAcrossVersions;
   exeStats?: CompareStatsRowAcrossExes[];
+}
 
+export interface CompareStatsRowPartial {
+  stats: CompareStatsRow;
   dataFormatters: DataFormat;
   viewHelpers: ViewHelpers;
 }
@@ -104,4 +109,12 @@ export interface ButtonsAdditionalInfoPartial {
   details: DetailedInfo;
   benchId: BenchmarkId;
   dataFormatters: DataFormat;
+}
+
+export interface CompareStatsTablePartial {
+  criteria: CompareStatsTableHeader;
+  benchmarks: CompareStatsRow[];
+
+  dataFormatters: DataFormat;
+  viewHelpers: ViewHelpers;
 }

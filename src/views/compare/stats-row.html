@@ -1,35 +1,37 @@
 <tr>
-{% if (it.missingCommitId) {
-%}<th scope="row">{%= it.benchId.b %}</th>
-  <td colspan="4">missing in the {%= it.missingCommitId %} data sets</td>
+{%
+   const stats = it.stats;
+   if (stats.missingCommitId) {
+%}<th scope="row">{%= stats.benchId.b %}</th>
+  <td colspan="4">missing in the {%= stats.missingCommitId %} data sets</td>
 {% } else {
   let args = '';
 
-  if (it.details.numV  > 0) { args += it.benchId.v + ' '; }
-  if (it.details.numC  > 0) { args += it.benchId.c + ' '; }
-  if (it.details.numI  > 0) { args += it.benchId.i + ' '; }
-  if (it.details.numEa > 0) { args += it.benchId.ea + ' '; }
+  if (stats.details.numV  > 0) { args += stats.benchId.v + ' '; }
+  if (stats.details.numC  > 0) { args += stats.benchId.c + ' '; }
+  if (stats.details.numI  > 0) { args += stats.benchId.i + ' '; }
+  if (stats.details.numEa > 0) { args += stats.benchId.ea + ' '; }
 
   if (args.length > 0) {
     args = `<span class="all-args">${args.trim()}</span>`;
   }
-%}<th scope="row">{%= it.benchId.b %}{%= args %}</th>
-  <td class="inline-cmp"><img src="{%= it.inlinePlot %}"></td>
-{%    if (it.exeStats) {
+%}<th scope="row">{%= stats.benchId.b %}{%= args %}</th>
+  <td class="inline-cmp"><img src="{%= stats.inlinePlot %}"></td>
+{%    if (stats.exeStats) {
 %}{%-   include('compare/stats-row-across-exes.html', {
-          exes: it.exeStats,
+          exes: stats.exeStats,
           dataFormatters: it.dataFormatters,
           viewHelpers: it.viewHelpers}
       ) %}
 {%   } else {
 %}{%-   include('compare/stats-row-across-versions.html', {
-        stats: it.versionStats,
+        stats: stats.versionStats,
         dataFormatters: it.dataFormatters}
       ) %}
 {%   }
 %}<td>{%- include('compare/buttons-additional-info.html', {
-            benchId: it.benchId,
-            details: it.details,
+            benchId: stats.benchId,
+            details: stats.details,
             dataFormatters: it.dataFormatters}
      ) %}</td>
 {% }

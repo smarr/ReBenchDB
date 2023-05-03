@@ -1,0 +1,14 @@
+<table class="table table-sm benchmark-details">
+{%- include('compare/stats-tbl-header.html', {
+  criteria: it.criteria,
+}) %}
+<tbody>
+{%    for (const benchmark of it.benchmarks) {
+%}{%-   include('compare/stats-row.html', {
+          stats: benchmark,
+          dataFormatters: it.dataFormatters,
+          viewHelpers: it.viewHelpers
+        })
+%}{%  }
+%}</tbody>
+</table>
