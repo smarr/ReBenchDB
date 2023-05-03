@@ -111,7 +111,7 @@ describe('Compare View Parts', () => {
         dataFormatters
       };
       const result = tpl(data);
-      expect(result).toEqual(loadResult('version-stats'));
+      expect(result).toEqual(loadResult('stats-row-across-version'));
     });
   });
 
@@ -125,12 +125,12 @@ describe('Compare View Parts', () => {
         viewHelpers
       };
       const result = tpl(data);
-      expect(result).toEqual(loadResult('exec-stats'));
+      expect(result).toEqual(loadResult('stats-row-across-exes'));
     });
   });
 
   describe('Buttons for Additional Information', () => {
-    const tpl = prepareTemplate('compare/buttons-additional-info.html', true);
+    const tpl = prepareTemplate('compare/stats-row-buttons-info.html', true);
 
     it('with full data, it should render all buttons', () => {
       const data: ButtonsAdditionalInfoPartial = {
@@ -140,7 +140,7 @@ describe('Compare View Parts', () => {
       };
 
       const result = tpl(data);
-      expect(result).toEqual(loadResult('button-info'));
+      expect(result).toEqual(loadResult('stats-row-button-info'));
     });
   });
 
