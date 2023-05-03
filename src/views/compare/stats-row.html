@@ -1,6 +1,6 @@
 <tr>
-{% if (it.missingCommitId) { %}
-  <th scope="row">{%= it.benchId.b %}</th>
+{% if (it.missingCommitId) {
+%}<th scope="row">{%= it.benchId.b %}</th>
   <td colspan="4">missing in the {%= it.missingCommitId %} data sets</td>
 {% } else {
   let args = '';
@@ -13,25 +13,24 @@
   if (args.length > 0) {
     args = `<span class="all-args">${args.trim()}</span>`;
   }
-%}
-  <th scope="row">{%= it.benchId.b %}{%= args %}</th>
+%}<th scope="row">{%= it.benchId.b %}{%= args %}</th>
   <td class="inline-cmp"><img src="{%= it.inlinePlot %}"></td>
-{%    if (it.exeStats) { %}
-      {%- include('compare/stats-row-across-exes.html', {
-        ...it.exeStats,
-        ...it.dataFormatters,
-        ...it.viewHelpers}
+{%    if (it.exeStats) {
+%}{%-   include('compare/stats-row-across-exes.html', {
+          exes: it.exeStats,
+          dataFormatters: it.dataFormatters,
+          viewHelpers: it.viewHelpers}
       ) %}
-{%   } else { %}
-      {%- include('compare/stats-row-across-versions.html', {
+{%   } else {
+%}{%-   include('compare/stats-row-across-versions.html', {
         stats: it.versionStats,
         dataFormatters: it.dataFormatters}
       ) %}
-{%   } %}
-<td>{%- include('compare/buttons-additional-info.html', {
+{%   }
+%}<td>{%- include('compare/buttons-additional-info.html', {
             benchId: it.benchId,
             details: it.details,
             dataFormatters: it.dataFormatters}
      ) %}</td>
-{% } %}
-</tr>
+{% }
+%}</tr>

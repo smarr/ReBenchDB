@@ -26,12 +26,16 @@ export interface CompareStatsTableHeader {
 }
 
 export interface CompareStatsRowAcrossExes {
-  exes: {
-    name: string;
-    total: ComparisonStatistics;
-    gcTime: ComparisonStatistics;
-    allocated: ComparisonStatistics;
-  }[];
+  name: string;
+  total: ComparisonStatistics;
+  gcTime: ComparisonStatistics;
+  allocated: ComparisonStatistics;
+}
+
+export interface CompareStatsRowAccrossExesPartial {
+  exes: CompareStatsRowAcrossExes[];
+  dataFormatters: DataFormat;
+  viewHelpers: ViewHelpers;
 }
 
 export interface CompareStatsRowAcrossVersions {
@@ -90,7 +94,7 @@ export interface StatsRowPartial {
   missingCommitId?: string;
 
   versionStats?: CompareStatsRowAcrossVersions;
-  exeStats?: CompareStatsRowAcrossExes;
+  exeStats?: CompareStatsRowAcrossExes[];
 
   dataFormatters: DataFormat;
   viewHelpers: ViewHelpers;

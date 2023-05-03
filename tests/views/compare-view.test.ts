@@ -5,6 +5,7 @@ import * as dataFormatters from '../../src/data-format.js';
 import * as viewHelpers from '../../src/views/helpers.js';
 import {
   ButtonsAdditionalInfoPartial,
+  CompareStatsRowAccrossExesPartial,
   CompareStatsRowAcrossExes,
   CompareStatsRowAcrossVersionsPartial,
   CompareStatsTableHeader,
@@ -36,17 +37,71 @@ const dataTruffleSOM = JSON.parse(
   ).toString()
 );
 
+const benchId = {
+  b: 'my-benchmark',
+  e: 'exe1',
+  s: 'suite2'
+};
+
+const details = {
+  cmdline: 'som/some-command with args',
+  environments: [
+    {
+      id: 1,
+      hostname: 'MyHost',
+      ostype: 'Linux',
+      memory: 123456,
+      cpu: 'Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz',
+      clockspeed: 2800000000,
+      note: 'Some notes'
+    }
+  ],
+  envId: 1,
+  hasProfileData: true,
+  base: {
+    commitId: '123456',
+    runId: 1,
+    trialId: 2
+  },
+  change: {
+    commitId: '123457',
+    runId: 3,
+    trialId: 4
+  },
+  numV: 0,
+  numC: 0,
+  numI: 0,
+  numEa: 0
+};
+
+const versionStats = {
+  total: { median: 0.333, samples: 43, change_m: 546 },
+  gcTime: { median: 0.111, samples: 2, change_m: 146 },
+  allocated: { median: 222, samples: 2, change_m: 646 }
+};
+
+const exeStats = [
+  {
+    name: 'TruffleSOM-ast',
+    total: { median: 0.333, samples: 43, change_m: 546 },
+    gcTime: { median: 0.111, samples: 1, change_m: 146 },
+    allocated: { median: 222, samples: 1, change_m: 646 }
+  },
+  {
+    name: 'TruffleSOM-bc',
+    total: { median: 0.4534, samples: 12, change_m: 34 },
+    gcTime: { median: 0.256, samples: 1, change_m: 2323 },
+    allocated: { median: 675, samples: 1, change_m: 6046 }
+  }
+];
+
 describe('Compare View Parts', () => {
   describe('Statistics in Row for Comparison Across Versions', () => {
     const tpl = prepareTemplate('compare/stats-row-across-versions.html');
 
     it('should render <td> elements with the statistics', () => {
       const data: CompareStatsRowAcrossVersionsPartial = {
-        stats: {
-          total: { median: 0.333, samples: 43, change_m: 546 },
-          gcTime: { median: 0.111, samples: 2, change_m: 146 },
-          allocated: { median: 222, samples: 2, change_m: 646 }
-        },
+        stats: versionStats,
         dataFormatters
       };
       const result = tpl(data);
@@ -58,23 +113,10 @@ describe('Compare View Parts', () => {
     const tpl = prepareTemplate('compare/stats-row-across-exes.html', true);
 
     it('should render <td> elements with the statistics', () => {
-      const data: CompareStatsRowAcrossExes = {
-        exes: [
-          {
-            name: 'TruffleSOM-ast',
-            total: { median: 0.333, samples: 43, change_m: 546 },
-            gcTime: { median: 0.111, samples: 1, change_m: 146 },
-            allocated: { median: 222, samples: 1, change_m: 646 }
-          },
-          {
-            name: 'TruffleSOM-bc',
-            total: { median: 0.4534, samples: 12, change_m: 34 },
-            gcTime: { median: 0.256, samples: 1, change_m: 2323 },
-            allocated: { median: 675, samples: 1, change_m: 6046 }
-          }
-        ],
-        ...dataFormatters,
-        ...viewHelpers
+      const data: CompareStatsRowAccrossExesPartial = {
+        exes: exeStats,
+        dataFormatters,
+        viewHelpers
       };
       const result = tpl(data);
       expect(result).toEqual(loadResult('exec-stats'));
@@ -86,41 +128,8 @@ describe('Compare View Parts', () => {
 
     it('with full data, it should render all buttons', () => {
       const data: ButtonsAdditionalInfoPartial = {
-        benchId: {
-          b: 'my-benchmark',
-          e: 'exe1',
-          s: 'suite2'
-        },
-        details: {
-          cmdline: 'som/some-command with args',
-          environments: [
-            {
-              id: 1,
-              hostname: 'MyHost',
-              ostype: 'Linux',
-              memory: 123456,
-              cpu: 'Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz',
-              clockspeed: 2800000000,
-              note: 'Some notes'
-            }
-          ],
-          envId: 1,
-          hasProfileData: true,
-          base: {
-            commitId: '123456',
-            runId: 1,
-            trialId: 2
-          },
-          change: {
-            commitId: '123457',
-            runId: 3,
-            trialId: 4
-          },
-          numV: 0,
-          numC: 0,
-          numI: 0,
-          numEa: 0
-        },
+        benchId,
+        details,
         dataFormatters
       };
 
@@ -169,78 +178,34 @@ describe('Compare View Parts', () => {
   describe('Row in Statistics Table', () => {
     const tpl = prepareTemplate('compare/stats-row.html', true);
 
-    it('should render the data as expected', () => {
+    it('should render the version comparison as expected', () => {
       const data: StatsRowPartial = {
-        benchId: {
-          b: 'my-benchmark',
-          e: 'exe1',
-          s: 'suite2'
-        },
-        details: {
-          cmdline: 'som/some-command with args',
-          environments: [
-            {
-              id: 1,
-              hostname: 'MyHost',
-              ostype: 'Linux',
-              memory: 123456,
-              cpu: 'Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz',
-              clockspeed: 2800000000,
-              note: 'Some notes'
-            }
-          ],
-          envId: 1,
-          hasProfileData: true,
-          base: {
-            commitId: '123456',
-            runId: 1,
-            trialId: 2
-          },
-          change: {
-            commitId: '123457',
-            runId: 3,
-            trialId: 4
-          },
-          numV: 0,
-          numC: 0,
-          numI: 0,
-          numEa: 0
-        },
+        benchId,
+        details,
         inlinePlot: 'todo.png',
-        versionStats: {
-          total: { median: 0.333, samples: 43, change_m: 546 },
-          gcTime: { median: 0.111, samples: 2, change_m: 146 },
-          allocated: { median: 222, samples: 2, change_m: 646 }
-        },
+        versionStats,
         dataFormatters,
         viewHelpers
       };
 
       const result = tpl(data);
-      expect(result).toEqual(loadResult('stats-row'));
+      expect(result).toEqual(loadResult('stats-row-version'));
+    });
+
+    it('should render the exe comparison as expected', () => {
+      const data: StatsRowPartial = {
+        benchId,
+        details,
+        inlinePlot: 'todo.png',
+        exeStats,
+        dataFormatters,
+        viewHelpers
+      };
+
+      const result = tpl(data);
+      expect(result).toEqual(loadResult('stats-row-exe'));
     });
   });
-
-  /*
-  const data: CompareStatsRowAcrossExes = {
-        exes: [
-          {
-            name: 'TruffleSOM-ast',
-            total: { median: 0.333, samples: 43, change_m: 546 },
-            gcTime: { median: 0.111, samples: 1, change_m: 546 },
-            allocated: { median: 222, samples: 1, change_m: 646 }
-          },
-          {
-            name: 'TruffleSOM-bc',
-            total: { median: 0.4534, samples: 12, change_m: 34 },
-            gcTime: { median: 0.256, samples: 1, change_m: 2323 },
-            allocated: { median: 675, samples: 1, change_m: 6046 }
-          }
-        ],
-        ...numFormat,
-        ...viewHelpers
-      };
-  */
 });
 
 describe('Compare View Navigation', () => {
