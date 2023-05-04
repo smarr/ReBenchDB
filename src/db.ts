@@ -1043,21 +1043,12 @@ export abstract class Database {
   public async getEnvironmentsForComparison(
     commitHash1: string,
     commitHash2: string
-  ): Promise<
-    {
-      envid: number;
-      hostname: string;
-      ostype: string;
-      memory: number;
-      cpu: string;
-      clockspeed: number;
-    }[]
-  > {
+  ): Promise<Environment[]> {
     const result = await this.query({
       name: 'fetchEnvForComparison',
       text: `SELECT
-                env.id as envid, env.hostname, env.ostype, env.memory,
-                env.cpu, env.clockspeed
+                env.id as id, env.hostname, env.ostype, env.memory,
+                env.cpu, env.clockspeed, note
              FROM Source src
                 JOIN Trial t         ON t.sourceId = src.id
                 JOIN Environment env ON t.envId = env.id

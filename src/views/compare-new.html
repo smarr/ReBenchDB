@@ -15,7 +15,7 @@
 <header>
 <div class="jumbotron compare">
   <h2>ReBenchDB for {%= it.project%}</h2>
-  {% if (it.revDetails) { %}
+  {% if (it.revisionFound) { %}
   <h3>Comparing <a href="{%= it.base.repourl%}/compare/{%= it.baselineHash%}...{%= it.changeHash%}">{%= it.baselineHash6%} with {%= it.changeHash6%}</a></h3>
   {% } else { %}
   <h3>Comparing {%= it.baselineHash6%} with {%= it.changeHash6%}</h3>
@@ -34,7 +34,7 @@
 </div>
 
 
-{% if (it.revisionNotFound) { %}
+{% if (!it.revisionFound) { %}
 <div class="alert alert-warning compare" role="alert">
   <h4 class="alert-heading">Revisions Not Found</h4>
 
@@ -54,7 +54,7 @@
 </div>
 {% } %}
 
-{% if (it.renderData) { %}
+{% if (it.revisionFound) { %}
 <div id="version-details" class="compare">
   <h2>Version Details</h2>
   <dl class="row">
@@ -105,7 +105,7 @@
 </main>
 </div></div>
 
-{% } /* if (it.renderData) */ %}
+{% } /* if (it.revisionFound) */ %}
 
 </body>
 </html>

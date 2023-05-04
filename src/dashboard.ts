@@ -19,7 +19,13 @@ import {
 import { getDirname } from './util.js';
 import { log } from './logging.js';
 import { QueryConfig } from 'pg';
-import { CompareNavPartial, StatsSummary } from './views/view-types.js';
+import {
+  ByExeSuiteComparison,
+  CompareNavPartial,
+  CompareView,
+  CompareViewWithData,
+  StatsSummary
+} from './views/view-types.js';
 import {
   ComparisonStatistics,
   calculateSummaryOfChangeSummaries
@@ -31,6 +37,8 @@ import {
   collateMeasurements
 } from './stats-data-prep.js';
 import { renderOverviewPlots } from './charts.js';
+import * as dataFormatters from './data-format.js';
+import * as viewHelpers from './views/helpers.js';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -424,7 +432,7 @@ export async function dashCompareNew(
   projectSlug: string,
   dbConfig: DatabaseConfig,
   db: Database
-): Promise<any> {
+): Promise<CompareView> {
   const baselineHash6 = base.substring(0, 6);
   const changeHash6 = change.substring(0, 6);
 
@@ -480,7 +488,7 @@ export async function calculateAllStatisticsAndRenderPlots(
   base: string,
   change: string,
   reportId: string
-): Promise<{ all: StatsSummary }> {
+): Promise<StatsSummary> {
   const cmp = base.localeCompare(change);
   if (cmp === 0) {
     throw new Error('base and change are the same');
@@ -514,9 +522,7 @@ export async function calculateAllStatisticsAndRenderPlots(
   summary.overviewPngUrl = files.png;
   summary.overviewSvgUrls = files.svg;
 
-  return {
-    all: summary
-  };
+  return summary;
 }
 
 export function getNavigation(data: MeasurementData[]): CompareNavPartial {

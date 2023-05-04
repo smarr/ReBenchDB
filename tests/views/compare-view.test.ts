@@ -13,7 +13,8 @@ import {
   CompareStatsTablePartial,
   CompareVersionsPartial,
   CompareStatsTable,
-  BySuiteComparison
+  BySuiteComparison,
+  DetailedInfo
 } from 'views/view-types.js';
 import { robustPath } from '../../src/util.js';
 import {
@@ -357,8 +358,8 @@ describe('Compare View Parts', () => {
 describe('Compare View Statistics', () => {
   const resultsJ = collateMeasurements(dataJsSOM.results);
   const resultsT = collateMeasurements(dataTruffleSOM.results);
-  let statsJ: { all: StatsSummary };
-  let statsT: { all: StatsSummary };
+  let statsJ: StatsSummary;
+  let statsT: StatsSummary;
 
   it('should calculate statistics without throwing exception', async () => {
     statsJ = await calculateAllStatisticsAndRenderPlots(
@@ -380,8 +381,7 @@ describe('Compare View Statistics', () => {
 
 
   it('should get the summary statistics for JsSOM', () => {
-    const stats: StatsSummary = statsJ.all;
-    expect(stats).toEqual({
+    expect(statsJ).toEqual({
       numRunConfigs: 26,
       overviewPngUrl: `${robustPath(
         '../resources/reports/'
@@ -398,8 +398,7 @@ describe('Compare View Statistics', () => {
   });
 
   it('should get the summary statistics for TruffleSOM', () => {
-    const stats = statsT.all;
-    expect(stats).toEqual({
+    expect(statsT).toEqual({
       numRunConfigs: 166,
       overviewPngUrl: `${robustPath(
         '../resources/reports/'
