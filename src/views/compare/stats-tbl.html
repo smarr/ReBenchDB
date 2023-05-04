@@ -6,6 +6,7 @@
 {%    for (const benchmark of it.benchmarks) {
 %}{%-   include('compare/stats-row.html', {
           stats: benchmark,
+          environments: it.environments,
           dataFormatters: it.dataFormatters,
           viewHelpers: it.viewHelpers
         })

@@ -54,7 +54,6 @@ export interface CompareStatsRowAcrossVersionsPartial {
 export interface DetailedInfo {
   cmdline: string;
 
-  environments: Environment[];
   envId: number;
 
   warmupPlotUrl?: string;
@@ -101,6 +100,7 @@ export interface CompareStatsRow {
 
 export interface CompareStatsRowPartial {
   stats: CompareStatsRow;
+  environments: Environment[];
   dataFormatters: DataFormat;
   viewHelpers: ViewHelpers;
 }
@@ -108,12 +108,14 @@ export interface CompareStatsRowPartial {
 export interface ButtonsAdditionalInfoPartial {
   details: DetailedInfo;
   benchId: BenchmarkId;
+  environments: Environment[];
   dataFormatters: DataFormat;
 }
 
 export interface CompareStatsTable {
   criteria: CompareStatsTableHeader;
   benchmarks: CompareStatsRow[];
+  environments: Environment[];
 }
 
 export interface CompareStatsTablePartial extends CompareStatsTable {
@@ -131,6 +133,7 @@ export type ByExeSuiteComparison = Map<string, BySuiteComparison>;
 
 export interface CompareVersionsPartial {
   allMeasurements: ByExeSuiteComparison;
+  environments: Environment[];
   dataFormatters: DataFormat;
   viewHelpers: ViewHelpers;
 }

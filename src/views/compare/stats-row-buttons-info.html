@@ -5,9 +5,9 @@ const f = it.dataFormatters;
 %}<button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>{%= d.cmdline %}</code>"></button>
 {%
-   if (d.environments) {
+   if (it.environments) {
 %}<button type="button" class="btn btn-sm btn-environment btn-popover"
-    data-content="{%= f.formatEnvironment(d.envId, d.environments) %}"></button>
+    data-content="{%= f.formatEnvironment(d.envId, it.environments) %}"></button>
 {% }
 
    if (d.warmupPlotUrl) {

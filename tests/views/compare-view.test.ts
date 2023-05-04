@@ -21,6 +21,7 @@ import {
   getNavigation
 } from '../../src/dashboard.js';
 import { collateMeasurements } from '../../src/stats-data-prep.js';
+import { Environment } from 'db.js';
 
 function loadResult(name: string): string {
   return readFileSync(
@@ -52,19 +53,20 @@ const benchId = {
   s: 'suite2'
 };
 
-const details = {
+const environments: Environment[] = [
+  {
+    id: 1,
+    hostname: 'MyHost',
+    ostype: 'Linux',
+    memory: 123456,
+    cpu: 'Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz',
+    clockspeed: 2800000000,
+    note: 'Some notes'
+  }
+];
+
+const details: DetailedInfo = {
   cmdline: 'som/some-command with args',
-  environments: [
-    {
-      id: 1,
-      hostname: 'MyHost',
-      ostype: 'Linux',
-      memory: 123456,
-      cpu: 'Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz',
-      clockspeed: 2800000000,
-      note: 'Some notes'
-    }
-  ],
   envId: 1,
   hasProfileData: true,
   base: {
@@ -139,6 +141,7 @@ describe('Compare View Parts', () => {
       const data: ButtonsAdditionalInfoPartial = {
         benchId,
         details,
+        environments,
         dataFormatters
       };
 
@@ -189,6 +192,7 @@ describe('Compare View Parts', () => {
           inlinePlot: 'todo.png',
           versionStats
         },
+        environments,
         dataFormatters,
         viewHelpers
       };
@@ -205,6 +209,7 @@ describe('Compare View Parts', () => {
           inlinePlot: 'todo.png',
           exeStats
         },
+        environments,
         dataFormatters,
         viewHelpers
       };
@@ -230,6 +235,7 @@ describe('Compare View Parts', () => {
             versionStats
           }
         ],
+        environments,
         dataFormatters,
         viewHelpers
       };
@@ -327,11 +333,13 @@ describe('Compare View Parts', () => {
             inlinePlot: 'todo.png',
             versionStats
           }
-        ]
+        ],
+        environments
       };
 
       const data: CompareVersionsPartial = {
         allMeasurements: new Map(),
+        environments,
         dataFormatters,
         viewHelpers
       };
