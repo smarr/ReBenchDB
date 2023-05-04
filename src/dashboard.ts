@@ -444,41 +444,51 @@ export async function dashCompareNew(
     change
   );
 
-  const data: any = {
+  if (!revDetails.dataFound || !revDetails.base || !revDetails.change) {
+    return {
+      revisionFound: false,
+      project: projectSlug,
+      baselineHash: base,
+      changeHash: change,
+      baselineHash6,
+      changeHash6
+    };
+  }
+
+  const results = await db.getMeasurementsForComparison(base, change);
+  const environments = await db.getEnvironmentsForComparison(base, change);
+
+  const collatedMs = collateMeasurements(results);
+
+  const data: CompareViewWithData = {
+    revisionFound: true,
     project: projectSlug,
     baselineHash: base,
     changeHash: change,
     baselineHash6,
     changeHash6,
-    reportId,
-    renderData: false
+    base: revDetails.base,
+    change: revDetails.change,
+    navigation: getNavigation(results),
+
+    noData: false, // TODO: need to derive this from one of the stats details
+    notInBoth: null, // TODO: need to get this also out of the stats calculations
+
+    statsSummary: await calculateAllStatisticsAndRenderPlots(
+      collatedMs,
+      base,
+      change,
+      reportId
+    ),
+    stats: {
+      allMeasurements: <ByExeSuiteComparison>(
+        (<unknown>collateMeasurements(results))
+      ),
+      environments,
+      dataFormatters,
+      viewHelpers
+    }
   };
-
-  if (!revDetails.dataFound) {
-    data.revisionNotFound = true;
-    return data;
-  }
-
-  data.base = revDetails.base;
-  data.change = revDetails.change;
-
-  data.renderData = true;
-
-  const results = await db.getMeasurementsForComparison(base, change);
-  const envs: any[] = await db.getEnvironmentsForComparison(base, change);
-
-  const { nav, navExeComparison } = getNavigation(results);
-  data.nav = nav;
-  data.navExeComparison = navExeComparison;
-
-  data.allMeasurements = collateMeasurements(results);
-  data.stats = calculateAllStatisticsAndRenderPlots(
-    data.allMeasurements,
-    base,
-    change,
-    reportId
-  );
-  data.envs = envs;
 
   return data;
 }

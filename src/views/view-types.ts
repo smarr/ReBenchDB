@@ -1,5 +1,5 @@
 import { BenchmarkId } from 'api';
-import { CriterionData, Environment } from 'db';
+import { CriterionData, Environment, RevisionData } from 'db';
 import { ComparisonStatistics, BasicSummaryStatistics } from 'stats';
 
 declare type DataFormat = typeof import('../data-format');
@@ -137,3 +137,46 @@ export interface CompareVersionsPartial {
   dataFormatters: DataFormat;
   viewHelpers: ViewHelpers;
 }
+
+export interface RefreshMenuPartial {
+  /* Name of the project. */
+  project: string;
+
+  /* Full commit hash of the base commit. */
+  baselineHash: string;
+
+  /* Full commit hash of the change commit. */
+  changeHash: string;
+}
+
+export interface CompareViewBasics {
+  /** Name of the project. */
+  project: string;
+
+  baselineHash: string;
+  changeHash: string;
+
+  baselineHash6: string;
+  changeHash6: string;
+}
+
+export interface CompareViewWithoutData extends CompareViewBasics {
+  revisionFound: false;
+}
+
+export interface CompareViewWithData extends CompareViewBasics {
+  revisionFound: true;
+
+  noData: boolean;
+  notInBoth: any; // TODO
+
+  base: RevisionData;
+  change: RevisionData;
+
+  navigation: CompareNavPartial;
+  statsSummary: StatsSummary;
+
+  stats: CompareVersionsPartial;
+}
+
+export type CompareView = CompareViewWithoutData | CompareViewWithData;
