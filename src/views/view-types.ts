@@ -51,6 +51,17 @@ export interface CompareStatsRowAcrossVersionsPartial {
   dataFormatters: DataFormat;
 }
 
+export interface ProfileId {
+  commitId: string;
+  runId: number;
+  trialId: number;
+}
+
+export interface ProfileIds {
+  base: ProfileId;
+  change: ProfileId;
+}
+
 export interface DetailedInfo {
   cmdline: string;
 
@@ -58,21 +69,9 @@ export interface DetailedInfo {
 
   warmupPlotUrl?: string;
 
-  hasProfileData: boolean;
+  profileIds?: ProfileIds;
 
-  base: {
-    commitId: string;
-    runId: number;
-    trialId: number;
-  };
-
-  change: {
-    commitId: string;
-    runId: number;
-    trialId: number;
-  };
-
-  /** Number of Versions */
+  /** Number of VarValues */
   numV: number;
 
   /** Number of Cores */
@@ -115,10 +114,10 @@ export interface ButtonsAdditionalInfoPartial {
 export interface CompareStatsTable {
   criteria: CompareStatsTableHeader;
   benchmarks: CompareStatsRow[];
-  environments: Environment[];
 }
 
 export interface CompareStatsTablePartial extends CompareStatsTable {
+  environments: Environment[];
   dataFormatters: DataFormat;
   viewHelpers: ViewHelpers;
 }

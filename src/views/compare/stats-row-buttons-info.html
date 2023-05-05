@@ -14,8 +14,9 @@ const f = it.dataFormatters;
 %}<button type="button" class="btn btn-sm btn-light btn-expand" data-img="{%= d.warmupPlotUrl %}"></button>
 {% } 
 
-   if (d.hasProfileData) {
-%}<button type="button" class="btn btn-sm btn-profile" data-content="{%= d.base.commitId %}/{%= d.base.runId %}/{%= d.base.trialId %},{%= d.change.commitId %}/{%= d.change.runId %}/{%= d.change.trialId %}"></button>{%
+   if (d.profileIds) {
+      const p = d.profileIds;
+%}<button type="button" class="btn btn-sm btn-profile" data-content="{%= p.base.commitId %}/{%= p.base.runId %}/{%= p.base.trialId %},{%= p.change.commitId %}/{%= p.change.runId %}/{%= p.change.trialId %}"></button>{%
    }
 %}
 <button type="button" class="btn btn-sm btn-timeline" data-content='{%- JSON.stringify(

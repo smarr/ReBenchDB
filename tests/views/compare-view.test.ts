@@ -69,16 +69,17 @@ const environments: Environment[] = [
 const details: DetailedInfo = {
   cmdline: 'som/some-command with args',
   envId: 1,
-  hasProfileData: true,
-  base: {
-    commitId: '123456',
-    runId: 1,
-    trialId: 2
-  },
-  change: {
-    commitId: '123457',
-    runId: 3,
-    trialId: 4
+  profileIds: {
+    base: {
+      commitId: '123456',
+      runId: 1,
+      trialId: 2
+    },
+    change: {
+      commitId: '123457',
+      runId: 3,
+      trialId: 4
+    }
   },
   numV: 0,
   numC: 0,
@@ -334,8 +335,7 @@ describe('Compare View Parts', () => {
             inlinePlot: 'todo.png',
             versionStats
           }
-        ],
-        environments
+        ]
       };
 
       const data: CompareVersionsPartial = {
