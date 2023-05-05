@@ -160,9 +160,11 @@ describe('Compare View Parts', () => {
         overviewPngUrl: 'some-url.svg',
         overviewSvgUrls: ['some-url1.svg', 'some-url2.svg'],
         numRunConfigs: 232,
-        total: { min: 0.1, max: 1.1, median: 0.5 },
-        gcTime: { min: 2.1, max: 3.1, median: 2.5 },
-        allocated: { min: 4.1, max: 5.1, median: 4.5 }
+        stats: {
+          total: { min: 0.1, max: 1.1, median: 0.5 },
+          gcTime: { min: 2.1, max: 3.1, median: 2.5 },
+          allocated: { min: 4.1, max: 5.1, median: 4.5 }
+        }
       };
 
       const result = tpl(data);
@@ -389,10 +391,12 @@ describe('Compare View Statistics', () => {
       overviewSvgUrls: [
         `${robustPath('../resources/reports/')}/testJ/overview-som.svg`
       ],
-      total: {
-        min: -0.08187505715653631,
-        max: 0.1445205479452054,
-        median: -0.007853258247567385
+      stats: {
+        total: {
+          min: -0.08187505715653631,
+          max: 0.1445205479452054,
+          median: -0.007853258247567385
+        }
       }
     });
   });
@@ -418,10 +422,12 @@ describe('Compare View Statistics', () => {
         )}/testT/overview-micro-startup.svg`,
         `${robustPath('../resources/reports/')}/testT/overview-micro-somsom.svg`
       ],
-      total: {
-        min: -0.14266018907563016,
-        max: 0.41233051093656736,
-        median: -0.0009242240366887366
+      stats: {
+        total: {
+          min: -0.14266018907563016,
+          max: 0.41233051093656736,
+          median: -0.0009242240366887366
+        }
       }
     });
   });

@@ -3,6 +3,7 @@
 {% for (const url of it.overviewSvgUrls) {
      %}<img src="{%= url %}">{%
    }
+   const s = it.stats;
 %}
 </div>
 <dl class="row">
@@ -10,11 +11,17 @@
   <dd class="col-sm-8">{%= it.numRunConfigs %}</dd>
 
   <dt class="col-sm-3">Run time (median)</dt>
-  <dd class="col-sm-8">{%= it.total.median %} (min. {%= it.total.min %}, max. {%= it.total.max %})</dd>
+  <dd class="col-sm-8">{%= s.total.median %} (min. {%= s.total.min %}, max. {%= s.total.max %})</dd>
+{%
+   if (s.gcTime || s['GC time']) {
+    const gc = s.gcTime || s['GC time'];
+%}<dt class="col-sm-3">GC time (median)</dt>
+  <dd class="col-sm-8">{%= gc.median %} (min. {%= gc.min %}, max. {%= gc.max %})</dd>
+{% }
 
-  <dt class="col-sm-3">GC time (median)</dt>
-  <dd class="col-sm-8">{%= it.gcTime.median %} (min. {%= it.gcTime.min %}, max. {%= it.gcTime.max %})</dd>
-
-  <dt class="col-sm-3">Allocated bytes (median)</dt>
-  <dd class="col-sm-8">{%= it.allocated.median %} (min. {%= it.allocated.min %}, max. {%= it.allocated.max %})</dd>
-</dl>
+   if (s.allocated || s['Allocated']) {
+     const a = s.allocated || s['Allocated'];
+%}<dt class="col-sm-3">Allocated bytes (median)</dt>
+  <dd class="col-sm-8">{%= a.median %} (min. {%= a.min %}, max. {%= a.max %})</dd>
+{% }
+%}</dl>

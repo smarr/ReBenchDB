@@ -7,6 +7,8 @@ declare type ViewHelpers = typeof import('./helpers');
 
 /** Summary statistics for the overall comparison. */
 export interface StatsSummary {
+  stats: Record<string, BasicSummaryStatistics>;
+
   /** The URL to a PNG with the overview statistics. */
   overviewPngUrl: string;
 
@@ -14,9 +16,6 @@ export interface StatsSummary {
   overviewSvgUrls: string[];
 
   numRunConfigs: number;
-  total: BasicSummaryStatistics;
-  gcTime: BasicSummaryStatistics;
-  allocated: BasicSummaryStatistics;
 }
 
 /** Types for the Compare Partials */
@@ -40,11 +39,10 @@ export interface CompareStatsRowAccrossExesPartial {
   viewHelpers: ViewHelpers;
 }
 
-export interface CompareStatsRowAcrossVersions {
-  total: ComparisonStatistics;
-  gcTime: ComparisonStatistics;
-  allocated: ComparisonStatistics;
-}
+export type CompareStatsRowAcrossVersions = Record<
+  string,
+  ComparisonStatistics
+>;
 
 export interface CompareStatsRowAcrossVersionsPartial {
   stats: CompareStatsRowAcrossVersions;
