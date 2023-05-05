@@ -391,12 +391,8 @@ describe('Compare View Statistics', () => {
   it('should get the summary statistics for JsSOM', () => {
     expect(statsJ).toEqual({
       numRunConfigs: 26,
-      overviewPngUrl: `${robustPath(
-        '../resources/reports/'
-      )}/testJ/overview.png`,
-      overviewSvgUrls: [
-        `${robustPath('../resources/reports/')}/testJ/overview-som.svg`
-      ],
+      overviewPngUrl: `testJ/overview.png`,
+      overviewSvgUrls: [`testJ/overview-som.svg`],
       stats: {
         total: {
           min: -0.08187505715653631,
@@ -410,23 +406,13 @@ describe('Compare View Statistics', () => {
   it('should get the summary statistics for TruffleSOM', () => {
     expect(statsT).toEqual({
       numRunConfigs: 166,
-      overviewPngUrl: `${robustPath(
-        '../resources/reports/'
-      )}/testT/overview.png`,
+      overviewPngUrl: `testT/overview.png`,
       overviewSvgUrls: [
-        `${robustPath(
-          '../resources/reports/'
-        )}/testT/overview-macro-steady.svg`,
-        `${robustPath(
-          '../resources/reports/'
-        )}/testT/overview-micro-steady.svg`,
-        `${robustPath(
-          '../resources/reports/'
-        )}/testT/overview-macro-startup.svg`,
-        `${robustPath(
-          '../resources/reports/'
-        )}/testT/overview-micro-startup.svg`,
-        `${robustPath('../resources/reports/')}/testT/overview-micro-somsom.svg`
+        `testT/overview-macro-steady.svg`,
+        `testT/overview-micro-steady.svg`,
+        `testT/overview-macro-startup.svg`,
+        `testT/overview-micro-startup.svg`,
+        `testT/overview-micro-somsom.svg`
       ],
       stats: {
         total: {

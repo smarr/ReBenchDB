@@ -302,10 +302,6 @@ export function getReportFilename(reportId: string): string {
   return `${reportOutputFolder}/${reportId}.html`;
 }
 
-export function getReportFolder(reportId: string): string {
-  return `${reportOutputFolder}/${reportId}`;
-}
-
 export function dashDeleteOldReport(
   project: string,
   base: string,
@@ -513,22 +509,23 @@ export async function calculateAllStatisticsAndRenderPlots(
     criteria
   );
 
-  const summary = <StatsSummary>(
-    (<unknown>calculateSummaryOfChangeSummaries(criteria))
-  );
-  summary.numRunConfigs = numRunConfigs;
-
-  const folderName = getReportFolder(reportId);
-  mkdirSync(folderName, { recursive: true });
+  const absolutePath = robustPath(`${reportOutputFolder}/${reportId}`);
+  mkdirSync(absolutePath, { recursive: true });
 
   const plotData = calculateDataForOverviewPlot(byExeSuiteBench, 'total');
 
-  const files = await renderOverviewPlots(folderName, 'overview', plotData);
+  const files = await renderOverviewPlots(
+    robustPath(reportOutputFolder),
+    `${reportId}/overview`,
+    plotData
+  );
 
-  summary.overviewPngUrl = files.png;
-  summary.overviewSvgUrls = files.svg;
-
-  return summary;
+  return {
+    stats: calculateSummaryOfChangeSummaries(criteria),
+    numRunConfigs,
+    overviewPngUrl: files.png,
+    overviewSvgUrls: files.svg
+  };
 }
 
 export function getNavigation(data: MeasurementData[]): CompareNavPartial {

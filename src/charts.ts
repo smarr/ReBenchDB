@@ -190,15 +190,15 @@ export async function renderOverviewPlots(
     images.push(image);
     writeFileSync(`${outputFolder}/${plotName}-${group}.png`, image);
 
-    const fileName = `${outputFolder}/${plotName}-${group}.svg`;
-    svgUrls.push(fileName);
+    const absolutePath = `${outputFolder}/${plotName}-${group}.svg`;
+    svgUrls.push(`${plotName}-${group}.svg`);
     const svg = await renderOverviewComparison(group, data, 'svg');
-    writeFileSync(fileName, svg);
+    writeFileSync(absolutePath, svg);
   }
 
   const result = await joinImages(images, { direction: 'vertical' });
-  const pngFileName = `${outputFolder}/${plotName}.png`;
-  await result.toFile(pngFileName);
+  const pngAbsolutePath = `${outputFolder}/${plotName}.png`;
+  await result.toFile(pngAbsolutePath);
 
-  return { png: pngFileName, svg: svgUrls };
+  return { png: `${plotName}.png`, svg: svgUrls };
 }

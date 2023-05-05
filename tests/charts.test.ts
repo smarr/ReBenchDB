@@ -29,6 +29,8 @@ function createTmpDirectory(): string {
   return mkdtempSync(`${tmpDir}${sep}rebenchdb-charts-tests`);
 }
 
+const outputFolder = createTmpDirectory();
+
 function toBeMostlyIdenticalImage(actualFile: string, expectedFile: string) {
   if (typeof actualFile !== 'string' || typeof expectedFile !== 'string') {
     throw new Error(
@@ -37,7 +39,9 @@ function toBeMostlyIdenticalImage(actualFile: string, expectedFile: string) {
     );
   }
 
-  const actualPng = PNG.sync.read(readFileSync(actualFile));
+  const actualPng = PNG.sync.read(
+    readFileSync(`${outputFolder}/${actualFile}`)
+  );
   const expectedPng = PNG.sync.read(readFileSync(expectedFile));
 
   const actualSize = { width: actualPng.width, height: actualPng.height };
@@ -97,7 +101,7 @@ function toBeMostlyIdenticalImage(actualFile: string, expectedFile: string) {
 }
 
 function toBeIdenticalSvgFiles(actualFile: string, expectedFile: string) {
-  const actual: string = readFileSync(actualFile, 'utf8');
+  const actual: string = readFileSync(`${outputFolder}/${actualFile}`, 'utf8');
   const expected: string = readFileSync(expectedFile, 'utf8');
 
   if (actual !== expected) {
@@ -146,8 +150,6 @@ describe('renderOverviewPlots()', () => {
   const plotDataJsSOM = calculateDataForOverviewPlot(resultsJsSOM, 'total');
   const plotDataTSOM = calculateDataForOverviewPlot(resultsTSOM, 'total');
 
-  const outputFolder = createTmpDirectory();
-
   describe('with JsSOM data', () => {
     let result: { png: string; svg: string[] };
     it('should not error when rendering the plots', async () => {
@@ -157,13 +159,13 @@ describe('renderOverviewPlots()', () => {
 
     it('should return a png', () => {
       expect(result.png).toBeDefined();
-      expect(result.png).toEqual(`${outputFolder}/jssom.png`);
+      expect(result.png).toEqual(`jssom.png`);
     });
 
     it('should return a one svg', () => {
       expect(result.svg).toBeDefined();
       expect(result.svg).toHaveLength(1);
-      expect(result.svg[0]).toEqual(`${outputFolder}/jssom-som.svg`);
+      expect(result.svg[0]).toEqual(`jssom-som.svg`);
     });
 
     it('should match the png expected', () => {
@@ -192,7 +194,7 @@ describe('renderOverviewPlots()', () => {
 
     it('should return a png', () => {
       expect(result.png).toBeDefined();
-      expect(result.png).toEqual(`${outputFolder}/trufflesom.png`);
+      expect(result.png).toEqual(`trufflesom.png`);
     });
 
     it('should match the png expected', () => {
@@ -205,11 +207,11 @@ describe('renderOverviewPlots()', () => {
       expect(result.svg).toBeDefined();
       expect(result.svg).toHaveLength(5);
       expect(result.svg).toEqual([
-        `${outputFolder}/trufflesom-macro-steady.svg`,
-        `${outputFolder}/trufflesom-micro-steady.svg`,
-        `${outputFolder}/trufflesom-macro-startup.svg`,
-        `${outputFolder}/trufflesom-micro-startup.svg`,
-        `${outputFolder}/trufflesom-micro-somsom.svg`
+        `trufflesom-macro-steady.svg`,
+        `trufflesom-micro-steady.svg`,
+        `trufflesom-macro-startup.svg`,
+        `trufflesom-micro-startup.svg`,
+        `trufflesom-micro-somsom.svg`
       ]);
     });
 
