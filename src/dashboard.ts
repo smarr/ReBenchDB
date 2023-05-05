@@ -499,14 +499,10 @@ export async function calculateAllStatisticsAndRenderPlots(
   change: string,
   reportId: string
 ): Promise<StatsSummary> {
-  const cmp = base.localeCompare(change);
-  if (cmp === 0) {
-    throw new Error('base and change are the same');
-  }
-  const baseCommitIdIsFirst = cmp < 0;
-
-  const baseOffset = baseCommitIdIsFirst ? 0 : 1;
-  const changeOffset = baseCommitIdIsFirst ? 1 : 0;
+  const { baseOffset, changeOffset } = getCommitOffsetsInSortedMeasurements(
+    base,
+    change
+  );
 
   const criteria = new Map<string, ComparisonStatistics[]>();
 

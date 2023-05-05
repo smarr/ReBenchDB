@@ -75,6 +75,22 @@ export function compareToSortForSinglePassChangeStatsWithoutCommitId(
   return a.criterion.name.localeCompare(b.criterion.name);
 }
 
+export function getCommitOffsetsInSortedMeasurements(
+  baseCommitId: string,
+  changeCommitId: string
+): { baseOffset: number; changeOffset: number } {
+  const cmp = baseCommitId.localeCompare(changeCommitId);
+  if (cmp === 0) {
+    throw new Error('base and change are the same');
+  }
+  const baseCommitIdIsFirst = cmp < 0;
+
+  return {
+    baseOffset: baseCommitIdIsFirst ? 0 : 1,
+    changeOffset: baseCommitIdIsFirst ? 1 : 0
+  };
+}
+
 export interface ResultsByBenchmark {
   benchmarks: Map<string, ProcessedResult>;
   criteria: Record<string, CriterionData>;
