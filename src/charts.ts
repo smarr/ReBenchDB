@@ -92,13 +92,12 @@ export async function renderOverviewComparison(
   type: 'svg' | 'png' = 'png',
   plotType: 'boxplot' | 'violin' = 'boxplot'
 ): Promise<Buffer> {
-  const width = 432;
   const height = calculatePlotHeight(title, data);
 
   const plugins: any[] = ['chartjs-plugin-annotation'];
 
   const canvasOptions: ChartJSNodeCanvasOptions = {
-    width,
+    width: siteAesthetics.overviewPlotWidth,
     height,
     backgroundColour: siteAesthetics.backgroundColor,
     plugins: { modern: plugins },
@@ -109,7 +108,7 @@ export async function renderOverviewComparison(
           const ctx = chart.ctx;
           ctx.save();
           ctx.fillStyle = siteAesthetics.backgroundColor;
-          ctx.fillRect(0, 0, width, chart.height);
+          ctx.fillRect(0, 0, siteAesthetics.overviewPlotWidth, chart.height);
           ctx.restore();
         }
       });

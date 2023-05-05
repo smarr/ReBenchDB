@@ -78,7 +78,9 @@ export const siteAesthetics = {
   fastColor: '#e4ffc7',
   slowColor: '#ffcccc',
 
-  backgroundColor: '#ffffff'
+  backgroundColor: '#ffffff',
+
+  overviewPlotWidth: 432
 };
 
 export const TotalCriterion = 'total';

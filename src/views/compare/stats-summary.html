@@ -5,7 +5,7 @@
    const s = it.stats;
 
    for (const url of it.overviewSvgUrls) {
-     %}<img src="{%= url %}">{%
+     %}<img src="{%= it.config.reportsUrl %}/{%= url %}" width="{%= it.config.overviewPlotWidth %}">{%
    }
    
 %}

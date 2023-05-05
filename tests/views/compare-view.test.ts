@@ -166,7 +166,11 @@ describe('Compare View Parts', () => {
           gcTime: { min: 2.1, max: 3.1, median: 2.5 },
           allocated: { min: 4.1, max: 5.1, median: 4.5 }
         },
-        dataFormatters
+        dataFormatters,
+        config: {
+          reportsUrl: 'base-url',
+          overviewPlotWidth: 432
+        }
       };
 
       const result = tpl(data);

@@ -12,6 +12,7 @@ import { AllResults, BenchmarkCompletion, TimelineSuite } from './api.js';
 import { GitHub } from './github.js';
 import {
   robustPath,
+  siteAesthetics,
   siteConfig,
   storeJsonGzip,
   TotalCriterion

@@ -19,6 +19,7 @@ export interface StatsSummary {
 }
 
 export interface StatsSummaryPartial extends StatsSummary {
+  config: ReportConfig;
   dataFormatters: DataFormat;
 }
 
@@ -181,6 +182,13 @@ export interface CompareViewWithData extends CompareViewBasics {
   statsSummary: StatsSummary;
 
   stats: CompareVersions;
+  config: ReportConfig;
+}
+
+export interface ReportConfig {
+  /** The URL part where reports are stored, and publically accessible. */
+  reportsUrl: string;
+  overviewPlotWidth: number;
 }
 
 export type CompareView = CompareViewWithoutData | CompareViewWithData;
