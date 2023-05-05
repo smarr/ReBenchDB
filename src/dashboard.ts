@@ -34,7 +34,8 @@ import {
   ResultsByExeSuiteBenchmark,
   calculateAllChangeStatistics,
   calculateDataForOverviewPlot,
-  collateMeasurements
+  collateMeasurements,
+  getCommitOffsetsInSortedMeasurements
 } from './stats-data-prep.js';
 import { renderOverviewPlots } from './charts.js';
 import * as dataFormatters from './data-format.js';
