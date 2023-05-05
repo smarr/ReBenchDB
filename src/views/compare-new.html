@@ -89,7 +89,7 @@
 
 <main class="col-8" role="main">
 
-{%- include('compare/stats-summary.html', it.statsSummary) %}
+{%- include('compare/stats-summary.html', {...it.statsSummary, dataFormatters: it.dataFormatters}) %}
 
 {% if (it.notInBoth) { %}
 <h3>Changes in Benchmark Set</h3>

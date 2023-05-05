@@ -1,9 +1,13 @@
 <h2 id="overview">Result Overview</h2>
 <div id="overview-plots">
-{% for (const url of it.overviewSvgUrls) {
+{% 
+   const d = it.dataFormatters;
+   const s = it.stats;
+
+   for (const url of it.overviewSvgUrls) {
      %}<img src="{%= url %}">{%
    }
-   const s = it.stats;
+   
 %}
 </div>
 <dl class="row">
@@ -11,17 +15,17 @@
   <dd class="col-sm-8">{%= it.numRunConfigs %}</dd>
 
   <dt class="col-sm-3">Run time (median)</dt>
-  <dd class="col-sm-8">{%= s.total.median %} (min. {%= s.total.min %}, max. {%= s.total.max %})</dd>
+  <dd class="col-sm-8">{%= d.r2(s.total.median) %} (min. {%= d.r2(s.total.min) %}, max. {%= d.r2(s.total.max) %})</dd>
 {%
    if (s.gcTime || s['GC time']) {
     const gc = s.gcTime || s['GC time'];
 %}<dt class="col-sm-3">GC time (median)</dt>
-  <dd class="col-sm-8">{%= gc.median %} (min. {%= gc.min %}, max. {%= gc.max %})</dd>
+  <dd class="col-sm-8">{%= d.r2(gc.median) %} (min. {%= d.r2(gc.min) %}, max. {%= d.r2(gc.max) %})</dd>
 {% }
 
    if (s.allocated || s['Allocated']) {
      const a = s.allocated || s['Allocated'];
 %}<dt class="col-sm-3">Allocated bytes (median)</dt>
-  <dd class="col-sm-8">{%= a.median %} (min. {%= a.min %}, max. {%= a.max %})</dd>
+  <dd class="col-sm-8">{%= d.r2(a.median) %} (min. {%= d.r2(a.min) %}, max. {%= d.r2(a.max) %})</dd>
 {% }
 %}</dl>

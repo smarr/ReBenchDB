@@ -7,6 +7,8 @@ import { DatabaseWithPool } from './db.js';
 import { BenchmarkData, BenchmarkCompletion, TimelineRequest } from './api.js';
 import { createValidator } from './api-validator.js';
 import { ValidateFunction } from 'ajv';
+import * as dataFormatters from './data-format.js';
+import * as viewHelpers from './views/helpers.js';
 
 import {
   initPerfTracker,
@@ -313,7 +315,7 @@ router.get('/:projectSlug/compare-new/:baseline..:change', async (ctx) => {
     dbConfig,
     db
   );
-  ctx.body = compareTpl(data);
+  ctx.body = compareTpl({ ...data, dataFormatters, viewHelpers });
   ctx.type = 'html';
 
   completeRequest(start, db, 'change-new');

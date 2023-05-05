@@ -38,8 +38,6 @@ import {
   getCommitOffsetsInSortedMeasurements
 } from './stats-data-prep.js';
 import { renderOverviewPlots } from './charts.js';
-import * as dataFormatters from './data-format.js';
-import * as viewHelpers from './views/helpers.js';
 
 const __dirname = getDirname(import.meta.url);
 

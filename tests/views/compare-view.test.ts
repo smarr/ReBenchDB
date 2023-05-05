@@ -14,7 +14,8 @@ import {
   CompareVersionsPartial,
   CompareStatsTable,
   BySuiteComparison,
-  DetailedInfo
+  DetailedInfo,
+  StatsSummaryPartial
 } from 'views/view-types.js';
 import { robustPath } from '../../src/util.js';
 import {
@@ -156,7 +157,7 @@ describe('Compare View Parts', () => {
     const tpl = prepareTemplate('compare/stats-summary.html', true);
 
     it('should render the data as expected', () => {
-      const data: StatsSummary = {
+      const data: StatsSummaryPartial = {
         overviewPngUrl: 'some-url.svg',
         overviewSvgUrls: ['some-url1.svg', 'some-url2.svg'],
         numRunConfigs: 232,
@@ -164,7 +165,8 @@ describe('Compare View Parts', () => {
           total: { min: 0.1, max: 1.1, median: 0.5 },
           gcTime: { min: 2.1, max: 3.1, median: 2.5 },
           allocated: { min: 4.1, max: 5.1, median: 4.5 }
-        }
+        },
+        dataFormatters
       };
 
       const result = tpl(data);

@@ -18,6 +18,10 @@ export interface StatsSummary {
   numRunConfigs: number;
 }
 
+export interface StatsSummaryPartial extends StatsSummary {
+  dataFormatters: DataFormat;
+}
+
 /** Types for the Compare Partials */
 
 export type CompareStatsTableHeader = Record<string, CriterionData>;
@@ -128,9 +132,12 @@ export interface CompareNavPartial {
 export type BySuiteComparison = Map<string, CompareStatsTable>;
 export type ByExeSuiteComparison = Map<string, BySuiteComparison>;
 
-export interface CompareVersionsPartial {
+export interface CompareVersions {
   allMeasurements: ByExeSuiteComparison;
   environments: Environment[];
+}
+
+export interface CompareVersionsPartial extends CompareVersions {
   dataFormatters: DataFormat;
   viewHelpers: ViewHelpers;
 }
@@ -173,7 +180,7 @@ export interface CompareViewWithData extends CompareViewBasics {
   navigation: CompareNavPartial;
   statsSummary: StatsSummary;
 
-  stats: CompareVersionsPartial;
+  stats: CompareVersions;
 }
 
 export type CompareView = CompareViewWithoutData | CompareViewWithData;
