@@ -97,12 +97,6 @@ export async function renderOverviewComparison(
 
   const plugins: any[] = ['chartjs-plugin-annotation'];
 
-  if (plotType === 'boxplot') {
-    plugins.push(BoxPlotController, BoxAndWiskers);
-  } else {
-    plugins.push(ViolinController, Violin);
-  }
-
   const canvasOptions: ChartJSNodeCanvasOptions = {
     width,
     height,
@@ -119,6 +113,16 @@ export async function renderOverviewComparison(
           ctx.restore();
         }
       });
+
+      if (plotType === 'boxplot') {
+        ChartJS.register(BoxPlotController, BoxAndWiskers);
+        ChartJS.registry.addControllers(BoxPlotController, BoxAndWiskers);
+        ChartJS.registry.addElements(BoxAndWiskers);
+      } else {
+        ChartJS.register(ViolinController, Violin);
+        ChartJS.registry.addControllers(ViolinController, Violin);
+        ChartJS.registry.addElements(Violin);
+      }
     }
   };
 
@@ -183,7 +187,7 @@ export async function renderOverviewPlots(
   const svgUrls: string[] = [];
 
   for (const [group, data] of plotData.entries()) {
-    const image = await renderOverviewComparison(group, data);
+    const image = await renderOverviewComparison(group, data, 'png');
     images.push(image);
     writeFileSync(`${outputFolder}/${plotName}-${group}.png`, image);
 
