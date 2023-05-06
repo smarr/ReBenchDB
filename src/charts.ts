@@ -86,18 +86,16 @@ function getDataset(data: ChangeData) {
   ];
 }
 
-export async function renderOverviewComparison(
-  title: string | null,
-  data: ChangeData,
-  type: 'svg' | 'png' = 'png',
+export function createCanvas(
+  height: number,
+  width: number,
+  outputType: 'svg' | 'png' = 'png',
   plotType: 'boxplot' | 'violin' = 'boxplot'
-): Promise<Buffer> {
-  const height = calculatePlotHeight(title, data);
-
+): ChartJSNodeCanvas {
   const plugins: any[] = ['chartjs-plugin-annotation'];
 
   const canvasOptions: ChartJSNodeCanvasOptions = {
-    width: siteAesthetics.overviewPlotWidth,
+    width,
     height,
     backgroundColour: siteAesthetics.backgroundColor,
     plugins: { modern: plugins },
@@ -125,11 +123,19 @@ export async function renderOverviewComparison(
     }
   };
 
-  if (type === 'svg') {
+  if (outputType === 'svg') {
     (<any>canvasOptions).type = 'svg'; // work around the readonly property
   }
-  const chartJSNodeCanvas = new ChartJSNodeCanvas(canvasOptions);
+  return new ChartJSNodeCanvas(canvasOptions);
+}
 
+export async function renderDataOnCanvas(
+  canvas: ChartJSNodeCanvas,
+  title: string | null,
+  data: ChangeData,
+  outputType: 'svg' | 'png' = 'png',
+  plotType: 'boxplot' | 'violin' = 'boxplot'
+): Promise<Buffer> {
   const plotTypeConst =
     plotType === 'boxplot' ? ('boxplot' as const) : ('violin' as const);
 
@@ -171,10 +177,32 @@ export async function renderOverviewComparison(
     };
   }
 
-  if (type === 'svg') {
-    return chartJSNodeCanvas.renderToBufferSync(configuration, 'image/svg+xml');
+  if (outputType === 'svg') {
+    return canvas.renderToBufferSync(configuration, 'image/svg+xml');
   }
-  return chartJSNodeCanvas.renderToBuffer(configuration);
+  return canvas.renderToBuffer(configuration);
+}
+
+export async function renderOverviewComparison(
+  title: string | null,
+  data: ChangeData,
+  outputType: 'svg' | 'png' = 'png',
+  plotType: 'boxplot' | 'violin' = 'boxplot'
+): Promise<Buffer> {
+  const chartJSNodeCanvas = createCanvas(
+    calculatePlotHeight(title, data),
+    siteAesthetics.overviewPlotWidth,
+    outputType,
+    plotType
+  );
+
+  return renderDataOnCanvas(
+    chartJSNodeCanvas,
+    title,
+    data,
+    outputType,
+    plotType
+  );
 }
 
 export async function renderOverviewPlots(
