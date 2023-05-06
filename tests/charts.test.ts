@@ -8,8 +8,7 @@ import { sep, basename } from 'node:path';
 import {
   getDataNormalizedToBaselineMedian,
   calculateAllChangeStatistics,
-  calculateDataForOverviewPlot,
-  collateMeasurements
+  calculateDataForOverviewPlot
 } from '../src/stats-data-prep.js';
 import { robustPath } from '../src/util.js';
 import {
@@ -17,7 +16,8 @@ import {
   renderInlinePlot,
   renderOverviewPlots
 } from '../src/charts.js';
-import { Measurements } from 'db.js';
+import { Measurements } from '../src/db.js';
+import { collateMeasurements } from '../src/db-data-processing.js';
 
 declare module 'expect' {
   interface AsymmetricMatchers {
