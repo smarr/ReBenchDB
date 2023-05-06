@@ -1,4 +1,11 @@
-import { readFileSync, existsSync, unlinkSync, rmSync, mkdirSync } from 'fs';
+import {
+  readFileSync,
+  existsSync,
+  unlinkSync,
+  rmSync,
+  mkdirSync
+} from 'node:fs';
+import { resolve } from 'node:path';
 import { execFile, ChildProcessPromise } from 'promisify-child-process';
 import {
   TimedCacheValidity,
@@ -42,7 +49,7 @@ import { renderOverviewPlots } from './charts.js';
 
 const __dirname = getDirname(import.meta.url);
 
-const reportOutputFolder = robustPath(`../resources/reports/`);
+const reportOutputFolder = resolve(robustPath(`../resources/reports/`));
 
 /**
  * SELECT exp.id, exp.startTime, m.iteration, m.value FROM Source s
@@ -509,13 +516,13 @@ export async function calculateAllStatisticsAndRenderPlots(
     criteria
   );
 
-  const absolutePath = robustPath(`${reportOutputFolder}/${reportId}`);
+  const absolutePath = `${reportOutputFolder}/${reportId}`;
   mkdirSync(absolutePath, { recursive: true });
 
   const plotData = calculateDataForOverviewPlot(byExeSuiteBench, 'total');
 
   const files = await renderOverviewPlots(
-    robustPath(reportOutputFolder),
+    reportOutputFolder,
     `${reportId}/overview`,
     plotData
   );
