@@ -80,7 +80,12 @@ export const siteAesthetics = {
 
   backgroundColor: '#ffffff',
 
-  overviewPlotWidth: 432
+  overviewPlotWidth: 432,
+
+  inlinePlot: {
+    width: 336,
+    height: 38
+  }
 };
 
 export const TotalCriterion = 'total';

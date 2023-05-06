@@ -320,6 +320,10 @@ td.warmup-plot {
   content: "-";
 }
 
+.inline-cmp img {
+  max-width: 336px;
+}
+
 @media (max-width: 576px) {
   .inline-cmp {
     max-width: 100px;

@@ -63,7 +63,44 @@ function getFivePercentLineAnnotations() {
   };
 }
 
-function getDataset(data: ChangeData) {
+function toDataSetWithBaseChangeBackground(data: ChangeData): any[] {
+  if (data.labels.length !== 2) {
+    throw new Error(
+      'Expect data with a baseline and a change data series.' +
+        ` But got one with ${data.labels.length} series, labeled: ` +
+        data.labels.join(', ')
+    );
+  }
+
+  const colors = [siteAesthetics.baseColor, siteAesthetics.changeColor];
+  const lightColors = [
+    siteAesthetics.baseColorLight,
+    siteAesthetics.changeColorLight
+  ];
+
+  return [
+    {
+      backgroundColor: lightColors,
+      borderColor: colors,
+
+      outlierBackgroundColor: lightColors,
+      outlierBorderColor: colors,
+      outlierRadius: 1.5,
+
+      borderWidth: 1,
+      itemRadius: 2,
+
+      meanBackgroundColor: '#000',
+      meanBorderColor: '#000',
+      meanBorderWidth: 1,
+      meanRadius: 1.5,
+
+      data: <number[]>(<unknown>data.data)
+    }
+  ];
+}
+
+function toDataSetWithFastSlowBackground(data: ChangeData): any[] {
   const medianPerLabel = data.data.map((d) => medianUnsorted(d));
 
   const backgroundColors = medianPerLabel.map((d) => {
@@ -135,12 +172,16 @@ export function createCanvas(
   return new ChartJSNodeCanvas(canvasOptions);
 }
 
-export async function renderDataOnCanvas(
+async function renderDataOnCanvas(
   canvas: ChartJSNodeCanvas,
   title: string | null,
   data: ChangeData,
   outputType: 'svg' | 'png' = 'png',
-  plotType: 'boxplot' | 'violin' = 'boxplot'
+  plotType: 'boxplot' | 'violin' = 'boxplot',
+  showYAxisLabels = true,
+  fontSize = 12,
+  tickLength = 4,
+  conversionFn = toDataSetWithFastSlowBackground
 ): Promise<Buffer> {
   const plotTypeConst =
     plotType === 'boxplot' ? ('boxplot' as const) : ('violin' as const);
@@ -149,7 +190,7 @@ export async function renderDataOnCanvas(
     type: plotTypeConst,
     data: {
       labels: data.labels,
-      datasets: getDataset(data)
+      datasets: conversionFn(data)
     },
     options: {
       devicePixelRatio: 2,
@@ -164,17 +205,30 @@ export async function renderDataOnCanvas(
           suggestedMax: 2,
           grid: {
             drawOnChartArea: false,
-            drawTicks: true
+            drawTicks: true,
+            tickLength,
+            drawBorder: false,
+            tickColor: '#000'
+          },
+          ticks: {
+            font: {
+              size: fontSize
+            }
           }
         },
         y: {
           grid: {
-            display: false
+            display: false,
+            drawBorder: false
           }
         }
       }
     }
   };
+
+  if (!showYAxisLabels) {
+    (<any>configuration.options.scales.y).ticks = { display: false };
+  }
 
   if (title) {
     (<any>configuration.options.plugins).title = {
@@ -235,4 +289,27 @@ export async function renderOverviewPlots(
   await result.toFile(pngAbsolutePath);
 
   return { png: `${plotName}.png`, svg: svgUrls };
+}
+
+export async function renderInlinePlot(
+  canvas: ChartJSNodeCanvas,
+  data: ChangeData,
+  outputFolder: string,
+  plotName: string,
+  plotId: number
+): Promise<string> {
+  const buffer = await renderDataOnCanvas(
+    canvas,
+    null,
+    data,
+    'svg',
+    'boxplot',
+    false,
+    6,
+    2,
+    toDataSetWithBaseChangeBackground
+  );
+  const inlinePlotUrl = `${plotName}-${plotId}.svg`;
+  writeFileSync(`${outputFolder}/${inlinePlotUrl}`, buffer);
+  return inlinePlotUrl;
 }

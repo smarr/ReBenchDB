@@ -6,12 +6,18 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { sep, basename } from 'node:path';
 
 import {
+  getDataNormalizedToBaselineMedian,
   calculateAllChangeStatistics,
   calculateDataForOverviewPlot,
   collateMeasurements
 } from '../src/stats-data-prep.js';
 import { robustPath } from '../src/util.js';
-import { renderOverviewPlots } from '../src/charts.js';
+import {
+  createCanvas,
+  renderInlinePlot,
+  renderOverviewPlots
+} from '../src/charts.js';
+import { Measurements } from 'db.js';
 
 declare module 'expect' {
   interface AsymmetricMatchers {
@@ -128,25 +134,25 @@ expect.extend({
   toBeIdenticalSvgFiles
 });
 
+const dataJsSOM = JSON.parse(
+  readFileSync(
+    robustPath(`../tests/data/compare-view-data-jssom.json`)
+  ).toString()
+);
+
+const dataTruffleSOM = JSON.parse(
+  readFileSync(
+    robustPath(`../tests/data/compare-view-data-trufflesom.json`)
+  ).toString()
+);
+
+const resultsJsSOM = collateMeasurements(dataJsSOM.results);
+const resultsTSOM = collateMeasurements(dataTruffleSOM.results);
+
+calculateAllChangeStatistics(resultsJsSOM, 0, 1, null);
+calculateAllChangeStatistics(resultsTSOM, 0, 1, null);
+
 describe('renderOverviewPlots()', () => {
-  const dataJsSOM = JSON.parse(
-    readFileSync(
-      robustPath(`../tests/data/compare-view-data-jssom.json`)
-    ).toString()
-  );
-
-  const dataTruffleSOM = JSON.parse(
-    readFileSync(
-      robustPath(`../tests/data/compare-view-data-trufflesom.json`)
-    ).toString()
-  );
-
-  const resultsJsSOM = collateMeasurements(dataJsSOM.results);
-  const resultsTSOM = collateMeasurements(dataTruffleSOM.results);
-
-  calculateAllChangeStatistics(resultsJsSOM, 0, 1, null);
-  calculateAllChangeStatistics(resultsTSOM, 0, 1, null);
-
   const plotDataJsSOM = calculateDataForOverviewPlot(resultsJsSOM, 'total');
   const plotDataTSOM = calculateDataForOverviewPlot(resultsTSOM, 'total');
 
@@ -237,13 +243,42 @@ describe('renderOverviewPlots()', () => {
       );
     });
   });
+});
 
-  afterAll(() => {
-    const keepCharts = false;
-    if (keepCharts) {
-      console.log(`outputFolder: ${outputFolder}`);
-    } else {
-      rmSync(outputFolder, { recursive: true, force: true });
-    }
+describe('renderInlinePlot()', () => {
+  const inlinePlotCanvas = createCanvas(38, 336, 'svg', 'boxplot');
+  const measurements = <Measurements[]>(
+    resultsJsSOM.get('som')?.get('macro')?.benchmarks.get('DeltaBlue')
+      ?.measurements
+  );
+
+  const data = getDataNormalizedToBaselineMedian(
+    measurements[0],
+    measurements[1]
+  );
+
+  it('should render the expected plot', async () => {
+    const name = await renderInlinePlot(
+      inlinePlotCanvas,
+      data,
+      outputFolder,
+      'inline',
+      1
+    );
+
+    expect(name).toEqual('inline-1.svg');
+
+    expect(name).toBeIdenticalSvgFiles(
+      robustPath(`../tests/data/charts/${name}`)
+    );
   });
+});
+
+afterAll(() => {
+  const keepCharts = false;
+  if (keepCharts) {
+    console.log(`outputFolder: ${outputFolder}`);
+  } else {
+    rmSync(outputFolder, { recursive: true, force: true });
+  }
 });
