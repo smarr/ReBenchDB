@@ -79,8 +79,14 @@ function getDataset(data: ChangeData) {
     {
       backgroundColor: backgroundColors,
       borderColor: siteAesthetics.changeColor,
-      borderWidth: 1.5,
+      borderWidth: 1,
       itemRadius: 2,
+
+      meanBackgroundColor: '#000',
+      meanBorderColor: '#000',
+      meanBorderWidth: 1,
+      meanRadius: 1.5,
+
       data: <number[]>(<unknown>data.data)
     }
   ];

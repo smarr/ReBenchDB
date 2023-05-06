@@ -239,6 +239,11 @@ describe('renderOverviewPlots()', () => {
   });
 
   afterAll(() => {
-    rmSync(outputFolder, { recursive: true, force: true });
+    const keepCharts = false;
+    if (keepCharts) {
+      console.log(`outputFolder: ${outputFolder}`);
+    } else {
+      rmSync(outputFolder, { recursive: true, force: true });
+    }
   });
 });
