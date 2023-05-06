@@ -45,6 +45,10 @@ nav.compare {
   padding-bottom: 10px;
 }
 
+#overview-plots {
+  max-width: 450px;
+}
+
 #report-nav-toggler {
   display: inline-block;
 }
