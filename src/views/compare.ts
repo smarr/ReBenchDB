@@ -182,23 +182,23 @@ $(() => {
   $('#show-refresh-form').on('click', () => $('input[name=password]').show());
 
   (<any>$)('.btn-popover').popover({ html: true, placement: 'top' });
-  $('.btn-expand').on('click', insertWarmupPlot);
+  $('.btn-warmup').on('click', insertWarmupPlot);
   $('.btn-profile').on('click', insertProfiles);
   $('.btn-timeline').on('click', insertTimeline);
 
-  const headlinesForTablesWithWarmupPlots = $('table:has(button.btn-expand)')
+  const headlinesForTablesWithWarmupPlots = $('table:has(button.btn-warmup)')
     .prev()
     .prev();
   headlinesForTablesWithWarmupPlots.append(
-    `<button type="button" class="btn btn-sm btn-light btn-expand"></button>`
+    `<button type="button" class="btn btn-sm btn-light btn-warmup"></button>`
   );
-  const buttons = headlinesForTablesWithWarmupPlots.find('.btn-expand');
+  const buttons = headlinesForTablesWithWarmupPlots.find('.btn-warmup');
   buttons.on('click', (e) => {
     const expandButtons = $(e.target)
       .parent()
       .next()
       .next()
-      .find('.btn-expand');
+      .find('.btn-warmup');
     expandButtons.each((i, elm) => insertWarmupPlot(elm));
   });
 
