@@ -15,7 +15,8 @@ import {
   CompareStatsTable,
   BySuiteComparison,
   DetailedInfo,
-  StatsSummaryPartial
+  StatsSummaryPartial,
+  ReportConfig
 } from 'views/view-types.js';
 import { robustPath } from '../../src/util.js';
 import {
@@ -109,6 +110,11 @@ const exeStats = [
   }
 ];
 
+const config: ReportConfig = {
+  reportsUrl: 'base-url',
+  overviewPlotWidth: 432
+};
+
 describe('Compare View Parts', () => {
   describe('Statistics in Row for Comparison Across Versions', () => {
     const tpl = prepareTemplate('compare/stats-row-across-versions.html');
@@ -167,10 +173,7 @@ describe('Compare View Parts', () => {
           allocated: { min: 4.1, max: 5.1, median: 4.5 }
         },
         dataFormatters,
-        config: {
-          reportsUrl: 'base-url',
-          overviewPlotWidth: 432
-        }
+        config
       };
 
       const result = tpl(data);
@@ -199,12 +202,13 @@ describe('Compare View Parts', () => {
         stats: {
           benchId,
           details,
-          inlinePlot: 'todo.png',
+          inlinePlot: 'inline.png',
           versionStats
         },
         environments,
         dataFormatters,
-        viewHelpers
+        viewHelpers,
+        config
       };
 
       const result = tpl(data);
@@ -216,12 +220,13 @@ describe('Compare View Parts', () => {
         stats: {
           benchId,
           details,
-          inlinePlot: 'todo.png',
+          inlinePlot: 'inline.png',
           exeStats
         },
         environments,
         dataFormatters,
-        viewHelpers
+        viewHelpers,
+        config
       };
 
       const result = tpl(data);
@@ -241,13 +246,14 @@ describe('Compare View Parts', () => {
           {
             benchId,
             details,
-            inlinePlot: 'todo.png',
+            inlinePlot: 'inline.png',
             versionStats
           }
         ],
         environments,
         dataFormatters,
-        viewHelpers
+        viewHelpers,
+        config
       };
 
       const result = tpl(data);
@@ -340,7 +346,7 @@ describe('Compare View Parts', () => {
           {
             benchId,
             details,
-            inlinePlot: 'todo.png',
+            inlinePlot: 'inline.png',
             versionStats
           }
         ]
@@ -350,7 +356,8 @@ describe('Compare View Parts', () => {
         allMeasurements: new Map(),
         environments,
         dataFormatters,
-        viewHelpers
+        viewHelpers,
+        config
       };
 
       const suites: BySuiteComparison = new Map();

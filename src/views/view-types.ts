@@ -105,6 +105,7 @@ export interface CompareStatsRowPartial {
   environments: Environment[];
   dataFormatters: DataFormat;
   viewHelpers: ViewHelpers;
+  config: ReportConfig;
 }
 
 export interface ButtonsAdditionalInfoPartial {
@@ -123,6 +124,7 @@ export interface CompareStatsTablePartial extends CompareStatsTable {
   environments: Environment[];
   dataFormatters: DataFormat;
   viewHelpers: ViewHelpers;
+  config: ReportConfig;
 }
 
 export interface CompareNavPartial {
@@ -141,6 +143,7 @@ export interface CompareVersions {
 export interface CompareVersionsPartial extends CompareVersions {
   dataFormatters: DataFormat;
   viewHelpers: ViewHelpers;
+  config: ReportConfig;
 }
 
 export interface RefreshMenuPartial {

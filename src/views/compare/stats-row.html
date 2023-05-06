@@ -16,7 +16,7 @@
     args = `<span class="all-args">${args.trim()}</span>`;
   }
 %}<th scope="row">{%= stats.benchId.b %}{%= args %}</th>
-  <td class="inline-cmp"><img src="{%= stats.inlinePlot %}"></td>
+  <td class="inline-cmp"><img src="{%= it.config.reportsUrl %}/{%= stats.inlinePlot %}"></td>
 {%    if (stats.exeStats) {
 %}{%-   include('compare/stats-row-across-exes.html', {
           exes: stats.exeStats,

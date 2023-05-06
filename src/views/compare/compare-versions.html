@@ -9,6 +9,7 @@ for (const [exeName, suites] of it.allMeasurements.entries()) {
 <div class="title-executor">Executor: {%= exeName %}</div>
 
 {%- include('compare/stats-tbl.html', {
+      config: it.config,
       criteria: suite.criteria,
       benchmarks: suite.benchmarks,
       environments: it.environments,
