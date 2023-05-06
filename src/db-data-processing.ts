@@ -11,6 +11,7 @@ import {
   CriterionData,
   MeasurementData,
   Measurements,
+  ProcessedResult,
   RunSettings
 } from './db.js';
 import { simplifyCmdline } from './views/util.js';
@@ -74,41 +75,17 @@ export function collateMeasurements(
       forExeBySuiteBench.set(row.suite, forSuiteByBench);
     }
 
-    let benchResult = forSuiteByBench.benchmarks.get(row.bench);
-    if (benchResult === undefined) {
-      benchResult = {
-        exe: row.exe,
-        suite: row.suite,
-        bench: row.bench,
-        measurements: []
-      };
-      forSuiteByBench.benchmarks.set(row.bench, benchResult);
-    }
+    const benchResult = findOrConstructProcessedResult(forSuiteByBench, row);
 
-    let m: Measurements | null = null;
-    for (const mm of benchResult.measurements) {
-      if (
-        mm.envId == row.envid &&
-        mm.commitId == row.commitid &&
-        mm.criterion.name == row.criterion
-      ) {
-        m = mm;
-        break;
-      }
-    }
+    const m: Measurements = findOrConstructMeasurements(
+      benchResult,
+      row,
+      criterion,
+      runSetting,
+      forSuiteByBench
+    );
 
-    if (!m) {
-      m = {
-        criterion,
-        values: [],
-        envId: row.envid,
-        commitId: row.commitid,
-        runSettings: runSetting
-      };
-      benchResult.measurements.push(m);
-      forSuiteByBench.criteria[criterion.name] = criterion;
-    }
-
+    // adjust invocation and iteration to be zero-based
     if (!m.values[row.invocation - 1]) {
       m.values[row.invocation - 1] = [];
     }
@@ -116,4 +93,68 @@ export function collateMeasurements(
   }
 
   return byExeSuiteBench;
+}
+
+function findOrConstructProcessedResult(
+  forSuiteByBench: ResultsByBenchmark,
+  row: MeasurementData
+): ProcessedResult {
+  let benchResult = forSuiteByBench.benchmarks.get(row.bench);
+  if (benchResult === undefined) {
+    benchResult = {
+      exe: row.exe,
+      suite: row.suite,
+      bench: row.bench,
+      measurements: []
+    };
+    forSuiteByBench.benchmarks.set(row.bench, benchResult);
+  }
+  return benchResult;
+}
+
+function findOrConstructMeasurements(
+  benchResult: ProcessedResult,
+  row: MeasurementData,
+  criterion: CriterionData,
+  runSetting: RunSettings,
+  forSuiteByBench: ResultsByBenchmark
+): Measurements {
+  let m: Measurements | null = findMeasurements(benchResult, row);
+
+  if (m) {
+    return m;
+  }
+
+  m = {
+    criterion,
+    values: [],
+    envId: row.envid,
+    commitId: row.commitid,
+    runSettings: runSetting
+  };
+  benchResult.measurements.push(m);
+  forSuiteByBench.criteria[criterion.name] = criterion;
+
+  return m;
+}
+
+/**
+ * Find the matching measurements for the given row.
+ */
+function findMeasurements(
+  benchResult: ProcessedResult,
+  row: MeasurementData
+): Measurements | null {
+  let m: Measurements | null = null;
+  for (const mm of benchResult.measurements) {
+    if (
+      mm.envId == row.envid &&
+      mm.commitId == row.commitid &&
+      mm.criterion.name == row.criterion
+    ) {
+      m = mm;
+      break;
+    }
+  }
+  return m;
 }
