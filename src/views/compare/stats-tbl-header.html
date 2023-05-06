@@ -4,11 +4,11 @@
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in {%= it.criteria.total.unit %}</th>
 <th scope="col">time diff %</th>
-{% if (it.criteria['GC time'].unit !== null) { %}
+{% if (it.criteria['GC time']) { %}
 <th scope="col">median GC<br>time in {%= it.criteria['GC time'].unit %}</th>
 <th scope="col">GC diff %</th>
 {% }
-   if (it.criteria.Allocated.unit !== null) { %}
+   if (it.criteria.Allocated) { %}
 <th scope="col">median <br>allocated {%= it.criteria.Allocated.unit %}</th>
 <th scope="col">Alloc diff %</th>
 {% } %}

@@ -4,7 +4,11 @@ const s = it.stats;
 %}<td class="stats-samples">{%= s.total.samples %}</td>
 <td><span class="stats-median" title="median">{%= f.r2(s.total.median) %}</span></td>
 <td><span class="stats-change" title="change over median run time">{%= f.per(s.total.change_m) %}</span></td>
-<td><span class="stats-median" title="median">{%= f.r0(s.gcTime.median) %}</span></td>
+{% if (s.gcTime) {
+%}<td><span class="stats-median" title="median">{%= f.r0(s.gcTime.median) %}</span></td>
 <td><span class="stats-gc-change" title="change over median GC time">{%= f.per(s.gcTime.change_m) %}</span></td>
-<td><span class="stats-median" title="median">{%= f.asHumanMem(s.allocated.median) %}</span></td>
-<td><span class="stats-alloc-change" title="change over median allocated memory">{%= f.per(s.allocated.change_m) %}</span></td>
+{% }
+   if (s.allocated) {
+  %}<td><span class="stats-median" title="median">{%= f.asHumanMem(s.allocated.median) %}</span></td>
+<td><span class="stats-alloc-change" title="change over median allocated memory">{%= f.per(s.allocated.change_m) %}</span></td>{%
+} %}
