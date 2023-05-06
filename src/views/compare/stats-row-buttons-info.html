@@ -10,14 +10,14 @@ const f = it.dataFormatters;
     data-content="{%= f.formatEnvironment(d.envId, it.environments) %}"></button>
 {% }
 
-   if (d.warmupPlotUrl) {
-%}<button type="button" class="btn btn-sm btn-light btn-expand" data-img="{%= d.warmupPlotUrl %}"></button>
-{% } 
+   if (d.hasWarmup) {
+%}<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="{%= f.dataSeriesIds(d.dataSeries) %}"></button>
+{%
+   } 
 
-   if (d.profileIds) {
-      const p = d.profileIds;
-%}<button type="button" class="btn btn-sm btn-profile" data-content="{%= p.base.commitId %}/{%= p.base.runId %}/{%= p.base.trialId %},{%= p.change.commitId %}/{%= p.change.runId %}/{%= p.change.trialId %}"></button>{%
+   if (d.hasProfiles) {
+%}<button type="button" class="btn btn-sm btn-profile" data-content="{%= f.dataSeriesIds(d.dataSeries) %}"></button>
+{%
    }
-%}
-<button type="button" class="btn btn-sm btn-timeline" data-content='{%- JSON.stringify(
+%}<button type="button" class="btn btn-sm btn-timeline" data-content='{%- JSON.stringify(
   f.benchmarkId(b.b, b.e, b.s, b.v, d.numV, b.c, d.numC, b.i, d.numI, b.ea, d.numEa)) %}'></button>

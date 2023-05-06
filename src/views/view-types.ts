@@ -54,15 +54,19 @@ export interface CompareStatsRowAcrossVersionsPartial {
   dataFormatters: DataFormat;
 }
 
-export interface ProfileId {
-  commitId: string;
+/**
+ * Identifies the set of measurements of a specific run, i.e., a concrete
+ * benchmark execution, and a specific trial, i.e., in a specific environment.
+ */
+export interface DataSeriesId {
+  commitId: string; // this one is a bit redundant, it's implied by the trialId
   runId: number;
   trialId: number;
 }
 
-export interface ProfileIds {
-  base: ProfileId;
-  change: ProfileId;
+export interface DataSeriesVersionComparison {
+  base: DataSeriesId;
+  change: DataSeriesId;
 }
 
 export interface DetailedInfo {
@@ -70,9 +74,10 @@ export interface DetailedInfo {
 
   envId: number;
 
-  warmupPlotUrl?: string;
+  hasWarmup: boolean;
+  hasProfiles: boolean;
 
-  profileIds?: ProfileIds;
+  dataSeries?: DataSeriesVersionComparison;
 
   /** Number of VarValues */
   numV: number;

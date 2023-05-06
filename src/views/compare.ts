@@ -107,12 +107,13 @@ function fetchProfile(projectName: string, change, runId, trialId, jqInsert) {
   });
 }
 
-function insertProfiles(e) {
+function insertProfiles(e): void {
   const projectName = <string>$('#project-name').attr('value');
   const jqButton = $(e.target);
   let profileInsertTarget = jqButton.parent().parent();
   jqButton.remove();
 
+  // format is serialized in data-format.ts:dataSeriesIds()
   const profilesIds = jqButton.data('content').split(',');
   for (const ids of profilesIds) {
     const [change, runId, trialId] = ids.split('/');

@@ -71,7 +71,9 @@ const environments: Environment[] = [
 const details: DetailedInfo = {
   cmdline: 'som/some-command with args',
   envId: 1,
-  profileIds: {
+  hasProfiles: true,
+  hasWarmup: true,
+  dataSeries: {
     base: {
       commitId: '123456',
       runId: 1,
