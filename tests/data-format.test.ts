@@ -20,6 +20,17 @@ describe('Format Functions for Numerical Values', () => {
       expect(r0(1.99)).toBe('2');
       expect(r0(1.49)).toBe('1');
       expect(r0(1.5)).toBe('2');
+
+      expect(r0(-0)).toBe('0');
+      expect(r0(-0.1)).toBe('0');
+      expect(r0(-0.4)).toBe('0');
+
+      expect(r0(-1.0)).toBe('-1');
+      expect(r0(-1.1)).toBe('-1');
+      expect(r0(-1.9)).toBe('-2');
+      expect(r0(-1.99)).toBe('-2');
+      expect(r0(-1.49)).toBe('-1');
+      expect(r0(-1.5)).toBe('-2');
     });
   });
 
@@ -32,6 +43,17 @@ describe('Format Functions for Numerical Values', () => {
       expect(r2(1.49)).toBe('1.49');
       expect(r2(1.499)).toBe('1.50');
       expect(r2(1.5)).toBe('1.50');
+
+      expect(r2(-0)).toBe('0.00');
+      expect(r2(-0.01)).toBe('-0.01');
+      expect(r2(-0.001)).toBe('0.00');
+
+      expect(r2(-1.0)).toBe('-1.00');
+      expect(r2(-1.1111)).toBe('-1.11');
+      expect(r2(-1.999)).toBe('-2.00');
+      expect(r2(-1.49)).toBe('-1.49');
+      expect(r2(-1.499)).toBe('-1.50');
+      expect(r2(-1.5)).toBe('-1.50');
     });
   });
 
@@ -40,6 +62,13 @@ describe('Format Functions for Numerical Values', () => {
       expect(per(0)).toBe('0');
       expect(per(0.5)).toBe('50');
       expect(per(0.499)).toBe('50');
+
+      expect(per(-0)).toBe('0');
+      expect(per(-0.004)).toBe('0');
+
+      expect(per(-0.01)).toBe('-1');
+      expect(per(-0.5)).toBe('-50');
+      expect(per(-0.499)).toBe('-50');
     });
   });
 

@@ -5,21 +5,29 @@ import type { Environment } from 'db';
  * Round to 0 decimal places.
  */
 export function r0(val: number): string {
-  return val.toFixed(0);
+  const result = val.toFixed(0);
+  if (result === '-0') {
+    return '0';
+  }
+  return result;
 }
 
 /**
  * Round to 2 decimal places.
  */
 export function r2(val: number): string {
-  return val.toFixed(2);
+  const result = val.toFixed(2);
+  if (result === '-0.00') {
+    return '0.00';
+  }
+  return result;
 }
 
 /**
  * As percentage.
  */
 export function per(val: number): string {
-  return (val * 100).toFixed(0);
+  return r0(val * 100);
 }
 
 /**
