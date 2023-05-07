@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, afterAll } from '@jest/globals';
 import { readFileSync } from 'fs';
 import { prepareTemplate } from '../../src/templates.js';
 import * as dataFormatters from '../../src/data-format.js';
@@ -25,6 +25,7 @@ import {
 } from '../../src/stats-data-prep.js';
 import { Environment } from '../../src/db.js';
 import { collateMeasurements } from '../../src/db-data-processing.js';
+import { createTmpDirectory, deleteTmpDirectory } from '../helpers.js';
 
 function loadResult(name: string): string {
   return readFileSync(
@@ -378,18 +379,22 @@ describe('Compare View Statistics', () => {
   let statsJ: StatsSummary;
   let statsT: StatsSummary;
 
+  const outputFolder = createTmpDirectory();
+
   it('should calculate statistics without throwing exception', async () => {
     statsJ = await calculateAllStatisticsAndRenderPlots(
       resultsJ,
       'bc1105',
       '4dff7e',
-      'testJ'
+      'testJ',
+      outputFolder
     );
     statsT = await calculateAllStatisticsAndRenderPlots(
       resultsT,
       '5fa4bd',
       '5820ec',
-      'testT'
+      'testT',
+      outputFolder
     );
 
     expect(statsJ).toBeDefined();
@@ -430,5 +435,9 @@ describe('Compare View Statistics', () => {
         }
       }
     });
+  });
+
+  afterAll(() => {
+    deleteTmpDirectory(outputFolder, false);
   });
 });
