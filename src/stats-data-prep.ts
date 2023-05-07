@@ -305,6 +305,13 @@ export async function convertMeasuresToBenchmarks(
     }
 
     if (!sameAsLast && numVersionStats > 0) {
+      if (inlinePlotUrl === undefined) {
+        throw new Error(
+          'inlinePlotUrl has not been set for ' +
+            `${bench.bench}, ${bench.exe}, ${bench.suite}. `
+        );
+      }
+
       const b: CompareStatsRow = {
         benchId: {
           b: bench.bench,
@@ -322,7 +329,7 @@ export async function convertMeasuresToBenchmarks(
           numI,
           numEa
         },
-        inlinePlot: inlinePlotUrl, // TODO
+        inlinePlot: inlinePlotUrl,
         missingCommitId: undefined, // TODO
         versionStats: versionStats
         // exeStats: undefined
@@ -366,6 +373,13 @@ export async function convertMeasuresToBenchmarks(
     numVersionStats += 1;
 
     if (isLastIteration) {
+      if (inlinePlotUrl === undefined) {
+        throw new Error(
+          'inlinePlotUrl has not been set for ' +
+            `${bench.bench}, ${bench.exe}, ${bench.suite}. `
+        );
+      }
+
       const b: CompareStatsRow = {
         benchId: {
           b: bench.bench,
@@ -383,7 +397,7 @@ export async function convertMeasuresToBenchmarks(
           numI,
           numEa
         },
-        inlinePlot: inlinePlotUrl, // TODO
+        inlinePlot: inlinePlotUrl,
         missingCommitId: undefined, // TODO
         versionStats: versionStats
         // exeStats: undefined
