@@ -124,35 +124,6 @@ export interface ResultsByBenchmark {
 export type ResultsBySuiteBenchmark = Map<string, ResultsByBenchmark>;
 export type ResultsByExeSuiteBenchmark = Map<string, ResultsBySuiteBenchmark>;
 
-export async function convertMapOfBenchmarksAndMeasures(
-  byBench: ResultsByBenchmark,
-  baseOffset: number,
-  changeOffset: number,
-  outputFolder: string,
-  plotName: string,
-  lastPlotId: number
-): Promise<{ table: CompareStatsTable; lastPlotId: number }> {
-  const byBenchmark: CompareStatsTable = {
-    benchmarks: [],
-    criteria: byBench.criteria
-  };
-
-  for (const bench of byBench.benchmarks.values()) {
-    const result = await convertMeasuresToBenchmarks(
-      bench,
-      baseOffset,
-      changeOffset,
-      outputFolder,
-      plotName,
-      lastPlotId
-    );
-    byBenchmark.benchmarks.push(...result.stats);
-    lastPlotId = result.lastPlotId;
-  }
-
-  return { table: byBenchmark, lastPlotId };
-}
-
 let inlinePlotCanvas: ChartJSNodeCanvas | null = null;
 
 export function getDataNormalizedToBaselineMedian(
@@ -494,6 +465,11 @@ export async function calculateAllChangeStatisticsAndInlinePlots(
     comparisonData.set(exe, bySuiteCompare);
 
     for (const [suite, byBench] of bySuite.entries()) {
+      const byBenchmark: CompareStatsTable = {
+        benchmarks: [],
+        criteria: byBench.criteria
+      };
+
       for (const bench of byBench.benchmarks.values()) {
         numRunConfigs += 1;
 
@@ -509,19 +485,20 @@ export async function calculateAllChangeStatisticsAndInlinePlots(
             'TODO: storing details about dropped data to show in the UI'
           );
         }
+
+        const result = await convertMeasuresToBenchmarks(
+          bench,
+          baseOffset,
+          changeOffset,
+          outputFolder,
+          plotName,
+          lastPlotId
+        );
+        byBenchmark.benchmarks.push(...result.stats);
+        lastPlotId = result.lastPlotId;
       }
 
-      const result = await convertMapOfBenchmarksAndMeasures(
-        byBench,
-        baseOffset,
-        changeOffset,
-        outputFolder,
-        plotName,
-        lastPlotId
-      );
-      bySuiteCompare.set(suite, result.table);
-
-      lastPlotId = result.lastPlotId;
+      bySuiteCompare.set(suite, byBenchmark);
     }
   }
   return { numRunConfigs, comparisonData };
