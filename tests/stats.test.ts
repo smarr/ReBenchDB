@@ -18,7 +18,8 @@ import {
   fullPrecisionSum,
   preciseMean,
   standardDeviation,
-  calculateSummaryOfChangeSummaries
+  calculateSummaryOfChangeSummaries,
+  normalize
 } from '../src/stats';
 
 describe('basicSum()', () => {
@@ -309,6 +310,13 @@ describe('calculateChangeStatistics()', () => {
     expect(stats.samples).toEqual(9);
     expect(stats.median).toEqual(5);
     expect(stats.change_m).toEqual(0.25);
+  });
+});
+
+describe('normalize()', () => {
+  it('should normalize a mixed array of numbers', () => {
+    expect(normalize([1, 2, 4, 10], 2)).toEqual([0.5, 1, 2, 5]);
+    expect(normalize([-1, -2, -4, -10], 2)).toEqual([-0.5, -1, -2, -5]);
   });
 });
 

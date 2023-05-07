@@ -204,7 +204,7 @@ function medianWithIndices(
   }
 }
 
-function median(sortedData: number[]): number {
+export function median(sortedData: number[]): number {
   return medianWithIndices(sortedData, medianIndices(sortedData.length));
 }
 
@@ -378,6 +378,10 @@ export function calculateChangeStatistics(
     samples: baseSorted.length,
     change_m: changeMedian / baseMedian - 1.0
   };
+}
+
+export function normalize(data: number[], unitValue: number): number[] {
+  return data.map((x) => x / unitValue);
 }
 
 export function calculateSummaryOfChangeSummaries(
