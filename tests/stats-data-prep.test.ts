@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, afterAll } from '@jest/globals';
 
 import { readFileSync } from 'node:fs';
 
@@ -30,6 +30,7 @@ import { CompareViewWithData } from '../src/views/view-types.js';
 import { prepareTemplate } from '../src/templates.js';
 import * as dataFormatters from '../src/data-format.js';
 import * as viewHelpers from '../src/views/helpers.js';
+import { createTmpDirectory, deleteTmpDirectory } from './helpers.js';
 
 describe('compareStringOrNull()', () => {
   it('should compare null and null', () => {
@@ -672,6 +673,8 @@ function loadResult(name: string): string {
 
 // TODO: does this belong into compare-view.test.ts?
 describe('prepareCompareView()', () => {
+  const outputFolder = createTmpDirectory();
+
   const compareTpl = prepareTemplate('compare-new.html');
 
   describe('based on data for JsSOM', () => {
@@ -689,8 +692,32 @@ describe('prepareCompareView()', () => {
       expect(result).toBeDefined();
     });
 
-    it.todo('should return the expected data');
-    it.todo('should produce the expected plots');
+    it('should produce 26 inline plots', () => {
+      for (let i = 1; i <= 26; i += 1) {
+        expect(`jssom/inline-${i}.svg`).toBeIdenticalSvgFiles(
+          outputFolder,
+          robustPath(
+            `../tests/data/charts/prepare-compare-view-jssom/inline-${i}.svg`
+          )
+        );
+      }
+    });
+
+    it('should produce 1 overview svg and 1 png', () => {
+      expect(`jssom/overview-som.svg`).toBeIdenticalSvgFiles(
+        outputFolder,
+        robustPath(
+          '../tests/data/charts/prepare-compare-view-jssom/overview-som.svg'
+        )
+      );
+
+      expect('jssom/overview.png').toBeMostlyIdenticalImage(
+        outputFolder,
+        robustPath(
+          '../tests/data/charts/prepare-compare-view-jssom/overview.png'
+        )
+      );
+    });
 
     it('should render to the expected html', () => {
       const r = <CompareViewWithData>result;
@@ -713,13 +740,47 @@ describe('prepareCompareView()', () => {
       expect(result).toBeDefined();
     });
 
-    it.todo('should return the expected data');
-    it.todo('should produce the expected plots');
+    it('should produce 166 inline plots', () => {
+      for (let i = 1; i <= 166; i += 1) {
+        expect(`tsom/inline-${i}.svg`).toBeIdenticalSvgFiles(
+          outputFolder,
+          robustPath(
+            `../tests/data/charts/prepare-compare-view-tsom/inline-${i}.svg`
+          )
+        );
+      }
+    });
+
+    it('should produce 5 overview svgs and 1 png', () => {
+      for (const name of [
+        'tsom/overview-macro-steady.svg',
+        'tsom/overview-micro-steady.svg',
+        'tsom/overview-macro-startup.svg',
+        'tsom/overview-micro-startup.svg',
+        'tsom/overview-micro-somsom.svg'
+      ]) {
+        expect(name).toBeIdenticalSvgFiles(
+          outputFolder,
+          robustPath(`../tests/data/charts/prepare-compare-view-${name}`)
+        );
+      }
+
+      expect('tsom/overview.png').toBeMostlyIdenticalImage(
+        outputFolder,
+        robustPath(
+          '../tests/data/charts/prepare-compare-view-tsom/overview.png'
+        )
+      );
+    });
 
     it('should render to the expected html', () => {
       const r = <CompareViewWithData>result;
       const html = compareTpl({ ...r, dataFormatters, viewHelpers });
       expect(html).toEqual(loadResult('compare-view-tsom'));
     });
+  });
+
+  afterAll(() => {
+    deleteTmpDirectory(outputFolder, false);
   });
 });

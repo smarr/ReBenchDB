@@ -1,5 +1,4 @@
 import { mkdirSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { assert } from './logging.js';
 import {
   ComparisonStatistics,
@@ -31,7 +30,7 @@ import {
   renderInlinePlot,
   renderOverviewPlots
 } from './charts.js';
-import { robustPath, siteAesthetics, siteConfig } from './util.js';
+import { siteAesthetics, siteConfig } from './util.js';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 import { collateMeasurements } from './db-data-processing.js';
 
@@ -726,7 +725,8 @@ export async function calculateAllStatisticsAndRenderPlots(
   byExeSuiteBench: ResultsByExeSuiteBenchmark,
   base: string,
   change: string,
-  reportId: string
+  reportId: string,
+  reportOutputFolder: string
 ): Promise<StatsSummary> {
   const { baseOffset, changeOffset } = getCommitOffsetsInSortedMeasurements(
     base,
