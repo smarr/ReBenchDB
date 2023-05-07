@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 
 import { robustPath } from '../src/util.js';
 import {
