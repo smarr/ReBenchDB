@@ -234,8 +234,6 @@ describe('Compare View Parts', () => {
       const result = tpl(data);
       expect(result).toEqual(loadResult('stats-row-exe'));
     });
-
-    it.todo('should create the inline plot');
   });
 
   describe('Statistics Table', () => {
