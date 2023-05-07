@@ -254,6 +254,12 @@ export interface RevisionData {
   authorname: string;
 }
 
+export interface RevisionComparison {
+  dataFound: boolean;
+  base?: RevisionData;
+  change?: RevisionData;
+}
+
 const measurementDataColumns = `
         expId, runId, trialId,
         substring(commitId, 1, 6) as commitid,
@@ -444,11 +450,7 @@ export abstract class Database {
     projectSlug: string,
     base: string,
     change: string
-  ): Promise<{
-    dataFound: boolean;
-    base?: RevisionData;
-    change?: RevisionData;
-  }> {
+  ): Promise<RevisionComparison> {
     const result = await this.query({
       name: 'fetchRevisionsInProjectByCommitIds',
       text: `SELECT DISTINCT
