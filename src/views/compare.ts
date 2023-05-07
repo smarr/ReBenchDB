@@ -23,6 +23,10 @@ function displaySignificance(sig) {
 }
 
 function insertWarmupPlot(e) {
+  alert(
+    'TODO: need to change this to use uPlot to render the plot' +
+      ' based on data retrieved from the backend'
+  );
   const jqButton = $(e.target);
   const url = jqButton.data('img');
   const insert = `<tr><td class="warmup-plot" colspan="6">
