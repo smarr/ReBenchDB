@@ -264,8 +264,10 @@ describe('Compare View Parts', () => {
   });
 
   describe('Compare View Navigation', () => {
-    const resultJ = getNavigation(dataJsSOM.results);
-    const resultT = getNavigation(dataTruffleSOM.results);
+    const collatedJ = collateMeasurements(dataJsSOM.results);
+    const collatedT = collateMeasurements(dataTruffleSOM.results);
+    const resultJ = getNavigation(collatedJ);
+    const resultT = getNavigation(collatedT);
 
     it('should produce the correct navigation', () => {
       expect(resultJ.nav).toEqual([

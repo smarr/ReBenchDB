@@ -692,7 +692,7 @@ export async function prepareCompareView(
     changeHash6,
     base: <RevisionData>revDetails.base,
     change: <RevisionData>revDetails.change,
-    navigation: getNavigation(results),
+    navigation: getNavigation(collatedMs),
 
     noData: false, // TODO: need to derive this from one of the stats details
     notInBoth: null, // TODO: need to get this out of the stats calculations
@@ -751,25 +751,23 @@ export async function calculateAllStatisticsAndRenderPlots(
   };
 }
 
-export function getNavigation(data: MeasurementData[]): CompareNavPartial {
-  // TODO: don't need to run over the MeasurementData[] twice...
-  const executors = new Map<string, Set<string>>();
-  const allSuites = new Map<string, Set<string>>();
+export function getNavigation(
+  data: ResultsByExeSuiteBenchmark
+): CompareNavPartial {
+  const executors = new Map<string, Set<string>>(); // executor -> suites
+  const allSuites = new Map<string, Set<string>>(); // suite -> executors
 
-  for (const row of data) {
-    let suites: Set<string> | undefined = executors.get(row.exe);
-    if (!suites) {
-      suites = new Set();
-      executors.set(row.exe, suites);
-    }
-    suites.add(row.suite);
+  for (const [exe, suites] of data.entries()) {
+    executors.set(exe, new Set(suites.keys()));
 
-    let execs: Set<string> | undefined = allSuites.get(row.suite);
-    if (!execs) {
-      execs = new Set();
-      allSuites.set(row.suite, execs);
+    for (const suite of suites.keys()) {
+      let execs: Set<string> | undefined = allSuites.get(suite);
+      if (!execs) {
+        execs = new Set();
+        allSuites.set(suite, execs);
+      }
+      execs.add(exe);
     }
-    execs.add(row.exe);
   }
 
   const result: { exeName: string; suites: string[] }[] = [];
