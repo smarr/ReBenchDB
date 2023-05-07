@@ -22,7 +22,7 @@ import { robustPath } from '../../src/util.js';
 import {
   calculateAllStatisticsAndRenderPlots,
   getNavigation
-} from '../../src/dashboard.js';
+} from '../../src/stats-data-prep.js';
 import { Environment } from '../../src/db.js';
 import { collateMeasurements } from '../../src/db-data-processing.js';
 
@@ -395,7 +395,6 @@ describe('Compare View Statistics', () => {
     expect(statsJ).toBeDefined();
     expect(statsT).toBeDefined();
   });
-
 
   it('should get the summary statistics for JsSOM', () => {
     expect(statsJ).toEqual({

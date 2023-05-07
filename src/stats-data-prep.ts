@@ -1,13 +1,39 @@
+import { mkdirSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { assert } from './logging.js';
-import { ComparisonStatistics, calculateChangeStatistics } from './stats.js';
+import {
+  ComparisonStatistics,
+  calculateChangeStatistics,
+  calculateSummaryOfChangeSummaries,
+  median,
+  normalize
+} from './stats.js';
 import {
   CriterionData,
+  Environment,
   MeasurementData,
   Measurements,
   ProcessedResult,
-  RunSettings
+  RevisionComparison,
+  RevisionData
 } from './db.js';
-import { simplifyCmdline } from './views/util.js';
+import {
+  ByExeSuiteComparison,
+  CompareNavPartial,
+  CompareStatsRow,
+  CompareStatsRowAcrossVersions,
+  CompareStatsTable,
+  CompareViewWithData,
+  StatsSummary
+} from './views/view-types.js';
+import {
+  createCanvas,
+  renderInlinePlot,
+  renderOverviewPlots
+} from './charts.js';
+import { robustPath, siteAesthetics, siteConfig } from './util.js';
+import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
+import { collateMeasurements } from './db-data-processing.js';
 
 export function compareStringOrNull(
   a: string | null,
@@ -99,7 +125,299 @@ export interface ResultsByBenchmark {
 export type ResultsBySuiteBenchmark = Map<string, ResultsByBenchmark>;
 export type ResultsByExeSuiteBenchmark = Map<string, ResultsBySuiteBenchmark>;
 
+export async function convert(
+  data: ResultsByExeSuiteBenchmark,
+  base: string,
+  change: string,
+  outputFolder: string,
+  plotName: string
+): Promise<ByExeSuiteComparison> {
+  const { baseOffset, changeOffset } = getCommitOffsetsInSortedMeasurements(
+    base,
+    change
+  );
+  const byExeSuiteBench = new Map<string, Map<string, CompareStatsTable>>();
+  let lastPlotId = 0;
 
+  for (const [exe, bySuite] of data.entries()) {
+    const bySuiteCompare = new Map<string, CompareStatsTable>();
+    byExeSuiteBench.set(exe, bySuiteCompare);
+
+    for (const [suite, byBench] of bySuite.entries()) {
+      const result = await convertMapOfBenchmarksAndMeasures(
+        byBench,
+        baseOffset,
+        changeOffset,
+        outputFolder,
+        plotName,
+        lastPlotId
+      );
+      bySuiteCompare.set(suite, result.table);
+
+      lastPlotId = result.lastPlotId;
+    }
+  }
+
+  return byExeSuiteBench;
+}
+
+export async function convertMapOfBenchmarksAndMeasures(
+  byBench: ResultsByBenchmark,
+  baseOffset: number,
+  changeOffset: number,
+  outputFolder: string,
+  plotName: string,
+  lastPlotId: number
+): Promise<{ table: CompareStatsTable; lastPlotId: number }> {
+  const byBenchmark: CompareStatsTable = {
+    benchmarks: [],
+    criteria: byBench.criteria
+  };
+
+  for (const bench of byBench.benchmarks.values()) {
+    const result = await convertMeasuresToBenchmarks(
+      bench,
+      baseOffset,
+      changeOffset,
+      outputFolder,
+      plotName,
+      lastPlotId
+    );
+    byBenchmark.benchmarks.push(...result.stats);
+    lastPlotId = result.lastPlotId;
+  }
+
+  return { table: byBenchmark, lastPlotId };
+}
+
+let inlinePlotCanvas: ChartJSNodeCanvas | null = null;
+
+export function getDataNormalizedToBaselineMedian(
+  base: Measurements,
+  change: Measurements
+): ChangeData {
+  const sortedB = base.values.flat();
+  const sortedC = change.values.flat();
+  sortedB.sort((a, b) => a - b);
+  sortedC.sort((a, b) => a - b);
+  const baseM = median(sortedB);
+
+  return {
+    labels: [base.commitId, change.commitId],
+    data: [normalize(sortedB, baseM), normalize(sortedC, baseM)]
+  };
+}
+
+export async function convertMeasuresToBenchmarks(
+  bench: ProcessedResult,
+  baseOffset: number,
+  changeOffset: number,
+  outputFolder: string,
+  plotName: string,
+  lastPlotId: number
+): Promise<{ stats: CompareStatsRow[]; lastPlotId: number }> {
+  // Start by checking some basic assertions.
+  // This is mostly for my own sanity,
+  // and to encode the invariants that we assume.
+
+  if (bench.measurements.length % 2 !== 0 && bench.measurements.length <= 0) {
+    throw new Error(
+      'measurements.length must be even and >0, ' +
+        'because we expect pairs of measurements from baseline and change,' +
+        `but has length ${bench.measurements.length} ` +
+        `for ${bench.bench}, ${bench.exe}, ${bench.suite}`
+    );
+  }
+
+  if (
+    (baseOffset === 0 || changeOffset === 0) &&
+    baseOffset + changeOffset !== 1
+  ) {
+    throw new Error(
+      'baseOffset and changeOffset must be 0 and 1, or 1 and 0, but are ' +
+        `${baseOffset} and ${changeOffset} for ` +
+        `${bench.bench}, ${bench.exe}, ${bench.suite}`
+    );
+  }
+
+  if (bench.measurements[0].commitId === bench.measurements[1].commitId) {
+    // TODO: missingCommitId handling here?
+    throw new Error(
+      'base and change are the same for ' +
+        `${bench.bench}, ${bench.exe}, ${bench.suite}, ` +
+        `but are expected to be different` +
+        `both are ${bench.measurements[0].commitId}`
+    );
+  }
+
+  const benchmarks: CompareStatsRow[] = [];
+  let lastEnvId = -1;
+  let lastVarValue: string | null = null;
+  let lastCores: string | null = null;
+  let lastInputSize: string | null = null;
+  let lastExtraArgs: string | null = null;
+
+  let numV = 0;
+  let numC = 0;
+  let numI = 0;
+  let numEa = 0;
+
+  let versionStats: CompareStatsRowAcrossVersions = {};
+  let numVersionStats = 0;
+  let inlinePlotUrl: string | undefined = undefined;
+
+  for (let i = 0; i < bench.measurements.length; i += 2) {
+    const isLastIteration = i + 2 >= bench.measurements.length;
+
+    let sameAsLast = true;
+
+    const m = bench.measurements[i + baseOffset];
+    if (lastEnvId === -1) {
+      lastEnvId = m.envId;
+      lastVarValue = m.runSettings.varValue;
+      lastCores = m.runSettings.cores;
+      lastInputSize = m.runSettings.inputSize;
+      lastExtraArgs = m.runSettings.extraArgs;
+    } else {
+      if (lastEnvId !== m.envId) {
+        sameAsLast = false;
+      }
+
+      if (lastVarValue !== m.runSettings.varValue) {
+        sameAsLast = false;
+        numV += 1;
+      }
+
+      if (lastCores !== m.runSettings.cores) {
+        sameAsLast = false;
+        numC += 1;
+      }
+
+      if (lastInputSize !== m.runSettings.inputSize) {
+        sameAsLast = false;
+        numI += 1;
+      }
+
+      if (lastExtraArgs !== m.runSettings.extraArgs) {
+        sameAsLast = false;
+        numEa += 1;
+      }
+    }
+
+    if (!sameAsLast && numVersionStats > 0) {
+      const b: CompareStatsRow = {
+        benchId: {
+          b: bench.bench,
+          e: bench.exe,
+          s: bench.suite
+        },
+        details: {
+          cmdline: m.runSettings.simplifiedCmdline,
+          envId: m.envId,
+          hasProfiles: false, // TODO
+          hasWarmup: false, // TODO
+          // profileIds,
+          numV,
+          numC,
+          numI,
+          numEa
+        },
+        inlinePlot: inlinePlotUrl, // TODO
+        missingCommitId: undefined, // TODO
+        versionStats: versionStats
+        // exeStats: undefined
+      };
+      benchmarks.push(b);
+      versionStats = {};
+    }
+
+    const change = bench.measurements[i + changeOffset];
+    if (!change.changeStats) {
+      throw new Error(
+        'changeStats has not yet been set ' +
+          `for ${bench.bench}, ${bench.exe}, ${bench.suite}. ` +
+          `This should have been done in calculateAllChangeStatistics()`
+      );
+    }
+    versionStats[change.criterion.name] = change.changeStats;
+    if (change.criterion.name === 'total') {
+      if (inlinePlotCanvas === null) {
+        inlinePlotCanvas = createCanvas(
+          siteAesthetics.inlinePlot.height,
+          siteAesthetics.inlinePlot.width,
+          'svg',
+          'boxplot'
+        );
+      }
+
+      const data = getDataNormalizedToBaselineMedian(m, change);
+
+      lastPlotId += 1;
+
+      inlinePlotUrl = await renderInlinePlot(
+        inlinePlotCanvas,
+        data,
+        outputFolder,
+        plotName,
+        lastPlotId
+      );
+    }
+
+    numVersionStats += 1;
+
+    if (isLastIteration) {
+      const b: CompareStatsRow = {
+        benchId: {
+          b: bench.bench,
+          e: bench.exe,
+          s: bench.suite
+        },
+        details: {
+          cmdline: m.runSettings.simplifiedCmdline,
+          envId: m.envId,
+          // profileIds,
+          hasProfiles: false, // TODO
+          hasWarmup: false, // TODO
+          numV,
+          numC,
+          numI,
+          numEa
+        },
+        inlinePlot: inlinePlotUrl, // TODO
+        missingCommitId: undefined, // TODO
+        versionStats: versionStats
+        // exeStats: undefined
+      };
+      benchmarks.push(b);
+    }
+
+    // TODO: get the profileIds
+    // const profileIds = {
+    //   base: {
+    //     commitId: bench.measurements[i + baseOffset].commitId,
+    //     runId: bench.measurements[i + baseOffset].runSettings.runId,
+    //     trialId: bench.measurements[i + baseOffset].runSettings.trialId,
+    //   },
+    //   change: {
+    //     commitId: bench.measurements[i + changeOffset].commitId,
+    //     runId: bench.measurements[i + changeOffset].runSettings.runId,
+    //     trialId: bench.measurements[i + changeOffset].runSettings.trialId,
+    //   }
+    // };
+  }
+
+  // do extra pass to adjust the counts as needed
+  if (numV > 0 || numC > 0 || numI > 0 || numEa > 0) {
+    for (const b of benchmarks) {
+      b.details.numV = numV;
+      b.details.numC = numC;
+      b.details.numI = numI;
+      b.details.numEa = numEa;
+    }
+  }
+
+  return { stats: benchmarks, lastPlotId };
+}
 
 export function dropMeasurementsWhereBaseOrChangeIsMissing(
   measurements: Measurements[]
@@ -334,4 +652,146 @@ export function calculateDataForOverviewPlot(
   const changeData = getChangeDataBySuiteAndExe(byExeSuiteBench, criterion);
   const runTimeFactor = calculateRunTimeFactor(changeData);
   return arrangeChangeDataForChart(runTimeFactor);
+}
+
+const reportOutputFolder = resolve(robustPath(`../resources/reports/`));
+
+export async function prepareCompareView(
+  results: MeasurementData[],
+  environments: Environment[],
+  base: string,
+  change: string,
+  reportId: string,
+  projectSlug: string,
+  baselineHash6: string,
+  changeHash6: string,
+  revDetails: RevisionComparison
+): Promise<CompareViewWithData> {
+  const collatedMs = collateMeasurements(results);
+  const statsSummary = await calculateAllStatisticsAndRenderPlots(
+    collatedMs,
+    base,
+    change,
+    reportId
+  );
+
+  const converted = await convert(
+    collatedMs,
+    base,
+    change,
+    reportOutputFolder,
+    `${reportId}/inline`
+  );
+
+  const data: CompareViewWithData = {
+    revisionFound: true,
+    project: projectSlug,
+    baselineHash: base,
+    changeHash: change,
+    baselineHash6,
+    changeHash6,
+    base: <RevisionData>revDetails.base,
+    change: <RevisionData>revDetails.change,
+    navigation: getNavigation(results),
+
+    noData: false, // TODO: need to derive this from one of the stats details
+    notInBoth: null, // TODO: need to get this out of the stats calculations
+
+    statsSummary,
+    stats: {
+      allMeasurements: converted,
+      environments
+    },
+    config: {
+      reportsUrl: siteConfig.reportsUrl,
+      overviewPlotWidth: siteAesthetics.overviewPlotWidth
+    }
+    // reportId,
+  };
+
+  return data;
+}
+
+export async function calculateAllStatisticsAndRenderPlots(
+  byExeSuiteBench: ResultsByExeSuiteBenchmark,
+  base: string,
+  change: string,
+  reportId: string
+): Promise<StatsSummary> {
+  const { baseOffset, changeOffset } = getCommitOffsetsInSortedMeasurements(
+    base,
+    change
+  );
+
+  const criteria = new Map<string, ComparisonStatistics[]>();
+
+  const numRunConfigs = calculateAllChangeStatistics(
+    byExeSuiteBench,
+    baseOffset,
+    changeOffset,
+    criteria
+  );
+
+  const absolutePath = `${reportOutputFolder}/${reportId}`;
+  mkdirSync(absolutePath, { recursive: true });
+
+  const plotData = calculateDataForOverviewPlot(byExeSuiteBench, 'total');
+
+  const files = await renderOverviewPlots(
+    reportOutputFolder,
+    `${reportId}/overview`,
+    plotData
+  );
+
+  return {
+    stats: calculateSummaryOfChangeSummaries(criteria),
+    numRunConfigs,
+    overviewPngUrl: files.png,
+    overviewSvgUrls: files.svg
+  };
+}
+
+export function getNavigation(data: MeasurementData[]): CompareNavPartial {
+  // TODO: don't need to run over the MeasurementData[] twice...
+  const executors = new Map<string, Set<string>>();
+  const allSuites = new Map<string, Set<string>>();
+
+  for (const row of data) {
+    let suites: Set<string> | undefined = executors.get(row.exe);
+    if (!suites) {
+      suites = new Set();
+      executors.set(row.exe, suites);
+    }
+    suites.add(row.suite);
+
+    let execs: Set<string> | undefined = allSuites.get(row.suite);
+    if (!execs) {
+      execs = new Set();
+      allSuites.set(row.suite, execs);
+    }
+    execs.add(row.exe);
+  }
+
+  const result: { exeName: string; suites: string[] }[] = [];
+  const exes = Array.from(executors.entries());
+  exes.sort((a, b) => a[0].localeCompare(b[0]));
+  for (const [key, val] of exes) {
+    const suitesSorted = Array.from(val);
+    suitesSorted.sort((a, b) => a.localeCompare(b));
+    result.push({ exeName: key, suites: suitesSorted });
+  }
+
+  const suitesWithMultipleExecutors: string[] = [];
+  for (const [suite, execs] of allSuites) {
+    if (execs.size > 1) {
+      suitesWithMultipleExecutors.push(suite);
+    }
+  }
+
+  suitesWithMultipleExecutors.sort((a, b) => a.localeCompare(b));
+
+  return {
+    nav: result,
+    navExeComparison: { suites: suitesWithMultipleExecutors }
+  };
 }

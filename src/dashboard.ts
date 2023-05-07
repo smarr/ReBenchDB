@@ -1,51 +1,22 @@
-import {
-  readFileSync,
-  existsSync,
-  unlinkSync,
-  rmSync,
-  mkdirSync
-} from 'node:fs';
+import { readFileSync, existsSync, unlinkSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { execFile, ChildProcessPromise } from 'promisify-child-process';
-import {
-  TimedCacheValidity,
-  Database,
-  DatabaseConfig,
-  Source,
-  MeasurementData
-} from './db.js';
+import { QueryConfig } from 'pg';
+
+import { TimedCacheValidity, Database, DatabaseConfig, Source } from './db.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
 import { AllResults, BenchmarkCompletion, TimelineSuite } from './api.js';
 import { GitHub } from './github.js';
 import {
   robustPath,
-  siteAesthetics,
   siteConfig,
   storeJsonGzip,
-  TotalCriterion
+  TotalCriterion,
+  getDirname
 } from './util.js';
-import { getDirname } from './util.js';
 import { log } from './logging.js';
-import { QueryConfig } from 'pg';
-import {
-  ByExeSuiteComparison,
-  CompareNavPartial,
-  CompareView,
-  CompareViewWithData,
-  StatsSummary
-} from './views/view-types.js';
-import {
-  ComparisonStatistics,
-  calculateSummaryOfChangeSummaries
-} from './stats.js';
-import {
-  ResultsByExeSuiteBenchmark,
-  calculateAllChangeStatistics,
-  calculateDataForOverviewPlot,
-  collateMeasurements,
-  getCommitOffsetsInSortedMeasurements
-} from './stats-data-prep.js';
-import { renderOverviewPlots } from './charts.js';
+import { CompareView } from './views/view-types.js';
+import { prepareCompareView } from './stats-data-prep.js';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -447,7 +418,7 @@ export async function dashCompareNew(
     change
   );
 
-  if (!revDetails.dataFound || !revDetails.base || !revDetails.change) {
+  if (!revDetails.dataFound) {
     return {
       revisionFound: false,
       project: projectSlug,
@@ -461,122 +432,17 @@ export async function dashCompareNew(
   const results = await db.getMeasurementsForComparison(base, change);
   const environments = await db.getEnvironmentsForComparison(base, change);
 
-  const collatedMs = collateMeasurements(results);
-
-  const data: CompareViewWithData = {
-    revisionFound: true,
-    project: projectSlug,
-    baselineHash: base,
-    changeHash: change,
+  return prepareCompareView(
+    results,
+    environments,
+    base,
+    change,
+    reportId,
+    projectSlug,
     baselineHash6,
     changeHash6,
-    base: revDetails.base,
-    change: revDetails.change,
-    navigation: getNavigation(results),
-
-    noData: false, // TODO: need to derive this from one of the stats details
-    notInBoth: null, // TODO: need to get this also out of the stats calculations
-
-    statsSummary: await calculateAllStatisticsAndRenderPlots(
-      collatedMs,
-      base,
-      change,
-      reportId
-    ),
-    stats: {
-      allMeasurements: <ByExeSuiteComparison>(
-        (<unknown>collateMeasurements(results))
-      ),
-      environments,
-      dataFormatters,
-      viewHelpers
-    }
-  };
-
-  return data;
-}
-
-export async function calculateAllStatisticsAndRenderPlots(
-  byExeSuiteBench: ResultsByExeSuiteBenchmark,
-  base: string,
-  change: string,
-  reportId: string
-): Promise<StatsSummary> {
-  const { baseOffset, changeOffset } = getCommitOffsetsInSortedMeasurements(
-    base,
-    change
+    revDetails
   );
-
-  const criteria = new Map<string, ComparisonStatistics[]>();
-
-  const numRunConfigs = calculateAllChangeStatistics(
-    byExeSuiteBench,
-    baseOffset,
-    changeOffset,
-    criteria
-  );
-
-  const absolutePath = `${reportOutputFolder}/${reportId}`;
-  mkdirSync(absolutePath, { recursive: true });
-
-  const plotData = calculateDataForOverviewPlot(byExeSuiteBench, 'total');
-
-  const files = await renderOverviewPlots(
-    reportOutputFolder,
-    `${reportId}/overview`,
-    plotData
-  );
-
-  return {
-    stats: calculateSummaryOfChangeSummaries(criteria),
-    numRunConfigs,
-    overviewPngUrl: files.png,
-    overviewSvgUrls: files.svg
-  };
-}
-
-export function getNavigation(data: MeasurementData[]): CompareNavPartial {
-  const executors = new Map<string, Set<string>>();
-  const allSuites = new Map<string, Set<string>>();
-
-  for (const row of data) {
-    let suites: Set<string> | undefined = executors.get(row.exe);
-    if (!suites) {
-      suites = new Set();
-      executors.set(row.exe, suites);
-    }
-    suites.add(row.suite);
-
-    let execs: Set<string> | undefined = allSuites.get(row.suite);
-    if (!execs) {
-      execs = new Set();
-      allSuites.set(row.suite, execs);
-    }
-    execs.add(row.exe);
-  }
-
-  const result: { exeName: string; suites: string[] }[] = [];
-  const exes = Array.from(executors.entries());
-  exes.sort((a, b) => a[0].localeCompare(b[0]));
-  for (const [key, val] of exes) {
-    const suitesSorted = Array.from(val);
-    suitesSorted.sort((a, b) => a.localeCompare(b));
-    result.push({ exeName: key, suites: suitesSorted });
-  }
-
-  const suitesWithMultipleExecutors: string[] = [];
-  for (const [suite, execs] of allSuites) {
-    if (execs.size > 1) {
-      suitesWithMultipleExecutors.push(suite);
-    }
-  }
-
-  suitesWithMultipleExecutors.sort((a, b) => a.localeCompare(b));
-
-  return {
-    nav: result,
-    navExeComparison: { suites: suitesWithMultipleExecutors }
-  };
 }
 
 const expDataPreparation = new Map();

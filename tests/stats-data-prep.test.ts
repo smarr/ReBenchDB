@@ -1,9 +1,15 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 import { robustPath } from '../src/util.js';
-import { Measurements, ProcessedResult, RunSettings } from '../src/db.js';
+import {
+  MeasurementData,
+  Measurements,
+  ProcessedResult,
+  RevisionComparison,
+  RunSettings
+} from '../src/db.js';
 import {
   ResultsByBenchmark,
   ResultsByExeSuiteBenchmark,
@@ -15,10 +21,15 @@ import {
   compareStringOrNull,
   compareToSortForSinglePassChangeStats,
   dropMeasurementsWhereBaseOrChangeIsMissing,
-  getChangeDataBySuiteAndExe
+  getChangeDataBySuiteAndExe,
+  prepareCompareView
 } from '../src/stats-data-prep.js';
 import { ComparisonStatistics } from '../src/stats.js';
 import { collateMeasurements } from '../src/db-data-processing.js';
+import { CompareViewWithData } from '../src/views/view-types.js';
+import { prepareTemplate } from '../src/templates.js';
+import * as dataFormatters from '../src/data-format.js';
+import * as viewHelpers from '../src/views/helpers.js';
 
 describe('compareStringOrNull()', () => {
   it('should compare null and null', () => {
@@ -378,13 +389,13 @@ describe('dropMeasurementsWhereBaseOrChangeIsMissing()', () => {
   });
 });
 
-const dataJsSOM = JSON.parse(
+const dataJsSOM: { results: MeasurementData[] } = JSON.parse(
   readFileSync(
     robustPath(`../tests/data/compare-view-data-jssom.json`)
   ).toString()
 );
 
-const dataTSOM = JSON.parse(
+const dataTSOM: { results: MeasurementData[] } = JSON.parse(
   readFileSync(
     robustPath(`../tests/data/compare-view-data-trufflesom.json`)
   ).toString()
@@ -593,5 +604,96 @@ describe('arrangeChangeDataForChart()', () => {
     const result = arrangeChangeDataForChart(changeData);
 
     expect(result).toBe(changeData);
+  });
+});
+
+const revData: RevisionComparison = {
+  dataFound: true,
+  base: {
+    projectid: 1,
+    name: 'som',
+    sourceid: 1,
+    commitid: '4dff7e',
+    repourl: 'repo-url',
+    branchortag: 'main',
+    commitmessage: 'msg1',
+    authorname: 'foo@bar'
+  },
+  change: {
+    projectid: 1,
+    name: 'som',
+    sourceid: 1,
+    commitid: 'bc1105',
+    repourl: 'repo-url',
+    branchortag: 'main',
+    commitmessage: 'msg2',
+    authorname: 'foo@bar'
+  }
+};
+
+// TODO: this is duplicated from compare-view.test.ts
+function loadResult(name: string): string {
+  return readFileSync(
+    robustPath(`../tests/views/expected-results/${name}.html`)
+  ).toString();
+}
+
+// TODO: does this belong into compare-view.test.ts?
+describe('prepareCompareView()', () => {
+  const compareTpl = prepareTemplate('compare-new.html');
+
+  describe('based on data for JsSOM', () => {
+    let result: CompareViewWithData | null = null;
+
+    it('should execute without exception', async () => {
+      result = await prepareCompareView(
+        dataJsSOM.results,
+        [],
+        '4dff7e',
+        'bc1105',
+        'jssom',
+        'jssom',
+        '4dff7e',
+        'bc1105',
+        revData
+      );
+      expect(result).toBeDefined();
+    });
+
+    it.todo('should return the expected data');
+    it.todo('should produce the expected plots');
+
+    it('should render to the expected html', () => {
+      const r = <CompareViewWithData>result;
+      const html = compareTpl({ ...r, dataFormatters, viewHelpers });
+      expect(html).toEqual(loadResult('compare-view-jssom'));
+    });
+  });
+
+  describe('based on data for TruffleSOM', () => {
+    let result: CompareViewWithData | null = null;
+    it('should execute without exception', async () => {
+      result = await prepareCompareView(
+        dataTSOM.results,
+        [],
+        '5820ec',
+        '5fa4bd',
+        'tsom',
+        'tsom',
+        '5820ec',
+        '5fa4bd',
+        revData
+      );
+      expect(result).toBeDefined();
+    });
+
+    it.todo('should return the expected data');
+    it.todo('should produce the expected plots');
+
+    it('should render to the expected html', () => {
+      const r = <CompareViewWithData>result;
+      const html = compareTpl({ ...r, dataFormatters, viewHelpers });
+      expect(html).toEqual(loadResult('compare-view-tsom'));
+    });
   });
 });
