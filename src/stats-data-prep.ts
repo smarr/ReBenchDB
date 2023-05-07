@@ -211,7 +211,10 @@ export function calculateAllChangeStatistics(
 }
 
 export interface ChangeData {
+  /** Labels for the data series to be plotted. */
   labels: string[];
+
+  /** Data of the data series. */
   data: number[][];
 }
 
