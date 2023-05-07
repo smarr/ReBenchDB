@@ -1,14 +1,16 @@
 import { describe, expect, it } from '@jest/globals';
-import { Environment } from 'db';
+import { Environment } from '../src/db.js';
 import {
   asHumanHz,
   asHumanMem,
   benchmarkId,
+  dataSeriesIds,
   formatEnvironment,
   per,
   r0,
   r2
-} from '../src/data-format';
+} from '../src/data-format.js';
+import { DataSeriesVersionComparison } from '../src/views/view-types.js';
 
 describe('Format Functions for Numerical Values', () => {
   describe('r0 - round to 0 decimal places', () => {
@@ -202,5 +204,24 @@ describe('Format Functions for Numerical Values', () => {
         )
       ).toBe('{"b":"bench","e":"exe","s":"suite"}');
     });
+  });
+});
+
+describe('dataSeriesIds()', () => {
+  it('should return the expected string', () => {
+    const ids: DataSeriesVersionComparison = {
+      base: {
+        commitId: '123456',
+        runId: 1,
+        trialId: 2
+      },
+      change: {
+        commitId: '123457',
+        runId: 3,
+        trialId: 4
+      }
+    };
+
+    expect(dataSeriesIds(ids)).toBe('123456/1/2,123457/3/4');
   });
 });

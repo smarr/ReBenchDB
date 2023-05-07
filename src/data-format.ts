@@ -1,6 +1,8 @@
 import type { BenchmarkId } from 'api';
 import type { Environment } from 'db';
 
+import type { DataSeriesVersionComparison } from './views/view-types.js';
+
 /**
  * Round to 0 decimal places.
  */
@@ -115,4 +117,12 @@ export function benchmarkId(
     obj.ea = extraArgs;
   }
   return obj;
+}
+
+export function dataSeriesIds(ids: DataSeriesVersionComparison): string {
+  // format is parsed in compare.ts:insertProfiles()
+  return (
+    `${ids.base.commitId}/${ids.base.runId}/${ids.base.trialId},` +
+    `${ids.change.commitId}/${ids.change.runId}/${ids.change.trialId}`
+  );
 }
