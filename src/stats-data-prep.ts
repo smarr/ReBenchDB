@@ -668,31 +668,27 @@ export function calculateDataForOverviewPlot(
   return arrangeChangeDataForChart(runTimeFactor);
 }
 
-const reportOutputFolder = resolve(robustPath(`../resources/reports/`));
-
 export async function prepareCompareView(
   results: MeasurementData[],
   environments: Environment[],
-  base: string,
-  change: string,
   reportId: string,
   projectSlug: string,
-  baselineHash6: string,
-  changeHash6: string,
-  revDetails: RevisionComparison
+  revDetails: RevisionComparison,
+  reportOutputFolder: string
 ): Promise<CompareViewWithData> {
   const collatedMs = collateMeasurements(results);
   const statsSummary = await calculateAllStatisticsAndRenderPlots(
     collatedMs,
-    base,
-    change,
-    reportId
+    revDetails.baseCommitId,
+    revDetails.changeCommitId,
+    reportId,
+    reportOutputFolder
   );
 
   const converted = await convert(
     collatedMs,
-    base,
-    change,
+    revDetails.baseCommitId,
+    revDetails.changeCommitId,
     reportOutputFolder,
     `${reportId}/inline`
   );
@@ -700,10 +696,10 @@ export async function prepareCompareView(
   const data: CompareViewWithData = {
     revisionFound: true,
     project: projectSlug,
-    baselineHash: base,
-    changeHash: change,
-    baselineHash6,
-    changeHash6,
+    baselineHash: revDetails.baseCommitId,
+    changeHash: revDetails.changeCommitId,
+    baselineHash6: revDetails.baseCommitId6,
+    changeHash6: revDetails.changeCommitId6,
     base: <RevisionData>revDetails.base,
     change: <RevisionData>revDetails.change,
     navigation: getNavigation(collatedMs),

@@ -407,9 +407,6 @@ export async function dashCompareNew(
   dbConfig: DatabaseConfig,
   db: Database
 ): Promise<CompareView> {
-  const baselineHash6 = base.substring(0, 6);
-  const changeHash6 = change.substring(0, 6);
-
   const reportId = getReportId(projectSlug, base, change);
 
   const revDetails = await db.revisionsExistInProject(
@@ -424,8 +421,8 @@ export async function dashCompareNew(
       project: projectSlug,
       baselineHash: base,
       changeHash: change,
-      baselineHash6,
-      changeHash6
+      baselineHash6: revDetails.baseCommitId6,
+      changeHash6: revDetails.baseCommitId6
     };
   }
 
@@ -435,13 +432,10 @@ export async function dashCompareNew(
   return prepareCompareView(
     results,
     environments,
-    base,
-    change,
     reportId,
     projectSlug,
-    baselineHash6,
-    changeHash6,
-    revDetails
+    revDetails,
+    reportOutputFolder
   );
 }
 

@@ -258,6 +258,12 @@ export interface RevisionComparison {
   dataFound: boolean;
   base?: RevisionData;
   change?: RevisionData;
+
+  /** Keep the commit ids to simplify data passing. */
+  baseCommitId: string;
+  changeCommitId: string;
+  baseCommitId6: string;
+  changeCommitId6: string;
 }
 
 const measurementDataColumns = `
@@ -451,6 +457,9 @@ export abstract class Database {
     base: string,
     change: string
   ): Promise<RevisionComparison> {
+    const baseCommitId6 = base.substring(0, 6);
+    const changeCommitId6 = change.substring(0, 6);
+
     const result = await this.query({
       name: 'fetchRevisionsInProjectByCommitIds',
       text: `SELECT DISTINCT
@@ -495,10 +504,20 @@ export abstract class Database {
       return {
         dataFound: true,
         base: baseData,
-        change: changeData
+        change: changeData,
+        baseCommitId: base,
+        changeCommitId: change,
+        baseCommitId6,
+        changeCommitId6
       };
     } else {
-      return { dataFound: false };
+      return {
+        dataFound: false,
+        baseCommitId: base,
+        changeCommitId: change,
+        baseCommitId6,
+        changeCommitId6
+      };
     }
   }
 

@@ -607,7 +607,7 @@ describe('arrangeChangeDataForChart()', () => {
   });
 });
 
-const revData: RevisionComparison = {
+const revDataJs: RevisionComparison = {
   dataFound: true,
   base: {
     projectid: 1,
@@ -628,7 +628,39 @@ const revData: RevisionComparison = {
     branchortag: 'main',
     commitmessage: 'msg2',
     authorname: 'foo@bar'
-  }
+  },
+  baseCommitId: '4dff7e',
+  changeCommitId: 'bc1105',
+  baseCommitId6: '4dff7e',
+  changeCommitId6: 'bc1105'
+};
+
+const revDataT: RevisionComparison = {
+  dataFound: true,
+  base: {
+    projectid: 1,
+    name: 'som',
+    sourceid: 1,
+    commitid: '5820ec',
+    repourl: 'repo-url',
+    branchortag: 'main',
+    commitmessage: 'msg1',
+    authorname: 'foo@bar'
+  },
+  change: {
+    projectid: 1,
+    name: 'som',
+    sourceid: 1,
+    commitid: '5fa4bd',
+    repourl: 'repo-url',
+    branchortag: 'main',
+    commitmessage: 'msg2',
+    authorname: 'foo@bar'
+  },
+  baseCommitId: '5820ec',
+  changeCommitId: '5fa4bd',
+  baseCommitId6: '5820ec',
+  changeCommitId6: '5fa4bd'
 };
 
 // TODO: this is duplicated from compare-view.test.ts
@@ -649,13 +681,10 @@ describe('prepareCompareView()', () => {
       result = await prepareCompareView(
         dataJsSOM.results,
         [],
-        '4dff7e',
-        'bc1105',
         'jssom',
         'jssom',
-        '4dff7e',
-        'bc1105',
-        revData
+        revDataJs,
+        outputFolder
       );
       expect(result).toBeDefined();
     });
@@ -676,13 +705,10 @@ describe('prepareCompareView()', () => {
       result = await prepareCompareView(
         dataTSOM.results,
         [],
-        '5820ec',
-        '5fa4bd',
         'tsom',
         'tsom',
-        '5820ec',
-        '5fa4bd',
-        revData
+        revDataT,
+        outputFolder
       );
       expect(result).toBeDefined();
     });
