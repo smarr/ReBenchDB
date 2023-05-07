@@ -23,8 +23,8 @@ import {
   calculateAllStatisticsAndRenderPlots,
   getNavigation
 } from '../../src/dashboard.js';
-import { collateMeasurements } from '../../src/stats-data-prep.js';
-import { Environment } from 'db.js';
+import { Environment } from '../../src/db.js';
+import { collateMeasurements } from '../../src/db-data-processing.js';
 
 function loadResult(name: string): string {
   return readFileSync(
