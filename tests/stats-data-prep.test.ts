@@ -230,6 +230,79 @@ describe('compareToSortForSinglePassChangeStats()', () => {
     expect(data[7].envId).toBe(2);
     expect(data[7].criterion.name).toBe('total');
   });
+
+  it('should give expected order also when bits are missing', () => {
+    const data: Measurements[] = [
+      {
+        criterion: { name: 'total', unit: 'ms' },
+        values: [[]],
+        envId: 1,
+        commitId: 'a',
+        runSettings
+      },
+      {
+        criterion: { name: 'total', unit: 'ms' },
+        values: [[]],
+        envId: 1,
+        commitId: 'b',
+        runSettings
+      },
+      {
+        criterion: { name: 'alloc', unit: 'ms' },
+        values: [[]],
+        envId: 1,
+        commitId: 'b',
+        runSettings
+      },
+      {
+        criterion: { name: 'total', unit: 'ms' },
+        values: [[]],
+        envId: 2,
+        commitId: 'b',
+        runSettings
+      },
+      {
+        criterion: { name: 'alloc', unit: 'ms' },
+        values: [[]],
+        envId: 2,
+        commitId: 'b',
+        runSettings
+      },
+      {
+        criterion: { name: 'alloc', unit: 'byte' },
+        values: [[]],
+        envId: 2,
+        commitId: 'a',
+        runSettings
+      }
+    ];
+
+    data.sort(compareToSortForSinglePassChangeStats);
+
+    // envId == 1
+    expect(data[0].commitId).toBe('b');
+    expect(data[0].envId).toBe(1);
+    expect(data[0].criterion.name).toBe('alloc');
+
+    expect(data[1].commitId).toBe('a');
+    expect(data[1].envId).toBe(1);
+    expect(data[1].criterion.name).toBe('total');
+    expect(data[2].commitId).toBe('b');
+    expect(data[2].envId).toBe(1);
+    expect(data[2].criterion.name).toBe('total');
+
+    // envId == 2
+    expect(data[3].commitId).toBe('a');
+    expect(data[3].envId).toBe(2);
+    expect(data[3].criterion.name).toBe('alloc');
+    expect(data[4].commitId).toBe('b');
+    expect(data[4].envId).toBe(2);
+    expect(data[4].criterion.name).toBe('alloc');
+
+    expect(data[5].commitId).toBe('b');
+    expect(data[5].envId).toBe(2);
+    expect(data[5].criterion.name).toBe('total');
+  });
 });
 
 describe('dropMeasurementsWhereBaseOrChangeIsMissing()', () => {
