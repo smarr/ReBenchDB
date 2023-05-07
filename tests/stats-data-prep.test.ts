@@ -415,7 +415,7 @@ describe('calculateChangeStatsForBenchmark()', () => {
 
     const changeOffset = 1;
     const dropped = calculateChangeStatsForBenchmark(
-      nbody.measurements,
+      nbody,
       0,
       changeOffset,
       perCriteria

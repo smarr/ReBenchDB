@@ -154,36 +154,6 @@ export async function convertMeasuresToBenchmarks(
   // This is mostly for my own sanity,
   // and to encode the invariants that we assume.
 
-  if (bench.measurements.length % 2 !== 0 && bench.measurements.length <= 0) {
-    throw new Error(
-      'measurements.length must be even and >0, ' +
-        'because we expect pairs of measurements from baseline and change,' +
-        `but has length ${bench.measurements.length} ` +
-        `for ${bench.bench}, ${bench.exe}, ${bench.suite}`
-    );
-  }
-
-  if (
-    (baseOffset === 0 || changeOffset === 0) &&
-    baseOffset + changeOffset !== 1
-  ) {
-    throw new Error(
-      'baseOffset and changeOffset must be 0 and 1, or 1 and 0, but are ' +
-        `${baseOffset} and ${changeOffset} for ` +
-        `${bench.bench}, ${bench.exe}, ${bench.suite}`
-    );
-  }
-
-  if (bench.measurements[0].commitId === bench.measurements[1].commitId) {
-    // TODO: missingCommitId handling here?
-    throw new Error(
-      'base and change are the same for ' +
-        `${bench.bench}, ${bench.exe}, ${bench.suite}, ` +
-        `but are expected to be different` +
-        `both are ${bench.measurements[0].commitId}`
-    );
-  }
-
   const benchmarks: CompareStatsRow[] = [];
   let lastEnvId = -1;
   let lastVarValue: string | null = null;
@@ -367,6 +337,42 @@ export async function convertMeasuresToBenchmarks(
   return { stats: benchmarks, lastPlotId };
 }
 
+function assertBasicPropertiesOfSortedMeasurements(
+  bench: ProcessedResult,
+  baseOffset: number,
+  changeOffset: number
+) {
+  if (bench.measurements.length % 2 !== 0 && bench.measurements.length <= 0) {
+    throw new Error(
+      'measurements.length must be even and >0, ' +
+        'because we expect pairs of measurements from baseline and change,' +
+        `but has length ${bench.measurements.length} ` +
+        `for ${bench.bench}, ${bench.exe}, ${bench.suite}`
+    );
+  }
+
+  if (
+    (baseOffset === 0 || changeOffset === 0) &&
+    baseOffset + changeOffset !== 1
+  ) {
+    throw new Error(
+      'baseOffset and changeOffset must be 0 and 1, or 1 and 0, but are ' +
+        `${baseOffset} and ${changeOffset} for ` +
+        `${bench.bench}, ${bench.exe}, ${bench.suite}`
+    );
+  }
+
+  if (bench.measurements[0].commitId === bench.measurements[1].commitId) {
+    // TODO: missingCommitId handling here?
+    throw new Error(
+      'base and change are the same for ' +
+        `${bench.bench}, ${bench.exe}, ${bench.suite}, ` +
+        `but are expected to be different` +
+        `both are ${bench.measurements[0].commitId}`
+    );
+  }
+}
+
 export function dropMeasurementsWhereBaseOrChangeIsMissing(
   measurements: Measurements[]
 ): Measurements[] | undefined {
@@ -402,17 +408,19 @@ export function dropMeasurementsWhereBaseOrChangeIsMissing(
 }
 
 export function calculateChangeStatsForBenchmark(
-  measurements: Measurements[],
+  bench: ProcessedResult,
   baseOffset: number,
   changeOffset: number,
   perCriteria: Map<string, ComparisonStatistics[]> | null
 ): Measurements[] | undefined {
+  const measurements = bench.measurements;
   assert(
     measurements.length % 2 === 0,
     'measurements.length must be even, ' +
       'because we expect pairs of measurements from baseline and change'
   );
   measurements.sort(compareToSortForSinglePassChangeStats);
+  assertBasicPropertiesOfSortedMeasurements(bench, baseOffset, changeOffset);
 
   const dropped = dropMeasurementsWhereBaseOrChangeIsMissing(measurements);
 
@@ -474,7 +482,7 @@ export async function calculateAllChangeStatisticsAndInlinePlots(
         numRunConfigs += 1;
 
         const dropped = calculateChangeStatsForBenchmark(
-          bench.measurements,
+          bench,
           baseOffset,
           changeOffset,
           criteria
