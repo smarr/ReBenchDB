@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   getDataNormalizedToBaselineMedian,
-  calculateAllChangeStatistics,
+  calculateAllChangeStatisticsAndInlinePlots,
   calculateDataForOverviewPlot
 } from '../src/stats-data-prep.js';
 import { robustPath } from '../src/util.js';
@@ -33,8 +33,28 @@ const dataTruffleSOM = JSON.parse(
 const resultsJsSOM = collateMeasurements(dataJsSOM.results);
 const resultsTSOM = collateMeasurements(dataTruffleSOM.results);
 
-calculateAllChangeStatistics(resultsJsSOM, 0, 1, null);
-calculateAllChangeStatistics(resultsTSOM, 0, 1, null);
+describe('setup', () => {
+  it('should calculate the statistics without error', async () => {
+    await calculateAllChangeStatisticsAndInlinePlots(
+      resultsJsSOM,
+      0,
+      1,
+      null,
+      outputFolder,
+      'charts-1'
+    );
+    await calculateAllChangeStatisticsAndInlinePlots(
+      resultsTSOM,
+      0,
+      1,
+      null,
+      outputFolder,
+      'charts-2'
+    );
+
+    expect(true).toBe(true);
+  });
+});
 
 describe('renderOverviewPlots()', () => {
   const plotDataJsSOM = calculateDataForOverviewPlot(resultsJsSOM, 'total');

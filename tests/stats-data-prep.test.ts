@@ -1,6 +1,6 @@
 import { describe, expect, it, afterAll } from '@jest/globals';
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdirSync } from 'node:fs';
 
 import { robustPath } from '../src/util.js';
 import {
@@ -16,7 +16,7 @@ import {
   ResultsBySuiteBenchmark,
   allExesAreTheSame,
   arrangeChangeDataForChart,
-  calculateAllChangeStatistics,
+  calculateAllChangeStatisticsAndInlinePlots,
   calculateChangeStatsForBenchmark,
   compareStringOrNull,
   compareToSortForSinglePassChangeStats,
@@ -450,12 +450,23 @@ const resultTSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
   dataTSOM.results
 );
 
+const outputFolder = createTmpDirectory();
+
 describe('calculateAllChangeStatistics()', () => {
   it(
     'should assign changeStats to the changeOffset ' +
       'measurement for all elements of JsSOM data',
-    () => {
-      const numRuns = calculateAllChangeStatistics(resultJsSOM, 0, 1, null);
+    async () => {
+      const numRuns = (
+        await calculateAllChangeStatisticsAndInlinePlots(
+          resultJsSOM,
+          0,
+          1,
+          null,
+          outputFolder,
+          'plot-sdp1'
+        )
+      ).numRunConfigs;
       expect(numRuns).toBe(26);
 
       for (const bySuite of resultJsSOM.values()) {
@@ -478,8 +489,17 @@ describe('calculateAllChangeStatistics()', () => {
   it(
     'should assign changeStats to the changeOffset ' +
       'measurement for all elements of TruffleSOM data',
-    () => {
-      const numRuns = calculateAllChangeStatistics(resultTSOM, 0, 1, null);
+    async () => {
+      const numRuns = (
+        await calculateAllChangeStatisticsAndInlinePlots(
+          resultTSOM,
+          0,
+          1,
+          null,
+          outputFolder,
+          'plot-sdp2'
+        )
+      ).numRunConfigs;
       expect(numRuns).toBe(166);
 
       for (const bySuite of resultJsSOM.values()) {
@@ -507,8 +527,34 @@ describe('getChangeDataBySuiteAndExe()', () => {
   const resultTSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
     dataTSOM.results
   );
-  const jsRuns = calculateAllChangeStatistics(resultJsSOM, 0, 1, null);
-  const tsRuns = calculateAllChangeStatistics(resultTSOM, 0, 1, null);
+  let jsRuns = 0;
+  let tsRuns = 0;
+
+  it('should calculate statistics and get results', async () => {
+    jsRuns = (
+      await calculateAllChangeStatisticsAndInlinePlots(
+        resultJsSOM,
+        0,
+        1,
+        null,
+        outputFolder,
+        'plot-sdp3'
+      )
+    ).numRunConfigs;
+    tsRuns = (
+      await calculateAllChangeStatisticsAndInlinePlots(
+        resultTSOM,
+        0,
+        1,
+        null,
+        outputFolder,
+        'plot-sdp4'
+      )
+    ).numRunConfigs;
+
+    expect(jsRuns).toBe(26);
+    expect(tsRuns).toBe(166);
+  });
 
   it('should return the expected data for JsSOM', () => {
     const result = getChangeDataBySuiteAndExe(resultJsSOM, 'total');
@@ -673,14 +719,13 @@ function loadResult(name: string): string {
 
 // TODO: does this belong into compare-view.test.ts?
 describe('prepareCompareView()', () => {
-  const outputFolder = createTmpDirectory();
-
   const compareTpl = prepareTemplate('compare-new.html');
 
   describe('based on data for JsSOM', () => {
     let result: CompareViewWithData | null = null;
 
     it('should execute without exception', async () => {
+      mkdirSync(`${outputFolder}/jssom`, { recursive: true });
       result = await prepareCompareView(
         dataJsSOM.results,
         [],
@@ -729,6 +774,7 @@ describe('prepareCompareView()', () => {
   describe('based on data for TruffleSOM', () => {
     let result: CompareViewWithData | null = null;
     it('should execute without exception', async () => {
+      mkdirSync(`${outputFolder}/tsom`, { recursive: true });
       result = await prepareCompareView(
         dataTSOM.results,
         [],
@@ -779,8 +825,8 @@ describe('prepareCompareView()', () => {
       expect(html).toEqual(loadResult('compare-view-tsom'));
     });
   });
+});
 
-  afterAll(() => {
-    deleteTmpDirectory(outputFolder, false);
-  });
+afterAll(() => {
+  deleteTmpDirectory(outputFolder, false);
 });

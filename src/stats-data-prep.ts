@@ -124,42 +124,6 @@ export interface ResultsByBenchmark {
 export type ResultsBySuiteBenchmark = Map<string, ResultsByBenchmark>;
 export type ResultsByExeSuiteBenchmark = Map<string, ResultsBySuiteBenchmark>;
 
-export async function convert(
-  data: ResultsByExeSuiteBenchmark,
-  base: string,
-  change: string,
-  outputFolder: string,
-  plotName: string
-): Promise<ByExeSuiteComparison> {
-  const { baseOffset, changeOffset } = getCommitOffsetsInSortedMeasurements(
-    base,
-    change
-  );
-  const byExeSuiteBench = new Map<string, Map<string, CompareStatsTable>>();
-  let lastPlotId = 0;
-
-  for (const [exe, bySuite] of data.entries()) {
-    const bySuiteCompare = new Map<string, CompareStatsTable>();
-    byExeSuiteBench.set(exe, bySuiteCompare);
-
-    for (const [suite, byBench] of bySuite.entries()) {
-      const result = await convertMapOfBenchmarksAndMeasures(
-        byBench,
-        baseOffset,
-        changeOffset,
-        outputFolder,
-        plotName,
-        lastPlotId
-      );
-      bySuiteCompare.set(suite, result.table);
-
-      lastPlotId = result.lastPlotId;
-    }
-  }
-
-  return byExeSuiteBench;
-}
-
 export async function convertMapOfBenchmarksAndMeasures(
   byBench: ResultsByBenchmark,
   baseOffset: number,
@@ -511,15 +475,25 @@ export function calculateChangeStatsForBenchmark(
   return undefined;
 }
 
-export function calculateAllChangeStatistics(
+export async function calculateAllChangeStatisticsAndInlinePlots(
   byExeSuiteBench: ResultsByExeSuiteBenchmark,
   baseOffset: number,
   changeOffset: number,
-  criteria: Map<string, ComparisonStatistics[]> | null
-): number {
+  criteria: Map<string, ComparisonStatistics[]> | null,
+  outputFolder: string,
+  plotName: string
+): Promise<{ numRunConfigs: number; comparisonData: ByExeSuiteComparison }> {
+  const comparisonData = new Map<string, Map<string, CompareStatsTable>>();
+  // those two counts are likely always the same,
+  // but for the moment, I'll keep themseparate
+  let lastPlotId = 0;
   let numRunConfigs = 0;
-  for (const bySuite of byExeSuiteBench.values()) {
-    for (const byBench of bySuite.values()) {
+
+  for (const [exe, bySuite] of byExeSuiteBench.entries()) {
+    const bySuiteCompare = new Map<string, CompareStatsTable>();
+    comparisonData.set(exe, bySuiteCompare);
+
+    for (const [suite, byBench] of bySuite.entries()) {
       for (const bench of byBench.benchmarks.values()) {
         numRunConfigs += 1;
 
@@ -536,9 +510,21 @@ export function calculateAllChangeStatistics(
           );
         }
       }
+
+      const result = await convertMapOfBenchmarksAndMeasures(
+        byBench,
+        baseOffset,
+        changeOffset,
+        outputFolder,
+        plotName,
+        lastPlotId
+      );
+      bySuiteCompare.set(suite, result.table);
+
+      lastPlotId = result.lastPlotId;
     }
   }
-  return numRunConfigs;
+  return { numRunConfigs, comparisonData };
 }
 
 export interface ChangeData {
@@ -676,21 +662,15 @@ export async function prepareCompareView(
   reportOutputFolder: string
 ): Promise<CompareViewWithData> {
   const collatedMs = collateMeasurements(results);
-  const statsSummary = await calculateAllStatisticsAndRenderPlots(
-    collatedMs,
-    revDetails.baseCommitId,
-    revDetails.changeCommitId,
-    reportId,
-    reportOutputFolder
-  );
-
-  const converted = await convert(
-    collatedMs,
-    revDetails.baseCommitId,
-    revDetails.changeCommitId,
-    reportOutputFolder,
-    `${reportId}/inline`
-  );
+  const { summary, allMeasurements } =
+    await calculateAllStatisticsAndRenderPlots(
+      collatedMs,
+      revDetails.baseCommitId,
+      revDetails.changeCommitId,
+      reportId,
+      reportOutputFolder,
+      `${reportId}/inline`
+    );
 
   const data: CompareViewWithData = {
     revisionFound: true,
@@ -706,9 +686,9 @@ export async function prepareCompareView(
     noData: false, // TODO: need to derive this from one of the stats details
     notInBoth: null, // TODO: need to get this out of the stats calculations
 
-    statsSummary,
+    statsSummary: summary,
     stats: {
-      allMeasurements: converted,
+      allMeasurements,
       environments
     },
     config: {
@@ -726,8 +706,9 @@ export async function calculateAllStatisticsAndRenderPlots(
   base: string,
   change: string,
   reportId: string,
-  reportOutputFolder: string
-): Promise<StatsSummary> {
+  reportOutputFolder: string,
+  inlinePlotName: string
+): Promise<{ summary: StatsSummary; allMeasurements: ByExeSuiteComparison }> {
   const { baseOffset, changeOffset } = getCommitOffsetsInSortedMeasurements(
     base,
     change
@@ -735,12 +716,15 @@ export async function calculateAllStatisticsAndRenderPlots(
 
   const criteria = new Map<string, ComparisonStatistics[]>();
 
-  const numRunConfigs = calculateAllChangeStatistics(
-    byExeSuiteBench,
-    baseOffset,
-    changeOffset,
-    criteria
-  );
+  const { numRunConfigs, comparisonData } =
+    await calculateAllChangeStatisticsAndInlinePlots(
+      byExeSuiteBench,
+      baseOffset,
+      changeOffset,
+      criteria,
+      reportOutputFolder,
+      inlinePlotName
+    );
 
   const absolutePath = `${reportOutputFolder}/${reportId}`;
   mkdirSync(absolutePath, { recursive: true });
@@ -754,10 +738,13 @@ export async function calculateAllStatisticsAndRenderPlots(
   );
 
   return {
-    stats: calculateSummaryOfChangeSummaries(criteria),
-    numRunConfigs,
-    overviewPngUrl: files.png,
-    overviewSvgUrls: files.svg
+    summary: {
+      stats: calculateSummaryOfChangeSummaries(criteria),
+      numRunConfigs,
+      overviewPngUrl: files.png,
+      overviewSvgUrls: files.svg
+    },
+    allMeasurements: comparisonData
   };
 }
 

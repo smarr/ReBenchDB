@@ -382,20 +382,26 @@ describe('Compare View Statistics', () => {
   const outputFolder = createTmpDirectory();
 
   it('should calculate statistics without throwing exception', async () => {
-    statsJ = await calculateAllStatisticsAndRenderPlots(
-      resultsJ,
-      'bc1105',
-      '4dff7e',
-      'testJ',
-      outputFolder
-    );
-    statsT = await calculateAllStatisticsAndRenderPlots(
-      resultsT,
-      '5fa4bd',
-      '5820ec',
-      'testT',
-      outputFolder
-    );
+    statsJ = (
+      await calculateAllStatisticsAndRenderPlots(
+        resultsJ,
+        'bc1105',
+        '4dff7e',
+        'testJ',
+        outputFolder,
+        'inline-cvs1'
+      )
+    ).summary;
+    statsT = (
+      await calculateAllStatisticsAndRenderPlots(
+        resultsT,
+        '5fa4bd',
+        '5820ec',
+        'testT',
+        outputFolder,
+        'inline-cvs2'
+      )
+    ).summary;
 
     expect(statsJ).toBeDefined();
     expect(statsT).toBeDefined();
