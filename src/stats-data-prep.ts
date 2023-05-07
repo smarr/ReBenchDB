@@ -190,8 +190,6 @@ export function calculateAllChangeStatistics(
   for (const bySuite of byExeSuiteBench.values()) {
     for (const byBench of bySuite.values()) {
       for (const bench of byBench.benchmarks.values()) {
-        // TODO: make sure this is really the numRunConfigs.
-        // For some reason, I am not quite sure this is correct
         numRunConfigs += 1;
 
         const dropped = calculateChangeStatsForBenchmark(
