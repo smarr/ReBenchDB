@@ -373,38 +373,164 @@ function assertBasicPropertiesOfSortedMeasurements(
   }
 }
 
-export function dropMeasurementsWhereBaseOrChangeIsMissing(
-  measurements: Measurements[]
-): Measurements[] | undefined {
-  const dropped: Measurements[] = [];
+function addCompareStatsRow(
+  missing: Map<string, CompareStatsRow>,
+  measurements: Measurements,
+  bench: ProcessedResult,
+  base: string,
+  change: string
+): void {
+  const b = bench.bench;
+  const e = bench.exe;
+  const s = bench.suite;
+  const v = measurements.runSettings.varValue || undefined;
+  const c = measurements.runSettings.cores || undefined;
+  const i = measurements.runSettings.inputSize || undefined;
+  const ea = measurements.runSettings.extraArgs || undefined;
+  const envId = measurements.envId;
 
-  function drop(i: number) {
-    dropped.push(measurements[i]);
+  const key = `${b}-${e}-${s}-${v || ''}-${c || ''}-${i || ''}-${
+    ea || ''
+  }-${envId}`;
+
+  let row = missing.get(key);
+  if (row === undefined) {
+    row = {
+      benchId: { b, e, s, v, c, ea },
+      details: {
+        cmdline: measurements.runSettings.simplifiedCmdline,
+        envId,
+        hasProfiles: false,
+        hasWarmup: false,
+        numV: 0,
+        numC: 0,
+        numI: 0,
+        numEa: 0,
+        numEnv: 0
+      },
+      missingCommitId: measurements.commitId === base ? change : base,
+      missingCriteria: []
+    };
+    missing.set(key, row);
+  }
+  row.missingCriteria?.push(measurements.criterion);
+}
+
+export interface VariantCountAndMissing {
+  numV: number;
+  numC: number;
+  numI: number;
+  numEa: number;
+  numEnv: number;
+  missing?: CompareStatsRow[];
+}
+
+/**
+ * Missing data is recorded, and the missing criteria a collected into
+ * the CompareStatsRow.
+ */
+export function countVariantsAndDropMissing(
+  bench: ProcessedResult,
+  base: string,
+  change: string
+): VariantCountAndMissing {
+  const measurements = bench.measurements;
+  const missing: Map<string, CompareStatsRow> = new Map();
+  let lastEnvId = -1;
+  let lastVarValue: string | null = null;
+  let lastCores: string | null = null;
+  let lastInputSize: string | null = null;
+  let lastExtraArgs: string | null = null;
+
+  let numV = 0;
+  let numC = 0;
+  let numI = 0;
+  let numEa = 0;
+  let numEnv = 1;
+
+  function dropAsMissing(i: number): void {
+    addCompareStatsRow(missing, measurements[i], bench, base, change);
     measurements.splice(i, 1);
+  }
+
+  function createResult(): VariantCountAndMissing {
+    // adjust the counts as needed
+    if (numV > 0 || numC > 0 || numI > 0 || numEa > 0 || numEnv > 0) {
+      for (const mi of missing.values()) {
+        mi.details.numV = numV;
+        mi.details.numC = numC;
+        mi.details.numI = numI;
+        mi.details.numEa = numEa;
+        mi.details.numEnv = numEnv;
+      }
+    }
+
+    return {
+      numV,
+      numC,
+      numI,
+      numEa,
+      numEnv,
+      missing: missing.size === 0 ? undefined : [...missing.values()]
+    };
   }
 
   let i = 0;
   while (i < measurements.length) {
-    if (i + 1 >= measurements.length) {
-      drop(i);
-      return dropped;
-    }
+    const isLastItem = i + 1 >= measurements.length;
 
     const base = measurements[i];
+
+    if (lastEnvId === -1) {
+      lastEnvId = base.envId;
+      lastVarValue = base.runSettings.varValue;
+      lastCores = base.runSettings.cores;
+      lastInputSize = base.runSettings.inputSize;
+      lastExtraArgs = base.runSettings.extraArgs;
+    } else {
+      if (lastEnvId !== base.envId) {
+        lastEnvId = base.envId;
+        numEnv += 1;
+      }
+
+      if (lastVarValue !== base.runSettings.varValue) {
+        lastVarValue = base.runSettings.varValue;
+        numV += 1;
+      }
+
+      if (lastCores !== base.runSettings.cores) {
+        lastCores = base.runSettings.cores;
+        numC += 1;
+      }
+
+      if (lastInputSize !== base.runSettings.inputSize) {
+        lastInputSize = base.runSettings.inputSize;
+        numI += 1;
+      }
+
+      if (lastExtraArgs !== base.runSettings.extraArgs) {
+        lastExtraArgs = base.runSettings.extraArgs;
+        numEa += 1;
+      }
+    }
+
+    if (isLastItem) {
+      dropAsMissing(i);
+      return createResult();
+    }
+
     const change = measurements[i + 1];
+
     if (
       compareToSortForSinglePassChangeStatsWithoutCommitId(base, change) !== 0
     ) {
-      drop(i);
+      dropAsMissing(i);
     } else {
       i += 2;
     }
   }
 
-  if (dropped.length === 0) {
-    return undefined;
-  }
-  return dropped;
+  return createResult();
 }
 
 export function calculateChangeStatsForBenchmark(
@@ -422,7 +548,7 @@ export function calculateChangeStatsForBenchmark(
   measurements.sort(compareToSortForSinglePassChangeStats);
   assertBasicPropertiesOfSortedMeasurements(bench, baseOffset, changeOffset);
 
-  const dropped = dropMeasurementsWhereBaseOrChangeIsMissing(measurements);
+  const countsAndMissing = countVariantsAndDropMissing(bench, base, change);
 
   // separate the measurements by criterion and envId
   // but handle a few trivial cases first

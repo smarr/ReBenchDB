@@ -20,7 +20,7 @@ import {
   calculateChangeStatsForBenchmark,
   compareStringOrNull,
   compareToSortForSinglePassChangeStats,
-  dropMeasurementsWhereBaseOrChangeIsMissing,
+  countVariantsAndDropMissing,
   getChangeDataBySuiteAndExe,
   prepareCompareView
 } from '../src/stats-data-prep.js';
@@ -305,7 +305,16 @@ describe('compareToSortForSinglePassChangeStats()', () => {
   });
 });
 
-describe('dropMeasurementsWhereBaseOrChangeIsMissing()', () => {
+describe('countVariantsAndDropMissing()', () => {
+  function makeProRes(measurements: Measurements[]): ProcessedResult {
+    return {
+      exe: 'exe',
+      suite: 'suite',
+      bench: 'bench',
+      measurements
+    };
+  }
+
   it('should not drop anything from properly paired up list', () => {
     const data: Measurements[] = [
       {
@@ -338,10 +347,17 @@ describe('dropMeasurementsWhereBaseOrChangeIsMissing()', () => {
       }
     ];
 
-    const dropped = dropMeasurementsWhereBaseOrChangeIsMissing(data);
+    const result = countVariantsAndDropMissing(makeProRes(data), 'a', 'b');
 
     expect(data.length).toBe(4);
-    expect(dropped).toBeUndefined();
+    expect(result).toEqual({
+      numV: 0,
+      numC: 0,
+      numI: 0,
+      numEa: 0,
+      numEnv: 1,
+      missing: undefined
+    });
   });
 
   it('should drop measurements where base is missing', () => {
@@ -369,14 +385,20 @@ describe('dropMeasurementsWhereBaseOrChangeIsMissing()', () => {
       }
     ];
 
-    const dropped = dropMeasurementsWhereBaseOrChangeIsMissing(data);
+    const result = countVariantsAndDropMissing(makeProRes(data), 'a', 'b');
 
     expect(data.length).toBe(2);
-    expect(dropped).toBeDefined();
-    if (dropped === undefined) throw new Error('dropped is undefined');
-    expect(dropped.length).toBe(1);
-    expect(dropped[0].commitId).toBe('b');
-    expect(dropped[0].criterion.name).toBe('alloc');
+    expect(result.missing).toBeDefined();
+    expect(result.missing).toHaveLength(1);
+
+    if (result.missing === undefined) throw new Error('missing is undefined');
+
+    expect(result.missing[0].missingCommitId).toBe('a');
+
+    if (result.missing[0].missingCriteria === undefined)
+      throw new Error('missing is undefined');
+
+    expect(result.missing[0].missingCriteria[0].name).toBe('alloc');
   });
 
   it('should drop measurements where change is missing', () => {
@@ -404,14 +426,20 @@ describe('dropMeasurementsWhereBaseOrChangeIsMissing()', () => {
       }
     ];
 
-    const dropped = dropMeasurementsWhereBaseOrChangeIsMissing(data);
+    const result = countVariantsAndDropMissing(makeProRes(data), 'a', 'b');
 
     expect(data.length).toBe(2);
-    expect(dropped).toBeDefined();
-    if (dropped === undefined) throw new Error('dropped is undefined');
-    expect(dropped.length).toBe(1);
-    expect(dropped[0].commitId).toBe('a');
-    expect(dropped[0].criterion.name).toBe('alloc');
+    expect(result.missing).toBeDefined();
+    expect(result.missing).toHaveLength(1);
+
+    if (result.missing === undefined) throw new Error('missing is undefined');
+
+    expect(result.missing[0].missingCommitId).toBe('b');
+
+    if (result.missing[0].missingCriteria === undefined)
+      throw new Error('missing is undefined');
+
+    expect(result.missing[0].missingCriteria[0].name).toBe('alloc');
   });
 
   it('should drop measurements that do not pair up', () => {
@@ -446,20 +474,31 @@ describe('dropMeasurementsWhereBaseOrChangeIsMissing()', () => {
       }
     ];
 
-    const dropped = dropMeasurementsWhereBaseOrChangeIsMissing(data);
+    const result = countVariantsAndDropMissing(makeProRes(data), 'a', 'b');
 
-    expect(data.length).toBe(0);
-    expect(dropped).toBeDefined();
-    if (dropped === undefined) throw new Error('dropped is undefined');
-    expect(dropped.length).toBe(4);
-    expect(dropped[0].commitId).toBe('a');
-    expect(dropped[0].envId).toBe(1);
-    expect(dropped[1].commitId).toBe('a');
-    expect(dropped[1].envId).toBe(2);
-    expect(dropped[2].commitId).toBe('a');
-    expect(dropped[2].criterion.name).toBe('alloc');
-    expect(dropped[3].commitId).toBe('c');
-    expect(dropped[3].criterion.name).toBe('trace');
+    expect(data).toHaveLength(0);
+    expect(result.missing).toBeDefined();
+    expect(result.missing).toHaveLength(2);
+
+    if (result.missing === undefined) throw new Error('missing is undefined');
+
+    expect(result.missing[0].missingCommitId).toBe('b');
+    expect(result.missing[0].details.envId).toBe(1);
+
+    const mc1 = result.missing[0].missingCriteria;
+    expect(mc1).toHaveLength(3);
+    if (mc1 === undefined) throw new Error('missing is undefined');
+    expect(mc1[0].name).toBe('total');
+    expect(mc1[1].name).toBe('alloc');
+    expect(mc1[2].name).toBe('trace');
+
+    expect(result.missing[1].missingCommitId).toBe('b');
+    expect(result.missing[1].details.envId).toBe(2);
+
+    const mc2 = result.missing[1].missingCriteria;
+    expect(mc2).toHaveLength(1);
+    if (mc2 === undefined) throw new Error('missing is undefined');
+    expect(mc2[0].name).toBe('total');
   });
 });
 
