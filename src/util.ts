@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { promisify } from 'node:util';
 import { gzip as gzipCallback } from 'node:zlib';
 import { writeFile } from 'node:fs/promises';
+import { CanvasSettings } from 'charts';
 
 const gzip = promisify(gzipCallback);
 
@@ -65,7 +66,19 @@ export const siteConfig = {
   publicUrl: process.env.PUBLIC_URL || _rebench_dev,
   appId: parseInt(process.env.GITHUB_APP_ID || '') || 76497,
   githubPrivateKey:
-    process.env.GITHUB_PK || 'rebenchdb.2020-08-11.private-key.pem'
+    process.env.GITHUB_PK || 'rebenchdb.2020-08-11.private-key.pem',
+
+  canShowWarmup: (data: number[][]): boolean => {
+    return data.some((ms) => ms.length >= 5);
+  },
+  inlinePlotCriterion: 'total'
+};
+
+const inlinePlot: CanvasSettings = {
+  width: 336,
+  height: 38,
+  outputType: 'svg',
+  plotType: 'boxplot'
 };
 
 export const siteAesthetics = {
@@ -82,10 +95,7 @@ export const siteAesthetics = {
 
   overviewPlotWidth: 432,
 
-  inlinePlot: {
-    width: 336,
-    height: 38
-  }
+  inlinePlot
 };
 
 export const TotalCriterion = 'total';

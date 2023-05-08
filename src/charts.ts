@@ -129,17 +129,19 @@ function toDataSetWithFastSlowBackground(data: ChangeData): any[] {
   ];
 }
 
-export function createCanvas(
-  height: number,
-  width: number,
-  outputType: 'svg' | 'png' = 'png',
-  plotType: 'boxplot' | 'violin' = 'boxplot'
-): ChartJSNodeCanvas {
+export interface CanvasSettings {
+  height: number;
+  width: number;
+  outputType: 'svg' | 'png';
+  plotType: 'boxplot' | 'violin';
+}
+
+export function createCanvas(settings: CanvasSettings): ChartJSNodeCanvas {
   const plugins: any[] = ['chartjs-plugin-annotation'];
 
   const canvasOptions: ChartJSNodeCanvasOptions = {
-    width,
-    height,
+    width: settings.width,
+    height: settings.height,
     backgroundColour: siteAesthetics.backgroundColor,
     plugins: { modern: plugins },
     chartCallback: (ChartJS) => {
@@ -154,7 +156,7 @@ export function createCanvas(
         }
       });
 
-      if (plotType === 'boxplot') {
+      if (settings.plotType === 'boxplot') {
         ChartJS.register(BoxPlotController, BoxAndWiskers);
         ChartJS.registry.addControllers(BoxPlotController, BoxAndWiskers);
         ChartJS.registry.addElements(BoxAndWiskers);
@@ -166,7 +168,7 @@ export function createCanvas(
     }
   };
 
-  if (outputType === 'svg') {
+  if (settings.outputType === 'svg') {
     (<any>canvasOptions).type = 'svg'; // work around the readonly property
   }
   return new ChartJSNodeCanvas(canvasOptions);
@@ -249,12 +251,12 @@ export async function renderOverviewComparison(
   outputType: 'svg' | 'png' = 'png',
   plotType: 'boxplot' | 'violin' = 'boxplot'
 ): Promise<Buffer> {
-  const chartJSNodeCanvas = createCanvas(
-    calculatePlotHeight(title, data),
-    siteAesthetics.overviewPlotWidth,
+  const chartJSNodeCanvas = createCanvas({
+    height: calculatePlotHeight(title, data),
+    width: siteAesthetics.overviewPlotWidth,
     outputType,
     plotType
-  );
+  });
 
   return renderDataOnCanvas(
     chartJSNodeCanvas,

@@ -89,7 +89,8 @@ const details: DetailedInfo = {
   numV: 0,
   numC: 0,
   numI: 0,
-  numEa: 0
+  numEa: 0,
+  numEnv: 0
 };
 
 const versionStats = {

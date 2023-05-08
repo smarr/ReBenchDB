@@ -4,7 +4,8 @@ import { readFileSync } from 'node:fs';
 import {
   getDataNormalizedToBaselineMedian,
   calculateAllChangeStatisticsAndInlinePlots,
-  calculateDataForOverviewPlot
+  calculateDataForOverviewPlot,
+  getMsFlattenedAndSorted
 } from '../src/stats-data-prep.js';
 import { robustPath } from '../src/util.js';
 import {
@@ -15,6 +16,7 @@ import {
 import { Measurements } from '../src/db.js';
 import { collateMeasurements } from '../src/db-data-processing.js';
 import { createTmpDirectory, deleteTmpDirectory } from './helpers.js';
+import { ByExeSuiteComparison } from 'views/view-types.js';
 
 const outputFolder = createTmpDirectory();
 
@@ -33,32 +35,49 @@ const dataTruffleSOM = JSON.parse(
 const resultsJsSOM = collateMeasurements(dataJsSOM.results);
 const resultsTSOM = collateMeasurements(dataTruffleSOM.results);
 
-describe('setup', () => {
-  it('should calculate the statistics without error', async () => {
-    await calculateAllChangeStatisticsAndInlinePlots(
-      resultsJsSOM,
-      0,
-      1,
-      null,
-      outputFolder,
-      'charts-1'
-    );
-    await calculateAllChangeStatisticsAndInlinePlots(
-      resultsTSOM,
-      0,
-      1,
-      null,
-      outputFolder,
-      'charts-2'
-    );
-
-    expect(true).toBe(true);
-  });
-});
-
 describe('renderOverviewPlots()', () => {
-  const plotDataJsSOM = calculateDataForOverviewPlot(resultsJsSOM, 'total');
-  const plotDataTSOM = calculateDataForOverviewPlot(resultsTSOM, 'total');
+  let jsSomStats: {
+    numRunConfigs: number;
+    comparisonData: ByExeSuiteComparison;
+  };
+  let tSomStats: {
+    numRunConfigs: number;
+    comparisonData: ByExeSuiteComparison;
+  };
+  let plotDataJsSOM;
+  let plotDataTSOM;
+
+  it('should calculate the statistics without error', async () => {
+    jsSomStats = await calculateAllChangeStatisticsAndInlinePlots(
+      resultsJsSOM,
+      '4dff7e',
+      'bc1105',
+      0,
+      1
+    );
+    tSomStats = await calculateAllChangeStatisticsAndInlinePlots(
+      resultsTSOM,
+      '4dff7e',
+      'bc1105',
+      0,
+      1
+    );
+
+    expect(jsSomStats).toBeDefined();
+    expect(tSomStats).toBeDefined();
+
+    plotDataJsSOM = calculateDataForOverviewPlot(
+      jsSomStats.comparisonData,
+      'total'
+    );
+    plotDataTSOM = calculateDataForOverviewPlot(
+      tSomStats.comparisonData,
+      'total'
+    );
+
+    expect(plotDataJsSOM).toBeDefined();
+    expect(plotDataTSOM).toBeDefined();
+  });
 
   describe('with JsSOM data', () => {
     let result: { png: string; svg: string[] };
@@ -158,15 +177,26 @@ describe('renderOverviewPlots()', () => {
 });
 
 describe('renderInlinePlot()', () => {
-  const inlinePlotCanvas = createCanvas(38, 336, 'svg', 'boxplot');
+  const inlinePlotCanvas = createCanvas({
+    height: 38,
+    width: 336,
+    outputType: 'svg',
+    plotType: 'boxplot'
+  });
   const measurements = <Measurements[]>(
     resultsJsSOM.get('som')?.get('macro')?.benchmarks.get('DeltaBlue')
       ?.measurements
   );
 
-  const data = getDataNormalizedToBaselineMedian(
+  const { sortedBase, sortedChange } = getMsFlattenedAndSorted(
     measurements[0],
     measurements[1]
+  );
+  const data = getDataNormalizedToBaselineMedian(
+    'a',
+    'b',
+    sortedBase,
+    sortedChange
   );
 
   it('should render the expected plot', async () => {

@@ -14,6 +14,7 @@ import {
   ResultsByBenchmark,
   ResultsByExeSuiteBenchmark,
   ResultsBySuiteBenchmark,
+  StatsForBenchmark,
   allExesAreTheSame,
   arrangeChangeDataForChart,
   calculateAllChangeStatisticsAndInlinePlots,
@@ -26,7 +27,12 @@ import {
 } from '../src/stats-data-prep.js';
 import { ComparisonStatistics } from '../src/stats.js';
 import { collateMeasurements } from '../src/db-data-processing.js';
-import { CompareViewWithData } from '../src/views/view-types.js';
+import {
+  ByExeSuiteComparison,
+  CompareStatsRow,
+  CompareViewWithData,
+  MissingData
+} from '../src/views/view-types.js';
 import { prepareTemplate } from '../src/templates.js';
 import * as dataFormatters from '../src/data-format.js';
 import * as viewHelpers from '../src/views/helpers.js';
@@ -68,23 +74,23 @@ const runSettings: RunSettings = {
   simplifiedCmdline: 'Exec TestBenchmark1'
 };
 
+function makeM(criterion, unit, envId, commitId) {
+  return {
+    criterion: { name: criterion, unit },
+    values: [[]],
+    envId,
+    commitId,
+    runSettings,
+    runId: 1,
+    trialId: 1
+  };
+}
+
 describe('compareToSortForSinglePassChangeStats()', () => {
   it('should give expected order when just commitId different', () => {
     const data: Measurements[] = [
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 1,
-        commitId: 'a',
-        runSettings
-      },
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 1,
-        commitId: 'b',
-        runSettings
-      }
+      makeM('total', 'ms', 1, 'a'),
+      makeM('total', 'ms', 1, 'b')
     ];
 
     data.sort(compareToSortForSinglePassChangeStats);
@@ -95,34 +101,10 @@ describe('compareToSortForSinglePassChangeStats()', () => {
 
   it('should give expected order for list with different envIds', () => {
     const data: Measurements[] = [
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 1,
-        commitId: 'a',
-        runSettings
-      },
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 2,
-        commitId: 'a',
-        runSettings
-      },
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 1,
-        commitId: 'b',
-        runSettings
-      },
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 2,
-        commitId: 'b',
-        runSettings
-      }
+      makeM('total', 'ms', 1, 'a'),
+      makeM('total', 'ms', 2, 'a'),
+      makeM('total', 'ms', 1, 'b'),
+      makeM('total', 'ms', 2, 'b')
     ];
 
     data.sort(compareToSortForSinglePassChangeStats);
@@ -140,62 +122,14 @@ describe('compareToSortForSinglePassChangeStats()', () => {
 
   it('should give expected order for different envIds and criteria', () => {
     const data: Measurements[] = [
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 1,
-        commitId: 'a',
-        runSettings
-      },
-      {
-        criterion: { name: 'alloc', unit: 'byte' },
-        values: [[]],
-        envId: 1,
-        commitId: 'a',
-        runSettings
-      },
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 1,
-        commitId: 'b',
-        runSettings
-      },
-      {
-        criterion: { name: 'alloc', unit: 'ms' },
-        values: [[]],
-        envId: 1,
-        commitId: 'b',
-        runSettings
-      },
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 2,
-        commitId: 'b',
-        runSettings
-      },
-      {
-        criterion: { name: 'alloc', unit: 'ms' },
-        values: [[]],
-        envId: 2,
-        commitId: 'b',
-        runSettings
-      },
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 2,
-        commitId: 'a',
-        runSettings
-      },
-      {
-        criterion: { name: 'alloc', unit: 'byte' },
-        values: [[]],
-        envId: 2,
-        commitId: 'a',
-        runSettings
-      }
+      makeM('total', 'ms', 1, 'a'),
+      makeM('alloc', 'byte', 1, 'a'),
+      makeM('total', 'ms', 1, 'b'),
+      makeM('alloc', 'byte', 1, 'b'),
+      makeM('total', 'ms', 2, 'b'),
+      makeM('alloc', 'byte', 2, 'b'),
+      makeM('total', 'ms', 2, 'a'),
+      makeM('alloc', 'byte', 2, 'a')
     ];
 
     data.sort(compareToSortForSinglePassChangeStats);
@@ -233,48 +167,12 @@ describe('compareToSortForSinglePassChangeStats()', () => {
 
   it('should give expected order also when bits are missing', () => {
     const data: Measurements[] = [
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 1,
-        commitId: 'a',
-        runSettings
-      },
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 1,
-        commitId: 'b',
-        runSettings
-      },
-      {
-        criterion: { name: 'alloc', unit: 'ms' },
-        values: [[]],
-        envId: 1,
-        commitId: 'b',
-        runSettings
-      },
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 2,
-        commitId: 'b',
-        runSettings
-      },
-      {
-        criterion: { name: 'alloc', unit: 'ms' },
-        values: [[]],
-        envId: 2,
-        commitId: 'b',
-        runSettings
-      },
-      {
-        criterion: { name: 'alloc', unit: 'byte' },
-        values: [[]],
-        envId: 2,
-        commitId: 'a',
-        runSettings
-      }
+      makeM('total', 'ms', 1, 'a'),
+      makeM('total', 'ms', 1, 'b'),
+      makeM('alloc', 'byte', 1, 'b'),
+      makeM('total', 'ms', 2, 'b'),
+      makeM('alloc', 'byte', 2, 'b'),
+      makeM('alloc', 'byte', 2, 'a')
     ];
 
     data.sort(compareToSortForSinglePassChangeStats);
@@ -317,34 +215,10 @@ describe('countVariantsAndDropMissing()', () => {
 
   it('should not drop anything from properly paired up list', () => {
     const data: Measurements[] = [
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 1,
-        commitId: 'a',
-        runSettings
-      },
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 1,
-        commitId: 'b',
-        runSettings
-      },
-      {
-        criterion: { name: 'alloc', unit: 'byte' },
-        values: [[]],
-        envId: 1,
-        commitId: 'a',
-        runSettings
-      },
-      {
-        criterion: { name: 'alloc', unit: 'byte' },
-        values: [[]],
-        envId: 1,
-        commitId: 'b',
-        runSettings
-      }
+      makeM('total', 'ms', 1, 'a'),
+      makeM('total', 'ms', 1, 'b'),
+      makeM('alloc', 'byte', 1, 'a'),
+      makeM('alloc', 'byte', 1, 'b')
     ];
 
     const result = countVariantsAndDropMissing(makeProRes(data), 'a', 'b');
@@ -356,149 +230,83 @@ describe('countVariantsAndDropMissing()', () => {
       numI: 0,
       numEa: 0,
       numEnv: 1,
-      missing: undefined
+      missing: new Map()
     });
   });
 
   it('should drop measurements where base is missing', () => {
     const data: Measurements[] = [
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 1,
-        commitId: 'a',
-        runSettings
-      },
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 1,
-        commitId: 'b',
-        runSettings
-      },
-      {
-        criterion: { name: 'alloc', unit: 'byte' },
-        values: [[]],
-        envId: 1,
-        commitId: 'b',
-        runSettings
-      }
+      makeM('total', 'ms', 1, 'a'),
+      makeM('total', 'ms', 1, 'b'),
+      makeM('alloc', 'byte', 1, 'b')
     ];
 
     const result = countVariantsAndDropMissing(makeProRes(data), 'a', 'b');
 
     expect(data.length).toBe(2);
-    expect(result.missing).toBeDefined();
-    expect(result.missing).toHaveLength(1);
+    expect(result.missing.size).toEqual(1);
 
-    if (result.missing === undefined) throw new Error('missing is undefined');
+    const stats: CompareStatsRow = result.missing.values().next().value;
+    expect(stats.missing).toHaveLength(1);
+    if (stats.missing === undefined) throw new Error('missing is undefined');
 
-    expect(result.missing[0].missingCommitId).toBe('a');
-
-    if (result.missing[0].missingCriteria === undefined)
-      throw new Error('missing is undefined');
-
-    expect(result.missing[0].missingCriteria[0].name).toBe('alloc');
+    const missing = stats.missing[0];
+    expect(missing.commitId).toEqual('a');
+    expect(missing.criterion.name).toBe('alloc');
   });
 
   it('should drop measurements where change is missing', () => {
     const data: Measurements[] = [
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 1,
-        commitId: 'a',
-        runSettings
-      },
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 1,
-        commitId: 'b',
-        runSettings
-      },
-      {
-        criterion: { name: 'alloc', unit: 'byte' },
-        values: [[]],
-        envId: 1,
-        commitId: 'a',
-        runSettings
-      }
+      makeM('total', 'ms', 1, 'a'),
+      makeM('total', 'ms', 1, 'b'),
+      makeM('alloc', 'byte', 1, 'a')
     ];
 
     const result = countVariantsAndDropMissing(makeProRes(data), 'a', 'b');
 
     expect(data.length).toBe(2);
     expect(result.missing).toBeDefined();
-    expect(result.missing).toHaveLength(1);
+    expect(result.missing.size).toEqual(1);
 
-    if (result.missing === undefined) throw new Error('missing is undefined');
+    const stats: CompareStatsRow = result.missing.values().next().value;
+    expect(stats.missing).toHaveLength(1);
+    if (stats.missing === undefined) throw new Error('missing is undefined');
 
-    expect(result.missing[0].missingCommitId).toBe('b');
-
-    if (result.missing[0].missingCriteria === undefined)
-      throw new Error('missing is undefined');
-
-    expect(result.missing[0].missingCriteria[0].name).toBe('alloc');
+    const missing = stats.missing[0];
+    expect(missing.commitId).toEqual('b');
+    expect(missing.criterion.name).toBe('alloc');
   });
 
   it('should drop measurements that do not pair up', () => {
     const data: Measurements[] = [
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 1,
-        commitId: 'a',
-        runSettings
-      },
-      {
-        criterion: { name: 'total', unit: 'ms' },
-        values: [[]],
-        envId: 2,
-        commitId: 'a',
-        runSettings
-      },
-      {
-        criterion: { name: 'alloc', unit: 'byte' },
-        values: [[]],
-        envId: 1,
-        commitId: 'a',
-        runSettings
-      },
-      {
-        criterion: { name: 'trace', unit: 'byte' },
-        values: [[]],
-        envId: 1,
-        commitId: 'c',
-        runSettings
-      }
+      makeM('total', 'ms', 1, 'a'),
+      makeM('total', 'ms', 2, 'a'),
+      makeM('alloc', 'byte', 1, 'a'),
+      makeM('trace', 'byte', 1, 'c')
     ];
 
     const result = countVariantsAndDropMissing(makeProRes(data), 'a', 'b');
 
     expect(data).toHaveLength(0);
     expect(result.missing).toBeDefined();
-    expect(result.missing).toHaveLength(2);
+    expect(result.missing.size).toEqual(2);
 
-    if (result.missing === undefined) throw new Error('missing is undefined');
+    const missing = [...result.missing.values()];
 
-    expect(result.missing[0].missingCommitId).toBe('b');
-    expect(result.missing[0].details.envId).toBe(1);
+    expect(missing[0].details.envId).toBe(1);
+    expect(missing[1].details.envId).toBe(2);
 
-    const mc1 = result.missing[0].missingCriteria;
+    const mc1 = <MissingData[]>missing[0].missing;
     expect(mc1).toHaveLength(3);
-    if (mc1 === undefined) throw new Error('missing is undefined');
-    expect(mc1[0].name).toBe('total');
-    expect(mc1[1].name).toBe('alloc');
-    expect(mc1[2].name).toBe('trace');
 
-    expect(result.missing[1].missingCommitId).toBe('b');
-    expect(result.missing[1].details.envId).toBe(2);
+    expect(mc1[0].commitId).toEqual('b');
+    expect(mc1[0].criterion.name).toEqual('total');
+    expect(mc1[1].criterion.name).toEqual('alloc');
+    expect(mc1[2].criterion.name).toEqual('trace');
 
-    const mc2 = result.missing[1].missingCriteria;
+    const mc2 = <MissingData[]>missing[1].missing;
     expect(mc2).toHaveLength(1);
-    if (mc2 === undefined) throw new Error('missing is undefined');
-    expect(mc2[0].name).toBe('total');
+    expect(mc2[0].criterion.name).toEqual('total');
   });
 });
 
@@ -526,31 +334,44 @@ describe('calculateChangeStatsForBenchmark()', () => {
     const nbody = <ProcessedResult>macro.benchmarks.get('NBody');
 
     const changeOffset = 1;
-    const dropped = calculateChangeStatsForBenchmark(
-      nbody,
-      0,
-      changeOffset,
-      perCriteria
-    );
+    let stats: StatsForBenchmark;
+
+    it('should run without exception', async () => {
+      stats = await calculateChangeStatsForBenchmark(
+        nbody,
+        '4dff7e',
+        'bc1105',
+        0,
+        changeOffset,
+        perCriteria,
+        0
+      );
+      expect(stats.numRunConfigs).toEqual(1);
+    });
 
     it('should not have dropped any data', () => {
       expect(nbody.measurements).toHaveLength(2);
-      expect(dropped).toBeUndefined();
+      expect(stats.stats).toHaveLength(1);
     });
 
     it('should have added the expected statistics', () => {
-      const change = nbody.measurements[changeOffset];
-      expect(change.changeStats).toBeDefined();
-      expect(change.changeStats?.change_m).toBeCloseTo(-0.096325, 5);
-      expect(change.changeStats?.median).toBeCloseTo(81.384, 5);
-      expect(change.changeStats?.samples).toBe(10);
+      const versionStats = stats.stats[0].versionStats;
+      expect(versionStats).toBeDefined();
+      if (versionStats === undefined)
+        throw new Error('versionStats is undefined');
+
+      expect(versionStats.total).toBeDefined();
+
+      expect(versionStats.total?.change_m).toBeCloseTo(-0.096325, 5);
+      expect(versionStats.total?.median).toBeCloseTo(81.384, 5);
+      expect(versionStats.total?.samples).toBe(10);
       expect(perCriteria.size).toEqual(1);
       expect(perCriteria.has('total')).toBe(true);
 
       const total = <ComparisonStatistics[]>perCriteria.get('total');
       expect(total).toHaveLength(1);
 
-      expect(total[0]).toBe(change.changeStats);
+      expect(total[0]).toBe(versionStats.total);
     });
   });
 });
@@ -564,72 +385,98 @@ const resultTSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
 
 const outputFolder = createTmpDirectory();
 
-describe('calculateAllChangeStatistics()', () => {
-  it(
-    'should assign changeStats to the changeOffset ' +
-      'measurement for all elements of JsSOM data',
-    async () => {
-      const numRuns = (
-        await calculateAllChangeStatisticsAndInlinePlots(
-          resultJsSOM,
-          0,
-          1,
-          null,
-          outputFolder,
-          'plot-sdp1'
-        )
-      ).numRunConfigs;
-      expect(numRuns).toBe(26);
+describe('calculateAllChangeStatisticsAndInlinePlots()', () => {
+  let jsComparisonData: ByExeSuiteComparison;
+  let tsComparisonData: ByExeSuiteComparison;
 
-      for (const bySuite of resultJsSOM.values()) {
-        for (const byBench of bySuite.values()) {
-          for (const bench of byBench.benchmarks.values()) {
-            for (let i = 0; i < bench.measurements.length; i += 1) {
-              const m = bench.measurements[i];
-              if (i % 2 === 1) {
-                expect(m.changeStats).toBeDefined();
-              } else {
-                expect(m.changeStats).toBeUndefined();
-              }
-            }
-          }
+  it('should get the version stats for all JsSOM runs', async () => {
+    const { numRunConfigs, comparisonData } =
+      await calculateAllChangeStatisticsAndInlinePlots(
+        resultJsSOM,
+        revDataJs.baseCommitId,
+        revDataJs.changeCommitId,
+        0,
+        1
+      );
+    expect(numRunConfigs).toBe(26);
+
+    for (const bySuite of comparisonData.values()) {
+      for (const byBench of bySuite.values()) {
+        for (const bench of byBench.benchmarks.values()) {
+          expect(bench.versionStats?.total).toBeDefined();
         }
       }
     }
-  );
 
-  it(
-    'should assign changeStats to the changeOffset ' +
-      'measurement for all elements of TruffleSOM data',
-    async () => {
-      const numRuns = (
-        await calculateAllChangeStatisticsAndInlinePlots(
-          resultTSOM,
-          0,
-          1,
-          null,
-          outputFolder,
-          'plot-sdp2'
-        )
-      ).numRunConfigs;
-      expect(numRuns).toBe(166);
+    jsComparisonData = comparisonData;
+  });
 
-      for (const bySuite of resultJsSOM.values()) {
-        for (const byBench of bySuite.values()) {
-          for (const bench of byBench.benchmarks.values()) {
-            for (let i = 0; i < bench.measurements.length; i += 1) {
-              const m = bench.measurements[i];
-              if (i % 2 === 1) {
-                expect(m.changeStats).toBeDefined();
-              } else {
-                expect(m.changeStats).toBeUndefined();
-              }
-            }
-          }
+  it('should get the version stats for all TruffleSOM runs', async () => {
+    const { numRunConfigs, comparisonData } =
+      await calculateAllChangeStatisticsAndInlinePlots(
+        resultTSOM,
+        revDataT.baseCommitId,
+        revDataT.changeCommitId,
+        0,
+        1
+      );
+    expect(numRunConfigs).toBe(166);
+
+    for (const bySuite of comparisonData.values()) {
+      for (const byBench of bySuite.values()) {
+        for (const bench of byBench.benchmarks.values()) {
+          expect(bench.versionStats?.total).toBeDefined();
         }
       }
     }
-  );
+
+    tsComparisonData = comparisonData;
+  });
+
+  describe('allExesAreTheSame()', () => {
+    it('should return true for the JsSOM data', () => {
+      const result = getChangeDataBySuiteAndExe(jsComparisonData, 'total');
+      expect(allExesAreTheSame(result)).toEqual([true, 'som']);
+    });
+
+    it('should return false for the TruffleSOM data', () => {
+      const result = getChangeDataBySuiteAndExe(tsComparisonData, 'total');
+      expect(allExesAreTheSame(result)).toEqual([false, null]);
+    });
+  });
+
+  describe('arrangeChangeDataForChart()', () => {
+    it(
+      'should transpose the JsSOM data ' +
+        'from grouping by suite to grouping by exe',
+      () => {
+        const changeData = getChangeDataBySuiteAndExe(
+          jsComparisonData,
+          'total'
+        );
+        const result = arrangeChangeDataForChart(changeData);
+
+        expect(result.size).toEqual(1);
+        const data = result.get('som');
+
+        expect(data).toBeDefined();
+
+        if (!data) {
+          return;
+        }
+
+        expect(data.labels).toEqual(['macro', 'micro']);
+        expect(data.data).toHaveLength(2);
+      }
+    );
+
+    it('should not have changed the TruffleSOM data', () => {
+      const changeData = getChangeDataBySuiteAndExe(tsComparisonData, 'total');
+      const result = arrangeChangeDataForChart(changeData);
+
+      expect(result).toBe(changeData);
+    });
+  });
 });
 
 describe('getChangeDataBySuiteAndExe()', () => {
@@ -639,37 +486,40 @@ describe('getChangeDataBySuiteAndExe()', () => {
   const resultTSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
     dataTSOM.results
   );
-  let jsRuns = 0;
-  let tsRuns = 0;
+  let jsResults: {
+    numRunConfigs: number;
+    comparisonData: ByExeSuiteComparison;
+  };
+  let tsResults: {
+    numRunConfigs: number;
+    comparisonData: ByExeSuiteComparison;
+  };
 
   it('should calculate statistics and get results', async () => {
-    jsRuns = (
-      await calculateAllChangeStatisticsAndInlinePlots(
-        resultJsSOM,
-        0,
-        1,
-        null,
-        outputFolder,
-        'plot-sdp3'
-      )
-    ).numRunConfigs;
-    tsRuns = (
-      await calculateAllChangeStatisticsAndInlinePlots(
-        resultTSOM,
-        0,
-        1,
-        null,
-        outputFolder,
-        'plot-sdp4'
-      )
-    ).numRunConfigs;
+    jsResults = await calculateAllChangeStatisticsAndInlinePlots(
+      resultJsSOM,
+      revDataJs.baseCommitId,
+      revDataJs.changeCommitId,
+      0,
+      1
+    );
+    tsResults = await calculateAllChangeStatisticsAndInlinePlots(
+      resultTSOM,
+      revDataT.baseCommitId,
+      revDataT.changeCommitId,
+      0,
+      1
+    );
 
-    expect(jsRuns).toBe(26);
-    expect(tsRuns).toBe(166);
+    expect(jsResults.numRunConfigs).toBe(26);
+    expect(tsResults.numRunConfigs).toBe(166);
   });
 
   it('should return the expected data for JsSOM', () => {
-    const result = getChangeDataBySuiteAndExe(resultJsSOM, 'total');
+    const result = getChangeDataBySuiteAndExe(
+      jsResults.comparisonData,
+      'total'
+    );
     expect(result.size).toEqual(2);
     expect(result.has('micro')).toBe(true);
     expect(result.has('macro')).toBe(true);
@@ -686,11 +536,14 @@ describe('getChangeDataBySuiteAndExe()', () => {
     expect(micro?.data[0]).toHaveLength(20);
     expect(macro?.data[0]).toHaveLength(6);
 
-    expect(jsRuns).toBe(20 + 6);
+    expect(jsResults.numRunConfigs).toBe(20 + 6);
   });
 
   it('should return the expected data for TruffleSOM', () => {
-    const result = getChangeDataBySuiteAndExe(resultTSOM, 'total');
+    const result = getChangeDataBySuiteAndExe(
+      tsResults.comparisonData,
+      'total'
+    );
     expect(result.size).toEqual(5);
 
     expect(result.has('macro-startup')).toBe(true);
@@ -720,49 +573,7 @@ describe('getChangeDataBySuiteAndExe()', () => {
     expect(macroStartup?.data[0]).toHaveLength(5);
     expect(microSomSom?.data[0]).toHaveLength(5);
 
-    expect(tsRuns).toBe(166);
-  });
-});
-
-describe('allExesAreTheSame()', () => {
-  it('should return true for the JsSOM data', () => {
-    const result = getChangeDataBySuiteAndExe(resultJsSOM, 'total');
-    expect(allExesAreTheSame(result)).toEqual([true, 'som']);
-  });
-
-  it('should return false for the TruffleSOM data', () => {
-    const result = getChangeDataBySuiteAndExe(resultTSOM, 'total');
-    expect(allExesAreTheSame(result)).toEqual([false, null]);
-  });
-});
-
-describe('arrangeChangeDataForChart()', () => {
-  it(
-    'should transpose the JsSOM data ' +
-      'from grouping by suite to grouping by exe',
-    () => {
-      const changeData = getChangeDataBySuiteAndExe(resultJsSOM, 'total');
-      const result = arrangeChangeDataForChart(changeData);
-
-      expect(result.size).toEqual(1);
-      const data = result.get('som');
-
-      expect(data).toBeDefined();
-
-      if (!data) {
-        return;
-      }
-
-      expect(data.labels).toEqual(['macro', 'micro']);
-      expect(data.data).toHaveLength(2);
-    }
-  );
-
-  it('should not have changed the TruffleSOM data', () => {
-    const changeData = getChangeDataBySuiteAndExe(resultTSOM, 'total');
-    const result = arrangeChangeDataForChart(changeData);
-
-    expect(result).toBe(changeData);
+    expect(tsResults.numRunConfigs).toBe(166);
   });
 });
 

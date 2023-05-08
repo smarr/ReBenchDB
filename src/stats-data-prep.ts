@@ -1,5 +1,4 @@
 import { mkdirSync } from 'node:fs';
-import { assert } from './logging.js';
 import {
   ComparisonStatistics,
   calculateChangeStatistics,
@@ -20,9 +19,9 @@ import {
   ByExeSuiteComparison,
   CompareNavPartial,
   CompareStatsRow,
-  CompareStatsRowAcrossVersions,
   CompareStatsTable,
   CompareViewWithData,
+  DataSeriesVersionComparison,
   StatsSummary
 } from './views/view-types.js';
 import {
@@ -127,215 +126,19 @@ export type ResultsByExeSuiteBenchmark = Map<string, ResultsBySuiteBenchmark>;
 let inlinePlotCanvas: ChartJSNodeCanvas | null = null;
 
 export function getDataNormalizedToBaselineMedian(
-  base: Measurements,
-  change: Measurements
+  base: string,
+  change: string,
+  sortedBase: number[],
+  sortedChange: number[]
 ): ChangeData {
-  const sortedB = base.values.flat();
-  const sortedC = change.values.flat();
-  sortedB.sort((a, b) => a - b);
-  sortedC.sort((a, b) => a - b);
-  const baseM = median(sortedB);
-
-  return {
-    labels: [base.commitId, change.commitId],
-    data: [normalize(sortedB, baseM), normalize(sortedC, baseM)]
+  const baseM = median(sortedBase);
+  const data: ChangeData = {
+    labels: [base, change],
+    data: [normalize(sortedBase, baseM), normalize(sortedChange, baseM)]
   };
+  return data;
 }
 
-export async function convertMeasuresToBenchmarks(
-  bench: ProcessedResult,
-  baseOffset: number,
-  changeOffset: number,
-  outputFolder: string,
-  plotName: string,
-  lastPlotId: number
-): Promise<{ stats: CompareStatsRow[]; lastPlotId: number }> {
-  // Start by checking some basic assertions.
-  // This is mostly for my own sanity,
-  // and to encode the invariants that we assume.
-
-  const benchmarks: CompareStatsRow[] = [];
-  let lastEnvId = -1;
-  let lastVarValue: string | null = null;
-  let lastCores: string | null = null;
-  let lastInputSize: string | null = null;
-  let lastExtraArgs: string | null = null;
-
-  let numV = 0;
-  let numC = 0;
-  let numI = 0;
-  let numEa = 0;
-
-  let versionStats: CompareStatsRowAcrossVersions = {};
-  let numVersionStats = 0;
-  let inlinePlotUrl: string | undefined = undefined;
-
-  for (let i = 0; i < bench.measurements.length; i += 2) {
-    const isLastIteration = i + 2 >= bench.measurements.length;
-
-    let sameAsLast = true;
-
-    const m = bench.measurements[i + baseOffset];
-    if (lastEnvId === -1) {
-      lastEnvId = m.envId;
-      lastVarValue = m.runSettings.varValue;
-      lastCores = m.runSettings.cores;
-      lastInputSize = m.runSettings.inputSize;
-      lastExtraArgs = m.runSettings.extraArgs;
-    } else {
-      if (lastEnvId !== m.envId) {
-        sameAsLast = false;
-      }
-
-      if (lastVarValue !== m.runSettings.varValue) {
-        sameAsLast = false;
-        numV += 1;
-      }
-
-      if (lastCores !== m.runSettings.cores) {
-        sameAsLast = false;
-        numC += 1;
-      }
-
-      if (lastInputSize !== m.runSettings.inputSize) {
-        sameAsLast = false;
-        numI += 1;
-      }
-
-      if (lastExtraArgs !== m.runSettings.extraArgs) {
-        sameAsLast = false;
-        numEa += 1;
-      }
-    }
-
-    if (!sameAsLast && numVersionStats > 0) {
-      if (inlinePlotUrl === undefined) {
-        throw new Error(
-          'inlinePlotUrl has not been set for ' +
-            `${bench.bench}, ${bench.exe}, ${bench.suite}. `
-        );
-      }
-
-      const b: CompareStatsRow = {
-        benchId: {
-          b: bench.bench,
-          e: bench.exe,
-          s: bench.suite
-        },
-        details: {
-          cmdline: m.runSettings.simplifiedCmdline,
-          envId: m.envId,
-          hasProfiles: false, // TODO
-          hasWarmup: false, // TODO
-          // profileIds,
-          numV,
-          numC,
-          numI,
-          numEa
-        },
-        inlinePlot: inlinePlotUrl,
-        missingCommitId: undefined, // TODO
-        versionStats: versionStats
-        // exeStats: undefined
-      };
-      benchmarks.push(b);
-      versionStats = {};
-    }
-
-    const change = bench.measurements[i + changeOffset];
-    if (!change.changeStats) {
-      throw new Error(
-        'changeStats has not yet been set ' +
-          `for ${bench.bench}, ${bench.exe}, ${bench.suite}. ` +
-          `This should have been done in calculateAllChangeStatistics()`
-      );
-    }
-    versionStats[change.criterion.name] = change.changeStats;
-    if (change.criterion.name === 'total') {
-      if (inlinePlotCanvas === null) {
-        inlinePlotCanvas = createCanvas(
-          siteAesthetics.inlinePlot.height,
-          siteAesthetics.inlinePlot.width,
-          'svg',
-          'boxplot'
-        );
-      }
-
-      const data = getDataNormalizedToBaselineMedian(m, change);
-
-      lastPlotId += 1;
-
-      inlinePlotUrl = await renderInlinePlot(
-        inlinePlotCanvas,
-        data,
-        outputFolder,
-        plotName,
-        lastPlotId
-      );
-    }
-
-    numVersionStats += 1;
-
-    if (isLastIteration) {
-      if (inlinePlotUrl === undefined) {
-        throw new Error(
-          'inlinePlotUrl has not been set for ' +
-            `${bench.bench}, ${bench.exe}, ${bench.suite}. `
-        );
-      }
-
-      const b: CompareStatsRow = {
-        benchId: {
-          b: bench.bench,
-          e: bench.exe,
-          s: bench.suite
-        },
-        details: {
-          cmdline: m.runSettings.simplifiedCmdline,
-          envId: m.envId,
-          // profileIds,
-          hasProfiles: false, // TODO
-          hasWarmup: false, // TODO
-          numV,
-          numC,
-          numI,
-          numEa
-        },
-        inlinePlot: inlinePlotUrl,
-        missingCommitId: undefined, // TODO
-        versionStats: versionStats
-        // exeStats: undefined
-      };
-      benchmarks.push(b);
-    }
-
-    // TODO: get the profileIds
-    // const profileIds = {
-    //   base: {
-    //     commitId: bench.measurements[i + baseOffset].commitId,
-    //     runId: bench.measurements[i + baseOffset].runSettings.runId,
-    //     trialId: bench.measurements[i + baseOffset].runSettings.trialId,
-    //   },
-    //   change: {
-    //     commitId: bench.measurements[i + changeOffset].commitId,
-    //     runId: bench.measurements[i + changeOffset].runSettings.runId,
-    //     trialId: bench.measurements[i + changeOffset].runSettings.trialId,
-    //   }
-    // };
-  }
-
-  // do extra pass to adjust the counts as needed
-  if (numV > 0 || numC > 0 || numI > 0 || numEa > 0) {
-    for (const b of benchmarks) {
-      b.details.numV = numV;
-      b.details.numC = numC;
-      b.details.numI = numI;
-      b.details.numEa = numEa;
-    }
-  }
-
-  return { stats: benchmarks, lastPlotId };
-}
 
 function assertBasicPropertiesOfSortedMeasurements(
   bench: ProcessedResult,
@@ -373,27 +176,25 @@ function assertBasicPropertiesOfSortedMeasurements(
   }
 }
 
-function addCompareStatsRow(
-  missing: Map<string, CompareStatsRow>,
+function addOrGetCompareStatsRow(
+  variants: Map<string, CompareStatsRow>,
   measurements: Measurements,
-  bench: ProcessedResult,
-  base: string,
-  change: string
-): void {
+  bench: ProcessedResult
+): CompareStatsRow {
   const b = bench.bench;
   const e = bench.exe;
   const s = bench.suite;
+
+  // only these will vary between different sets of measurements
   const v = measurements.runSettings.varValue || undefined;
   const c = measurements.runSettings.cores || undefined;
   const i = measurements.runSettings.inputSize || undefined;
   const ea = measurements.runSettings.extraArgs || undefined;
   const envId = measurements.envId;
 
-  const key = `${b}-${e}-${s}-${v || ''}-${c || ''}-${i || ''}-${
-    ea || ''
-  }-${envId}`;
+  const key = `${v || ''}-${c || ''}-${i || ''}-${ea || ''}-${envId}`;
 
-  let row = missing.get(key);
+  let row = variants.get(key);
   if (row === undefined) {
     row = {
       benchId: { b, e, s, v, c, ea },
@@ -407,13 +208,30 @@ function addCompareStatsRow(
         numI: 0,
         numEa: 0,
         numEnv: 0
-      },
-      missingCommitId: measurements.commitId === base ? change : base,
-      missingCriteria: []
+      }
     };
-    missing.set(key, row);
+    variants.set(key, row);
   }
-  row.missingCriteria?.push(measurements.criterion);
+  return row;
+}
+
+function addMissingCompareStatsRow(
+  variants: Map<string, CompareStatsRow>,
+  measurements: Measurements,
+  bench: ProcessedResult,
+  base: string,
+  change: string
+): void {
+  const row = addOrGetCompareStatsRow(variants, measurements, bench);
+
+  if (!row.missing) {
+    row.missing = [];
+  }
+
+  row.missing.push({
+    commitId: measurements.commitId === base ? change : base,
+    criterion: measurements.criterion
+  });
 }
 
 export interface VariantCountAndMissing {
@@ -422,7 +240,7 @@ export interface VariantCountAndMissing {
   numI: number;
   numEa: number;
   numEnv: number;
-  missing?: CompareStatsRow[];
+  missing: Map<string, CompareStatsRow>;
 }
 
 /**
@@ -449,7 +267,7 @@ export function countVariantsAndDropMissing(
   let numEnv = 1;
 
   function dropAsMissing(i: number): void {
-    addCompareStatsRow(missing, measurements[i], bench, base, change);
+    addMissingCompareStatsRow(missing, measurements[i], bench, base, change);
     measurements.splice(i, 1);
   }
 
@@ -464,15 +282,7 @@ export function countVariantsAndDropMissing(
         mi.details.numEnv = numEnv;
       }
     }
-
-    return {
-      numV,
-      numC,
-      numI,
-      numEa,
-      numEnv,
-      missing: missing.size === 0 ? undefined : [...missing.values()]
-    };
+    return { numV, numC, numI, numEa, numEnv, missing };
   }
 
   let i = 0;
@@ -533,60 +343,219 @@ export function countVariantsAndDropMissing(
   return createResult();
 }
 
-export function calculateChangeStatsForBenchmark(
+export interface StatsForBenchmark {
+  stats: CompareStatsRow[];
+  lastPlotId: number;
+  numRunConfigs: number;
+}
+
+export async function calculateChangeStatsForBenchmark(
   bench: ProcessedResult,
+  base: string,
+  change: string,
   baseOffset: number,
   changeOffset: number,
-  perCriteria: Map<string, ComparisonStatistics[]> | null
-): Measurements[] | undefined {
+  perCriteria: Map<string, ComparisonStatistics[]> | null,
+  lastPlotId: number,
+  outputFolder: string | null = null,
+  plotName: string | null = null
+): Promise<StatsForBenchmark> {
   const measurements = bench.measurements;
-  assert(
-    measurements.length % 2 === 0,
-    'measurements.length must be even, ' +
-      'because we expect pairs of measurements from baseline and change'
-  );
-  measurements.sort(compareToSortForSinglePassChangeStats);
-  assertBasicPropertiesOfSortedMeasurements(bench, baseOffset, changeOffset);
 
+  // sort measurements to create the structure of paired measurements
+  measurements.sort(compareToSortForSinglePassChangeStats);
+
+  // drop everything that doesn't pair up
   const countsAndMissing = countVariantsAndDropMissing(bench, base, change);
 
-  // separate the measurements by criterion and envId
-  // but handle a few trivial cases first
   if (measurements.length === 0) {
-    return dropped;
+    // nothing to do, so just try returning the missing
+    return {
+      stats: [...countsAndMissing.missing.values()],
+      lastPlotId,
+      numRunConfigs: 0
+    };
   }
+
+  // check that we have the expected structure
+  assertBasicPropertiesOfSortedMeasurements(bench, baseOffset, changeOffset);
+
+  const variants: Map<string, CompareStatsRow> = countsAndMissing.missing;
+
+  // now we have pairs of measurements
+  // and we have various different criteria
+  // we need to
+  // - calculate the change statistics for each criterion
+  const counts = await computeStatisticsAndInlinePlot(
+    variants,
+    bench,
+    measurements,
+    baseOffset,
+    changeOffset,
+    perCriteria,
+    lastPlotId,
+    siteConfig.inlinePlotCriterion,
+    outputFolder,
+    plotName
+  );
+
+  return {
+    stats: [...variants.values()],
+    lastPlotId: counts.lastPlotId,
+    numRunConfigs: counts.numRunConfigs
+  };
+}
+
+function getDataSeriesIds(
+  base: Measurements,
+  change: Measurements
+): DataSeriesVersionComparison {
+  return {
+    base: {
+      commitId: base.commitId,
+      runId: base.runId,
+      trialId: base.trialId
+    },
+    change: {
+      commitId: change.commitId,
+      runId: change.runId,
+      trialId: change.trialId
+    }
+  };
+}
+
+export function getMsFlattenedAndSorted(
+  base: Measurements,
+  change: Measurements
+): { sortedBase: number[]; sortedChange: number[] } {
+  const sortedBase = base.values.flat();
+  sortedBase.sort((a, b) => a - b);
+
+  const sortedChange = change.values.flat();
+  sortedChange.sort((a, b) => a - b);
+  return { sortedBase, sortedChange };
+}
+
+async function computeStatisticsAndInlinePlot(
+  variants: Map<string, CompareStatsRow>,
+  bench: ProcessedResult,
+  measurements: Measurements[],
+  baseOffset: number,
+  changeOffset: number,
+  perCriteria: Map<string, ComparisonStatistics[]> | null,
+  lastPlotId: number,
+  inlinePlotCriterion: string | null = null,
+  outputFolder: string | null = null,
+  plotName: string | null = null
+): Promise<{ lastPlotId: number; numRunConfigs: number }> {
+  let numRunConfigs = 0;
 
   for (let i = 0; i < measurements.length; i += 2) {
-    const sortedBase = measurements[i + baseOffset].values.flat();
-    sortedBase.sort((a, b) => a - b);
+    const base = measurements[i + baseOffset];
+    const change = measurements[i + changeOffset];
 
-    const sortedChange = measurements[i + changeOffset].values.flat();
-    sortedChange.sort((a, b) => a - b);
+    const { sortedBase, sortedChange } = getMsFlattenedAndSorted(base, change);
+    const changeStats = calculateChangeStatistics(sortedBase, sortedChange);
 
-    const stats = calculateChangeStatistics(sortedBase, sortedChange);
-    measurements[i + changeOffset].changeStats = stats;
+    const row = addOrGetCompareStatsRow(variants, change, bench);
+
+    // add the various details
+    row.details.hasWarmup = siteConfig.canShowWarmup(change.values);
+
+    if (
+      (row.details.hasWarmup || row.details.hasProfiles) &&
+      !row.details.dataSeries
+    ) {
+      row.details.dataSeries = getDataSeriesIds(base, change);
+    }
+
+    if (!row.versionStats) {
+      row.versionStats = {};
+    }
+
+    row.versionStats[change.criterion.name] = changeStats;
+
+    if (
+      outputFolder !== null &&
+      plotName != null &&
+      change.criterion.name === inlinePlotCriterion
+    ) {
+      lastPlotId += 1;
+      row.inlinePlot = await createInlinePlot(
+        base.commitId,
+        change.commitId,
+        sortedBase,
+        sortedChange,
+        outputFolder,
+        plotName,
+        lastPlotId
+      );
+    }
 
     if (perCriteria !== null) {
-      const criterionName = measurements[i + baseOffset].criterion.name;
-      let allStats = perCriteria.get(criterionName);
-      if (allStats === undefined) {
-        allStats = [];
-        perCriteria.set(criterionName, allStats);
-      }
-      allStats.push(stats);
+      recordPerCriteria(perCriteria, measurements, i, baseOffset, changeStats);
     }
+
+    numRunConfigs += 1;
   }
 
-  return undefined;
+  return { lastPlotId, numRunConfigs };
+}
+
+async function createInlinePlot(
+  base: string,
+  change: string,
+  sortedBase: number[],
+  sortedChange: number[],
+  outputFolder: string,
+  plotName: string,
+  plotId: number
+): Promise<string> {
+  if (inlinePlotCanvas === null) {
+    inlinePlotCanvas = createCanvas(siteAesthetics.inlinePlot);
+  }
+
+  const data: ChangeData = getDataNormalizedToBaselineMedian(
+    base,
+    change,
+    sortedBase,
+    sortedChange
+  );
+
+  return await renderInlinePlot(
+    inlinePlotCanvas,
+    data,
+    outputFolder,
+    plotName,
+    plotId
+  );
+}
+
+function recordPerCriteria(
+  perCriteria: Map<string, ComparisonStatistics[]>,
+  measurements: Measurements[],
+  i: number,
+  baseOffset: number,
+  changeStats: ComparisonStatistics
+) {
+  const criterionName = measurements[i + baseOffset].criterion.name;
+  let allStats = perCriteria.get(criterionName);
+  if (allStats === undefined) {
+    allStats = [];
+    perCriteria.set(criterionName, allStats);
+  }
+  allStats.push(changeStats);
 }
 
 export async function calculateAllChangeStatisticsAndInlinePlots(
   byExeSuiteBench: ResultsByExeSuiteBenchmark,
+  base: string,
+  change: string,
   baseOffset: number,
   changeOffset: number,
-  criteria: Map<string, ComparisonStatistics[]> | null,
-  outputFolder: string,
-  plotName: string
+  criteria: Map<string, ComparisonStatistics[]> | null = null,
+  outputFolder: string | null = null,
+  plotName: string | null = null
 ): Promise<{ numRunConfigs: number; comparisonData: ByExeSuiteComparison }> {
   const comparisonData = new Map<string, Map<string, CompareStatsTable>>();
   // those two counts are likely always the same,
@@ -605,31 +574,22 @@ export async function calculateAllChangeStatisticsAndInlinePlots(
       };
 
       for (const bench of byBench.benchmarks.values()) {
-        numRunConfigs += 1;
-
-        const dropped = calculateChangeStatsForBenchmark(
+        const result = await calculateChangeStatsForBenchmark(
           bench,
+          base,
+          change,
           baseOffset,
           changeOffset,
-          criteria
-        );
-
-        if (dropped) {
-          throw new Error(
-            'TODO: storing details about dropped data to show in the UI'
-          );
-        }
-
-        const result = await convertMeasuresToBenchmarks(
-          bench,
-          baseOffset,
-          changeOffset,
+          criteria,
+          lastPlotId,
           outputFolder,
-          plotName,
-          lastPlotId
+          plotName
         );
-        byBenchmark.benchmarks.push(...result.stats);
+
         lastPlotId = result.lastPlotId;
+        numRunConfigs += result.numRunConfigs;
+
+        byBenchmark.benchmarks.push(...result.stats);
       }
 
       bySuiteCompare.set(suite, byBenchmark);
@@ -650,7 +610,7 @@ export type BySuiteChangeData = Map<string, ChangeData>;
 export type ByGroupChangeData = Map<string, ChangeData>;
 
 export function getChangeDataBySuiteAndExe(
-  byExeSuiteBench: ResultsByExeSuiteBenchmark,
+  byExeSuiteBench: ByExeSuiteComparison,
   criterion: string
 ): BySuiteChangeData {
   const bySuiteAndExe = new Map<string, ChangeData>();
@@ -666,17 +626,16 @@ export function getChangeDataBySuiteAndExe(
       const changeDataForExe: number[] = [];
 
       for (const bench of byBench.benchmarks.values()) {
-        for (const m of bench.measurements) {
-          if (m.changeStats === undefined) {
-            continue;
-          }
-
-          if (m.criterion.name !== criterion) {
-            continue;
-          }
-
-          changeDataForExe.push(m.changeStats.change_m);
+        if (bench.versionStats === undefined) {
+          continue;
         }
+
+        const changeStats = bench.versionStats[criterion];
+        if (changeStats === undefined) {
+          continue;
+        }
+
+        changeDataForExe.push(changeStats.change_m);
       }
 
       bySuiteChangeData.labels.push(exe);
@@ -756,7 +715,7 @@ export function allExesAreTheSame(
 }
 
 export function calculateDataForOverviewPlot(
-  byExeSuiteBench: ResultsByExeSuiteBenchmark,
+  byExeSuiteBench: ByExeSuiteComparison,
   criterion: string
 ): ByGroupChangeData {
   const changeData = getChangeDataBySuiteAndExe(byExeSuiteBench, criterion);
@@ -830,6 +789,8 @@ export async function calculateAllStatisticsAndRenderPlots(
   const { numRunConfigs, comparisonData } =
     await calculateAllChangeStatisticsAndInlinePlots(
       byExeSuiteBench,
+      base,
+      change,
       baseOffset,
       changeOffset,
       criteria,
@@ -840,7 +801,7 @@ export async function calculateAllStatisticsAndRenderPlots(
   const absolutePath = `${reportOutputFolder}/${reportId}`;
   mkdirSync(absolutePath, { recursive: true });
 
-  const plotData = calculateDataForOverviewPlot(byExeSuiteBench, 'total');
+  const plotData = calculateDataForOverviewPlot(comparisonData, 'total');
 
   const files = await renderOverviewPlots(
     reportOutputFolder,

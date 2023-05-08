@@ -90,17 +90,28 @@ export interface DetailedInfo {
 
   /** Number of Extra Argument */
   numEa: number;
+
+  /** Number of Environments */
+  numEnv: number;
+}
+
+export interface MissingData {
+  /* Commit hash for which the data is missing. */
+  commitId: string;
+
+  /* Criterion for which the data is missing. */
+  criterion: CriterionData;
 }
 
 export interface CompareStatsRow {
   benchId: BenchmarkId;
   details: DetailedInfo;
 
-  inlinePlot: string;
+  missing?: MissingData[];
 
-  /** The commit id for which data is missing for the comparison. */
-  missingCommitId?: string;
+  inlinePlot?: string;
 
+  /** Statistics per criterion, comparing base and change. */
   versionStats?: CompareStatsRowAcrossVersions;
   exeStats?: CompareStatsRowAcrossExes[];
 }
