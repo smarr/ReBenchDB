@@ -139,7 +139,6 @@ export function getDataNormalizedToBaselineMedian(
   return data;
 }
 
-
 function assertBasicPropertiesOfSortedMeasurements(
   bench: ProcessedResult,
   baseOffset: number,
