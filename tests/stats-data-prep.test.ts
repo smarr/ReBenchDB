@@ -1,4 +1,4 @@
-import { describe, expect, it, afterAll } from '@jest/globals';
+import { describe, expect, it } from '@jest/globals';
 
 import { readFileSync, mkdirSync } from 'node:fs';
 
@@ -36,7 +36,9 @@ import {
 import { prepareTemplate } from '../src/templates.js';
 import * as dataFormatters from '../src/data-format.js';
 import * as viewHelpers from '../src/views/helpers.js';
-import { createTmpDirectory, deleteTmpDirectory } from './helpers.js';
+import { initJestMatchers } from './helpers.js';
+
+initJestMatchers();
 
 describe('compareStringOrNull()', () => {
   it('should compare null and null', () => {
@@ -383,7 +385,7 @@ const resultTSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
   dataTSOM.results
 );
 
-const outputFolder = createTmpDirectory();
+const outputFolder = robustPath('../tests/data/actual-results/stats-data-prep');
 
 describe('calculateAllChangeStatisticsAndInlinePlots()', () => {
   let jsComparisonData: ByExeSuiteComparison;
@@ -636,8 +638,14 @@ const revDataT: RevisionComparison = {
 // TODO: this is duplicated from compare-view.test.ts
 function loadResult(name: string): string {
   return readFileSync(
-    robustPath(`../tests/views/expected-results/${name}.html`)
+    robustPath(`../tests/data/expected-results/stats-data-prep/${name}.html`)
   ).toString();
+}
+
+function getResultPath(fileName: string): string {
+  return robustPath(
+    `../tests/data/expected-results/stats-data-prep/${fileName}`
+  );
 }
 
 // TODO: does this belong into compare-view.test.ts?
@@ -664,9 +672,7 @@ describe('prepareCompareView()', () => {
       for (let i = 1; i <= 26; i += 1) {
         expect(`jssom/inline-${i}.svg`).toBeIdenticalSvgFiles(
           outputFolder,
-          robustPath(
-            `../tests/data/charts/prepare-compare-view-jssom/inline-${i}.svg`
-          )
+          getResultPath(`jssom/inline-${i}.svg`)
         );
       }
     });
@@ -674,16 +680,12 @@ describe('prepareCompareView()', () => {
     it('should produce 1 overview svg and 1 png', () => {
       expect(`jssom/overview-som.svg`).toBeIdenticalSvgFiles(
         outputFolder,
-        robustPath(
-          '../tests/data/charts/prepare-compare-view-jssom/overview-som.svg'
-        )
+        getResultPath('jssom/overview-som.svg')
       );
 
       expect('jssom/overview.png').toBeMostlyIdenticalImage(
         outputFolder,
-        robustPath(
-          '../tests/data/charts/prepare-compare-view-jssom/overview.png'
-        )
+        getResultPath('jssom/overview.png')
       );
     });
 
@@ -713,9 +715,7 @@ describe('prepareCompareView()', () => {
       for (let i = 1; i <= 166; i += 1) {
         expect(`tsom/inline-${i}.svg`).toBeIdenticalSvgFiles(
           outputFolder,
-          robustPath(
-            `../tests/data/charts/prepare-compare-view-tsom/inline-${i}.svg`
-          )
+          getResultPath(`tsom/inline-${i}.svg`)
         );
       }
     });
@@ -728,17 +728,12 @@ describe('prepareCompareView()', () => {
         'tsom/overview-micro-startup.svg',
         'tsom/overview-micro-somsom.svg'
       ]) {
-        expect(name).toBeIdenticalSvgFiles(
-          outputFolder,
-          robustPath(`../tests/data/charts/prepare-compare-view-${name}`)
-        );
+        expect(name).toBeIdenticalSvgFiles(outputFolder, getResultPath(name));
       }
 
       expect('tsom/overview.png').toBeMostlyIdenticalImage(
         outputFolder,
-        robustPath(
-          '../tests/data/charts/prepare-compare-view-tsom/overview.png'
-        )
+        getResultPath('tsom/overview.png')
       );
     });
 
@@ -748,8 +743,4 @@ describe('prepareCompareView()', () => {
       expect(html).toEqual(loadResult('compare-view-tsom'));
     });
   });
-});
-
-afterAll(() => {
-  deleteTmpDirectory(outputFolder, false);
 });

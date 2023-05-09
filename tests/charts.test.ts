@@ -1,4 +1,4 @@
-import { describe, expect, afterAll, it } from '@jest/globals';
+import { describe, expect, it } from '@jest/globals';
 import { readFileSync } from 'node:fs';
 
 import {
@@ -15,10 +15,16 @@ import {
 } from '../src/charts.js';
 import { Measurements } from '../src/db.js';
 import { collateMeasurements } from '../src/db-data-processing.js';
-import { createTmpDirectory, deleteTmpDirectory } from './helpers.js';
-import { ByExeSuiteComparison } from 'views/view-types.js';
+import { ByExeSuiteComparison } from '../src/views/view-types.js';
+import { initJestMatchers } from './helpers.js';
 
-const outputFolder = createTmpDirectory();
+initJestMatchers();
+
+const outputFolder = robustPath('../tests/data/actual-results/charts');
+
+function getResultPath(fileName: string): string {
+  return robustPath(`../tests/data/expected-results/charts/${fileName}`);
+}
 
 const dataJsSOM = JSON.parse(
   readFileSync(
@@ -100,14 +106,14 @@ describe('renderOverviewPlots()', () => {
     it('should match the png expected', () => {
       expect(result.png).toBeMostlyIdenticalImage(
         outputFolder,
-        robustPath('../tests/data/charts/jssom.png')
+        getResultPath('jssom.png')
       );
     });
 
     it('should match the svg expected', () => {
       expect(result.svg[0]).toBeIdenticalSvgFiles(
         outputFolder,
-        robustPath('../tests/data/charts/jssom-som.svg')
+        getResultPath('jssom-som.svg')
       );
     });
   });
@@ -131,7 +137,7 @@ describe('renderOverviewPlots()', () => {
     it('should match the png expected', () => {
       expect(result.png).toBeMostlyIdenticalImage(
         outputFolder,
-        robustPath('../tests/data/charts/trufflesom.png')
+        getResultPath('trufflesom.png')
       );
     });
 
@@ -150,27 +156,27 @@ describe('renderOverviewPlots()', () => {
     it('should match the svg expected', () => {
       expect(result.svg[0]).toBeIdenticalSvgFiles(
         outputFolder,
-        robustPath('../tests/data/charts/trufflesom-macro-steady.svg')
+        getResultPath('trufflesom-macro-steady.svg')
       );
 
       expect(result.svg[1]).toBeIdenticalSvgFiles(
         outputFolder,
-        robustPath('../tests/data/charts/trufflesom-micro-steady.svg')
+        getResultPath('trufflesom-micro-steady.svg')
       );
 
       expect(result.svg[2]).toBeIdenticalSvgFiles(
         outputFolder,
-        robustPath('../tests/data/charts/trufflesom-macro-startup.svg')
+        getResultPath('trufflesom-macro-startup.svg')
       );
 
       expect(result.svg[3]).toBeIdenticalSvgFiles(
         outputFolder,
-        robustPath('../tests/data/charts/trufflesom-micro-startup.svg')
+        getResultPath('trufflesom-micro-startup.svg')
       );
 
       expect(result.svg[4]).toBeIdenticalSvgFiles(
         outputFolder,
-        robustPath('../tests/data/charts/trufflesom-micro-somsom.svg')
+        getResultPath('trufflesom-micro-somsom.svg')
       );
     });
   });
@@ -210,13 +216,6 @@ describe('renderInlinePlot()', () => {
 
     expect(name).toEqual('inline-1.svg');
 
-    expect(name).toBeIdenticalSvgFiles(
-      outputFolder,
-      robustPath(`../tests/data/charts/${name}`)
-    );
+    expect(name).toBeIdenticalSvgFiles(outputFolder, getResultPath(name));
   });
-});
-
-afterAll(() => {
-  deleteTmpDirectory(outputFolder, false);
 });

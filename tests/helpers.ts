@@ -130,7 +130,9 @@ function toBeIdenticalSvgFiles(
   };
 }
 
-expect.extend({
-  toBeMostlyIdenticalImage,
-  toBeIdenticalSvgFiles
-});
+export function initJestMatchers(): void {
+  expect.extend({
+    toBeMostlyIdenticalImage,
+    toBeIdenticalSvgFiles
+  });
+}

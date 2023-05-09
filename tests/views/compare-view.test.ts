@@ -1,4 +1,4 @@
-import { describe, expect, it, afterAll } from '@jest/globals';
+import { describe, expect, it } from '@jest/globals';
 import { readFileSync } from 'fs';
 import { prepareTemplate } from '../../src/templates.js';
 import * as dataFormatters from '../../src/data-format.js';
@@ -17,7 +17,7 @@ import {
   DetailedInfo,
   StatsSummaryPartial,
   ReportConfig
-} from 'views/view-types.js';
+} from '../../src/views/view-types.js';
 import { robustPath } from '../../src/util.js';
 import {
   calculateAllStatisticsAndRenderPlots,
@@ -25,11 +25,10 @@ import {
 } from '../../src/stats-data-prep.js';
 import { Environment } from '../../src/db.js';
 import { collateMeasurements } from '../../src/db-data-processing.js';
-import { createTmpDirectory, deleteTmpDirectory } from '../helpers.js';
 
 function loadResult(name: string): string {
   return readFileSync(
-    robustPath(`../tests/views/expected-results/${name}.html`)
+    robustPath(`../tests/data/expected-results/compare-view/${name}.html`)
   ).toString();
 }
 
@@ -380,7 +379,7 @@ describe('Compare View Statistics', () => {
   let statsJ: StatsSummary;
   let statsT: StatsSummary;
 
-  const outputFolder = createTmpDirectory();
+  const outputFolder = robustPath('../tests/data/actual-results/compare-view');
 
   it('should calculate statistics without throwing exception', async () => {
     statsJ = (
@@ -442,9 +441,5 @@ describe('Compare View Statistics', () => {
         }
       }
     });
-  });
-
-  afterAll(() => {
-    deleteTmpDirectory(outputFolder, false);
   });
 });
