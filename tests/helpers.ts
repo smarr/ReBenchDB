@@ -147,6 +147,18 @@ function toEqualHtmlFragment(actualHtml: string, expectedFragmentFile: string) {
     robustPath(`../tests/data/expected-results/${expectedFragmentFile}.html`)
   ).toString();
 
+  if (isRequestedToUpdateExpectedData()) {
+    writeFileSync(
+      robustPath(`../tests/data/expected-results/${expectedFragmentFile}.html`),
+      actualHtml
+    );
+    return {
+      pass: true,
+      message: () =>
+        `Updating of expected data was enabled, so no comparison was done.`
+    };
+  }
+
   if (actualHtml !== expectedHtml) {
     const diff = diffStringsUnified(expectedHtml, actualHtml, {
       expand: false
