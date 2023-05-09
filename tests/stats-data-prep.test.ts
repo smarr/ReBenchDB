@@ -36,7 +36,10 @@ import {
 import { prepareTemplate } from '../src/templates.js';
 import * as dataFormatters from '../src/data-format.js';
 import * as viewHelpers from '../src/views/helpers.js';
-import { initJestMatchers } from './helpers.js';
+import {
+  initJestMatchers,
+  isRequestedToUpdateExpectedData
+} from './helpers.js';
 
 initJestMatchers();
 
@@ -385,7 +388,9 @@ const resultTSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
   dataTSOM.results
 );
 
-const outputFolder = robustPath('../tests/data/actual-results/stats-data-prep');
+const outputFolder = isRequestedToUpdateExpectedData()
+  ? robustPath('../tests/data/expected-results/stats-data-prep')
+  : robustPath('../tests/data/actual-results/stats-data-prep');
 
 describe('calculateAllChangeStatisticsAndInlinePlots()', () => {
   let jsComparisonData: ByExeSuiteComparison;
@@ -635,13 +640,6 @@ const revDataT: RevisionComparison = {
   changeCommitId6: '5fa4bd'
 };
 
-// TODO: this is duplicated from compare-view.test.ts
-function loadResult(name: string): string {
-  return readFileSync(
-    robustPath(`../tests/data/expected-results/stats-data-prep/${name}.html`)
-  ).toString();
-}
-
 function getResultPath(fileName: string): string {
   return robustPath(
     `../tests/data/expected-results/stats-data-prep/${fileName}`
@@ -703,7 +701,7 @@ describe('prepareCompareView()', () => {
     it('should render to the expected html', () => {
       const r = <CompareViewWithData>result;
       const html = compareTpl({ ...r, dataFormatters, viewHelpers });
-      expect(html).toEqual(loadResult('compare-view-jssom'));
+      expect(html).toEqualHtmlFragment('stats-data-prep/compare-view-jssom');
     });
   });
 
@@ -762,7 +760,7 @@ describe('prepareCompareView()', () => {
     it('should render to the expected html', () => {
       const r = <CompareViewWithData>result;
       const html = compareTpl({ ...r, dataFormatters, viewHelpers });
-      expect(html).toEqual(loadResult('compare-view-tsom'));
+      expect(html).toEqualHtmlFragment('stats-data-prep/compare-view-tsom');
     });
   });
 });

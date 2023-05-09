@@ -5,15 +5,20 @@ import { basename, sep } from 'node:path';
 
 import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
+import { diffStringsUnified } from 'jest-diff';
+
+import { robustPath } from '../src/util.js';
 
 declare module 'expect' {
   interface AsymmetricMatchers {
     toBeMostlyIdenticalImage(outputFolder: string, expectedFile: string): void;
     toBeIdenticalSvgFiles(outputFolder: string, expectedFile: string): void;
+    toEqualHtmlFragment(expectedFragmentFile: string): void;
   }
   interface Matchers<R> {
     toBeMostlyIdenticalImage(outputFolder: string, expectedFile: string): R;
     toBeIdenticalSvgFiles(outputFolder: string, expectedFile: string): R;
+    toEqualHtmlFragment(expectedFragmentFile: string): R;
   }
 }
 
@@ -112,13 +117,20 @@ function toBeIdenticalSvgFiles(
   const expected: string = readFileSync(expectedFile, 'utf8');
 
   if (actual !== expected) {
+    const diff = diffStringsUnified(expected, actual, { expand: false });
+    // limit diff to first 10 lines
+    const diffLines = diff.split('\n');
+    const diffLinesShort = diffLines.slice(0, 25);
+    const diffShort = diffLinesShort.join('\n');
+
     writeFileSync(basename(actualFile), actual);
 
     return {
       message: () =>
         `expected ${actualFile} to be identical to ${expectedFile},
-         but they were different.
-         See ${basename(actualFile)}.`,
+but they were different.
+See ${basename(actualFile)}.
+${diffShort}`,
       pass: false
     };
   }
@@ -130,9 +142,44 @@ function toBeIdenticalSvgFiles(
   };
 }
 
+function toEqualHtmlFragment(actualHtml: string, expectedFragmentFile: string) {
+  const expectedHtml = readFileSync(
+    robustPath(`../tests/data/expected-results/${expectedFragmentFile}.html`)
+  ).toString();
+
+  if (actualHtml !== expectedHtml) {
+    const diff = diffStringsUnified(expectedHtml, actualHtml, {
+      expand: false
+    });
+    // limit diff to first 10 lines
+    const diffLines = diff.split('\n');
+    const diffLinesShort = diffLines.slice(0, 25);
+    const diffShort = diffLinesShort.join('\n');
+
+    return {
+      message: () =>
+        `expected ${expectedFragmentFile} to be identical to the rendered HTML,
+but they were different:
+${diffShort}`,
+      pass: false
+    };
+  }
+  return {
+    pass: true,
+    message: () =>
+      `Expected ${expectedFragmentFile} to be different ` +
+      `from the rendered HTML, but both were identical.`
+  };
+}
+
 export function initJestMatchers(): void {
   expect.extend({
     toBeMostlyIdenticalImage,
-    toBeIdenticalSvgFiles
+    toBeIdenticalSvgFiles,
+    toEqualHtmlFragment
   });
+}
+
+export function isRequestedToUpdateExpectedData(): boolean {
+  return process.env.UPDATE_EXPECTED_DATA === 'true';
 }

@@ -25,12 +25,9 @@ import {
 } from '../../src/stats-data-prep.js';
 import { Environment } from '../../src/db.js';
 import { collateMeasurements } from '../../src/db-data-processing.js';
+import { initJestMatchers } from '../helpers.js';
 
-function loadResult(name: string): string {
-  return readFileSync(
-    robustPath(`../tests/data/expected-results/compare-view/${name}.html`)
-  ).toString();
-}
+initJestMatchers();
 
 const dataJsSOM = JSON.parse(
   readFileSync(
@@ -128,7 +125,9 @@ describe('Compare View Parts', () => {
         dataFormatters
       };
       const result = tpl(data);
-      expect(result).toEqual(loadResult('stats-row-across-version'));
+      expect(result).toEqualHtmlFragment(
+        'compare-view/stats-row-across-version'
+      );
     });
   });
 
@@ -142,7 +141,7 @@ describe('Compare View Parts', () => {
         viewHelpers
       };
       const result = tpl(data);
-      expect(result).toEqual(loadResult('stats-row-across-exes'));
+      expect(result).toEqualHtmlFragment('compare-view/stats-row-across-exes');
     });
   });
 
@@ -158,7 +157,7 @@ describe('Compare View Parts', () => {
       };
 
       const result = tpl(data);
-      expect(result).toEqual(loadResult('stats-row-button-info'));
+      expect(result).toEqualHtmlFragment('compare-view/stats-row-button-info');
     });
   });
 
@@ -180,7 +179,7 @@ describe('Compare View Parts', () => {
       };
 
       const result = tpl(data);
-      expect(result).toEqual(loadResult('stats-summary'));
+      expect(result).toEqualHtmlFragment('compare-view/stats-summary');
     });
   });
 
@@ -193,7 +192,7 @@ describe('Compare View Parts', () => {
       };
 
       const result = tpl(data);
-      expect(result).toEqual(loadResult('stats-tbl-header'));
+      expect(result).toEqualHtmlFragment('compare-view/stats-tbl-header');
     });
   });
 
@@ -215,7 +214,7 @@ describe('Compare View Parts', () => {
       };
 
       const result = tpl(data);
-      expect(result).toEqual(loadResult('stats-row-version'));
+      expect(result).toEqualHtmlFragment('compare-view/stats-row-version');
     });
 
     it('should render the exe comparison as expected', () => {
@@ -233,7 +232,7 @@ describe('Compare View Parts', () => {
       };
 
       const result = tpl(data);
-      expect(result).toEqual(loadResult('stats-row-exe'));
+      expect(result).toEqualHtmlFragment('compare-view/stats-row-exe');
     });
   });
 
@@ -258,7 +257,7 @@ describe('Compare View Parts', () => {
       };
 
       const result = tpl(data);
-      expect(result).toEqual(loadResult('stats-tbl'));
+      expect(result).toEqualHtmlFragment('compare-view/stats-tbl');
     });
   });
 
@@ -330,12 +329,12 @@ describe('Compare View Parts', () => {
 
     it('should render the JsSOM nav correctly to html', () => {
       const result = tpl(resultJ);
-      expect(result).toEqual(loadResult('navigation-jssom'));
+      expect(result).toEqualHtmlFragment('compare-view/navigation-jssom');
     });
 
     it('should render the TruffleSOM nav correctly to html', () => {
       const result = tpl(resultT);
-      expect(result).toEqual(loadResult('navigation-tsom'));
+      expect(result).toEqualHtmlFragment('compare-view/navigation-tsom');
     });
   });
 
@@ -368,7 +367,7 @@ describe('Compare View Parts', () => {
       suites.set('suite1', benchmarks);
 
       const result = tpl(data);
-      expect(result).toEqual(loadResult('compare-versions'));
+      expect(result).toEqualHtmlFragment('compare-view/compare-versions');
     });
   });
 });
