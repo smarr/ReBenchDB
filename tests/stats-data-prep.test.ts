@@ -38,7 +38,8 @@ import * as dataFormatters from '../src/data-format.js';
 import * as viewHelpers from '../src/views/helpers.js';
 import {
   initJestMatchers,
-  isRequestedToUpdateExpectedData
+  isRequestedToUpdateExpectedData,
+  isSupportingSvgTests
 } from './helpers.js';
 
 initJestMatchers();
@@ -762,5 +763,16 @@ describe('prepareCompareView()', () => {
       const html = compareTpl({ ...r, dataFormatters, viewHelpers });
       expect(html).toEqualHtmlFragment('stats-data-prep/compare-view-tsom');
     });
+
+    if (!isSupportingSvgTests()) {
+      // eslint-disable-next-line jest/no-disabled-tests
+      it.skip(
+        'SVG tests are currently disabled, ' +
+          'because they render differently on different systems',
+        () => {
+          expect(true).toBe(false);
+        }
+      );
+    }
   });
 });

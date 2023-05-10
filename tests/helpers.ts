@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { tmpdir, type } from 'node:os';
 import { basename, sep } from 'node:path';
 
 import pixelmatch from 'pixelmatch';
@@ -113,6 +113,14 @@ function toBeIdenticalSvgFiles(
   outputFolder: string,
   expectedFile: string
 ) {
+  if (!isSupportingSvgTests()) {
+    return {
+      pass: true,
+      message: () =>
+        `Skipping SVG tests on ${type()} because of different rendering.`
+    };
+  }
+
   const actual: string = readFileSync(`${outputFolder}/${actualFile}`, 'utf8');
   const expected: string = readFileSync(expectedFile, 'utf8');
 
@@ -194,4 +202,8 @@ export function initJestMatchers(): void {
 
 export function isRequestedToUpdateExpectedData(): boolean {
   return process.env.UPDATE_EXPECTED_DATA === 'true';
+}
+
+export function isSupportingSvgTests(): boolean {
+  return type() !== 'Linux';
 }
