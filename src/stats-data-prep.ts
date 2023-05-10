@@ -165,7 +165,6 @@ function assertBasicPropertiesOfSortedMeasurements(
   }
 
   if (bench.measurements[0].commitId === bench.measurements[1].commitId) {
-    // TODO: missingCommitId handling here?
     throw new Error(
       'base and change are the same for ' +
         `${bench.bench}, ${bench.exe}, ${bench.suite}, ` +
