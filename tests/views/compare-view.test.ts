@@ -98,15 +98,19 @@ const versionStats = {
 const exeStats = [
   {
     name: 'TruffleSOM-ast',
-    total: { median: 0.333, samples: 43, change_m: 546 },
-    gcTime: { median: 0.111, samples: 1, change_m: 146 },
-    allocated: { median: 222, samples: 1, change_m: 646 }
+    criteria: {
+      total: { median: 0.333, samples: 43, change_m: 546 },
+      gcTime: { median: 0.111, samples: 1, change_m: 146 },
+      allocated: { median: 222, samples: 1, change_m: 646 }
+    }
   },
   {
     name: 'TruffleSOM-bc',
-    total: { median: 0.4534, samples: 12, change_m: 34 },
-    gcTime: { median: 0.256, samples: 1, change_m: 2323 },
-    allocated: { median: 675, samples: 1, change_m: 6046 }
+    criteria: {
+      total: { median: 0.4534, samples: 12, change_m: 34 },
+      gcTime: { median: 0.256, samples: 1, change_m: 2323 },
+      allocated: { median: 675, samples: 1, change_m: 6046 }
+    }
   }
 ];
 

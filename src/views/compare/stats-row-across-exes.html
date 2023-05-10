@@ -7,7 +7,7 @@ const commonStart = h.commonStringStart(it.exes.map((e) => e.name));
   let itOut = new h.PerIterationOutput('', '<br>');
   for (const e of it.exes) {
   %}{%- itOut.next()
-  %}{%= h.withoutStart(commonStart, e.name) %} {%= e.total.samples %}
+  %}{%= h.withoutStart(commonStart, e.name) %} {%= e.criteria.total.samples %}
 {% }
 %}</td>
 <td><span class="stats-median" title="median">
@@ -15,7 +15,7 @@ const commonStart = h.commonStringStart(it.exes.map((e) => e.name));
   itOut = new h.PerIterationOutput('', '<br>');
   for (const e of it.exes) {
   %}{%- itOut.next()
-  %}{%= f.r2(e.total.median) %}
+  %}{%= f.r2(e.criteria.total.median) %}
 {% }
 %}</span></td>
 <td>
@@ -23,8 +23,8 @@ const commonStart = h.commonStringStart(it.exes.map((e) => e.name));
   itOut = new h.PerIterationOutput('', '<br>');
   for (const e of it.exes) {
   %}{%- itOut.next()
-  %}{%= f.r2(e.total.median) %}
-    <span class="stats-change" title="change over median run time">{%= f.per(e.total.change_m) %}</span>
+  %}{%= f.r2(e.criteria.total.median) %}
+    <span class="stats-change" title="change over median run time">{%= f.per(e.criteria.total.change_m) %}</span>
 {% }
 %}</td>
 <td><span class="stats-median" title="median">
@@ -32,7 +32,7 @@ const commonStart = h.commonStringStart(it.exes.map((e) => e.name));
   itOut = new h.PerIterationOutput('', '<br>');
   for (const e of it.exes) {
   %}{%- itOut.next()
-  %}{%= f.r0(e.gcTime.median) %}
+  %}{%= f.r0(e.criteria.gcTime.median) %}
 {% }
 %}</span></td>
 <td>
@@ -40,7 +40,7 @@ const commonStart = h.commonStringStart(it.exes.map((e) => e.name));
   itOut = new h.PerIterationOutput('', '<br>');
   for (const e of it.exes) {
   %}{%- itOut.next()
-  %}<span class="stats-change" title="change over median GC time">{%= f.per(e.gcTime.change_m) %}</span>
+  %}<span class="stats-change" title="change over median GC time">{%= f.per(e.criteria.gcTime.change_m) %}</span>
 {% }
 %}</td>
 <td><span class="stats-median" title="median">
@@ -48,7 +48,7 @@ const commonStart = h.commonStringStart(it.exes.map((e) => e.name));
   itOut = new h.PerIterationOutput('', '<br>');
   for (const e of it.exes) {
   %}{%- itOut.next()
-  %}{%= f.asHumanMem(e.allocated.median) %}
+  %}{%= f.asHumanMem(e.criteria.allocated.median) %}
 {% }
 %}</span></td>
 <td>
@@ -56,6 +56,6 @@ const commonStart = h.commonStringStart(it.exes.map((e) => e.name));
   itOut = new h.PerIterationOutput('', '<br>');
   for (const e of it.exes) {
   %}{%- itOut.next()
-  %}<span class="stats-change" title="change over median allocated">{%= f.per(e.allocated.change_m) %}</span>
+  %}<span class="stats-change" title="change over median allocated">{%= f.per(e.criteria.allocated.change_m) %}</span>
 {% }
 %}</td>
