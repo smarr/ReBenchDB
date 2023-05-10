@@ -238,6 +238,54 @@ describe('Compare View Parts', () => {
       const result = tpl(data);
       expect(result).toEqualHtmlFragment('compare-view/stats-row-exe');
     });
+
+    it('should render a row when all data is missing for one version', () => {
+      const data: CompareStatsRowPartial = {
+        stats: {
+          benchId,
+          details,
+          inlinePlot: 'inline.png',
+          missing: [
+            { commitId: 'aaa', criterion: { name: 'total', unit: 'ms' } }
+          ]
+        },
+        environments,
+        dataFormatters,
+        viewHelpers,
+        config
+      };
+
+      const result = tpl(data);
+      expect(result).toEqualHtmlFragment(
+        'compare-view/stats-row-version-missing'
+      );
+    });
+
+    it('should render the total if only some other data is missing', () => {
+      const data: CompareStatsRowPartial = {
+        stats: {
+          benchId,
+          details,
+          inlinePlot: 'inline.png',
+          missing: [
+            {
+              commitId: 'aaa',
+              criterion: { name: 'some missing criterion', unit: 'ms' }
+            }
+          ],
+          versionStats
+        },
+        environments,
+        dataFormatters,
+        viewHelpers,
+        config
+      };
+
+      const result = tpl(data);
+      expect(result).toEqualHtmlFragment(
+        'compare-view/stats-row-version-one-criteria-missing'
+      );
+    });
   });
 
   describe('Statistics Table', () => {

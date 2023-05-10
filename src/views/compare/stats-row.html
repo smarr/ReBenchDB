@@ -1,21 +1,52 @@
-<tr>
 {%
-   const stats = it.stats;
-   if (stats.missingCommitId) {
-%}<th scope="row">{%= stats.benchId.b %}</th>
-  <td colspan="4">missing in the {%= stats.missingCommitId %} data sets</td>
-{% } else {
-  let args = '';
+const stats = it.stats;
 
-  if (stats.details.numV  > 0) { args += stats.benchId.v + ' '; }
-  if (stats.details.numC  > 0) { args += stats.benchId.c + ' '; }
-  if (stats.details.numI  > 0) { args += stats.benchId.i + ' '; }
-  if (stats.details.numEa > 0) { args += stats.benchId.ea + ' '; }
+let args = '';
 
-  if (args.length > 0) {
-    args = `<span class="all-args">${args.trim()}</span>`;
-  }
+if (stats.details.numV  > 0) { args += stats.benchId.v + ' '; }
+if (stats.details.numC  > 0) { args += stats.benchId.c + ' '; }
+if (stats.details.numI  > 0) { args += stats.benchId.i + ' '; }
+if (stats.details.numEa > 0) { args += stats.benchId.ea + ' '; }
+
+if (args.length > 0) {
+  args = `<span class="all-args">${args.trim()}</span>`;
+}
+
+if (stats.missing) {
+%}<tr>
 %}<th scope="row">{%= stats.benchId.b %}{%= args %}</th>
+<td colspan="4">Missing data for {%
+  const byCommitId = new Map();
+  for (const m of stats.missing) {
+    let byCommit = byCommitId.get(m.commitId);
+    if (!byCommit) {
+      byCommit = [];
+      byCommitId.set(m.commitId, byCommit);
+    }
+    byCommit.push(m.criterion.name);
+  }
+
+  for (const [commitId, byCommit] of byCommitId) {
+    %}<span class="missing-data"><span class="commit-id">{%= commitId %}:</span> {%= byCommit.join(', ') %}{%
+  }
+%}
+</td>
+</tr>
+{%
+}
+
+let hasTotal = false;
+if (stats.exeStats && stats.exeStats.every((e) => e.criteria.total)) {
+  hasTotal = true;
+} else if (stats.versionStats && stats.versionStats.total) {
+  hasTotal = true;
+}
+if (!stats.missing || hasTotal) {
+    
+
+    if (hasTotal) {
+%}<tr>
+<th scope="row">{%= stats.benchId.b %}{%= args %}</th>
   <td class="inline-cmp"><img src="{%= it.config.reportsUrl %}/{%= stats.inlinePlot %}"></td>
 {%    if (stats.exeStats) {
 %}{%-   include('compare/stats-row-across-exes.html', {
@@ -36,4 +67,5 @@
             dataFormatters: it.dataFormatters}
      ) %}</td>
 {% }
-%}</tr>
+%}</tr>{%
+} %}
