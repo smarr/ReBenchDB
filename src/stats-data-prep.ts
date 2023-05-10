@@ -782,6 +782,9 @@ export async function calculateAllStatisticsAndRenderPlots(
     change
   );
 
+  const absolutePath = `${reportOutputFolder}/${reportId}`;
+  mkdirSync(absolutePath, { recursive: true });
+
   const criteria = new Map<string, ComparisonStatistics[]>();
 
   const { numRunConfigs, comparisonData } =
@@ -795,9 +798,6 @@ export async function calculateAllStatisticsAndRenderPlots(
       reportOutputFolder,
       inlinePlotName
     );
-
-  const absolutePath = `${reportOutputFolder}/${reportId}`;
-  mkdirSync(absolutePath, { recursive: true });
 
   const plotData = calculateDataForOverviewPlot(comparisonData, 'total');
 
