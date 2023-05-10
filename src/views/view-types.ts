@@ -33,9 +33,7 @@ export interface CompareStatsTableHeaderPartial {
 
 export interface CompareStatsRowAcrossExes {
   name: string;
-  total: ComparisonStatistics;
-  gcTime: ComparisonStatistics;
-  allocated: ComparisonStatistics;
+  criteria: Record<string, ComparisonStatistics>;
 }
 
 export interface CompareStatsRowAccrossExesPartial {
