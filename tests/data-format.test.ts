@@ -210,18 +210,17 @@ describe('Format Functions for Numerical Values', () => {
 describe('dataSeriesIds()', () => {
   it('should return the expected string', () => {
     const ids: DataSeriesVersionComparison = {
+      runId: 1,
       base: {
         commitId: '123456',
-        runId: 1,
         trialId: 2
       },
       change: {
         commitId: '123457',
-        runId: 3,
         trialId: 4
       }
     };
 
-    expect(dataSeriesIds(ids)).toBe('123456/1/2,123457/3/4');
+    expect(dataSeriesIds(ids)).toBe('1,123456/2,123457/4');
   });
 });

@@ -58,11 +58,11 @@ export interface CompareStatsRowAcrossVersionsPartial {
  */
 export interface DataSeriesId {
   commitId: string; // this one is a bit redundant, it's implied by the trialId
-  runId: number;
   trialId: number;
 }
 
 export interface DataSeriesVersionComparison {
+  runId: number;
   base: DataSeriesId;
   change: DataSeriesId;
 }

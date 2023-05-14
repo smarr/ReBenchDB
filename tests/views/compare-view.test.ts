@@ -71,14 +71,13 @@ const details: DetailedInfo = {
   hasProfiles: true,
   hasWarmup: true,
   dataSeries: {
+    runId: 1,
     base: {
       commitId: '123456',
-      runId: 1,
       trialId: 2
     },
     change: {
       commitId: '123457',
-      runId: 3,
       trialId: 4
     }
   },

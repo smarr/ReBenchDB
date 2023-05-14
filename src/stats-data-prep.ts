@@ -408,15 +408,21 @@ function getDataSeriesIds(
   base: Measurements,
   change: Measurements
 ): DataSeriesVersionComparison {
+  if (base.runId !== change.runId) {
+    throw new Error(
+      `runIds are expected to be the same but` +
+        ` are: ${base.runId} and ${change.runId}` +
+        ` for ${base.criterion.name}`
+    );
+  }
   return {
+    runId: base.runId,
     base: {
       commitId: base.commitId,
-      runId: base.runId,
       trialId: base.trialId
     },
     change: {
       commitId: change.commitId,
-      runId: change.runId,
       trialId: change.trialId
     }
   };

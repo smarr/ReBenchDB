@@ -122,7 +122,7 @@ export function benchmarkId(
 export function dataSeriesIds(ids: DataSeriesVersionComparison): string {
   // format is parsed in compare.ts:insertProfiles()
   return (
-    `${ids.base.commitId}/${ids.base.runId}/${ids.base.trialId},` +
-    `${ids.change.commitId}/${ids.change.runId}/${ids.change.trialId}`
+    `${ids.runId},${ids.base.commitId}/${ids.base.trialId},` +
+    `${ids.change.commitId}/${ids.change.trialId}`
   );
 }

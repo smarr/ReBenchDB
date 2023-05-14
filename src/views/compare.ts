@@ -119,8 +119,9 @@ function insertProfiles(e): void {
 
   // format is serialized in data-format.ts:dataSeriesIds()
   const profilesIds = jqButton.data('content').split(',');
+  const runId = profilesIds.shift();
   for (const ids of profilesIds) {
-    const [change, runId, trialId] = ids.split('/');
+    const [change, trialId] = ids.split('/');
 
     const jqInsert = $(
       `<tr><td class="profile-container" colspan="6"></td></tr>`
