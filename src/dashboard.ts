@@ -15,7 +15,12 @@ import {
   getDirname
 } from './util.js';
 import { log } from './logging.js';
-import { CompareView } from './views/view-types.js';
+import {
+  CompareView,
+  WarmupData,
+  WarmupDataForTrial,
+  WarmupDataPerCriterion
+} from './views/view-types.js';
 import { prepareCompareView } from './stats-data-prep.js';
 
 const __dirname = getDirname(import.meta.url);
@@ -118,6 +123,94 @@ export async function dashProfile(
     /* let's just leave it a string */
   }
   return data;
+}
+
+export async function dashMeasurements(
+  projectSlug: string,
+  runId: number,
+  trialId1: number,
+  trialId2: number,
+  db: Database
+): Promise<WarmupData | null> {
+  const q = {
+    name: 'fetchMeasurementsByProjectIdRunIdTrialId',
+    text: `SELECT
+              trialId,
+              invocation, iteration, warmup,
+              criterion.name as criterion,
+              criterion.unit as unit,
+              value
+            FROM
+              Measurement
+              JOIN Trial ON trialId = Trial.id
+              JOIN Experiment ON Trial.expId = Experiment.id
+              JOIN Criterion ON criterion = criterion.id
+              JOIN Run ON runId = run.id
+              JOIN Project ON Project.id = Experiment.projectId
+            WHERE Project.slug = $1
+              AND runId = $2
+              AND (trialId = $3 OR trialId = $4)
+            ORDER BY trialId, criterion, invocation, iteration;`,
+    values: [projectSlug, runId, trialId1, trialId2]
+  };
+  const result = await db.query(q);
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const trial1: WarmupDataForTrial = {
+    trialId: result.rows[0].trialid,
+    warmup: result.rows[0].warmup,
+    data: []
+  };
+  const trial2: WarmupDataForTrial = {
+    trialId: result.rows[result.rows.length - 1].trialid,
+    warmup: result.rows[result.rows.length - 1].warmup,
+    data: []
+  };
+  // preprocess rows, but should already have it like this in the database...
+
+  let trialId = 0;
+  let currentTrial: WarmupDataForTrial | null = null;
+  let lastCriterion = null;
+  let critObject: WarmupDataPerCriterion | null = null;
+
+  for (const r of result.rows) {
+    if (trialId === 0) {
+      trialId = r.trialid;
+      currentTrial = trial1;
+      lastCriterion = null;
+    } else if (trialId !== r.trialid) {
+      if (currentTrial === trial2) {
+        throw Error(
+          'Unexpected trialId change. We only expect two different ones.'
+        );
+      }
+      trialId = r.trialid;
+      currentTrial = trial2;
+      lastCriterion = null;
+    }
+
+    if (lastCriterion === null || lastCriterion !== r.criterion) {
+      lastCriterion = r.criterion;
+      critObject = {
+        criterion: r.criterion,
+        unit: r.unit,
+        values: []
+      };
+      currentTrial?.data.push(critObject);
+    }
+
+    if (critObject) {
+      if (critObject.values[r.invocation - 1] === undefined) {
+        critObject.values[r.invocation - 1] = [];
+      }
+
+      critObject.values[r.invocation - 1][r.iteration - 1] = r.value;
+    }
+  }
+
+  return { trial1, trial2 };
 }
 
 let statisticsCache: { stats: any[] } | null = null;

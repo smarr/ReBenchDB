@@ -14,7 +14,8 @@ const iterations = {
   'prep-exp-data': 0,
   'get-exp-data': 0,
   'project-benchmarks': 0,
-  'get-profiles': 0
+  'get-profiles': 0,
+  'get-measurements': 0
 };
 
 const descriptions = {
@@ -28,7 +29,8 @@ const descriptions = {
   'get-exp-data': 'Starting to prepare experiment data',
   'project-benchmarks': 'Time of GET /rebenchdb/dash/:projectId/benchmarks',
   'get-profiles':
-    'Time of GET /rebenchdb/dash/:projectId/profiles/:runId/:trialId'
+    'Time of GET /rebenchdb/dash/:projectId/profiles/:runId/:trialId',
+  'get-measurements': 'Time of GET /rebenchdb/dash/:projectId/measurements/...'
 };
 
 export function initPerfTracker(): void {

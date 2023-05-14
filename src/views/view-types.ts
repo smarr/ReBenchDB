@@ -209,3 +209,20 @@ export interface ReportConfig {
 }
 
 export type CompareView = CompareViewWithoutData | CompareViewWithData;
+
+export interface WarmupDataPerCriterion {
+  criterion: string;
+  unit: string;
+  values: number[][];
+}
+
+export interface WarmupDataForTrial {
+  trialId: number;
+  warmup: number;
+  data: WarmupDataPerCriterion[];
+}
+
+export interface WarmupData {
+  trial1: WarmupDataForTrial;
+  trial2: WarmupDataForTrial;
+}

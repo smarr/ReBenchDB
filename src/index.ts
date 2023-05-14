@@ -27,7 +27,8 @@ import {
   dashDeleteOldReport,
   dashProfile,
   dashLatestBenchmarksForTimelineView,
-  dashCompareNew
+  dashCompareNew,
+  dashMeasurements
 } from './dashboard.js';
 import { prepareTemplate, processTemplate } from './templates.js';
 import {
@@ -235,6 +236,24 @@ router.get(
     );
     ctx.type = 'application/json';
     completeRequest(start, db, 'get-profiles');
+  }
+);
+
+router.get(
+  '/rebenchdb/dash/:projectSlug/measurements/:runId/:trialId1/:trialId2',
+  async (ctx) => {
+    const start = startRequest();
+
+    ctx.body = await dashMeasurements(
+      ctx.params.projectSlug,
+      Number(ctx.params.runId),
+      Number(ctx.params.trialId1),
+      Number(ctx.params.trialId2),
+      db
+    );
+
+    ctx.type = 'application/json';
+    completeRequest(start, db, 'get-measurements');
   }
 );
 
