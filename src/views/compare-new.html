@@ -103,7 +103,8 @@
 
 {% } %}
 
-{%- include('compare/compare-versions.html', it.stats) %}
+{%- include('compare/compare-versions.html', {...it.stats, config: it.config}) %}
+
   }
 
 </main>
