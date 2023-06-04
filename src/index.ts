@@ -225,7 +225,7 @@ router.get('/rebenchdb/dash/:projectId/timeline/:runId', async (ctx) => {
 });
 
 router.get(
-  '/rebenchdb/dash/:projectId/profiles/:runId/:trialId',
+  '/rebenchdb/dash/:projectSlug/profiles/:runId/:trialId',
   async (ctx) => {
     const start = startRequest();
 

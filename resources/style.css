@@ -348,6 +348,10 @@ td.warmup-plot {
   display: none !important;
 }
 
+.show-legend .u-legend tr {
+  display: table-row !important;
+}
+
 .timeline-multi .u-legend tr:nth-child(1),
 .timeline-multi .u-legend tr:nth-child(3),
 .timeline-multi .u-legend tr:nth-child(6),

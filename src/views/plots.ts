@@ -2,6 +2,7 @@ import type { AllResults, PlotData, TimelineResponse } from 'api';
 import type { Source } from 'db.js';
 import { filterCommitMessage } from './render.js';
 import uPlot from '/static/uPlot.esm.min.js';
+import type { WarmupData, WarmupDataPerCriterion } from './view-types.js';
 
 function simpleSlug(str) {
   return str.replace(/[\W_]+/g, '');
@@ -336,7 +337,7 @@ export function renderTimelinePlot(
 export function renderComparisonTimelinePlot(
   response: TimelineResponse,
   jqInsert: any
-): any {
+): uPlot {
   const series = [
     {},
     seriesConfig(response.baseBranchName, 'BCI 95th, low', baselineLight, 1),
@@ -394,5 +395,140 @@ export function renderComparisonTimelinePlot(
   if (noChangeDataSeries) {
     jqInsert.find('.u-legend tr:nth-child(6)').addClass('hidden');
   }
+  return plot;
+}
+
+function addSeries(
+  critData: WarmupDataPerCriterion,
+  data: number[][],
+  series: any[],
+  commitId: string,
+  color: string,
+  colorLight: string,
+  units: string[]
+) {
+  if (critData.values.length > 1) {
+    console.error(
+      'Expected only data for one iteration. ' +
+        'Dont know how to handle multiple'
+    );
+  }
+  data.push(critData.values[0]);
+
+  if (critData.criterion === 'total') {
+    const cfg = seriesConfig(
+      commitId,
+      `Run time in ${critData.unit}`,
+      color,
+      2
+    );
+    series.push(cfg);
+    cfg.scale = critData.unit;
+  } else {
+    const cfg = seriesConfig(
+      commitId,
+      `${critData.criterion} in ${critData.unit}`,
+      colorLight,
+      1
+    );
+    series.push(cfg);
+    cfg.scale = critData.unit;
+    cfg.paths = (_u) => null;
+    // cfg.fill = colorLight;
+    cfg.points = {
+      space: 0,
+      fill: colorLight,
+      size: 4
+    };
+  }
+
+  if (!units.includes(critData.unit)) {
+    if (critData.criterion === 'total') {
+      units.unshift(critData.unit);
+    } else {
+      units.push(critData.unit);
+    }
+  }
+
+  return critData.values[0].length;
+}
+
+export function renderWarmupPlot(
+  warmupData: WarmupData,
+  baseCommitId: string,
+  changeCommitId: string,
+  targetElement: JQuery<HTMLElement>
+): uPlot {
+  const series = [{}];
+  const units: string[] = [];
+  const iterationNums: number[] = [];
+  const data = [iterationNums];
+  let maxIterations = 0;
+  let totalUnit: string | null = null;
+
+  for (const critData of warmupData.trial1.data) {
+    if (critData.criterion === 'total') {
+      totalUnit = critData.unit;
+    }
+  }
+
+  for (const critData of warmupData.trial1.data) {
+    const numIterations = addSeries(
+      critData,
+      data,
+      series,
+      baseCommitId,
+      baselineColor,
+      baselineLight,
+      units
+    );
+    maxIterations = Math.max(maxIterations, numIterations);
+  }
+
+  for (const critData of warmupData.trial2.data) {
+    const numIterations = addSeries(
+      critData,
+      data,
+      series,
+      changeCommitId,
+      changeColor,
+      changeLight,
+      units
+    );
+    maxIterations = Math.max(maxIterations, numIterations);
+  }
+
+  const axes = [{}];
+
+  for (const unit of units) {
+    const axis: any = {
+      scale: unit,
+      values: (_, vals) => vals.map((v) => v + unit),
+      size: computeAxisLabelSpace
+    };
+    if (unit != totalUnit) {
+      axis.side = 1;
+      axis.grid = {
+        show: false
+      };
+    }
+
+    axes.push(axis);
+  }
+
+  const options = {
+    width: 576,
+    height: 240,
+    title: 'Behavior for iterations',
+    series,
+    scales: { x: { time: false }, z: { from: 'y' } },
+    axes
+  };
+
+  for (let i = 1; i <= maxIterations; i += 1) {
+    iterationNums.push(i);
+  }
+
+  const plot = new uPlot(options, data, targetElement[0]);
   return plot;
 }

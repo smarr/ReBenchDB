@@ -1,5 +1,6 @@
 import { initializeFilters } from './filter.js';
-import { renderComparisonTimelinePlot } from './plots.js';
+import { renderComparisonTimelinePlot, renderWarmupPlot } from './plots.js';
+import { WarmupData } from './view-types.js';
 
 function determineAndDisplaySignificance() {
   const val = $('#significance').val();
@@ -22,17 +23,38 @@ function displaySignificance(sig) {
   });
 }
 
-function insertWarmupPlot(e) {
-  alert(
-    'TODO: need to change this to use uPlot to render the plot' +
-      ' based on data retrieved from the backend'
+async function fetchWarmupData(
+  projectSlug: string,
+  dataIds: DataSeriesIds,
+  targetElement: JQuery<HTMLElement>
+) {
+  const warmupR = await fetch(
+    `/rebenchdb/dash/${projectSlug}/measurements/` +
+      `${dataIds.runId}/${dataIds.ids[0].trialId}/${dataIds.ids[1].trialId}`
   );
+
+  const warmupData: WarmupData = await warmupR.json();
+  renderWarmupPlot(
+    warmupData,
+    dataIds.ids[0].commitId,
+    dataIds.ids[1].commitId,
+    targetElement
+  );
+}
+
+async function insertWarmupPlot(e) {
   const jqButton = $(e.target);
-  const url = jqButton.data('img');
-  const insert = `<tr><td class="warmup-plot" colspan="6">
-      <img src="${url}"></td></tr>`;
-  jqButton.parent().parent().after(insert);
+  const projectSlug = <string>$('#project-slug').attr('value');
+  const dataIds = parseDataSeriesIds(jqButton.data('content'));
+
+  const insert = `<tr><td class="warmup-plot show-legend" colspan="6">
+  <div class="plot-container"></div></td></tr>`;
+
+  const jqInsert = $(insert);
+  jqInsert.insertAfter(jqButton.parent().parent());
   jqButton.remove();
+
+  await fetchWarmupData(projectSlug, dataIds, jqInsert.find('.plot-container'));
 }
 
 function createEntry(e, profId, counter) {
@@ -80,9 +102,9 @@ function createEntry(e, profId, counter) {
   return entryHtml;
 }
 
-function fetchProfile(projectName: string, change, runId, trialId, jqInsert) {
+function fetchProfile(projectSlug: string, change, runId, trialId, jqInsert) {
   const profileP = fetch(
-    `/rebenchdb/dash/${projectName}/profiles/${runId}/${trialId}`
+    `/rebenchdb/dash/${projectSlug}/profiles/${runId}/${trialId}`
   );
   profileP.then(async (profileResponse) => {
     const profileData = await profileResponse.json();
@@ -111,24 +133,42 @@ function fetchProfile(projectName: string, change, runId, trialId, jqInsert) {
   });
 }
 
+interface DataSeriesIds {
+  runId: number;
+  ids: { commitId: string; trialId: number }[];
+}
+
+/**
+ * Parse the format serialized in data-format.ts:dataSeriesIds().
+ */
+function parseDataSeriesIds(serialized: string): DataSeriesIds {
+  const idPairs = serialized.split(',');
+  const runId = <string>idPairs.shift();
+
+  const data: { commitId: string; trialId: number }[] = [];
+  for (const id of idPairs) {
+    const [commitId, trialId] = id.split('/');
+    data.push({ commitId, trialId: parseInt(trialId) });
+  }
+
+  return { runId: parseInt(runId), ids: data };
+}
+
 function insertProfiles(e): void {
-  const projectName = <string>$('#project-name').attr('value');
+  const projectSlug = <string>$('#project-slug').attr('value');
   const jqButton = $(e.target);
   let profileInsertTarget = jqButton.parent().parent();
   jqButton.remove();
 
-  // format is serialized in data-format.ts:dataSeriesIds()
-  const profilesIds = jqButton.data('content').split(',');
-  const runId = profilesIds.shift();
-  for (const ids of profilesIds) {
-    const [change, trialId] = ids.split('/');
+  const { runId, ids } = parseDataSeriesIds(jqButton.data('content'));
 
+  for (const { commitId, trialId } of ids) {
     const jqInsert = $(
       `<tr><td class="profile-container" colspan="6"></td></tr>`
     );
     profileInsertTarget.after(jqInsert);
     profileInsertTarget = jqInsert;
-    fetchProfile(projectName, change, runId, trialId, jqInsert);
+    fetchProfile(projectSlug, commitId, runId, trialId, jqInsert);
   }
 }
 
@@ -147,11 +187,12 @@ async function fetchPost(url: string, data: any): Promise<any> {
 }
 
 async function insertTimeline(e): Promise<void> {
-  const projectName = <string>$('#project-name').attr('value');
   const jqButton = $(e.target);
 
+  const projectSlug = <string>$('#project-slug').attr('value');
   const baseHash = $('#baseHash').attr('value');
   const changeHash = $('#changeHash').attr('value');
+
   const dataId = jqButton.data('content');
   dataId.baseline = baseHash;
   dataId.change = changeHash;
@@ -163,7 +204,7 @@ async function insertTimeline(e): Promise<void> {
   jqButton.remove();
 
   await fetchTimelineData(
-    projectName,
+    projectSlug,
     dataId,
     jqInsert.find('.plot-container')
   );
@@ -205,7 +246,9 @@ $(() => {
       .next()
       .next()
       .find('.btn-warmup');
-    expandButtons.each((i, elm) => insertWarmupPlot(elm));
+    expandButtons.each((i, elm) => {
+      insertWarmupPlot(elm);
+    });
   });
 
   initializeFilters('.benchmark-details tbody th:nth-child(1)');
