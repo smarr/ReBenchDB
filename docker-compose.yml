@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  rebenchdb-app:
+    build: .
+    image: rebenchdb-app
+    command: npm run start
+    expose:
+      - 33333
+    environment:
+      RDB_HOST: postgres
+      RDB_USER: docker
+      RDB_PASS: docker
+      RDB_DB: rebenchdb
+      REFRESH_SECRET: refresh
+    depends_on:
+      - postgres
+    ports:
+      - '33333:33333'
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: rebenchdb
+      DEV: true
+    ports:
+      - '5432:5432'
