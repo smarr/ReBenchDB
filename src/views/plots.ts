@@ -97,11 +97,34 @@ function seriesConfig(
   return cfg;
 }
 
-const baselineColor = '#729fcf';
-const baselineLight = '#97c4f0';
+// colors are from the Extended Tango Palette
+// https://emilis.info/other/extended_tango/
+const baselineColors = [
+  // '#00202a',	'#0a3050',
+  '#204a87',
+  '#3465a4',
+  '#729fcf',
+  '#97c4f0'
+  // '#daeeff'
+];
 
-const changeColor = '#e9b96e';
-const changeLight = '#efd0a7';
+const changeColors = [
+  // '#271700',	'#503000',
+  '#8f5902',
+  '#c17d11',
+  '#e9b96e',
+  '#efd0a7'
+  // '#faf0d7'
+];
+
+const totalColorIdx = 2;
+const lightColorIdx = 3;
+
+const baselineColor = baselineColors[totalColorIdx];
+const baselineLight = baselineColors[lightColorIdx];
+
+const changeColor = changeColors[totalColorIdx];
+const changeLight = changeColors[lightColorIdx];
 
 function computeAxisLabelSpace(self, axisTickLabels, axisIdx, cycleNum) {
   const axis = self.axes[axisIdx];
@@ -398,59 +421,137 @@ export function renderComparisonTimelinePlot(
   return plot;
 }
 
+/**
+ * Replace `0` with `null` to hide the point in the plot.
+ */
+function replaceZeroByNull(data: number[]): number[] {
+  for (let i = 0; i < data.length; i += 1) {
+    if (data[i] === 0) {
+      (<any[]>data)[i] = null;
+    }
+  }
+
+  return data;
+}
+
 function addSeries(
   critData: WarmupDataPerCriterion,
   data: number[][],
   series: any[],
   commitId: string,
-  color: string,
-  colorLight: string,
-  units: string[]
+  colors: string[],
+  styleMap: Record<string, any>
 ) {
   if (critData.values.length > 1) {
     console.error(
       'Expected only data for one iteration. ' +
-        'Dont know how to handle multiple'
+        'Do not yet know how to handle multiple.'
     );
   }
-  data.push(critData.values[0]);
+  data.push(replaceZeroByNull(critData.values[0]));
 
-  if (critData.criterion === 'total') {
-    const cfg = seriesConfig(
-      commitId,
-      `Run time in ${critData.unit}`,
-      color,
-      2
-    );
-    series.push(cfg);
-    cfg.scale = critData.unit;
-  } else {
-    const cfg = seriesConfig(
-      commitId,
-      `${critData.criterion} in ${critData.unit}`,
-      colorLight,
-      1
-    );
-    series.push(cfg);
-    cfg.scale = critData.unit;
-    cfg.paths = (_u) => null;
-    // cfg.fill = colorLight;
+  const style = styleMap[critData.criterion];
+
+  const cfg = seriesConfig(
+    commitId,
+    style.labelStart + critData.unit,
+    colors[style.colorIdx],
+    style.width
+  );
+  series.push(cfg);
+  cfg.scale = critData.unit;
+
+  if (style.paths) {
+    cfg.paths = style.paths;
     cfg.points = {
-      space: 0,
-      fill: colorLight,
-      size: 4
+      space: style.points.space,
+      fill: colors[style.points.fillColorIdx],
+      size: style.points.size
     };
   }
 
-  if (!units.includes(critData.unit)) {
-    if (critData.criterion === 'total') {
-      units.unshift(critData.unit);
-    } else {
-      units.push(critData.unit);
+  return critData.values[0].length;
+}
+
+function collectUnitsAndCriteria(
+  trial1: WarmupDataPerCriterion[],
+  trial2: WarmupDataPerCriterion[]
+): { totalUnit: string; units: string[]; criteria: string[] } {
+  const units: string[] = [];
+  const criteria: string[] = [];
+  let totalUnit: string | null = null;
+
+  for (const critData of trial1) {
+    if (!criteria.includes(critData.criterion)) {
+      criteria.push(critData.criterion);
+    }
+
+    if (!units.includes(critData.unit)) {
+      if (critData.criterion === 'total') {
+        totalUnit = critData.unit;
+        units.unshift(critData.unit);
+      } else {
+        units.push(critData.unit);
+      }
     }
   }
 
-  return critData.values[0].length;
+  for (const critData of trial2) {
+    if (!criteria.includes(critData.criterion)) {
+      criteria.push(critData.criterion);
+    }
+
+    if (!units.includes(critData.unit)) {
+      if (critData.criterion === 'total') {
+        console.assert(
+          totalUnit === critData.unit,
+          'The two trials have different units'
+        );
+        units.unshift(critData.unit);
+      } else {
+        units.push(critData.unit);
+      }
+    }
+  }
+
+  return { totalUnit: totalUnit ?? '', units, criteria };
+}
+
+function createStyles(criteria: string[]) {
+  const styles: Record<string, any> = {};
+
+  let colorIdx = 0;
+
+  for (const crit of criteria) {
+    if (colorIdx === totalColorIdx) {
+      colorIdx += 1;
+    }
+    if (colorIdx > baselineColors.length) {
+      colorIdx = 0;
+    }
+
+    const style: any = {};
+
+    if (crit === 'total') {
+      style.labelStart = 'Run time in ';
+      style.colorIdx = totalColorIdx;
+      style.width = 2;
+    } else {
+      style.labelStart = `${crit} in `;
+      style.colorIdx = colorIdx;
+      colorIdx += 1;
+      style.width = 1;
+      style.paths = (_u) => null;
+      style.points = {
+        space: 0,
+        fillColorIdx: colorIdx,
+        size: 4
+      };
+    }
+
+    styles[crit] = style;
+  }
+  return styles;
 }
 
 export function renderWarmupPlot(
@@ -460,17 +561,16 @@ export function renderWarmupPlot(
   targetElement: JQuery<HTMLElement>
 ): uPlot {
   const series = [{}];
-  const units: string[] = [];
   const iterationNums: number[] = [];
   const data = [iterationNums];
   let maxIterations = 0;
-  let totalUnit: string | null = null;
 
-  for (const critData of warmupData.trial1.data) {
-    if (critData.criterion === 'total') {
-      totalUnit = critData.unit;
-    }
-  }
+  const { totalUnit, units, criteria } = collectUnitsAndCriteria(
+    warmupData.trial1.data,
+    warmupData.trial2.data
+  );
+
+  const styles = createStyles(criteria);
 
   for (const critData of warmupData.trial1.data) {
     const numIterations = addSeries(
@@ -478,9 +578,8 @@ export function renderWarmupPlot(
       data,
       series,
       baseCommitId,
-      baselineColor,
-      baselineLight,
-      units
+      baselineColors,
+      styles
     );
     maxIterations = Math.max(maxIterations, numIterations);
   }
@@ -491,9 +590,8 @@ export function renderWarmupPlot(
       data,
       series,
       changeCommitId,
-      changeColor,
-      changeLight,
-      units
+      changeColors,
+      styles
     );
     maxIterations = Math.max(maxIterations, numIterations);
   }
