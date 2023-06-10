@@ -486,13 +486,12 @@ function collectUnitsAndCriteria(
       criteria.push(critData.criterion);
     }
 
+    if (critData.criterion === 'total') {
+      totalUnit = critData.unit;
+    }
+
     if (!units.includes(critData.unit)) {
-      if (critData.criterion === 'total') {
-        totalUnit = critData.unit;
-        units.unshift(critData.unit);
-      } else {
-        units.push(critData.unit);
-      }
+      units.push(critData.unit);
     }
   }
 
@@ -507,10 +506,17 @@ function collectUnitsAndCriteria(
           totalUnit === critData.unit,
           'The two trials have different units'
         );
-        units.unshift(critData.unit);
-      } else {
-        units.push(critData.unit);
       }
+      units.push(critData.unit);
+    }
+  }
+
+  // make sure that the total unit is the first one
+  for (let i = 0; i < units.length; i += 1) {
+    if (units[i] === totalUnit) {
+      units.splice(i, 1);
+      units.unshift(totalUnit);
+      break;
     }
   }
 
