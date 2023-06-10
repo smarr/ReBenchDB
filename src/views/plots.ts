@@ -463,11 +463,8 @@ function addSeries(
 
   if (style.paths) {
     cfg.paths = style.paths;
-    cfg.points = {
-      space: style.points.space,
-      fill: colors[style.points.fillColorIdx],
-      size: style.points.size
-    };
+    cfg.points = style.points;
+    cfg.points.fill = colors[style.colorIdx];
   }
 
   return critData.values[0].length;
@@ -523,10 +520,17 @@ function collectUnitsAndCriteria(
   return { totalUnit: totalUnit ?? '', units, criteria };
 }
 
+const pointVariants = [
+  drawPointsAsCrosses,
+  drawPointsAsPluses,
+  drawPointsAsTriangles
+];
+
 function createStyles(criteria: string[]) {
   const styles: Record<string, any> = {};
 
   let colorIdx = 0;
+  let pointVariantIdx = 0;
 
   for (const crit of criteria) {
     if (colorIdx === totalColorIdx) {
@@ -534,6 +538,9 @@ function createStyles(criteria: string[]) {
     }
     if (colorIdx > baselineColors.length) {
       colorIdx = 0;
+    }
+    if (pointVariantIdx >= pointVariants.length) {
+      pointVariantIdx = 0;
     }
 
     const style: any = {};
@@ -546,13 +553,14 @@ function createStyles(criteria: string[]) {
       style.labelStart = `${crit} in `;
       style.colorIdx = colorIdx;
       colorIdx += 1;
-      style.width = 1;
+      style.width = 0.5;
       style.paths = (_u) => null;
       style.points = {
         space: 0,
-        fillColorIdx: colorIdx,
-        size: 4
+        size: 4,
+        show: pointVariants[pointVariantIdx]
       };
+      pointVariantIdx += 1;
     }
 
     styles[crit] = style;
@@ -635,4 +643,98 @@ export function renderWarmupPlot(
 
   const plot = new uPlot(options, data, targetElement[0]);
   return plot;
+}
+
+function drawPointsAsCrosses(u, i, i0, i1) {
+  const { ctx } = u;
+  const { _stroke, scale, width } = u.series[i];
+  const crossSize = 3 * devicePixelRatio;
+
+  ctx.save();
+  ctx.strokeStyle = _stroke;
+  ctx.lineWidth = width;
+
+  let j = i0;
+
+  while (j <= i1) {
+    const val = u.data[i][j];
+    const cx = Math.round(u.valToPos(u.data[0][j], 'x', true));
+    const cy = Math.round(u.valToPos(val, scale, true));
+
+    ctx.beginPath();
+
+    ctx.moveTo(cx - crossSize, cy - crossSize);
+    ctx.lineTo(cx + crossSize, cy + crossSize);
+    ctx.stroke();
+
+    ctx.moveTo(cx - crossSize, cy + crossSize);
+    ctx.lineTo(cx + crossSize, cy - crossSize);
+    ctx.stroke();
+
+    j++;
+  }
+
+  ctx.restore();
+}
+
+function drawPointsAsPluses(u, i, i0, i1) {
+  const { ctx } = u;
+  const { _stroke, scale, width } = u.series[i];
+  const crossSize = 3 * devicePixelRatio;
+
+  ctx.save();
+  ctx.strokeStyle = _stroke;
+  ctx.lineWidth = width;
+
+  let j = i0;
+
+  while (j <= i1) {
+    const val = u.data[i][j];
+    const cx = Math.round(u.valToPos(u.data[0][j], 'x', true));
+    const cy = Math.round(u.valToPos(val, scale, true));
+
+    ctx.beginPath();
+
+    ctx.moveTo(cx - crossSize, cy);
+    ctx.lineTo(cx + crossSize, cy);
+    ctx.stroke();
+
+    ctx.moveTo(cx, cy + crossSize);
+    ctx.lineTo(cx, cy - crossSize);
+    ctx.stroke();
+
+    j++;
+  }
+
+  ctx.restore();
+}
+
+function drawPointsAsTriangles(u, i, i0, i1) {
+  const { ctx } = u;
+  const { _stroke, scale, width } = u.series[i];
+  const triangleSize = 3 * devicePixelRatio;
+
+  ctx.save();
+  ctx.strokeStyle = _stroke;
+  ctx.lineWidth = width * 4;
+
+  let j = i0;
+
+  while (j <= i1) {
+    const val = u.data[i][j];
+    const cx = Math.round(u.valToPos(u.data[0][j], 'x', true));
+    const cy = Math.round(u.valToPos(val, scale, true));
+
+    ctx.beginPath();
+
+    ctx.moveTo(cx, cy + triangleSize);
+    ctx.lineTo(cx + triangleSize, cy - triangleSize);
+    ctx.lineTo(cx - triangleSize, cy - triangleSize);
+    ctx.closePath();
+    ctx.stroke();
+
+    j++;
+  }
+
+  ctx.restore();
 }
