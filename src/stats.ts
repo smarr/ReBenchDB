@@ -282,6 +282,10 @@ export interface BasicSummaryStatistics {
   median: number;
 }
 
+export interface SummaryStatsWithUnit extends BasicSummaryStatistics {
+  unit: string;
+}
+
 /** Summarizing a single benchmark. */
 export interface SummaryStatistics extends BasicSummaryStatistics {
   standardDeviation: number;
@@ -295,6 +299,11 @@ export interface ComparisonStatistics {
   median: number;
   samples: number;
   change_m: number;
+}
+
+export interface ComparisonStatsWithUnit {
+  data: ComparisonStatistics[];
+  unit: string;
 }
 
 export function preciseVariance(data: number[]): number {
@@ -373,6 +382,15 @@ export function calculateChangeStatistics(
 
   const baseMedian = median(baseSorted);
   const changeMedian = median(changeSorted);
+
+  if (baseMedian === 0.0) {
+    return {
+      median: changeMedian,
+      samples: baseSorted.length,
+      change_m: 0.0
+    };
+  }
+
   return {
     median: changeMedian,
     samples: baseSorted.length,
@@ -385,12 +403,15 @@ export function normalize(data: number[], unitValue: number): number[] {
 }
 
 export function calculateSummaryOfChangeSummaries(
-  perCriteria: Map<string, ComparisonStatistics[]>
-): Record<string, BasicSummaryStatistics> {
-  const result: Record<string, BasicSummaryStatistics> = {};
-  for (const [key, value] of perCriteria.entries()) {
-    const changeMedians = value.map((x) => x.change_m);
-    result[key] = calculateBasicStatistics(changeMedians);
+  perCriteria: Map<string, ComparisonStatsWithUnit>
+): Record<string, SummaryStatsWithUnit> {
+  const result: Record<string, SummaryStatsWithUnit> = {};
+  for (const [key, stats] of perCriteria.entries()) {
+    const changeMedians = stats.data.map((x) => x.change_m);
+    result[key] = {
+      ...calculateBasicStatistics(changeMedians),
+      unit: stats.unit
+    };
   }
   return result;
 }

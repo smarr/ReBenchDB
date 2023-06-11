@@ -173,9 +173,9 @@ describe('Compare View Parts', () => {
         overviewSvgUrls: ['some-url1.svg', 'some-url2.svg'],
         numRunConfigs: 232,
         stats: {
-          total: { min: 0.1, max: 1.1, median: 0.5 },
-          gcTime: { min: 2.1, max: 3.1, median: 2.5 },
-          allocated: { min: 4.1, max: 5.1, median: 4.5 }
+          total: { min: 0.1, max: 1.1, median: 0.5, unit: 'ms' },
+          gcTime: { min: 2.1, max: 3.1, median: 2.5, unit: 'ms' },
+          allocated: { min: 4.1, max: 5.1, median: 4.5, unit: 'bytes' }
         },
         dataFormatters,
         config
@@ -466,7 +466,8 @@ describe('Compare View Statistics', () => {
         total: {
           min: -0.08187505715653631,
           max: 0.1445205479452054,
-          median: -0.007853258247567385
+          median: -0.007853258247567385,
+          unit: 'ms'
         }
       }
     });
@@ -487,7 +488,8 @@ describe('Compare View Statistics', () => {
         total: {
           min: -0.14266018907563016,
           max: 0.41233051093656736,
-          median: -0.0009242240366887366
+          median: -0.0009242240366887366,
+          unit: 'ms'
         }
       }
     });

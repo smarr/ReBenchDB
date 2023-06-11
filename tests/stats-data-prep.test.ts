@@ -25,7 +25,7 @@ import {
   getChangeDataBySuiteAndExe,
   prepareCompareView
 } from '../src/stats-data-prep.js';
-import { ComparisonStatistics } from '../src/stats.js';
+import { ComparisonStatsWithUnit } from '../src/stats.js';
 import { collateMeasurements } from '../src/db-data-processing.js';
 import {
   ByExeSuiteComparison,
@@ -330,7 +330,7 @@ const dataTSOM: { results: MeasurementData[] } = JSON.parse(
 
 describe('calculateChangeStatsForBenchmark()', () => {
   describe('with data from JsSOM', () => {
-    const perCriteria = new Map<string, ComparisonStatistics[]>();
+    const perCriteria = new Map<string, ComparisonStatsWithUnit>();
 
     const result: ResultsByExeSuiteBenchmark = collateMeasurements(
       dataJsSOM.results
@@ -374,10 +374,11 @@ describe('calculateChangeStatsForBenchmark()', () => {
       expect(perCriteria.size).toEqual(1);
       expect(perCriteria.has('total')).toBe(true);
 
-      const total = <ComparisonStatistics[]>perCriteria.get('total');
-      expect(total).toHaveLength(1);
+      const total = <ComparisonStatsWithUnit>perCriteria.get('total');
+      expect(total.data).toHaveLength(1);
+      expect(total.unit).toBe('ms');
 
-      expect(total[0]).toBe(versionStats.total);
+      expect(total.data[0]).toBe(versionStats.total);
     });
   });
 });

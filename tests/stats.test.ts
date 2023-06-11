@@ -19,7 +19,8 @@ import {
   preciseMean,
   standardDeviation,
   calculateSummaryOfChangeSummaries,
-  normalize
+  normalize,
+  ComparisonStatsWithUnit
 } from '../src/stats';
 
 describe('basicSum()', () => {
@@ -311,6 +312,17 @@ describe('calculateChangeStatistics()', () => {
     expect(stats.median).toEqual(5);
     expect(stats.change_m).toEqual(0.25);
   });
+
+  it('should handle 0 values', () => {
+    const stats: ComparisonStatistics = calculateChangeStatistics(
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    );
+
+    expect(stats.samples).toEqual(9);
+    expect(stats.median).toEqual(0);
+    expect(stats.change_m).toEqual(0);
+  });
 });
 
 describe('normalize()', () => {
@@ -321,21 +333,27 @@ describe('normalize()', () => {
 });
 
 describe('calculateSummaryOfChangeSummaries()', () => {
-  const perCriteria = new Map<string, ComparisonStatistics[]>();
+  const perCriteria = new Map<string, ComparisonStatsWithUnit>();
 
-  perCriteria.set('total', [
-    { samples: 10, median: 5, change_m: 10 },
-    { samples: 10, median: 5, change_m: 11 },
-    { samples: 10, median: 5, change_m: 12 },
-    { samples: 10, median: 5, change_m: 13 },
-    { samples: 10, median: 5, change_m: 14 }
-  ]);
+  perCriteria.set('total', {
+    data: [
+      { samples: 10, median: 5, change_m: 10 },
+      { samples: 10, median: 5, change_m: 11 },
+      { samples: 10, median: 5, change_m: 12 },
+      { samples: 10, median: 5, change_m: 13 },
+      { samples: 10, median: 5, change_m: 14 }
+    ],
+    unit: 'ms'
+  });
 
-  perCriteria.set('criteria1', [
-    { samples: 10, median: 5, change_m: 3 },
-    { samples: 10, median: 5, change_m: 2 },
-    { samples: 10, median: 5, change_m: 1 }
-  ]);
+  perCriteria.set('criteria1', {
+    data: [
+      { samples: 10, median: 5, change_m: 3 },
+      { samples: 10, median: 5, change_m: 2 },
+      { samples: 10, median: 5, change_m: 1 }
+    ],
+    unit: 'ms'
+  });
 
   const result = calculateSummaryOfChangeSummaries(perCriteria);
 

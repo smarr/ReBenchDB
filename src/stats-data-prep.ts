@@ -1,6 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import {
   ComparisonStatistics,
+  ComparisonStatsWithUnit,
   calculateChangeStatistics,
   calculateSummaryOfChangeSummaries,
   median,
@@ -353,7 +354,7 @@ export async function calculateChangeStatsForBenchmark(
   change: string,
   baseOffset: number,
   changeOffset: number,
-  perCriteria: Map<string, ComparisonStatistics[]> | null,
+  perCriteria: Map<string, ComparisonStatsWithUnit> | null,
   lastPlotId: number,
   outputFolder: string | null = null,
   plotName: string | null = null
@@ -446,7 +447,7 @@ async function computeStatisticsAndInlinePlot(
   measurements: Measurements[],
   baseOffset: number,
   changeOffset: number,
-  perCriteria: Map<string, ComparisonStatistics[]> | null,
+  perCriteria: Map<string, ComparisonStatsWithUnit> | null,
   lastPlotId: number,
   inlinePlotCriterion: string | null = null,
   outputFolder: string | null = null,
@@ -536,7 +537,7 @@ async function createInlinePlot(
 }
 
 function recordPerCriteria(
-  perCriteria: Map<string, ComparisonStatistics[]>,
+  perCriteria: Map<string, ComparisonStatsWithUnit>,
   measurements: Measurements[],
   i: number,
   baseOffset: number,
@@ -545,10 +546,13 @@ function recordPerCriteria(
   const criterionName = measurements[i + baseOffset].criterion.name;
   let allStats = perCriteria.get(criterionName);
   if (allStats === undefined) {
-    allStats = [];
+    allStats = {
+      data: [],
+      unit: measurements[i + baseOffset].criterion.unit
+    };
     perCriteria.set(criterionName, allStats);
   }
-  allStats.push(changeStats);
+  allStats.data.push(changeStats);
 }
 
 export async function calculateAllChangeStatisticsAndInlinePlots(
@@ -557,7 +561,7 @@ export async function calculateAllChangeStatisticsAndInlinePlots(
   change: string,
   baseOffset: number,
   changeOffset: number,
-  criteria: Map<string, ComparisonStatistics[]> | null = null,
+  criteria: Map<string, ComparisonStatsWithUnit> | null = null,
   outputFolder: string | null = null,
   plotName: string | null = null
 ): Promise<{ numRunConfigs: number; comparisonData: ByExeSuiteComparison }> {
@@ -791,7 +795,7 @@ export async function calculateAllStatisticsAndRenderPlots(
   const absolutePath = `${reportOutputFolder}/${reportId}`;
   mkdirSync(absolutePath, { recursive: true });
 
-  const criteria = new Map<string, ComparisonStatistics[]>();
+  const criteria = new Map<string, ComparisonStatsWithUnit>();
 
   const { numRunConfigs, comparisonData } =
     await calculateAllChangeStatisticsAndInlinePlots(

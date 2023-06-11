@@ -1,13 +1,13 @@
 import { BenchmarkId } from 'api';
 import { CriterionData, Environment, RevisionData } from 'db';
-import { ComparisonStatistics, BasicSummaryStatistics } from 'stats';
+import { ComparisonStatistics, SummaryStatsWithUnit } from 'stats';
 
 declare type DataFormat = typeof import('../data-format');
 declare type ViewHelpers = typeof import('./helpers');
 
 /** Summary statistics for the overall comparison. */
 export interface StatsSummary {
-  stats: Record<string, BasicSummaryStatistics>;
+  stats: Record<string, SummaryStatsWithUnit>;
 
   /** The URL to a PNG with the overview statistics. */
   overviewPngUrl: string;
