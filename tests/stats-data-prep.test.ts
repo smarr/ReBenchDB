@@ -565,10 +565,10 @@ describe('getChangeDataBySuiteAndExe()', () => {
 
     expect(macroStartup?.labels).toEqual([
       'TruffleSOM-graal',
-      'TruffleSOM-interp',
       'TruffleSOM-graal-bc',
-      'TruffleSOM-native-interp-bc',
-      'TruffleSOM-native-interp-ast'
+      'TruffleSOM-interp',
+      'TruffleSOM-native-interp-ast',
+      'TruffleSOM-native-interp-bc'
     ]);
     expect(microSomSom?.labels).toEqual([
       'SomSom-native-interp-ast',

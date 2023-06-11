@@ -150,28 +150,28 @@ describe('renderOverviewPlots()', () => {
       expect(result.svg).toBeDefined();
       expect(result.svg).toHaveLength(5);
       expect(result.svg).toEqual([
-        `trufflesom-macro-steady.svg`,
-        `trufflesom-micro-steady.svg`,
+        `trufflesom-micro-somsom.svg`,
         `trufflesom-macro-startup.svg`,
+        `trufflesom-macro-steady.svg`,
         `trufflesom-micro-startup.svg`,
-        `trufflesom-micro-somsom.svg`
+        `trufflesom-micro-steady.svg`
       ]);
     });
 
     it('should match the svg expected', () => {
       expect(result.svg[0]).toBeIdenticalSvgFiles(
         outputFolder,
-        getResultPath('trufflesom-macro-steady.svg')
+        getResultPath('trufflesom-micro-somsom.svg')
       );
 
       expect(result.svg[1]).toBeIdenticalSvgFiles(
         outputFolder,
-        getResultPath('trufflesom-micro-steady.svg')
+        getResultPath('trufflesom-macro-startup.svg')
       );
 
       expect(result.svg[2]).toBeIdenticalSvgFiles(
         outputFolder,
-        getResultPath('trufflesom-macro-startup.svg')
+        getResultPath('trufflesom-macro-steady.svg')
       );
 
       expect(result.svg[3]).toBeIdenticalSvgFiles(
@@ -181,7 +181,7 @@ describe('renderOverviewPlots()', () => {
 
       expect(result.svg[4]).toBeIdenticalSvgFiles(
         outputFolder,
-        getResultPath('trufflesom-micro-somsom.svg')
+        getResultPath('trufflesom-micro-steady.svg')
       );
     });
   });

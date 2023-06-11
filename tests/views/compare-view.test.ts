@@ -477,11 +477,11 @@ describe('Compare View Statistics', () => {
       numRunConfigs: 166,
       overviewPngUrl: `testT/overview.png`,
       overviewSvgUrls: [
-        `testT/overview-macro-steady.svg`,
-        `testT/overview-micro-steady.svg`,
+        `testT/overview-micro-somsom.svg`,
         `testT/overview-macro-startup.svg`,
+        `testT/overview-macro-steady.svg`,
         `testT/overview-micro-startup.svg`,
-        `testT/overview-micro-somsom.svg`
+        `testT/overview-micro-steady.svg`
       ],
       stats: {
         total: {
