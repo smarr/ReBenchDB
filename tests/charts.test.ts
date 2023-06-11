@@ -16,11 +16,16 @@ import {
 import { Measurements } from '../src/db.js';
 import { collateMeasurements } from '../src/db-data-processing.js';
 import { ByExeSuiteComparison } from '../src/views/view-types.js';
-import { initJestMatchers } from './helpers.js';
+import {
+  initJestMatchers,
+  isRequestedToUpdateExpectedData
+} from './helpers.js';
 
 initJestMatchers();
 
-const outputFolder = robustPath('../tests/data/actual-results/charts');
+const outputFolder = isRequestedToUpdateExpectedData()
+  ? robustPath('../tests/data/expected-results/charts')
+  : robustPath('../tests/data/actual-results/charts');
 
 function getResultPath(fileName: string): string {
   return robustPath(`../tests/data/expected-results/charts/${fileName}`);
