@@ -177,6 +177,7 @@ function assertBasicPropertiesOfSortedMeasurements(
 
 function addOrGetCompareStatsRow(
   variants: Map<string, CompareStatsRow>,
+  countsAndMissing: VariantCountAndMissing | null,
   measurements: Measurements,
   bench: ProcessedResult
 ): CompareStatsRow {
@@ -196,17 +197,17 @@ function addOrGetCompareStatsRow(
   let row = variants.get(key);
   if (row === undefined) {
     row = {
-      benchId: { b, e, s, v, c, ea },
+      benchId: { b, e, s, v, c, i, ea },
       details: {
         cmdline: measurements.runSettings.simplifiedCmdline,
         envId,
         hasProfiles: false,
         hasWarmup: false,
-        numV: 0,
-        numC: 0,
-        numI: 0,
-        numEa: 0,
-        numEnv: 0
+        numV: countsAndMissing === null ? 0 : countsAndMissing.numV,
+        numC: countsAndMissing === null ? 0 : countsAndMissing.numC,
+        numI: countsAndMissing === null ? 0 : countsAndMissing.numI,
+        numEa: countsAndMissing === null ? 0 : countsAndMissing.numEa,
+        numEnv: countsAndMissing === null ? 0 : countsAndMissing.numEnv
       }
     };
     variants.set(key, row);
@@ -221,7 +222,7 @@ function addMissingCompareStatsRow(
   base: string,
   change: string
 ): void {
-  const row = addOrGetCompareStatsRow(variants, measurements, bench);
+  const row = addOrGetCompareStatsRow(variants, null, measurements, bench);
 
   if (!row.missing) {
     row.missing = [];
@@ -263,7 +264,7 @@ export function countVariantsAndDropMissing(
   let numC = 0;
   let numI = 0;
   let numEa = 0;
-  let numEnv = 1;
+  let numEnv = 0;
 
   function dropAsMissing(i: number): void {
     addMissingCompareStatsRow(missing, measurements[i], bench, base, change);
@@ -290,37 +291,29 @@ export function countVariantsAndDropMissing(
 
     const base = measurements[i];
 
-    if (lastEnvId === -1) {
+    if (lastEnvId !== base.envId) {
       lastEnvId = base.envId;
+      numEnv += 1;
+    }
+
+    if (lastVarValue !== base.runSettings.varValue) {
       lastVarValue = base.runSettings.varValue;
+      numV += 1;
+    }
+
+    if (lastCores !== base.runSettings.cores) {
       lastCores = base.runSettings.cores;
+      numC += 1;
+    }
+
+    if (lastInputSize !== base.runSettings.inputSize) {
       lastInputSize = base.runSettings.inputSize;
+      numI += 1;
+    }
+
+    if (lastExtraArgs !== base.runSettings.extraArgs) {
       lastExtraArgs = base.runSettings.extraArgs;
-    } else {
-      if (lastEnvId !== base.envId) {
-        lastEnvId = base.envId;
-        numEnv += 1;
-      }
-
-      if (lastVarValue !== base.runSettings.varValue) {
-        lastVarValue = base.runSettings.varValue;
-        numV += 1;
-      }
-
-      if (lastCores !== base.runSettings.cores) {
-        lastCores = base.runSettings.cores;
-        numC += 1;
-      }
-
-      if (lastInputSize !== base.runSettings.inputSize) {
-        lastInputSize = base.runSettings.inputSize;
-        numI += 1;
-      }
-
-      if (lastExtraArgs !== base.runSettings.extraArgs) {
-        lastExtraArgs = base.runSettings.extraArgs;
-        numEa += 1;
-      }
+      numEa += 1;
     }
 
     if (isLastItem) {
@@ -387,6 +380,7 @@ export async function calculateChangeStatsForBenchmark(
   // - calculate the change statistics for each criterion
   const counts = await computeStatisticsAndInlinePlot(
     variants,
+    countsAndMissing,
     bench,
     measurements,
     baseOffset,
@@ -443,6 +437,7 @@ export function getMsFlattenedAndSorted(
 
 async function computeStatisticsAndInlinePlot(
   variants: Map<string, CompareStatsRow>,
+  countsAndMissing: VariantCountAndMissing,
   bench: ProcessedResult,
   measurements: Measurements[],
   baseOffset: number,
@@ -462,7 +457,12 @@ async function computeStatisticsAndInlinePlot(
     const { sortedBase, sortedChange } = getMsFlattenedAndSorted(base, change);
     const changeStats = calculateChangeStatistics(sortedBase, sortedChange);
 
-    const row = addOrGetCompareStatsRow(variants, change, bench);
+    const row = addOrGetCompareStatsRow(
+      variants,
+      countsAndMissing,
+      change,
+      bench
+    );
 
     // add the various details
     row.details.hasWarmup = siteConfig.canShowWarmup(change.values);

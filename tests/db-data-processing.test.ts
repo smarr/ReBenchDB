@@ -7,7 +7,7 @@ import {
   ResultsByExeSuiteBenchmark,
   ResultsBySuiteBenchmark
 } from '../src/stats-data-prep.js';
-import { ProcessedResult } from '../src/db.js';
+import { MeasurementData, ProcessedResult } from '../src/db.js';
 
 const dataJsSOM = JSON.parse(
   readFileSync(
@@ -173,6 +173,77 @@ describe('collateMeasurements()', () => {
 
       expect(m1.values[0]).toHaveLength(120);
       expect(m2.values[0]).toHaveLength(120);
+    });
+  });
+
+  describe('needs to distinguish different run ids', () => {
+    function createMeasure(
+      runid: number,
+      inputsize: string,
+      commitid: string
+    ): MeasurementData {
+      return {
+        expid: 1,
+        runid,
+        trialid: 1,
+        commitid,
+
+        bench: 'b',
+        exe: 'e',
+        suite: 's',
+
+        cmdline: 'b e s ' + inputsize,
+        varvalue: null,
+        cores: null,
+        inputsize,
+        extraargs: null,
+
+        iteration: 1,
+        invocation: 1,
+        warmup: null,
+
+        criterion: 'total',
+        unit: 'ms',
+        value: 1,
+
+        envid: 1
+      };
+    }
+
+    const data: MeasurementData[] = [
+      createMeasure(1, '1', 'a'),
+      createMeasure(1, '1', 'b'),
+      createMeasure(2, '2', 'a'),
+      createMeasure(2, '2', 'b')
+    ];
+
+    const result: ResultsByExeSuiteBenchmark = collateMeasurements(data);
+
+    it('should have 1 executor', () => {
+      expect(result.size).toBe(1);
+      expect([...result.keys()]).toEqual(['e']);
+    });
+
+    it('should have 1 suite', () => {
+      const suites = <ResultsBySuiteBenchmark>result.get('e');
+      expect(suites.size).toBe(1);
+      expect([...suites.keys()]).toEqual(['s']);
+    });
+
+    it('should have the expected benchmark', () => {
+      const suites = <ResultsBySuiteBenchmark>result.get('e');
+      const bs = <ResultsByBenchmark>suites.get('s');
+      expect(bs.benchmarks.size).toBe(1);
+
+      expect([...bs.benchmarks.keys()]).toEqual(['b']);
+    });
+
+    it('should have 4 measurements', () => {
+      const suites = <ResultsBySuiteBenchmark>result.get('e');
+      const bs = <ResultsByBenchmark>suites.get('s');
+      const b = <ProcessedResult>bs.benchmarks.get('b');
+
+      expect(b.measurements).toHaveLength(4);
     });
   });
 });

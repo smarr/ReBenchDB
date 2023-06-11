@@ -180,6 +180,7 @@ function findMeasurements(
     if (
       mm.envId == row.envid &&
       mm.commitId == row.commitid &&
+      mm.runId == row.runid &&
       mm.criterion.name == row.criterion
     ) {
       m = mm;

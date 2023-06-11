@@ -3,10 +3,10 @@ const stats = it.stats;
 
 let args = '';
 
-if (stats.details.numV  > 0) { args += stats.benchId.v + ' '; }
-if (stats.details.numC  > 0) { args += stats.benchId.c + ' '; }
-if (stats.details.numI  > 0) { args += stats.benchId.i + ' '; }
-if (stats.details.numEa > 0) { args += stats.benchId.ea + ' '; }
+if (stats.details.numV  > 1) { args += stats.benchId.v + ' '; }
+if (stats.details.numC  > 1) { args += stats.benchId.c + ' '; }
+if (stats.details.numI  > 1) { args += stats.benchId.i + ' '; }
+if (stats.details.numEa > 1) { args += stats.benchId.ea + ' '; }
 
 if (args.length > 0) {
   args = `<span class="all-args">${args.trim()}</span>`;
@@ -14,7 +14,7 @@ if (args.length > 0) {
 
 if (stats.missing) {
 %}<tr>
-%}<th scope="row">{%= stats.benchId.b %}{%= args %}</th>
+%}<th scope="row">{%= stats.benchId.b %}{%- args %}</th>
 <td colspan="4">Missing data for {%
   const byCommitId = new Map();
   for (const m of stats.missing) {
@@ -46,7 +46,7 @@ if (!stats.missing || hasTotal) {
 
     if (hasTotal) {
 %}<tr>
-<th scope="row">{%= stats.benchId.b %}{%= args %}</th>
+<th scope="row">{%= stats.benchId.b %}{%- args %}</th>
   <td class="inline-cmp"><img src="{%= it.config.reportsUrl %}/{%= stats.inlinePlot %}"></td>
 {%    if (stats.exeStats) {
 %}{%-   include('compare/stats-row-across-exes.html', {

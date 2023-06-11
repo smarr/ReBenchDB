@@ -358,6 +358,16 @@ describe('calculateChangeStatsForBenchmark()', () => {
     it('should not have dropped any data', () => {
       expect(nbody.measurements).toHaveLength(2);
       expect(stats.stats).toHaveLength(1);
+
+      for (const propName of ['b', 'e', 's', 'v', 'c', 'i', 'ea']) {
+        expect(stats.stats[0].benchId).toHaveProperty(propName);
+      }
+
+      expect(stats.stats[0].details.numV).toBe(0);
+      expect(stats.stats[0].details.numC).toBe(1);
+      expect(stats.stats[0].details.numI).toBe(0);
+      expect(stats.stats[0].details.numEa).toBe(1);
+      expect(stats.stats[0].details.numEnv).toBe(1);
     });
 
     it('should have added the expected statistics', () => {
