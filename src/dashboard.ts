@@ -120,7 +120,7 @@ export async function dashProfile(
   try {
     data.profile = JSON.parse(data.profile);
   } catch (e) {
-    /* let's just leave it a string */
+    /* let's just leave it as a string */
   }
   return data;
 }
