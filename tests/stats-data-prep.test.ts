@@ -741,7 +741,7 @@ describe('prepareCompareView()', () => {
       );
     });
 
-    it('should produce 5 overview svgs and 1 png', () => {
+    it('should produce 5 overview SVGs and 1 png', () => {
       for (const name of [
         'tsom/overview-macro-steady.svg',
         'tsom/overview-micro-steady.svg',

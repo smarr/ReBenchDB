@@ -563,7 +563,7 @@ export async function calculateAllChangeStatisticsAndInlinePlots(
 ): Promise<{ numRunConfigs: number; comparisonData: ByExeSuiteComparison }> {
   const comparisonData = new Map<string, Map<string, CompareStatsTable>>();
   // those two counts are likely always the same,
-  // but for the moment, I'll keep themseparate
+  // but for the moment, I'll keep them separate
   let lastPlotId = 0;
   let numRunConfigs = 0;
 

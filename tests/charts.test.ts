@@ -146,7 +146,7 @@ describe('renderOverviewPlots()', () => {
       );
     });
 
-    it('should return five svgs', () => {
+    it('should return five SVGs', () => {
       expect(result.svg).toBeDefined();
       expect(result.svg).toHaveLength(5);
       expect(result.svg).toEqual([

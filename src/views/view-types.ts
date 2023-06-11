@@ -36,7 +36,7 @@ export interface CompareStatsRowAcrossExes {
   criteria: Record<string, ComparisonStatistics>;
 }
 
-export interface CompareStatsRowAccrossExesPartial {
+export interface CompareStatsRowAcrossExesPartial {
   exes: CompareStatsRowAcrossExes[];
   dataFormatters: DataFormat;
   viewHelpers: ViewHelpers;
@@ -203,7 +203,7 @@ export interface CompareViewWithData extends CompareViewBasics {
 }
 
 export interface ReportConfig {
-  /** The URL part where reports are stored, and publically accessible. */
+  /** The URL part where reports are stored, and publicly accessible. */
   reportsUrl: string;
   overviewPlotWidth: number;
 }

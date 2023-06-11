@@ -5,7 +5,7 @@ import * as dataFormatters from '../../src/data-format.js';
 import * as viewHelpers from '../../src/views/helpers.js';
 import {
   ButtonsAdditionalInfoPartial,
-  CompareStatsRowAccrossExesPartial,
+  CompareStatsRowAcrossExesPartial,
   CompareStatsRowAcrossVersionsPartial,
   CompareStatsTableHeaderPartial,
   CompareStatsRowPartial,
@@ -138,7 +138,7 @@ describe('Compare View Parts', () => {
     const tpl = prepareTemplate('compare/stats-row-across-exes.html', true);
 
     it('should render <td> elements with the statistics', () => {
-      const data: CompareStatsRowAccrossExesPartial = {
+      const data: CompareStatsRowAcrossExesPartial = {
         exes: exeStats,
         dataFormatters,
         viewHelpers
