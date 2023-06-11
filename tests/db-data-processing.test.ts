@@ -107,13 +107,13 @@ describe('collateMeasurements()', () => {
     it('should have 7 executors', () => {
       expect(result.size).toBe(7);
       expect([...result.keys()]).toEqual([
-        'TruffleSOM-graal',
-        'TruffleSOM-interp',
-        'TruffleSOM-graal-bc',
-        'TruffleSOM-native-interp-bc',
-        'TruffleSOM-native-interp-ast',
         'SomSom-native-interp-ast',
-        'SomSom-native-interp-bc'
+        'SomSom-native-interp-bc',
+        'TruffleSOM-graal',
+        'TruffleSOM-graal-bc',
+        'TruffleSOM-interp',
+        'TruffleSOM-native-interp-ast',
+        'TruffleSOM-native-interp-bc'
       ]);
     });
 
@@ -121,10 +121,10 @@ describe('collateMeasurements()', () => {
       const suites = <ResultsBySuiteBenchmark>result.get('TruffleSOM-graal');
       expect(suites.size).toBe(4);
       expect([...suites.keys()]).toEqual([
-        'macro-steady',
-        'micro-steady',
         'macro-startup',
-        'micro-startup'
+        'macro-steady',
+        'micro-startup',
+        'micro-steady'
       ]);
     });
 
@@ -134,12 +134,12 @@ describe('collateMeasurements()', () => {
       expect(macro.benchmarks.size).toBe(6);
 
       expect([...macro.benchmarks.keys()]).toEqual([
-        'Json',
-        'Richards',
-        'NBody',
         'DeltaBlue',
         'GraphSearch',
-        'PageRank'
+        'Json',
+        'NBody',
+        'PageRank',
+        'Richards'
       ]);
     });
 
