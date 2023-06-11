@@ -74,7 +74,7 @@ function seriesConfig(
   if (branchName === null && metric !== '') {
     label = metric;
   } else if (branchName !== '' && metric !== '') {
-    label = `${branchName} ${metric}`;
+    label = `${metric} ${branchName}`;
   } else {
     label = '';
   }
