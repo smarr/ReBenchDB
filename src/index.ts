@@ -234,6 +234,10 @@ router.get(
       Number(ctx.params.trialId),
       db
     );
+    if (ctx.body === undefined) {
+      ctx.status = 404;
+      ctx.body = {};
+    }
     ctx.type = 'application/json';
     completeRequest(start, db, 'get-profiles');
   }
