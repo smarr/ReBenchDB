@@ -202,6 +202,38 @@ export interface MeasurementData {
   envid: number;
 }
 
+interface AvailableProfile {
+  runid: number;
+  trialid: number;
+}
+
+export class HasProfile {
+  /**
+   * This is expected to be sorted by expid, runid, trialid
+   * as coming from the database.
+   */
+  private readonly availableProfiles: AvailableProfile[];
+
+  constructor(availableProfiles: AvailableProfile[]) {
+    this.availableProfiles = availableProfiles;
+  }
+
+  public getTrialId(runId: number): [number, number] | false {
+    const idx = this.availableProfiles.findIndex((p) => p.runid === runId);
+    if (idx >= 0) {
+      assert(
+        this.availableProfiles[idx].runid === runId &&
+          this.availableProfiles[idx + 1].runid === runId
+      );
+      return [
+        this.availableProfiles[idx].trialid,
+        this.availableProfiles[idx + 1].trialid
+      ];
+    }
+    return false;
+  }
+}
+
 export interface RunSettings {
   cmdline: string;
 
@@ -1583,6 +1615,31 @@ export abstract class Database {
       baseBranchName: result.rows[1].branchortag,
       changeBranchName: result.rows[0].branchortag
     };
+  }
+
+  public async getProfileAvailability(
+    projectId: number,
+    commitId1: string,
+    commitId2: string
+  ): Promise<HasProfile> {
+    const q = {
+      name: 'fetchProfileAvailability',
+      text: `SELECT 
+                runId, trialId
+              FROM ProfileData
+                JOIN Trial ON trialId = Trial.id
+                JOIN Experiment e ON expId = e.id
+                JOIN Source ON source.id = sourceId
+              WHERE
+                (commitId = $1 OR commitId = $2)
+                AND e.projectId = $3
+              ORDER BY
+                runId, trialId`,
+      values: [commitId1, commitId2, projectId]
+    };
+
+    const result = await this.query(q);
+    return new HasProfile(result.rows);
   }
 
   public async getLatestBenchmarksForTimelineView(

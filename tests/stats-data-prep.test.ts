@@ -345,6 +345,7 @@ describe('calculateChangeStatsForBenchmark()', () => {
     it('should run without exception', async () => {
       stats = await calculateChangeStatsForBenchmark(
         nbody,
+        null,
         '4dff7e',
         'bc1105',
         0,
@@ -412,6 +413,7 @@ describe('calculateAllChangeStatisticsAndInlinePlots()', () => {
     const { numRunConfigs, comparisonData } =
       await calculateAllChangeStatisticsAndInlinePlots(
         resultJsSOM,
+        null,
         revDataJs.baseCommitId,
         revDataJs.changeCommitId,
         0,
@@ -434,6 +436,7 @@ describe('calculateAllChangeStatisticsAndInlinePlots()', () => {
     const { numRunConfigs, comparisonData } =
       await calculateAllChangeStatisticsAndInlinePlots(
         resultTSOM,
+        null,
         revDataT.baseCommitId,
         revDataT.changeCommitId,
         0,
@@ -517,6 +520,7 @@ describe('getChangeDataBySuiteAndExe()', () => {
   it('should calculate statistics and get results', async () => {
     jsResults = await calculateAllChangeStatisticsAndInlinePlots(
       resultJsSOM,
+      null,
       revDataJs.baseCommitId,
       revDataJs.changeCommitId,
       0,
@@ -524,6 +528,7 @@ describe('getChangeDataBySuiteAndExe()', () => {
     );
     tsResults = await calculateAllChangeStatisticsAndInlinePlots(
       resultTSOM,
+      null,
       revDataT.baseCommitId,
       revDataT.changeCommitId,
       0,
@@ -670,6 +675,7 @@ describe('prepareCompareView()', () => {
       result = await prepareCompareView(
         dataJsSOM.results,
         [],
+        null,
         'jssom',
         'jssom',
         revDataJs,
@@ -724,6 +730,7 @@ describe('prepareCompareView()', () => {
       result = await prepareCompareView(
         dataTSOM.results,
         [],
+        null,
         'tsom',
         'tsom',
         revDataT,

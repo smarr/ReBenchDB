@@ -73,7 +73,9 @@ export interface DetailedInfo {
   envId: number;
 
   hasWarmup: boolean;
-  hasProfiles: boolean;
+
+  profileTrialIdBase: number | false;
+  profileTrialIdChange: number | false;
 
   dataSeries?: DataSeriesVersionComparison;
 

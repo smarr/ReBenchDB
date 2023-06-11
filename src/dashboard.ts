@@ -14,7 +14,7 @@ import {
   TotalCriterion,
   getDirname
 } from './util.js';
-import { log } from './logging.js';
+import { assert, log } from './logging.js';
 import {
   CompareView,
   WarmupData,
@@ -508,7 +508,7 @@ export async function dashCompareNew(
     change
   );
 
-  if (!revDetails.dataFound) {
+  if (!revDetails.dataFound || !revDetails.base) {
     return {
       revisionFound: false,
       project: projectSlug,
@@ -519,12 +519,25 @@ export async function dashCompareNew(
     };
   }
 
-  const results = await db.getMeasurementsForComparison(base, change);
-  const environments = await db.getEnvironmentsForComparison(base, change);
+  const projectId = revDetails.base.projectid;
+  assert(projectId === revDetails.change?.projectid, 'Project IDs must match');
+
+  const results = await db.getMeasurementsForComparison(
+    projectId,
+    base,
+    change
+  );
+  const environments = await db.getEnvironmentsForComparison(
+    projectId,
+    base,
+    change
+  );
+  const profiles = await db.getProfileAvailability(projectId, base, change);
 
   return prepareCompareView(
     results,
     environments,
+    profiles,
     reportId,
     projectSlug,
     revDetails,

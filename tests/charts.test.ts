@@ -61,6 +61,7 @@ describe('renderOverviewPlots()', () => {
   it('should calculate the statistics without error', async () => {
     jsSomStats = await calculateAllChangeStatisticsAndInlinePlots(
       resultsJsSOM,
+      null,
       '4dff7e',
       'bc1105',
       0,
@@ -68,6 +69,7 @@ describe('renderOverviewPlots()', () => {
     );
     tSomStats = await calculateAllChangeStatisticsAndInlinePlots(
       resultsTSOM,
+      null,
       '4dff7e',
       'bc1105',
       0,

@@ -221,6 +221,6 @@ describe('dataSeriesIds()', () => {
       }
     };
 
-    expect(dataSeriesIds(ids)).toBe('1,123456/2,123457/4');
+    expect(dataSeriesIds(ids, 2, 4)).toBe('1,123456/2,123457/4');
   });
 });

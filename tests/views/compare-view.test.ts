@@ -68,7 +68,8 @@ const environments: Environment[] = [
 const details: DetailedInfo = {
   cmdline: 'som/some-command with args',
   envId: 1,
-  hasProfiles: true,
+  profileTrialIdBase: 11,
+  profileTrialIdChange: 12,
   hasWarmup: true,
   dataSeries: {
     runId: 1,
@@ -435,6 +436,7 @@ describe('Compare View Statistics', () => {
     statsJ = (
       await calculateAllStatisticsAndRenderPlots(
         resultsJ,
+        null,
         'bc1105',
         '4dff7e',
         'testJ',
@@ -445,6 +447,7 @@ describe('Compare View Statistics', () => {
     statsT = (
       await calculateAllStatisticsAndRenderPlots(
         resultsT,
+        null,
         '5fa4bd',
         '5820ec',
         'testT',

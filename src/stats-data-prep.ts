@@ -10,6 +10,7 @@ import {
 import {
   CriterionData,
   Environment,
+  HasProfile,
   MeasurementData,
   Measurements,
   ProcessedResult,
@@ -179,7 +180,8 @@ function addOrGetCompareStatsRow(
   variants: Map<string, CompareStatsRow>,
   countsAndMissing: VariantCountAndMissing | null,
   measurements: Measurements,
-  bench: ProcessedResult
+  bench: ProcessedResult,
+  hasProfiles: HasProfile | null
 ): CompareStatsRow {
   const b = bench.bench;
   const e = bench.exe;
@@ -196,12 +198,17 @@ function addOrGetCompareStatsRow(
 
   let row = variants.get(key);
   if (row === undefined) {
+    const profileIds = hasProfiles
+      ? hasProfiles.getTrialId(measurements.runId)
+      : false;
+
     row = {
       benchId: { b, e, s, v, c, i, ea },
       details: {
         cmdline: measurements.runSettings.simplifiedCmdline,
         envId,
-        hasProfiles: false,
+        profileTrialIdBase: profileIds ? profileIds[0] : false,
+        profileTrialIdChange: profileIds ? profileIds[1] : false,
         hasWarmup: false,
         numV: countsAndMissing === null ? 0 : countsAndMissing.numV,
         numC: countsAndMissing === null ? 0 : countsAndMissing.numC,
@@ -222,7 +229,13 @@ function addMissingCompareStatsRow(
   base: string,
   change: string
 ): void {
-  const row = addOrGetCompareStatsRow(variants, null, measurements, bench);
+  const row = addOrGetCompareStatsRow(
+    variants,
+    null,
+    measurements,
+    bench,
+    null
+  );
 
   if (!row.missing) {
     row.missing = [];
@@ -343,6 +356,7 @@ export interface StatsForBenchmark {
 
 export async function calculateChangeStatsForBenchmark(
   bench: ProcessedResult,
+  hasProfiles: HasProfile | null,
   base: string,
   change: string,
   baseOffset: number,
@@ -383,6 +397,7 @@ export async function calculateChangeStatsForBenchmark(
     countsAndMissing,
     bench,
     measurements,
+    hasProfiles,
     baseOffset,
     changeOffset,
     perCriteria,
@@ -440,6 +455,7 @@ async function computeStatisticsAndInlinePlot(
   countsAndMissing: VariantCountAndMissing,
   bench: ProcessedResult,
   measurements: Measurements[],
+  hasProfiles: HasProfile | null,
   baseOffset: number,
   changeOffset: number,
   perCriteria: Map<string, ComparisonStatsWithUnit> | null,
@@ -461,14 +477,15 @@ async function computeStatisticsAndInlinePlot(
       variants,
       countsAndMissing,
       change,
-      bench
+      bench,
+      hasProfiles
     );
 
     // add the various details
     row.details.hasWarmup = siteConfig.canShowWarmup(change.values);
 
     if (
-      (row.details.hasWarmup || row.details.hasProfiles) &&
+      (row.details.hasWarmup || row.details.profileTrialIdBase) &&
       !row.details.dataSeries
     ) {
       row.details.dataSeries = getDataSeriesIds(base, change);
@@ -557,6 +574,7 @@ function recordPerCriteria(
 
 export async function calculateAllChangeStatisticsAndInlinePlots(
   byExeSuiteBench: ResultsByExeSuiteBenchmark,
+  hasProfiles: HasProfile | null,
   base: string,
   change: string,
   baseOffset: number,
@@ -584,6 +602,7 @@ export async function calculateAllChangeStatisticsAndInlinePlots(
       for (const bench of byBench.benchmarks.values()) {
         const result = await calculateChangeStatsForBenchmark(
           bench,
+          hasProfiles,
           base,
           change,
           baseOffset,
@@ -734,6 +753,7 @@ export function calculateDataForOverviewPlot(
 export async function prepareCompareView(
   results: MeasurementData[],
   environments: Environment[],
+  hasProfiles: HasProfile | null,
   reportId: string,
   projectSlug: string,
   revDetails: RevisionComparison,
@@ -743,6 +763,7 @@ export async function prepareCompareView(
   const { summary, allMeasurements } =
     await calculateAllStatisticsAndRenderPlots(
       collatedMs,
+      hasProfiles,
       revDetails.baseCommitId,
       revDetails.changeCommitId,
       reportId,
@@ -781,6 +802,7 @@ export async function prepareCompareView(
 
 export async function calculateAllStatisticsAndRenderPlots(
   byExeSuiteBench: ResultsByExeSuiteBenchmark,
+  hasProfiles: HasProfile | null,
   base: string,
   change: string,
   reportId: string,
@@ -800,6 +822,7 @@ export async function calculateAllStatisticsAndRenderPlots(
   const { numRunConfigs, comparisonData } =
     await calculateAllChangeStatisticsAndInlinePlots(
       byExeSuiteBench,
+      hasProfiles,
       base,
       change,
       baseOffset,
