@@ -1078,6 +1078,7 @@ export abstract class Database {
   }
 
   public async getMeasurementsForComparison(
+    projectId: number,
     commitHash1: string,
     commitHash2: string
   ): Promise<MeasurementData[]> {
@@ -1087,14 +1088,15 @@ export abstract class Database {
               ${measurementDataColumns}
             FROM
               ${measurementDataTableJoins}
-            WHERE commitId = $1 OR commitid = $2
+            WHERE (commitId = $1 OR commitid = $2) AND Experiment.projectId = $3
               ORDER BY expId, runId, invocation, iteration, criterion`,
-      values: [commitHash1, commitHash2]
+      values: [commitHash1, commitHash2, projectId]
     });
     return result.rows;
   }
 
   public async getEnvironmentsForComparison(
+    projectId: number,
     commitHash1: string,
     commitHash2: string
   ): Promise<Environment[]> {
@@ -1105,9 +1107,10 @@ export abstract class Database {
                 env.cpu, env.clockspeed, note
              FROM Source src
                 JOIN Trial t         ON t.sourceId = src.id
+                JOIN Experiment exp  ON exp.id = t.expId
                 JOIN Environment env ON t.envId = env.id
-             WHERE commitId = $1 OR commitid = $2`,
-      values: [commitHash1, commitHash2]
+             WHERE (commitId = $1 OR commitid = $2) AND exp.projectId = $3`,
+      values: [commitHash1, commitHash2, projectId]
     });
     return result.rows;
   }
