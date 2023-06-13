@@ -10,7 +10,6 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "@fontsource/roboto": "5.0.3",
     "@octokit/auth-app": "4.0.13",
     "@octokit/rest": "19.0.13",
     "chart.js": "^3.5.1",
@@ -94,10 +93,12 @@
 
     "precompile": "npm run prep-folders && npm run compile-uplot",
     "prep-folders": "mkdir -p tmp/interm tmp/knit resources/reports resources/exp-data",
+
     "compile-uplot": "terser --module --ecma 2018 --compress --mangle -o ./resources/uPlot.esm.min.js -- node_modules/uplot/dist/uPlot.esm.js",
     "compile": "tsc",
-    "postcompile": " npm run prep-static",
+    "postcompile": "npm run prep-static && npm run download-font",
     "prep-static": "cp dist/src/views/*.js ./resources/",
+    "download-font": "node dist/src/download.js https://github.com/googlefonts/roboto/releases/download/v2.136/roboto-hinted.zip tmp/roboto-hinted.zip && unzip tmp/roboto-hinted.zip",
     
     "start": "node --enable-source-maps --experimental-json-modules ./dist/src/index.js",
     "nodemon": "DEV=true nodemon --enable-source-maps --experimental-json-modules ./dist/src/index.js --watch ./dist/src --watch ./dist/package.json --watch ./src/views/ --ext js,json,html",
