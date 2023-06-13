@@ -198,17 +198,17 @@ function addOrGetCompareStatsRow(
 
   let row = variants.get(key);
   if (row === undefined) {
-    const profileIds = hasProfiles
-      ? hasProfiles.getTrialId(measurements.runId)
-      : false;
+    const benchId = { b, e, s, v, c, i, ea };
+    const profileIds = hasProfiles ? hasProfiles.get(benchId) : false;
 
     row = {
-      benchId: { b, e, s, v, c, i, ea },
+      benchId,
       details: {
         cmdline: measurements.runSettings.simplifiedCmdline,
         envId,
         profileTrialIdBase: profileIds ? profileIds[0] : false,
-        profileTrialIdChange: profileIds ? profileIds[1] : false,
+        profileTrialIdChange:
+          profileIds && profileIds[1] ? profileIds[1] : false,
         hasWarmup: false,
         numV: countsAndMissing === null ? 0 : countsAndMissing.numV,
         numC: countsAndMissing === null ? 0 : countsAndMissing.numC,

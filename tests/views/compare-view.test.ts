@@ -68,8 +68,8 @@ const environments: Environment[] = [
 const details: DetailedInfo = {
   cmdline: 'som/some-command with args',
   envId: 1,
-  profileTrialIdBase: 11,
-  profileTrialIdChange: 12,
+  profileTrialIdBase: <any>{ trialid: 11, runid: 1 },
+  profileTrialIdChange: <any>{ trialid: 12, runid: 1 },
   hasWarmup: true,
   dataSeries: {
     runId: 1,

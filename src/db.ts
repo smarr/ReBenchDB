@@ -15,7 +15,8 @@ import {
   TimelineResponse,
   PlotData,
   FullPlotData,
-  TimelineSuite
+  TimelineSuite,
+  BenchmarkId
 } from './api.js';
 import pg, { PoolConfig, QueryConfig, QueryResultRow } from 'pg';
 import { getDirname, TotalCriterion } from './util.js';
@@ -202,9 +203,23 @@ export interface MeasurementData {
   envid: number;
 }
 
-interface AvailableProfile {
-  runid: number;
+export interface AvailableProfile extends BenchmarkId {
   trialid: number;
+  runid: number;
+}
+
+function sameBenchId(a: BenchmarkId, b: BenchmarkId): boolean {
+  // using here == instead of === is intentional
+  // otherwise we don't equate null and undefined
+  return (
+    a.b == b.b &&
+    a.e == b.e &&
+    a.s == b.s &&
+    a.v == b.v &&
+    a.c == b.c &&
+    a.i == b.i &&
+    a.ea == b.ea
+  );
 }
 
 export class HasProfile {
@@ -218,17 +233,21 @@ export class HasProfile {
     this.availableProfiles = availableProfiles;
   }
 
-  public getTrialId(runId: number): [number, number] | false {
-    const idx = this.availableProfiles.findIndex((p) => p.runid === runId);
+  public get(
+    benchId: BenchmarkId
+  ): [AvailableProfile, AvailableProfile?] | false {
+    const idx = this.availableProfiles.findIndex((id) =>
+      sameBenchId(id, benchId)
+    );
     if (idx >= 0) {
-      assert(
-        this.availableProfiles[idx].runid === runId &&
-          this.availableProfiles[idx + 1].runid === runId
-      );
-      return [
-        this.availableProfiles[idx].trialid,
-        this.availableProfiles[idx + 1].trialid
-      ];
+      if (
+        idx === this.availableProfiles.length - 1 ||
+        !sameBenchId(this.availableProfiles[idx + 1], benchId)
+      ) {
+        return [this.availableProfiles[idx]];
+      }
+
+      return [this.availableProfiles[idx], this.availableProfiles[idx + 1]];
     }
     return false;
   }
@@ -1627,17 +1646,28 @@ export abstract class Database {
   ): Promise<HasProfile> {
     const q = {
       name: 'fetchProfileAvailability',
-      text: `SELECT 
-                runId, trialId
-              FROM ProfileData
-                JOIN Trial ON trialId = Trial.id
-                JOIN Experiment e ON expId = e.id
+      text: `SELECT
+                benchmark.name as b,
+                executor.name as e,
+                suite.name as s,
+                varValue as v,
+                cores as c,
+                inputSize as i,
+                extraArgs as ea,
+                trialId, runId
+              FROM ProfileData pd
+                JOIN Trial ON pd.trialId = Trial.id
+                JOIN Experiment e ON trial.expId = e.id
                 JOIN Source ON source.id = sourceId
+                JOIN Run ON runId = run.id
+                JOIN Suite ON run.suiteId = suite.id
+                JOIN Benchmark ON run.benchmarkId = benchmark.id
+                JOIN Executor ON execId = executor.id
               WHERE
                 (commitId = $1 OR commitId = $2)
                 AND e.projectId = $3
               ORDER BY
-                runId, trialId`,
+                b, e, s, v, c, i, ea, trialId, runId`,
       values: [commitId1, commitId2, projectId]
     };
 

@@ -1,5 +1,5 @@
 import { BenchmarkId } from 'api';
-import { CriterionData, Environment, RevisionData } from 'db';
+import { AvailableProfile, CriterionData, Environment, RevisionData } from 'db';
 import { ComparisonStatistics, SummaryStatsWithUnit } from 'stats';
 
 declare type DataFormat = typeof import('../data-format');
@@ -74,8 +74,8 @@ export interface DetailedInfo {
 
   hasWarmup: boolean;
 
-  profileTrialIdBase: number | false;
-  profileTrialIdChange: number | false;
+  profileTrialIdBase: AvailableProfile | false;
+  profileTrialIdChange: AvailableProfile | false;
 
   dataSeries?: DataSeriesVersionComparison;
 
