@@ -36,10 +36,12 @@ import { getDirname } from './util.js';
 import { log } from './logging.js';
 import { db } from './backend/db/db-instance.js';
 import { renderMainPage } from './backend/main/main.js';
-import { renderProjectPage } from './backend/project/project.js';
+import {
+  getSourceAsJson,
+  renderProjectPage
+} from './backend/project/project.js';
 import {
   respondExpIdNotFound,
-  respondProjectAndSourceNotFound,
   respondProjectIdNotFound,
   respondProjectNotFound
 } from './backend/common/standard-responses.js';
@@ -64,8 +66,8 @@ const app = new Koa();
 const router = new Router();
 
 router.get('/', renderMainPage);
-
 router.get('/:projectSlug', renderProjectPage);
+router.get('/:projectSlug/source/:sourceId', getSourceAsJson);
 
 router.get('/timeline/:projectId', async (ctx) => {
   const project = await db.getProject(Number(ctx.params.projectId));
@@ -233,24 +235,6 @@ router.get('/compare/:project/:baseline/:change', async (ctx) => {
     );
   } else {
     respondProjectNotFound(ctx, ctx.params.project);
-  }
-});
-
-router.get('/:projectSlug/source/:sourceId', async (ctx) => {
-  const result = await db.getSourceById(
-    ctx.params.projectSlug,
-    ctx.params.sourceId
-  );
-
-  if (result !== null) {
-    ctx.body = result;
-    ctx.type = 'application/json';
-  } else {
-    respondProjectAndSourceNotFound(
-      ctx,
-      ctx.params.projectSlug,
-      ctx.params.sourceId
-    );
   }
 });
 
