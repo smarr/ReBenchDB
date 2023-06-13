@@ -102,16 +102,25 @@ function createEntry(e, profId, counter) {
   return entryHtml;
 }
 
-function fetchProfile(projectSlug: string, change, runId, trialId, jqInsert) {
+function fetchProfile(
+  projectSlug: string,
+  commitId: string,
+  isBase: boolean,
+  runId: number,
+  trialId: number,
+  jqInsert: JQuery<HTMLElement>
+) {
   const profileP = fetch(
     `/rebenchdb/dash/${projectSlug}/profiles/${runId}/${trialId}`
   );
   profileP.then(async (profileResponse) => {
     const profileData = await profileResponse.json();
-    const profId = `prof-${change}-${runId}-${trialId}`;
+    const profId = `prof-${commitId}-${runId}-${trialId}`;
 
     const container = jqInsert.children();
-    let mainContent = `<div class="list-group list-group-root">`;
+    const labelClass = isBase ? 'baseline' : 'change';
+    const label = `<span class="${labelClass}-badge">${commitId}</span>`;
+    let mainContent = `${label}<div class="list-group list-group-root">`;
 
     const counter = { cnt: 0 };
     for (const e of profileData.profile) {
@@ -156,6 +165,8 @@ function parseDataSeriesIds(serialized: string): DataSeriesIds {
 
 function insertProfiles(e): void {
   const projectSlug = <string>$('#project-slug').attr('value');
+  const baseHash = $('#baseHash').attr('value');
+
   const jqButton = $(e.target);
   let profileInsertTarget = jqButton.parent().parent();
   jqButton.remove();
@@ -163,12 +174,17 @@ function insertProfiles(e): void {
   const { runId, ids } = parseDataSeriesIds(jqButton.data('content'));
 
   for (const { commitId, trialId } of ids) {
+    if (isNaN(trialId)) {
+      continue;
+    }
+
     const jqInsert = $(
       `<tr><td class="profile-container" colspan="6"></td></tr>`
     );
     profileInsertTarget.after(jqInsert);
     profileInsertTarget = jqInsert;
-    fetchProfile(projectSlug, commitId, runId, trialId, jqInsert);
+    const isBase = baseHash?.startsWith(commitId) ?? false;
+    fetchProfile(projectSlug, commitId, isBase, runId, trialId, jqInsert);
   }
 }
 
