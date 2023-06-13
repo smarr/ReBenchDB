@@ -25,7 +25,6 @@ import {
   reportCompletion,
   dashDeleteOldReport,
   dashProfile,
-  dashLatestBenchmarksForTimelineView,
   dashCompareNew,
   dashMeasurements
 } from './dashboard.js';
@@ -45,6 +44,10 @@ import {
   respondProjectIdNotFound,
   respondProjectNotFound
 } from './backend/common/standard-responses.js';
+import {
+  redirectToNewTimelineUrl,
+  renderTimeline
+} from './backend/timeline/timeline.js';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -70,28 +73,9 @@ router.get('/:projectSlug', renderProjectPage);
 router.get('/:projectSlug/source/:sourceId', getSourceAsJson);
 
 // DEPRECATED: remove for 1.0
-router.get('/timeline/:projectId', async (ctx) => {
-  const project = await db.getProject(Number(ctx.params.projectId));
-  if (project) {
-    ctx.redirect(`/${project.slug}/timeline`);
-  } else {
-    respondProjectIdNotFound(ctx, Number(ctx.params.projectId));
-  }
-});
+router.get('/timeline/:projectId', redirectToNewTimelineUrl);
 
-router.get('/:projectSlug/timeline', async (ctx) => {
-  const project = await db.getProjectBySlug(ctx.params.projectSlug);
-
-  if (project) {
-    ctx.body = processTemplate('timeline.html', {
-      project,
-      benchmarks: await dashLatestBenchmarksForTimelineView(project.id, db)
-    });
-    ctx.type = 'html';
-  } else {
-    respondProjectNotFound(ctx, ctx.params.projectSlug);
-  }
-});
+router.get('/:projectSlug/timeline', renderTimeline);
 
 // DEPRECATED: remove for 1.0
 router.get('/project/:projectId', async (ctx) => {
