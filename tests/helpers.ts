@@ -205,5 +205,5 @@ export function isRequestedToUpdateExpectedData(): boolean {
 }
 
 export function isSupportingSvgTests(): boolean {
-  return type() !== 'Linux';
+  return type() === 'Linux';
 }
