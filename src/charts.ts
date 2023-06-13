@@ -13,7 +13,7 @@ import {
   BoxAndWiskers
 } from '@sgratzl/chartjs-chart-boxplot';
 import { medianUnsorted } from '../src/stats.js';
-import { siteAesthetics } from './util.js';
+import { robustPath, siteAesthetics } from './util.js';
 
 const fullyTransparent = 'rgba(0, 0, 0, 0)';
 
@@ -145,6 +145,8 @@ export function createCanvas(settings: CanvasSettings): ChartJSNodeCanvas {
     backgroundColour: siteAesthetics.backgroundColor,
     plugins: { modern: plugins },
     chartCallback: (ChartJS) => {
+      ChartJS.defaults.font.family = 'Roboto';
+
       ChartJS.register({
         id: 'my_background_color',
         beforeDraw: (chart, _options) => {
@@ -171,7 +173,28 @@ export function createCanvas(settings: CanvasSettings): ChartJSNodeCanvas {
   if (settings.outputType === 'svg') {
     (<any>canvasOptions).type = 'svg'; // work around the readonly property
   }
-  return new ChartJSNodeCanvas(canvasOptions);
+
+  const canvas = new ChartJSNodeCanvas(canvasOptions);
+
+  canvas.registerFont(
+    robustPath(
+      '../node_modules/@fontsource/roboto/files/roboto-latin-400-normal.woff'
+    ),
+    {
+      family: 'Roboto',
+      weight: '400'
+    }
+  );
+  canvas.registerFont(
+    robustPath(
+      '../node_modules/@fontsource/roboto/files/roboto-latin-700-normal.woff'
+    ),
+    {
+      family: 'Roboto',
+      weight: '700'
+    }
+  );
+  return canvas;
 }
 
 async function renderDataOnCanvas(

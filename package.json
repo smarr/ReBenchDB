@@ -10,6 +10,7 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
+    "@fontsource/roboto": "5.0.3",
     "@octokit/auth-app": "4.0.13",
     "@octokit/rest": "19.0.13",
     "chart.js": "^3.5.1",

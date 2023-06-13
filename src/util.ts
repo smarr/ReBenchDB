@@ -56,6 +56,14 @@ export function isReBenchDotDev(): boolean {
   return siteConfig.publicUrl === _rebench_dev;
 }
 
+export function isRunningTests(): boolean {
+  return (
+    ('NODE_ENV' in process.env && process.env.NODE_ENV === 'test') ||
+    ('JEST_WORKER_ID' in process.env &&
+      process.env.JEST_WORKER_ID !== undefined)
+  );
+}
+
 export const statsConfig = {
   numberOfBootstrapSamples: 50
 };
