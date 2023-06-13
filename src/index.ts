@@ -4,7 +4,6 @@ import Koa from 'koa';
 import { koaBody } from 'koa-body';
 import Router from 'koa-router';
 
-import { DatabaseWithPool } from './db.js';
 import { BenchmarkData, BenchmarkCompletion, TimelineRequest } from './api.js';
 import { createValidator } from './api-validator.js';
 import * as dataFormatters from './data-format.js';
@@ -31,17 +30,12 @@ import {
   dashMeasurements
 } from './dashboard.js';
 import { prepareTemplate, processTemplate } from './templates.js';
-import {
-  cacheInvalidationDelay,
-  dbConfig,
-  isReBenchDotDev,
-  robustPath,
-  siteConfig,
-  statsConfig
-} from './util.js';
+import { dbConfig, robustPath, siteConfig } from './util.js';
 import { createGitHubClient } from './github.js';
 import { getDirname } from './util.js';
 import { log } from './logging.js';
+import { renderMainPage } from './backend/main/main.js';
+import { db } from './backend/db/db-instance.js';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -61,21 +55,8 @@ const refreshSecret =
 
 const app = new Koa();
 const router = new Router();
-const db = new DatabaseWithPool(
-  dbConfig,
-  statsConfig.numberOfBootstrapSamples,
-  true,
-  cacheInvalidationDelay
-);
 
-router.get('/', async (ctx) => {
-  const projects = await db.getAllProjects();
-  ctx.body = processTemplate('index.html', {
-    projects,
-    isReBenchDotDev: isReBenchDotDev()
-  });
-  ctx.type = 'html';
-});
+router.get('/', renderMainPage);
 
 const projectHtml = prepareTemplate('project.html');
 
