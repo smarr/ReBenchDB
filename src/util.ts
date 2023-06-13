@@ -23,6 +23,9 @@ export function getDirname(importMetaUrl: string): string {
 
 const __dirname = getDirname(import.meta.url);
 
+/**
+ * Get a robust path, relative to the source directory.
+ */
 export const robustPath = __dirname.includes('dist/')
   ? function (path) {
       return `${__dirname}/../../src/${path}`;
@@ -31,12 +34,15 @@ export const robustPath = __dirname.includes('dist/')
       return `${__dirname}/${path}`;
     };
 
-export const robustSrcPath = !__dirname.includes('dist/')
+/**
+ * Get a robust path in the compiled source directory.
+ */
+export const robustSrcPath = __dirname.includes('dist/')
   ? function (path) {
-      return `${__dirname}/../dist/src/${path}`;
+      return `${__dirname}/${path}`;
     }
   : function (path) {
-      return `${__dirname}/${path}`;
+      return `${__dirname}/../dist/src/${path}`;
     };
 
 export const dbConfig = {
