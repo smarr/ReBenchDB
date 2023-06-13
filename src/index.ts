@@ -34,8 +34,15 @@ import { dbConfig, robustPath, siteConfig } from './util.js';
 import { createGitHubClient } from './github.js';
 import { getDirname } from './util.js';
 import { log } from './logging.js';
-import { renderMainPage } from './backend/main/main.js';
 import { db } from './backend/db/db-instance.js';
+import { renderMainPage } from './backend/main/main.js';
+import { renderProjectPage } from './backend/project/project.js';
+import {
+  respondExpIdNotFound,
+  respondProjectAndSourceNotFound,
+  respondProjectIdNotFound,
+  respondProjectNotFound
+} from './backend/common/standard-responses.js';
 
 const __dirname = getDirname(import.meta.url);
 
@@ -58,47 +65,7 @@ const router = new Router();
 
 router.get('/', renderMainPage);
 
-const projectHtml = prepareTemplate('project.html');
-
-router.get('/:projectSlug', async (ctx) => {
-  const project = await db.getProjectBySlug(ctx.params.projectSlug);
-  if (project) {
-    ctx.body = projectHtml(project);
-    ctx.type = 'html';
-  } else {
-    respondProjectNotFound(ctx, ctx.params.projectSlug);
-  }
-});
-
-function respondProjectIdNotFound(ctx, projectId: number) {
-  ctx.body = `Requested project with id ${projectId} not found`;
-  ctx.status = 404;
-  ctx.type = 'text';
-}
-
-function respondProjectNotFound(ctx, projectSlug: string) {
-  ctx.body = `Requested project "${projectSlug}" not found`;
-  ctx.status = 404;
-  ctx.type = 'text';
-}
-
-function respondProjectAndSourceNotFound(
-  ctx,
-  projectSlug: string,
-  sourceId: string
-) {
-  ctx.body =
-    `Requested combination of project "${projectSlug}"` +
-    ` and source ${sourceId} not found`;
-  ctx.status = 404;
-  ctx.type = 'text';
-}
-
-function respondExpIdNotFound(ctx, expId: string) {
-  ctx.body = `Requested experiment ${expId} not found`;
-  ctx.status = 404;
-  ctx.type = 'text';
-}
+router.get('/:projectSlug', renderProjectPage);
 
 router.get('/timeline/:projectId', async (ctx) => {
   const project = await db.getProject(Number(ctx.params.projectId));
