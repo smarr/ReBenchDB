@@ -69,6 +69,7 @@ router.get('/', renderMainPage);
 router.get('/:projectSlug', renderProjectPage);
 router.get('/:projectSlug/source/:sourceId', getSourceAsJson);
 
+// DEPRECATED: remove for 1.0
 router.get('/timeline/:projectId', async (ctx) => {
   const project = await db.getProject(Number(ctx.params.projectId));
   if (project) {
@@ -92,6 +93,7 @@ router.get('/:projectSlug/timeline', async (ctx) => {
   }
 });
 
+// DEPRECATED: remove for 1.0
 router.get('/project/:projectId', async (ctx) => {
   const project = await db.getProject(Number(ctx.params.projectId));
   if (project) {
@@ -115,6 +117,7 @@ router.get('/:projectSlug/data', async (ctx) => {
   }
 });
 
+// DEPRECATED: remove for 1.0
 router.get('/rebenchdb/get-exp-data/:expId', async (ctx) => {
   const project = await db.getProjectByExpId(Number(ctx.params.expId));
   if (project) {
@@ -227,6 +230,7 @@ router.get('/rebenchdb/dash/:projectId/data-overview', async (ctx) => {
   ctx.type = 'application/json';
 });
 
+// DEPRECATED: remove for 1.0
 router.get('/compare/:project/:baseline/:change', async (ctx) => {
   const project = await db.getProjectByName(ctx.params.project);
   if (project) {
