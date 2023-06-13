@@ -19,13 +19,11 @@ import {
   BenchmarkId
 } from './api.js';
 import pg, { PoolConfig, QueryConfig, QueryResultRow } from 'pg';
-import { getDirname, TotalCriterion } from './util.js';
+import { robustPath, TotalCriterion } from './util.js';
 import { assert } from './logging.js';
 import { simplifyCmdline } from './views/util.js';
 import { SummaryStatistics } from './stats.js';
 import { BatchingTimelineUpdater } from './timeline-calc.js';
-
-const __dirname = getDirname(import.meta.url);
 
 function isUniqueViolationError(err) {
   return err.code === '23505';
@@ -40,11 +38,7 @@ export interface DatabaseConfig {
 }
 
 export function loadScheme(): string {
-  let schema = `${__dirname}/../src/db/db.sql`;
-  if (!existsSync(schema)) {
-    schema = `${__dirname}/../../src/db/db.sql`;
-  }
-
+  const schema = robustPath('backend/db/db.sql');
   return readFileSync(schema).toString();
 }
 
