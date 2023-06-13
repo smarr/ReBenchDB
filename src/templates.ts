@@ -5,7 +5,10 @@ import { compile, TemplateFunction, Options } from 'ejs';
 
 const headerHtml = readFileSync(robustPath('views/header.html')).toString();
 
-// TODO: remove this function
+/**
+ * @deprecated - replace by prepareTemplate() and an EJS template
+ * @todo remove this function
+ */
 export function processTemplate(filename: string, variables: any = {}): string {
   const fileContent = readFileSync(robustPath(`views/${filename}`)).toString();
 
