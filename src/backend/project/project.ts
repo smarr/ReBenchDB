@@ -1,8 +1,9 @@
 import { ParameterizedContext } from 'koa';
 import { db } from '../db/db-instance.js';
-import { prepareTemplate } from '../../templates.js';
+import { prepareTemplate, processTemplate } from '../../templates.js';
 import {
   respondProjectAndSourceNotFound,
+  respondProjectIdNotFound,
   respondProjectNotFound
 } from '../common/standard-responses.js';
 
@@ -37,5 +38,37 @@ export async function getSourceAsJson(
       ctx.params.projectSlug,
       ctx.params.sourceId
     );
+  }
+}
+
+/**
+ * @deprecated remove for 1.0
+ */
+export async function redirectToNewProjectDataUrl(
+  ctx: ParameterizedContext
+): Promise<void> {
+  const project = await db.getProject(Number(ctx.params.projectId));
+  if (project) {
+    ctx.redirect(`/${project.slug}/data`);
+  } else {
+    respondProjectIdNotFound(ctx, Number(ctx.params.projectId));
+  }
+  ctx.body = processTemplate('../backend/project/project-data.html', {
+    project
+  });
+  ctx.type = 'html';
+}
+
+export async function renderProjectDataPage(
+  ctx: ParameterizedContext
+): Promise<void> {
+  const project = await db.getProjectBySlug(ctx.params.projectSlug);
+  if (project) {
+    ctx.body = processTemplate('../backend/project/project-data.html', {
+      project
+    });
+    ctx.type = 'html';
+  } else {
+    respondProjectNotFound(ctx, ctx.params.projectSlug);
   }
 }

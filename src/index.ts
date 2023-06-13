@@ -37,6 +37,8 @@ import { db } from './backend/db/db-instance.js';
 import { renderMainPage } from './backend/main/main.js';
 import {
   getSourceAsJson,
+  redirectToNewProjectDataUrl,
+  renderProjectDataPage,
   renderProjectPage
 } from './backend/project/project.js';
 import {
@@ -74,32 +76,11 @@ router.get('/:projectSlug/source/:sourceId', getSourceAsJson);
 
 // DEPRECATED: remove for 1.0
 router.get('/timeline/:projectId', redirectToNewTimelineUrl);
+// DEPRECATED: remove for 1.0
+router.get('/project/:projectId', redirectToNewProjectDataUrl);
 
 router.get('/:projectSlug/timeline', renderTimeline);
-
-// DEPRECATED: remove for 1.0
-router.get('/project/:projectId', async (ctx) => {
-  const project = await db.getProject(Number(ctx.params.projectId));
-  if (project) {
-    ctx.redirect(`/${project.slug}/data`);
-  } else {
-    respondProjectIdNotFound(ctx, Number(ctx.params.projectId));
-  }
-  ctx.body = processTemplate('project-data.html', {
-    project
-  });
-  ctx.type = 'html';
-});
-
-router.get('/:projectSlug/data', async (ctx) => {
-  const project = await db.getProjectBySlug(ctx.params.projectSlug);
-  if (project) {
-    ctx.body = processTemplate('project-data.html', { project });
-    ctx.type = 'html';
-  } else {
-    respondProjectNotFound(ctx, ctx.params.projectSlug);
-  }
-});
+router.get('/:projectSlug/data', renderProjectDataPage);
 
 // DEPRECATED: remove for 1.0
 router.get('/rebenchdb/get-exp-data/:expId', async (ctx) => {
