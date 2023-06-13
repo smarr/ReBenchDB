@@ -176,11 +176,11 @@ export function createCanvas(settings: CanvasSettings): ChartJSNodeCanvas {
 
   const canvas = new ChartJSNodeCanvas(canvasOptions);
 
-  canvas.registerFont(robustPath('../roboto-hinted/Roboto-Regular.ttf'), {
+  canvas.registerFont(robustPath('../dist/roboto-hinted/Roboto-Regular.ttf'), {
     family: 'Roboto',
     weight: '400'
   });
-  canvas.registerFont(robustPath('../roboto-hinted/Roboto-Bold.ttf'), {
+  canvas.registerFont(robustPath('../dist/roboto-hinted/Roboto-Bold.ttf'), {
     family: 'Roboto',
     weight: '700'
   });
