@@ -16,14 +16,25 @@ runner to record data for ReBenchDB.
 
 ReBenchDB is designed to
 
-- [x] record benchmark measurements
-- [-] information about the environment in which the benchmarks were executed
-- [-] enable performance tracking over time
-- [x] enable performance comparison of experiments
-- [-] supports custom reports and performance analyses
-- [-] enables data export
+- record and store benchmark measurements
+- track information about the environment in which the benchmarks were executed
+- enable performance tracking over time
+- enable performance comparison of experiments
 
-(Things marked with [x] are already finished, or partially finished [-])
+### Features
+
+ - compare performance between specific commits
+   - show aggregated results on an overview plot
+   - give summary statistics
+   - show per-benchmark details
+     - a plot that allows to judge noise
+     - a plot with per-iteration data
+     - a plot of previous results
+     - various metrics and the command line
+     - profiling information
+   - compare performance across different executors
+ - per-project timeline view
+ - per-project data inventory and data export
 
 ## Non-Goals
 
@@ -43,7 +54,7 @@ Data is stored in a PostgreSQL database.
 Custom reports are executed via a shell script, though, we use R to create
 reports.
 
-To ensure that the SVG for plots is generated using a font available in most browers,
+To ensure that the SVG for plots is generated using a font available in most browsers,
 the server needs them when generating plots. We currently use Arial as default font.
 
 On Ubuntu, these fonts can be installed with:
