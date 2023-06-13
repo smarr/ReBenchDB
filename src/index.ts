@@ -21,7 +21,6 @@ import {
   dashCompare,
   dashBenchmarksForProject,
   dashDataOverview,
-  dashGetExpData,
   reportCompletion,
   dashDeleteOldReport,
   dashProfile,
@@ -37,15 +36,13 @@ import { db } from './backend/db/db-instance.js';
 import { renderMainPage } from './backend/main/main.js';
 import {
   getSourceAsJson,
+  redirectToNewProjectDataExportUrl,
   redirectToNewProjectDataUrl,
+  renderDataExport,
   renderProjectDataPage,
   renderProjectPage
 } from './backend/project/project.js';
-import {
-  respondExpIdNotFound,
-  respondProjectIdNotFound,
-  respondProjectNotFound
-} from './backend/common/standard-responses.js';
+import { respondProjectNotFound } from './backend/common/standard-responses.js';
 import {
   redirectToNewTimelineUrl,
   renderTimeline
@@ -78,40 +75,12 @@ router.get('/:projectSlug/source/:sourceId', getSourceAsJson);
 router.get('/timeline/:projectId', redirectToNewTimelineUrl);
 // DEPRECATED: remove for 1.0
 router.get('/project/:projectId', redirectToNewProjectDataUrl);
+// DEPRECATED: remove for 1.0
+router.get('/rebenchdb/get-exp-data/:expId', redirectToNewProjectDataExportUrl);
 
 router.get('/:projectSlug/timeline', renderTimeline);
 router.get('/:projectSlug/data', renderProjectDataPage);
-
-// DEPRECATED: remove for 1.0
-router.get('/rebenchdb/get-exp-data/:expId', async (ctx) => {
-  const project = await db.getProjectByExpId(Number(ctx.params.expId));
-  if (project) {
-    ctx.redirect(`/${project.slug}/data/${ctx.params.expId}`);
-  } else {
-    respondExpIdNotFound(ctx, ctx.params.expId);
-  }
-});
-
-router.get('/:projectSlug/data/:expId', async (ctx) => {
-  const start = startRequest();
-
-  const data = await dashGetExpData(
-    ctx.params.projectSlug,
-    Number(ctx.params.expId),
-    dbConfig,
-    db
-  );
-
-  if (data.preparingData) {
-    ctx.body = processTemplate('get-exp-data.html', data);
-    ctx.type = 'html';
-    ctx.set('Cache-Control', 'no-cache');
-  } else {
-    ctx.redirect(data.downloadUrl);
-  }
-
-  completeRequest(start, db, 'get-exp-data');
-});
+router.get('/:projectSlug/data/:expId', renderDataExport);
 
 router.get('/rebenchdb/dash/:projectId/results', async (ctx) => {
   const start = startRequest();

@@ -5,15 +5,9 @@ import { QueryConfig } from 'pg';
 
 import { TimedCacheValidity, Database, DatabaseConfig, Source } from './db.js';
 import { startRequest, completeRequest } from './perf-tracker.js';
-import { AllResults, BenchmarkCompletion, TimelineSuite } from './api.js';
+import { AllResults, BenchmarkCompletion } from './api.js';
 import { GitHub } from './github.js';
-import {
-  robustPath,
-  siteConfig,
-  storeJsonGzip,
-  TotalCriterion,
-  getDirname
-} from './util.js';
+import { robustPath, siteConfig, TotalCriterion } from './util.js';
 import { assert, log } from './logging.js';
 import {
   CompareView,
@@ -22,8 +16,6 @@ import {
   WarmupDataPerCriterion
 } from './views/view-types.js';
 import { prepareCompareView } from './stats-data-prep.js';
-
-const __dirname = getDirname(import.meta.url);
 
 const reportOutputFolder = resolve(robustPath(`../resources/reports/`));
 
@@ -543,78 +535,6 @@ export async function dashCompareNew(
     revDetails,
     reportOutputFolder
   );
-}
-
-const expDataPreparation = new Map();
-
-export async function dashGetExpData(
-  projectSlug: string,
-  expId: number,
-  dbConfig: DatabaseConfig,
-  db: Database
-): Promise<any> {
-  const result = await db.getExperimentDetails(expId, projectSlug);
-
-  let data: any;
-  if (!result) {
-    data = {
-      project: '',
-      generationFailed: true,
-      stdout: 'Experiment was not found'
-    };
-  } else {
-    data = result;
-  }
-
-  const expDataId = `${data.project}-${expId}`;
-  const expFileName = `exp-data/${expDataId}.json.gz`;
-  const expDataFile = `${__dirname}/../../resources/${expFileName}`;
-
-  if (existsSync(expDataFile)) {
-    data.preparingData = false;
-    data.downloadUrl = `${siteConfig.staticUrl}/${expFileName}`;
-  } else {
-    data.currentTime = new Date().toISOString();
-
-    const prevPrepDetails = expDataPreparation.get(expDataId);
-
-    // no previous attempt to prepare data
-    if (!prevPrepDetails) {
-      const start = startRequest();
-
-      data.preparingData = true;
-
-      const resultP = db.getExperimentMeasurements(expId);
-
-      expDataPreparation.set(expDataId, {
-        inProgress: true
-      });
-
-      resultP
-        .then(async (data: any[]) => {
-          await storeJsonGzip(data, expDataFile);
-          expDataPreparation.set(expDataId, {
-            inProgress: false
-          });
-        })
-        .catch(async (error) => {
-          log.error('Data preparation failed', error);
-          expDataPreparation.set(expDataId, {
-            error,
-            inProgress: false
-          });
-        })
-        .finally(async () => await completeRequest(start, db, 'prep-exp-data'));
-    } else if (prevPrepDetails.error) {
-      // if previous attempt failed
-      data.generationFailed = true;
-      data.preparingData = false;
-    } else {
-      data.preparingData = true;
-    }
-  }
-
-  return data;
 }
 
 export async function dashBenchmarksForProject(

@@ -2,10 +2,13 @@ import { ParameterizedContext } from 'koa';
 import { db } from '../db/db-instance.js';
 import { prepareTemplate, processTemplate } from '../../templates.js';
 import {
+  respondExpIdNotFound,
   respondProjectAndSourceNotFound,
   respondProjectIdNotFound,
   respondProjectNotFound
 } from '../common/standard-responses.js';
+import { completeRequest, startRequest } from '../../perf-tracker.js';
+import { getExpData } from './data-export.js';
 
 const projectHtml = prepareTemplate('../backend/project/project.html');
 
@@ -71,4 +74,39 @@ export async function renderProjectDataPage(
   } else {
     respondProjectNotFound(ctx, ctx.params.projectSlug);
   }
+}
+
+/**
+ * @deprecated remove for 1.0
+ */
+export async function redirectToNewProjectDataExportUrl(
+  ctx: ParameterizedContext
+): Promise<void> {
+  const project = await db.getProjectByExpId(Number(ctx.params.expId));
+  if (project) {
+    ctx.redirect(`/${project.slug}/data/${ctx.params.expId}`);
+  } else {
+    respondExpIdNotFound(ctx, ctx.params.expId);
+  }
+}
+
+export async function renderDataExport(
+  ctx: ParameterizedContext
+): Promise<void> {
+  const start = startRequest();
+
+  const data = await getExpData(
+    ctx.params.projectSlug,
+    Number(ctx.params.expId)
+  );
+
+  if (data.preparingData) {
+    ctx.body = processTemplate('get-exp-data.html', data);
+    ctx.type = 'html';
+    ctx.set('Cache-Control', 'no-cache');
+  } else {
+    ctx.redirect(data.downloadUrl);
+  }
+
+  completeRequest(start, db, 'get-exp-data');
 }
