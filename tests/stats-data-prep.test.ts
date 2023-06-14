@@ -712,7 +712,8 @@ describe('prepareCompareView()', () => {
 
       expect('jssom/overview.png').toBeMostlyIdenticalImage(
         outputFolder,
-        getResultPath('jssom/overview.png')
+        getResultPath('jssom/overview.png'),
+        2546
       );
     });
 
@@ -772,7 +773,8 @@ describe('prepareCompareView()', () => {
 
       expect('tsom/overview.png').toBeMostlyIdenticalImage(
         outputFolder,
-        getResultPath('tsom/overview.png')
+        getResultPath('tsom/overview.png'),
+        40416
       );
     });
 

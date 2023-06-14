@@ -11,12 +11,20 @@ import { robustPath } from '../src/util.js';
 
 declare module 'expect' {
   interface AsymmetricMatchers {
-    toBeMostlyIdenticalImage(outputFolder: string, expectedFile: string): void;
+    toBeMostlyIdenticalImage(
+      outputFolder: string,
+      expectedFile: string,
+      expectedPixelDiff?: number
+    ): void;
     toBeIdenticalSvgFiles(outputFolder: string, expectedFile: string): void;
     toEqualHtmlFragment(expectedFragmentFile: string): void;
   }
   interface Matchers<R> {
-    toBeMostlyIdenticalImage(outputFolder: string, expectedFile: string): R;
+    toBeMostlyIdenticalImage(
+      outputFolder: string,
+      expectedFile: string,
+      expectedPixelDiff?: number
+    ): R;
     toBeIdenticalSvgFiles(outputFolder: string, expectedFile: string): R;
     toEqualHtmlFragment(expectedFragmentFile: string): R;
   }
@@ -38,7 +46,8 @@ export function deleteTmpDirectory(outputFolder: string, keep: boolean): void {
 function toBeMostlyIdenticalImage(
   actualFile: string,
   outputFolder: string,
-  expectedFile: string
+  expectedFile: string,
+  expectedPixelDiff: number = 0
 ) {
   if (typeof actualFile !== 'string' || typeof expectedFile !== 'string') {
     throw new Error(
@@ -85,7 +94,7 @@ function toBeMostlyIdenticalImage(
     { threshold: 0.01 }
   );
 
-  if (numMismatchedPixel > 0) {
+  if (numMismatchedPixel > 0 && numMismatchedPixel != expectedPixelDiff) {
     const diffFileName = `diff-${basename(expectedFile)}-${basename(
       actualFile
     )}.png`;

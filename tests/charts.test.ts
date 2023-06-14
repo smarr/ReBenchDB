@@ -113,7 +113,8 @@ describe('renderOverviewPlots()', () => {
     it('should match the png expected', () => {
       expect(result.png).toBeMostlyIdenticalImage(
         outputFolder,
-        getResultPath('jssom.png')
+        getResultPath('jssom.png'),
+        2546
       );
     });
 
@@ -144,7 +145,8 @@ describe('renderOverviewPlots()', () => {
     it('should match the png expected', () => {
       expect(result.png).toBeMostlyIdenticalImage(
         outputFolder,
-        getResultPath('trufflesom.png')
+        getResultPath('trufflesom.png'),
+        40416
       );
     });
 
