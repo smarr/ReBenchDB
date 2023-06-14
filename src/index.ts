@@ -30,7 +30,6 @@ import {
 import { prepareTemplate, processTemplate } from './templates.js';
 import { dbConfig, robustPath, siteConfig } from './util.js';
 import { createGitHubClient } from './github.js';
-import { getDirname } from './util.js';
 import { log } from './logging.js';
 import { db } from './backend/db/db-instance.js';
 import { renderMainPage } from './backend/main/main.js';
@@ -47,8 +46,11 @@ import {
   redirectToNewTimelineUrl,
   renderTimeline
 } from './backend/timeline/timeline.js';
-
-const __dirname = getDirname(import.meta.url);
+import {
+  serveReport,
+  serveStaticResource,
+  serveViewJs
+} from './backend/dev-server/server.js';
 
 const packageJson = JSON.parse(
   readFileSync(robustPath('../package.json'), 'utf-8')
@@ -278,64 +280,11 @@ router.post(
 );
 
 if (DEV) {
-  router.get(`${siteConfig.staticUrl}/:filename*`, async (ctx) => {
-    const filename = ctx.params.filename;
-    log.debug(`serve ${filename}`);
-    let path: string;
-
-    // TODO: robustPath?
-    if (filename.endsWith('.css')) {
-      ctx.type = 'css';
-      path = `${__dirname}/../../resources/${filename}`;
-    } else if (filename.endsWith('.js')) {
-      ctx.type = 'application/javascript';
-      if (filename.includes('uPlot')) {
-        path = `${__dirname}/../../resources/${filename}`;
-      } else {
-        path = `${__dirname}/views/${filename}`;
-      }
-    } else if (filename.endsWith('.map')) {
-      ctx.type = 'application/json';
-      path = `${__dirname}/views/${filename}`;
-    } else if (filename.endsWith('.svg')) {
-      ctx.type = 'image/svg+xml';
-      path = `${__dirname}/../../resources/${filename}`;
-    } else if (filename.endsWith('.json.gz')) {
-      ctx.type = 'application/json';
-      ctx.set('Content-Encoding', 'gzip');
-      path = `${__dirname}/../../resources/${filename}`;
-    } else {
-      throw new Error(`Unsupported file type. Filename: ${filename}`);
-    }
-    ctx.body = readFileSync(path);
-  });
-
-  router.get(`/src/views/:filename*`, async (ctx) => {
-    log.debug(`serve ${ctx.params.filename}`);
-    let path: string;
-    if (ctx.params.filename.endsWith('.ts')) {
-      ctx.type = 'application/typescript';
-      path = `${__dirname}/../../src/views/${ctx.params.filename}`;
-    } else {
-      throw new Error(`Unsupported file type ${ctx.params.filename}`);
-    }
-    ctx.body = readFileSync(path);
-  });
-
+  router.get(`${siteConfig.staticUrl}/:filename*`, serveStaticResource);
+  router.get(`/src/views/:filename*`, serveViewJs);
   router.get(
     `${siteConfig.reportsUrl}/:change/figure-html/:filename`,
-    async (ctx) => {
-      log.debug(`serve ${ctx.params.filename}`);
-      const reportPath = `${__dirname}/../../resources/reports`;
-      ctx.body = readFileSync(
-        `${reportPath}/${ctx.params.change}/figure-html/${ctx.params.filename}`
-      );
-      if (ctx.params.filename.endsWith('.svg')) {
-        ctx.type = 'svg';
-      } else if (ctx.params.filename.endsWith('.css')) {
-        ctx.type = 'application/javascript';
-      }
-    }
+    serveReport
   );
 }
 
