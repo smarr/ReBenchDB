@@ -102,7 +102,7 @@ describe('Test Dashboard with basic test data loaded', () => {
 
   it('Should get a project', async () => {
     const projects = await db.getAllProjects();
-    expect(projects).toHaveLength(2);
+    expect(projects).toHaveLength(1);
     expect(projects[0].name).toEqual('Small Example Project');
     expect(projects[0].id).toEqual(1);
   });
@@ -124,19 +124,15 @@ describe('Test Dashboard with basic test data loaded', () => {
 
     for (const table of result) {
       if (table.table === 'Measurements') {
-        expect([
-          '' + 3 * numExperiments,
-          '' + (3 * numExperiments + 1),
-          '' + (3 * numExperiments + 2)
-        ]).toContain(table.cnt);
+        expect(table.cnt).toEqual('' + 3 * numExperiments);
       } else if (table.table === 'Experiments') {
-        expect(table.cnt).toEqual('' + (numExperiments + 1));
+        expect(table.cnt).toEqual('' + numExperiments);
       } else if (table.table === 'Trials') {
-        expect(['4', '5']).toContain(table.cnt);
+        expect(table.cnt).toEqual('3');
       } else {
         expect({ name: table.table, cnt: table.cnt }).toEqual({
           name: table.table,
-          cnt: '2' // includes the performance tracking
+          cnt: '1'
         });
       }
     }
@@ -164,7 +160,7 @@ describe('Test Dashboard with basic test data loaded', () => {
     expect(data[0].commitids).toEqual(
       '3333333333333333333333333333333333333333'
     );
-    expect(data[0].expid).toEqual(4);
+    expect(data[0].expid).toEqual(3);
     expect(data[0].name).toEqual(expNameMerge);
 
     expect(data[1].commitids).toEqual(
@@ -222,7 +218,7 @@ describe('Test Dashboard with basic test data loaded', () => {
     await db.awaitQuiescentTimelineUpdater();
     const response = await db.getTimelineForRun(1, 1);
 
-    expect(response?.sourceIds).toEqual([1, 4]);
+    expect(response?.sourceIds).toEqual([1, 3]);
     expect(response?.data[0]).toEqual([1576277396, 1576450196]);
     expect(response?.data[2]).toEqual([432.783, 432.783]);
   });

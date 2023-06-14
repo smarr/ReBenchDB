@@ -7,7 +7,7 @@ const info = 3;
 const error = 5;
 
 function getLoggingLevel(): number {
-  if (isRunningTests()) {
+  if (isRunningTests) {
     return error;
   }
 

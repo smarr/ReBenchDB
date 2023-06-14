@@ -1,7 +1,7 @@
 import { performance } from 'perf_hooks';
 import { Database } from './db.js';
 import { BenchmarkData, DataPoint, Measure } from './api.js';
-import { TotalCriterion } from './util.js';
+import { TotalCriterion, isRunningTests } from './util.js';
 
 let startTime: string;
 const iterations = {
@@ -115,7 +115,11 @@ export async function completeRequest(
   reqStart: number,
   db: Database,
   request: string
-): Promise<[number, number]> {
+): Promise<[number, number] | void> {
+  if (isRunningTests) {
+    return;
+  }
+
   const time = performance.now() - reqStart;
   iterations[request] += 1;
   return db.recordAllData(

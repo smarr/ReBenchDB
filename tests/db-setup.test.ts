@@ -299,8 +299,7 @@ describe('Recording a ReBench execution from payload files', () => {
     expect([1, 2]).toContain(trials.rowCount);
     exps = await db.query({ text: 'SELECT * from Experiment' });
 
-    // performance tracking and the actual experiment
-    expect(exps.rowCount).toEqual(2);
+    expect(exps.rowCount).toEqual(1);
   });
 
   it(
@@ -318,9 +317,9 @@ describe('Recording a ReBench execution from payload files', () => {
 
       expect(recMs).toEqual(459928);
       expect(recPs).toEqual(0);
-      expect(parseInt(measurements.rows[0].cnt)).toEqual(459928 + 4);
+      expect(parseInt(measurements.rows[0].cnt)).toEqual(459928 + 3);
       const timeline = await db.query({ text: 'SELECT * from Timeline' });
-      expect(timeline.rowCount).toEqual(318);
+      expect(timeline.rowCount).toEqual(317);
     },
     timeoutForLargeDataTest
   );
