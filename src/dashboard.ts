@@ -478,14 +478,6 @@ export async function dashCompareNew(
   );
 }
 
-export async function dashBenchmarksForProject(
-  db: Database,
-  projectId: number
-): Promise<{ benchmarks }> {
-  const result = await db.getBenchmarksByProjectId(projectId);
-  return { benchmarks: result };
-}
-
 export async function reportCompletion(
   dbConfig: DatabaseConfig,
   db: Database,

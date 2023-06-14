@@ -18,7 +18,6 @@ import {
   dashStatistics,
   dashChanges,
   dashCompare,
-  dashBenchmarksForProject,
   dashDataOverview,
   reportCompletion,
   dashDeleteOldReport,
@@ -118,15 +117,6 @@ router.get('/rebenchdb/get-exp-data/:expId', async (ctx) => {
 //       for the project
 router.get('/rebenchdb/dash/:projectId/results', async (ctx) => {
   return getLast100MeasurementsAsJson(ctx, db);
-});
-
-router.get('/rebenchdb/dash/:projectId/benchmarks', async (ctx) => {
-  const start = startRequest();
-
-  ctx.body = await dashBenchmarksForProject(db, Number(ctx.params.projectId));
-  ctx.type = 'application/json';
-
-  completeRequest(start, db, 'project-benchmarks');
 });
 
 router.get('/rebenchdb/dash/:projectId/timeline/:runId', async (ctx) => {

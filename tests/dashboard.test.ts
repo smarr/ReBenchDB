@@ -7,8 +7,7 @@ import {
 import {
   dashStatistics,
   dashChanges,
-  dashDataOverview,
-  dashBenchmarksForProject
+  dashDataOverview
 } from '../src/dashboard';
 import { BenchmarkData } from '../src/api.js';
 import { readFileSync } from 'fs';
@@ -178,7 +177,7 @@ describe('Test Dashboard with basic test data loaded', () => {
 
   it('Should get benchmarks for project', async () => {
     await db.awaitQuiescentTimelineUpdater();
-    const data = (await dashBenchmarksForProject(db, 1)).benchmarks;
+    const data = await db.getBenchmarksByProjectId(1);
     expect(data).toHaveLength(1);
     expect(data[0].benchid).toEqual(1);
     expect(data[0].benchmark).toEqual('NBody');
