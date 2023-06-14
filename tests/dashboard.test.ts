@@ -6,7 +6,6 @@ import {
 } from './db-testing.js';
 import {
   dashStatistics,
-  dashResults,
   dashChanges,
   dashDataOverview,
   dashBenchmarksForProject
@@ -26,6 +25,7 @@ import { getDirname, TotalCriterion } from '../src/util.js';
 const __dirname = getDirname(import.meta.url);
 
 import { jest } from '@jest/globals';
+import { getLast100Measurements } from '../src/backend/main/main.js';
 
 const timeoutForLargeDataTest = 200 * 1000;
 jest.setTimeout(timeoutForLargeDataTest);
@@ -42,7 +42,7 @@ describe('Test Dashboard on empty DB', () => {
   });
 
   it('Should get empty results request', async () => {
-    const result = await dashResults(0, db);
+    const result = await getLast100Measurements(0, db);
     expect(result).toEqual([]);
   });
 
@@ -117,7 +117,7 @@ describe('Test Dashboard with basic test data loaded', () => {
   });
 
   it('Should get results', async () => {
-    const results = await dashResults(1, db);
+    const results = await getLast100Measurements(1, db);
     const nBody = results[0];
     expect(nBody.benchmark).toEqual('NBody');
     expect(nBody.values).toHaveLength(numExperiments * 3);
@@ -260,7 +260,7 @@ describe('Test Dashboard with basic test data loaded', () => {
   // dashGetExpData
 });
 
-describe('dashResults', () => {
+describe('getLast100Measurements', () => {
   const env: Environment = {
     hostName: 'Host1',
     cpu: 'Processor1',
@@ -363,13 +363,13 @@ describe('dashResults', () => {
       source,
       experimentName: 'Exp 1',
       startTime: new Date('2022-01-01 10:00 UTC').toISOString(),
-      projectName: 'Test dashResults trivial',
+      projectName: 'Test trivial',
       data: createRunData(1, 200, 'trivial', 'test', 'testExec'),
       criteria: createCriteria()
     };
     await db.recordAllData(trivialData, true);
 
-    const result = await dashResults(1, db);
+    const result = await getLast100Measurements(1, db);
 
     expect(result.length).toEqual(1);
     expect(result[0].benchmark).toEqual('trivial');
@@ -388,13 +388,13 @@ describe('dashResults', () => {
       source,
       experimentName: 'Exp 2',
       startTime: new Date('2022-01-01 10:00 UTC').toISOString(),
-      projectName: 'Test dashResults 4 runs 50 iterations',
+      projectName: 'Test 4 runs 50 iterations',
       data: createRunData(4, 50, '4runs50it', 'test', 'testExec'),
       criteria: createCriteria()
     };
     await db.recordAllData(data4runs50it, true);
 
-    const result = await dashResults(2, db);
+    const result = await getLast100Measurements(2, db);
 
     expect(result.length).toEqual(1);
     expect(result[0].benchmark).toEqual('4runs50it');
@@ -430,7 +430,7 @@ describe('dashResults', () => {
     };
     await db.recordAllData(multiTrial, true);
 
-    const result = await dashResults(3, db);
+    const result = await getLast100Measurements(3, db);
 
     expect(result.length).toEqual(1);
     expect(result[0].benchmark).toEqual('multi-trial');
@@ -473,7 +473,7 @@ describe('dashResults', () => {
       true
     );
 
-    const result = await dashResults(4, db);
+    const result = await getLast100Measurements(4, db);
 
     expect(result.length).toEqual(1);
     expect(result[0].benchmark).toEqual('multi-exp');

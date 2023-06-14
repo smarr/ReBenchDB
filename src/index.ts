@@ -32,7 +32,10 @@ import { dbConfig, robustPath, siteConfig } from './util.js';
 import { createGitHubClient } from './github.js';
 import { log } from './logging.js';
 import { db } from './backend/db/db-instance.js';
-import { renderMainPage } from './backend/main/main.js';
+import {
+  getLast100MeasurementsAsJson,
+  renderMainPage
+} from './backend/main/main.js';
 import {
   getSourceAsJson,
   redirectToNewProjectDataExportUrl,
@@ -84,14 +87,9 @@ router.get('/:projectSlug/timeline', renderTimeline);
 router.get('/:projectSlug/data', renderProjectDataPage);
 router.get('/:projectSlug/data/:expId', renderDataExport);
 
-router.get('/rebenchdb/dash/:projectId/results', async (ctx) => {
-  const start = startRequest();
-
-  ctx.body = await dashResults(Number(ctx.params.projectId), db);
-  ctx.type = 'application/json';
-
-  completeRequest(start, db, 'get-results');
-});
+// todo: rename this to say that this endpoint gets the last 100 measurements
+//       for the project
+router.get('/rebenchdb/dash/:projectId/results', getLast100MeasurementsAsJson);
 
 router.get('/rebenchdb/dash/:projectId/benchmarks', async (ctx) => {
   const start = startRequest();
