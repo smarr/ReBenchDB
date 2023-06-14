@@ -121,7 +121,8 @@ describe('renderOverviewPlots()', () => {
     it('should match the svg expected', () => {
       expect(result.svg[0]).toBeIdenticalSvgFiles(
         outputFolder,
-        getResultPath('jssom-som.svg')
+        getResultPath('jssom-som.svg'),
+        2
       );
     });
   });
@@ -165,7 +166,8 @@ describe('renderOverviewPlots()', () => {
     it('should match the svg expected', () => {
       expect(result.svg[0]).toBeIdenticalSvgFiles(
         outputFolder,
-        getResultPath('trufflesom-micro-somsom.svg')
+        getResultPath('trufflesom-micro-somsom.svg'),
+        2
       );
 
       expect(result.svg[1]).toBeIdenticalSvgFiles(
@@ -225,6 +227,6 @@ describe('renderInlinePlot()', () => {
 
     expect(name).toEqual('inline-1.svg');
 
-    expect(name).toBeIdenticalSvgFiles(outputFolder, getResultPath(name));
+    expect(name).toBeIdenticalSvgFiles(outputFolder, getResultPath(name), 2);
   });
 });

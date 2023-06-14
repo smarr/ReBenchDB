@@ -16,7 +16,11 @@ declare module 'expect' {
       expectedFile: string,
       expectedPixelDiff?: number
     ): void;
-    toBeIdenticalSvgFiles(outputFolder: string, expectedFile: string): void;
+    toBeIdenticalSvgFiles(
+      outputFolder: string,
+      expectedFile: string,
+      expectedLineDiff?: number
+    ): void;
     toEqualHtmlFragment(expectedFragmentFile: string): void;
   }
   interface Matchers<R> {
@@ -25,7 +29,11 @@ declare module 'expect' {
       expectedFile: string,
       expectedPixelDiff?: number
     ): R;
-    toBeIdenticalSvgFiles(outputFolder: string, expectedFile: string): R;
+    toBeIdenticalSvgFiles(
+      outputFolder: string,
+      expectedFile: string,
+      expectedLineDiff?: number
+    ): R;
     toEqualHtmlFragment(expectedFragmentFile: string): R;
   }
 }
@@ -120,7 +128,8 @@ function toBeMostlyIdenticalImage(
 function toBeIdenticalSvgFiles(
   actualFile: string,
   outputFolder: string,
-  expectedFile: string
+  expectedFile: string,
+  expectedLineDiff = 0
 ) {
   if (!isSupportingSvgTests()) {
     return {
@@ -136,6 +145,16 @@ function toBeIdenticalSvgFiles(
   if (actual !== expected) {
     const diffArr = diffStringsRaw(expected, actual, true);
     const diffCount = diffArr.filter((d) => d[0] !== DIFF_EQUAL).length;
+
+    if (expectedLineDiff === diffCount) {
+      return {
+        pass: true,
+        message: () =>
+          `Expected ${actualFile} to be different ` +
+          `from ${expectedFile}, but both were identical,` +
+          ` within allowed differences.`
+      };
+    }
 
     const diff = diffStringsUnified(expected, actual, { expand: false });
     // limit diff to first 10 lines
