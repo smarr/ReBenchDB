@@ -75,17 +75,14 @@ const router = new Router();
 router.get('/', renderMainPage);
 router.get('/:projectSlug', renderProjectPage);
 router.get('/:projectSlug/source/:sourceId', getSourceAsJson);
-
-// DEPRECATED: remove for 1.0
-router.get('/timeline/:projectId', redirectToNewTimelineUrl);
-// DEPRECATED: remove for 1.0
-router.get('/project/:projectId', redirectToNewProjectDataUrl);
-// DEPRECATED: remove for 1.0
-router.get('/rebenchdb/get-exp-data/:expId', redirectToNewProjectDataExportUrl);
-
 router.get('/:projectSlug/timeline', renderTimeline);
 router.get('/:projectSlug/data', renderProjectDataPage);
 router.get('/:projectSlug/data/:expId', renderDataExport);
+
+// DEPRECATED: remove for 1.0
+router.get('/timeline/:projectId', redirectToNewTimelineUrl);
+router.get('/project/:projectId', redirectToNewProjectDataUrl);
+router.get('/rebenchdb/get-exp-data/:expId', redirectToNewProjectDataExportUrl);
 
 // todo: rename this to say that this endpoint gets the last 100 measurements
 //       for the project
