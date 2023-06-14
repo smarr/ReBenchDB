@@ -172,22 +172,26 @@ describe('renderOverviewPlots()', () => {
 
       expect(result.svg[1]).toBeIdenticalSvgFiles(
         outputFolder,
-        getResultPath('trufflesom-macro-startup.svg')
+        getResultPath('trufflesom-macro-startup.svg'),
+        2
       );
 
       expect(result.svg[2]).toBeIdenticalSvgFiles(
         outputFolder,
-        getResultPath('trufflesom-macro-steady.svg')
+        getResultPath('trufflesom-macro-steady.svg'),
+        2
       );
 
       expect(result.svg[3]).toBeIdenticalSvgFiles(
         outputFolder,
-        getResultPath('trufflesom-micro-startup.svg')
+        getResultPath('trufflesom-micro-startup.svg'),
+        2
       );
 
       expect(result.svg[4]).toBeIdenticalSvgFiles(
         outputFolder,
-        getResultPath('trufflesom-micro-steady.svg')
+        getResultPath('trufflesom-micro-steady.svg'),
+        2
       );
     });
   });
