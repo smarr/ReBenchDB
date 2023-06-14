@@ -3,6 +3,7 @@ import { completeRequest, startRequest } from '../../perf-tracker.js';
 import { siteConfig, storeJsonGzip } from '../../util.js';
 import { log } from '../../logging.js';
 import { Database } from '../../db.js';
+import { ParameterizedContext } from 'koa';
 
 const expDataPreparation = new Map();
 
@@ -73,4 +74,52 @@ export async function getExpData(
   }
 
   return data;
+}
+
+export async function getAvailableDataAsJson(
+  ctx: ParameterizedContext,
+  db: Database
+): Promise<void> {
+  ctx.body = await getDataOverview(Number(ctx.params.projectId), db);
+  ctx.type = 'application/json';
+}
+
+export async function getDataOverview(
+  projectId: number,
+  db: Database
+): Promise<{ data: any[] }> {
+  const result = await db.query({
+    name: 'fetchDataOverview',
+    text: `
+        SELECT
+          exp.id as expId, exp.name, exp.description,
+          min(t.startTime) as minStartTime,
+          max(t.endTime) as maxEndTime,
+          ARRAY_TO_STRING(ARRAY_AGG(DISTINCT t.username), ', ') as users,
+          ARRAY_TO_STRING(ARRAY_AGG(DISTINCT src.commitId), ' ') as commitIds,
+          ARRAY_TO_STRING(ARRAY_AGG(DISTINCT src.commitMessage), '\n\n')
+            as commitMsgs,
+          ARRAY_TO_STRING(ARRAY_AGG(DISTINCT env.hostName), ', ') as hostNames,
+
+          -- Accessing measurements and timeline should give the same results,
+          -- but the counting in measurements is of course a lot slower
+          --	count(m.*) as measurements,
+          --	count(DISTINCT m.runId) as runs
+          SUM(tl.numSamples) as measurements,
+          count(DISTINCT tl.runId) as runs
+        FROM experiment exp
+        JOIN Trial t         ON exp.id = t.expId
+        JOIN Source src      ON t.sourceId = src.id
+        JOIN Environment env ON env.id = t.envId
+
+        --JOIN Measurement m   ON m.trialId = t.id
+        JOIN Timeline tl     ON tl.trialId = t.id
+
+        WHERE exp.projectId = $1
+
+        GROUP BY exp.name, exp.description, exp.id
+        ORDER BY minStartTime DESC;`,
+    values: [projectId]
+  });
+  return { data: result.rows };
 }

@@ -6,7 +6,7 @@ import {
   calculateAllChangeStatisticsAndInlinePlots,
   calculateDataForOverviewPlot,
   getMsFlattenedAndSorted
-} from '../src/stats-data-prep.js';
+} from '../src/backend/compare/prep-data.js';
 import { robustPath } from '../src/util.js';
 import {
   createCanvas,

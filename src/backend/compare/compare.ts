@@ -7,6 +7,12 @@ import type {
   WarmupDataForTrial,
   WarmupDataPerCriterion
 } from '../../views/view-types.js';
+import { respondProjectNotFound } from '../common/standard-responses.js';
+import { dbConfig, refreshSecret } from '../../util.js';
+import { prepareTemplate, processTemplate } from '../../templates.js';
+import { deleteReport, renderCompare, renderCompareNew } from './report.js';
+import * as dataFormatters from '../../data-format.js';
+import * as viewHelpers from '../../views/helpers.js';
 
 export async function getProfileAsJson(
   ctx: ParameterizedContext,
@@ -164,4 +170,98 @@ async function getMeasurements(
   }
 
   return { trial1, trial2 };
+}
+
+/**
+ * @deprecated remove for 1.0
+ */
+export async function redirectToNewCompareUrl(
+  ctx: ParameterizedContext,
+  db: Database
+): Promise<void> {
+  const project = await db.getProjectByName(ctx.params.project);
+  if (project) {
+    ctx.redirect(
+      `/${project.slug}/compare/${ctx.params.baseline}..${ctx.params.change}`
+    );
+  } else {
+    respondProjectNotFound(ctx, ctx.params.project);
+  }
+}
+
+/**
+ * @deprecated remove once the new compare page is feature complete
+ */
+export async function renderComparePage(
+  ctx: ParameterizedContext,
+  db: Database
+): Promise<void> {
+  const start = startRequest();
+
+  const data = await renderCompare(
+    ctx.params.baseline,
+    ctx.params.change,
+    ctx.params.projectSlug,
+    dbConfig,
+    db
+  );
+  ctx.body = processTemplate('compare.html', data);
+  ctx.type = 'html';
+
+  if (data.generatingReport) {
+    ctx.set('Cache-Control', 'no-cache');
+  }
+
+  completeRequest(start, db, 'change');
+}
+
+const compareTpl = prepareTemplate('compare-new.html');
+
+export async function renderComparePageNew(
+  ctx: ParameterizedContext,
+  db: Database
+): Promise<void> {
+  const start = startRequest();
+
+  const data = await renderCompareNew(
+    ctx.params.baseline,
+    ctx.params.change,
+    ctx.params.projectSlug,
+    dbConfig,
+    db
+  );
+  ctx.body = compareTpl({ ...data, dataFormatters, viewHelpers });
+  ctx.type = 'html';
+
+  completeRequest(start, db, 'change-new');
+}
+
+export async function deleteCachedReport(
+  ctx: ParameterizedContext
+): Promise<void> {
+  ctx.type = 'text';
+
+  if (refreshSecret === undefined) {
+    ctx.body = 'ReBenchDB is not configured to accept refresh requests.';
+    ctx.status = 503;
+    return;
+  }
+
+  if (ctx.request.body.password === refreshSecret) {
+    const project = ctx.params.project;
+    const base = ctx.params.baseline;
+    const change = ctx.params.change;
+    deleteReport(project, base, change);
+
+    ctx.body = `Refresh requests accepted for
+        Project:  ${project}
+        Baseline: ${base}
+        Change:   ${change}
+        `;
+    ctx.status = 303;
+    ctx.redirect(`/compare/${project}/${base}/${change}`);
+  } else {
+    ctx.body = 'Incorrect authentication.';
+    ctx.status = 403;
+  }
 }

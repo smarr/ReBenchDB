@@ -5,7 +5,7 @@ import {
   ChartJSNodeCanvas,
   ChartJSNodeCanvasOptions
 } from 'chartjs-node-canvas';
-import { ByGroupChangeData, ChangeData } from '../src/stats-data-prep.js';
+import { ByGroupChangeData, ChangeData } from './backend/compare/prep-data.js';
 import {
   ViolinController,
   Violin,

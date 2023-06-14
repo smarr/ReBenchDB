@@ -6,7 +6,7 @@
 import {
   ResultsByBenchmark,
   ResultsByExeSuiteBenchmark
-} from './stats-data-prep.js';
+} from './backend/compare/prep-data.js';
 import {
   CriterionData,
   MeasurementData,

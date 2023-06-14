@@ -3,10 +3,8 @@ import Koa from 'koa';
 import { koaBody } from 'koa-body';
 import Router from 'koa-router';
 
-import { BenchmarkData, BenchmarkCompletion, TimelineRequest } from './api.js';
+import { BenchmarkData, TimelineRequest } from './api.js';
 import { createValidator } from './api-validator.js';
-import * as dataFormatters from './data-format.js';
-import * as viewHelpers from './views/helpers.js';
 
 import {
   initPerfTracker,
@@ -14,21 +12,13 @@ import {
   completeRequest
 } from './perf-tracker.js';
 import {
-  dashCompare,
-  dashDataOverview,
-  reportCompletion,
-  dashDeleteOldReport,
-  dashCompareNew
-} from './dashboard.js';
-import { prepareTemplate, processTemplate } from './templates.js';
-import {
   cacheInvalidationDelay,
   dbConfig,
   rebenchVersion,
   siteConfig,
   statsConfig
 } from './util.js';
-import { createGitHubClient } from './github.js';
+import { handleReBenchCompletion } from './backend/github/github.js';
 import { log } from './logging.js';
 import {
   getChangesAsJson,
@@ -44,7 +34,6 @@ import {
   renderProjectDataPage,
   renderProjectPage
 } from './backend/project/project.js';
-import { respondProjectNotFound } from './backend/common/standard-responses.js';
 import {
   getTimelineAsJson,
   redirectToNewTimelineUrl,
@@ -57,9 +46,14 @@ import {
 } from './backend/dev-server/server.js';
 import { DatabaseWithPool } from './db.js';
 import {
+  deleteCachedReport,
   getMeasurementsAsJson,
-  getProfileAsJson
+  getProfileAsJson,
+  redirectToNewCompareUrl,
+  renderComparePage,
+  renderComparePageNew
 } from './backend/compare/compare.js';
+import { getAvailableDataAsJson } from './backend/project/data-export.js';
 
 log.info('Starting ReBenchDB Version ' + rebenchVersion);
 
@@ -67,9 +61,6 @@ const port = process.env.PORT || 33333;
 
 const DEBUG = 'DEBUG' in process.env ? process.env.DEBUG === 'true' : false;
 const DEV = 'DEV' in process.env ? process.env.DEV === 'true' : false;
-
-const refreshSecret =
-  'REFRESH_SECRET' in process.env ? process.env.REFRESH_SECRET : undefined;
 
 const app = new Koa();
 const router = new Router();
@@ -93,6 +84,12 @@ router.get('/:projectSlug/data', async (ctx) => renderProjectDataPage(ctx, db));
 router.get('/:projectSlug/data/:expId', async (ctx) =>
   renderDataExport(ctx, db)
 );
+router.get('/:projectSlug/compare/:baseline..:change', async (ctx) =>
+  renderComparePage(ctx, db)
+);
+router.get('/:projectSlug/compare-new/:baseline..:change', async (ctx) =>
+  renderComparePageNew(ctx, db)
+);
 
 // DEPRECATED: remove for 1.0
 router.get('/timeline/:projectId', async (ctx) =>
@@ -103,6 +100,9 @@ router.get('/project/:projectId', async (ctx) =>
 );
 router.get('/rebenchdb/get-exp-data/:expId', async (ctx) =>
   redirectToNewProjectDataExportUrl(ctx, db)
+);
+router.get('/compare/:project/:baseline/:change', async (ctx) =>
+  redirectToNewCompareUrl(ctx, db)
 );
 
 // todo: rename this to say that this endpoint gets the last 100 measurements
@@ -125,61 +125,9 @@ router.get('/rebenchdb/stats', async (ctx) => getSiteStatsAsJson(ctx, db));
 router.get('/rebenchdb/dash/:projectId/changes', async (ctx) =>
   getChangesAsJson(ctx, db)
 );
-
-router.get('/rebenchdb/dash/:projectId/data-overview', async (ctx) => {
-  ctx.body = await dashDataOverview(Number(ctx.params.projectId), db);
-  ctx.type = 'application/json';
-});
-
-// DEPRECATED: remove for 1.0
-router.get('/compare/:project/:baseline/:change', async (ctx) => {
-  const project = await db.getProjectByName(ctx.params.project);
-  if (project) {
-    ctx.redirect(
-      `/${project.slug}/compare/${ctx.params.baseline}..${ctx.params.change}`
-    );
-  } else {
-    respondProjectNotFound(ctx, ctx.params.project);
-  }
-});
-
-router.get('/:projectSlug/compare/:baseline..:change', async (ctx) => {
-  const start = startRequest();
-
-  const data = await dashCompare(
-    ctx.params.baseline,
-    ctx.params.change,
-    ctx.params.projectSlug,
-    dbConfig,
-    db
-  );
-  ctx.body = processTemplate('compare.html', data);
-  ctx.type = 'html';
-
-  if (data.generatingReport) {
-    ctx.set('Cache-Control', 'no-cache');
-  }
-
-  completeRequest(start, db, 'change');
-});
-
-const compareTpl = prepareTemplate('compare-new.html');
-
-router.get('/:projectSlug/compare-new/:baseline..:change', async (ctx) => {
-  const start = startRequest();
-
-  const data = await dashCompareNew(
-    ctx.params.baseline,
-    ctx.params.change,
-    ctx.params.projectSlug,
-    dbConfig,
-    db
-  );
-  ctx.body = compareTpl({ ...data, dataFormatters, viewHelpers });
-  ctx.type = 'html';
-
-  completeRequest(start, db, 'change-new');
-});
+router.get('/rebenchdb/dash/:projectId/data-overview', async (ctx) =>
+  getAvailableDataAsJson(ctx, db)
+);
 
 router.get('/admin/perform-timeline-update', async (ctx) => {
   db
@@ -195,33 +143,7 @@ router.get('/admin/perform-timeline-update', async (ctx) => {
 router.post(
   '/admin/refresh/:project/:baseline/:change',
   koaBody({ urlencoded: true }),
-  async (ctx) => {
-    ctx.type = 'text';
-
-    if (refreshSecret === undefined) {
-      ctx.body = 'ReBenchDB is not configured to accept refresh requests.';
-      ctx.status = 503;
-      return;
-    }
-
-    if (ctx.request.body.password === refreshSecret) {
-      const project = ctx.params.project;
-      const base = ctx.params.baseline;
-      const change = ctx.params.change;
-      dashDeleteOldReport(project, base, change);
-
-      ctx.body = `Refresh requests accepted for
-        Project:  ${project}
-        Baseline: ${base}
-        Change:   ${change}
-        `;
-      ctx.status = 303;
-      ctx.redirect(`/compare/${project}/${base}/${change}`);
-    } else {
-      ctx.body = 'Incorrect authentication.';
-      ctx.status = 403;
-    }
-  }
+  deleteCachedReport
 );
 
 router.post(
@@ -330,45 +252,13 @@ router.put(
   }
 );
 
-const github = createGitHubClient(siteConfig);
-if (github === null) {
-  log.info(
-    'Reporting to GitHub is not yet enabled.' +
-      ' Make sure GITHUB_APP_ID and GITHUB_PK are set to enable it.'
-  );
-}
-
 // curl -X PUT -H "Content-Type: application/json" \
 // -d '{"endTime":"bar","experimentName": \
 // "CI Benchmark Run Pipeline ID 7204","projectName": "SOMns"}' \
 //  https://rebench.stefan-marr.de/rebenchdb/completion
-router.put('/rebenchdb/completion', koaBody(), async (ctx) => {
-  const data: BenchmarkCompletion = await ctx.request.body;
-  ctx.type = 'text';
-
-  if (!data.experimentName || !data.projectName) {
-    ctx.body =
-      'Completion request misses mandatory fields. ' +
-      'In needs to have experimentName, and projectName';
-    ctx.status = 400;
-    return;
-  }
-
-  try {
-    await reportCompletion(dbConfig, db, github, data);
-    log.debug(
-      `/rebenchdb/completion: ${data.projectName}` +
-        `${data.experimentName} was completed`
-    );
-    ctx.status = 201;
-    ctx.body =
-      `Completion recorded of ` + `${data.projectName} ${data.experimentName}`;
-  } catch (e: any) {
-    ctx.status = 500;
-    ctx.body = `Failed to record completion: ${e}\n${e.stack}`;
-    log.error('/rebenchdb/completion failed to record completion:', e);
-  }
-});
+router.put('/rebenchdb/completion', koaBody(), async (ctx) =>
+  handleReBenchCompletion(ctx, db)
+);
 
 app.use(router.routes());
 app.use(router.allowedMethods());

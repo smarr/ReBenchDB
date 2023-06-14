@@ -22,7 +22,7 @@ import { robustPath } from '../../src/util.js';
 import {
   calculateAllStatisticsAndRenderPlots,
   getNavigation
-} from '../../src/stats-data-prep.js';
+} from '../../src/backend/compare/prep-data.js';
 import { Environment } from '../../src/db.js';
 import { collateMeasurements } from '../../src/db-data-processing.js';
 import { initJestMatchers } from '../helpers.js';

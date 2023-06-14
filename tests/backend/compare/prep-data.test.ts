@@ -2,14 +2,14 @@ import { describe, expect, it } from '@jest/globals';
 
 import { readFileSync, mkdirSync, existsSync } from 'node:fs';
 
-import { robustPath } from '../src/util.js';
+import { robustPath } from '../../../src/util.js';
 import {
   MeasurementData,
   Measurements,
   ProcessedResult,
   RevisionComparison,
   RunSettings
-} from '../src/db.js';
+} from '../../../src/db.js';
 import {
   ResultsByBenchmark,
   ResultsByExeSuiteBenchmark,
@@ -24,23 +24,23 @@ import {
   countVariantsAndDropMissing,
   getChangeDataBySuiteAndExe,
   prepareCompareView
-} from '../src/stats-data-prep.js';
-import { ComparisonStatsWithUnit } from '../src/stats.js';
-import { collateMeasurements } from '../src/db-data-processing.js';
+} from '../../../src/backend/compare/prep-data.js';
+import { ComparisonStatsWithUnit } from '../../../src/stats.js';
+import { collateMeasurements } from '../../../src/db-data-processing.js';
 import {
   ByExeSuiteComparison,
   CompareStatsRow,
   CompareViewWithData,
   MissingData
-} from '../src/views/view-types.js';
-import { prepareTemplate } from '../src/templates.js';
-import * as dataFormatters from '../src/data-format.js';
-import * as viewHelpers from '../src/views/helpers.js';
+} from '../../../src/views/view-types.js';
+import { prepareTemplate } from '../../../src/templates.js';
+import * as dataFormatters from '../../../src/data-format.js';
+import * as viewHelpers from '../../../src/views/helpers.js';
 import {
   initJestMatchers,
   isRequestedToUpdateExpectedData,
   isSupportingSvgTests
-} from './helpers.js';
+} from '../../helpers.js';
 
 initJestMatchers();
 

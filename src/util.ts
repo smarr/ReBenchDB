@@ -55,6 +55,9 @@ export const dbConfig = {
   port: 5432
 };
 
+export const refreshSecret =
+  'REFRESH_SECRET' in process.env ? process.env.REFRESH_SECRET : undefined;
+
 /** How long to still hold on to the cache after it became invalid. In ms. */
 export const cacheInvalidationDelay = 1000 * 60 * 5; /* 5 minutes */
 

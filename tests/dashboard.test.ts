@@ -1,21 +1,22 @@
 import { describe, expect, beforeAll, afterAll, it, jest } from '@jest/globals';
+import { readFileSync } from 'fs';
+
 import {
   TestDatabase,
   createAndInitializeDB,
   closeMainDb
 } from './db-testing.js';
-import { dashDataOverview } from '../src/dashboard';
+
 import { BenchmarkData } from '../src/api.js';
-import { readFileSync } from 'fs';
 import { getDirname } from '../src/util.js';
-
-const __dirname = getDirname(import.meta.url);
-
 import {
   getChanges,
   getLast100Measurements,
   getStatistics
 } from '../src/backend/main/main.js';
+import { getDataOverview } from '../src/backend/project/data-export.js';
+
+const __dirname = getDirname(import.meta.url);
 
 const timeoutForLargeDataTest = 200 * 1000;
 jest.setTimeout(timeoutForLargeDataTest);
@@ -123,7 +124,7 @@ describe('Test Dashboard with basic test data loaded', () => {
 
   it('Should get available data for DataOverview', async () => {
     await db.awaitQuiescentTimelineUpdater();
-    const data = (await dashDataOverview(1, db)).data;
+    const data = (await getDataOverview(1, db)).data;
     expect(data).toHaveLength(numExperiments);
 
     expect(data[0].commitids).toEqual(

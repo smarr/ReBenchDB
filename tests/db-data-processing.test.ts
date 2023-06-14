@@ -6,7 +6,7 @@ import {
   ResultsByBenchmark,
   ResultsByExeSuiteBenchmark,
   ResultsBySuiteBenchmark
-} from '../src/stats-data-prep.js';
+} from '../src/backend/compare/prep-data.js';
 import { MeasurementData, ProcessedResult } from '../src/db.js';
 
 const dataJsSOM = JSON.parse(

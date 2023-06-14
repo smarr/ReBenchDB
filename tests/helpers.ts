@@ -47,7 +47,7 @@ function toBeMostlyIdenticalImage(
   actualFile: string,
   outputFolder: string,
   expectedFile: string,
-  expectedPixelDiff: number = 0
+  expectedPixelDiff = 0
 ) {
   if (typeof actualFile !== 'string' || typeof expectedFile !== 'string') {
     throw new Error(

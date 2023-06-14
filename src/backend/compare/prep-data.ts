@@ -6,7 +6,7 @@ import {
   calculateSummaryOfChangeSummaries,
   median,
   normalize
-} from './stats.js';
+} from '../../stats.js';
 import {
   CriterionData,
   Environment,
@@ -16,7 +16,7 @@ import {
   ProcessedResult,
   RevisionComparison,
   RevisionData
-} from './db.js';
+} from '../../db.js';
 import {
   ByExeSuiteComparison,
   CompareNavPartial,
@@ -25,15 +25,15 @@ import {
   CompareViewWithData,
   DataSeriesVersionComparison,
   StatsSummary
-} from './views/view-types.js';
+} from '../../views/view-types.js';
 import {
   createCanvas,
   renderInlinePlot,
   renderOverviewPlots
-} from './charts.js';
-import { siteAesthetics, siteConfig } from './util.js';
+} from '../../charts.js';
+import { siteAesthetics, siteConfig } from '../../util.js';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
-import { collateMeasurements } from './db-data-processing.js';
+import { collateMeasurements } from '../../db-data-processing.js';
 
 export function compareStringOrNull(
   a: string | null,
@@ -101,7 +101,7 @@ export function compareToSortForSinglePassChangeStatsWithoutCommitId(
   return a.criterion.name.localeCompare(b.criterion.name);
 }
 
-export function getCommitOffsetsInSortedMeasurements(
+function getCommitOffsetsInSortedMeasurements(
   baseCommitId: string,
   changeCommitId: string
 ): { baseOffset: number; changeOffset: number } {

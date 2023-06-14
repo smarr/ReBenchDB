@@ -1,12 +1,12 @@
 import { describe, expect, afterAll, it } from '@jest/globals';
 import { readFileSync, unlinkSync, rmSync, existsSync } from 'fs';
-import {
-  startReportGeneration,
-  getSummaryPlotFileName,
-  getOutputImageFolder
-} from '../src/dashboard';
 import { DatabaseConfig } from '../src/db.js';
 import { getDirname } from '../src/util.js';
+import {
+  getOutputImageFolder,
+  getSummaryPlotFileName,
+  startReportGeneration
+} from '../src/backend/compare/report.js';
 
 const __dirname = getDirname(import.meta.url);
 
