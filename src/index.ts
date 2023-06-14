@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import { ValidateFunction } from 'ajv';
 import Koa from 'koa';
 import { koaBody } from 'koa-body';
@@ -15,28 +14,26 @@ import {
   completeRequest
 } from './perf-tracker.js';
 import {
-  dashStatistics,
-  dashChanges,
   dashCompare,
   dashDataOverview,
   reportCompletion,
   dashDeleteOldReport,
-  dashProfile,
-  dashCompareNew,
-  dashMeasurements
+  dashCompareNew
 } from './dashboard.js';
 import { prepareTemplate, processTemplate } from './templates.js';
 import {
   cacheInvalidationDelay,
   dbConfig,
-  robustPath,
+  rebenchVersion,
   siteConfig,
   statsConfig
 } from './util.js';
 import { createGitHubClient } from './github.js';
 import { log } from './logging.js';
 import {
+  getChangesAsJson,
   getLast100MeasurementsAsJson,
+  getSiteStatsAsJson,
   renderMainPage
 } from './backend/main/main.js';
 import {
@@ -49,6 +46,7 @@ import {
 } from './backend/project/project.js';
 import { respondProjectNotFound } from './backend/common/standard-responses.js';
 import {
+  getTimelineAsJson,
   redirectToNewTimelineUrl,
   renderTimeline
 } from './backend/timeline/timeline.js';
@@ -58,12 +56,12 @@ import {
   serveViewJs
 } from './backend/dev-server/server.js';
 import { DatabaseWithPool } from './db.js';
+import {
+  getMeasurementsAsJson,
+  getProfileAsJson
+} from './backend/compare/compare.js';
 
-const packageJson = JSON.parse(
-  readFileSync(robustPath('../package.json'), 'utf-8')
-);
-
-log.info('Starting ReBenchDB Version ' + packageJson.version);
+log.info('Starting ReBenchDB Version ' + rebenchVersion);
 
 const port = process.env.PORT || 33333;
 
@@ -86,97 +84,47 @@ export const db = new DatabaseWithPool(
 router.get('/', async (ctx) => {
   return renderMainPage(ctx, db);
 });
-router.get('/:projectSlug', async (ctx) => {
-  return renderProjectPage(ctx, db);
-});
-router.get('/:projectSlug/source/:sourceId', async (ctx) => {
-  return getSourceAsJson(ctx, db);
-});
-router.get('/:projectSlug/timeline', async (ctx) => {
-  return renderTimeline(ctx, db);
-});
-router.get('/:projectSlug/data', async (ctx) => {
-  return renderProjectDataPage(ctx, db);
-});
-router.get('/:projectSlug/data/:expId', async (ctx) => {
-  return renderDataExport(ctx, db);
-});
+router.get('/:projectSlug', async (ctx) => renderProjectPage(ctx, db));
+router.get('/:projectSlug/source/:sourceId', async (ctx) =>
+  getSourceAsJson(ctx, db)
+);
+router.get('/:projectSlug/timeline', async (ctx) => renderTimeline(ctx, db));
+router.get('/:projectSlug/data', async (ctx) => renderProjectDataPage(ctx, db));
+router.get('/:projectSlug/data/:expId', async (ctx) =>
+  renderDataExport(ctx, db)
+);
 
 // DEPRECATED: remove for 1.0
-router.get('/timeline/:projectId', async (ctx) => {
-  return redirectToNewTimelineUrl(ctx, db);
-});
-router.get('/project/:projectId', async (ctx) => {
-  return redirectToNewProjectDataUrl(ctx, db);
-});
-router.get('/rebenchdb/get-exp-data/:expId', async (ctx) => {
-  return redirectToNewProjectDataExportUrl(ctx, db);
-});
+router.get('/timeline/:projectId', async (ctx) =>
+  redirectToNewTimelineUrl(ctx, db)
+);
+router.get('/project/:projectId', async (ctx) =>
+  redirectToNewProjectDataUrl(ctx, db)
+);
+router.get('/rebenchdb/get-exp-data/:expId', async (ctx) =>
+  redirectToNewProjectDataExportUrl(ctx, db)
+);
 
 // todo: rename this to say that this endpoint gets the last 100 measurements
 //       for the project
-router.get('/rebenchdb/dash/:projectId/results', async (ctx) => {
-  return getLast100MeasurementsAsJson(ctx, db);
-});
-
-router.get('/rebenchdb/dash/:projectId/timeline/:runId', async (ctx) => {
-  ctx.body = await db.getTimelineForRun(
-    Number(ctx.params.projectId),
-    Number(ctx.params.runId)
-  );
-  if (ctx.body === null) {
-    ctx.status = 500;
-  }
-  ctx.type = 'application/json';
-});
-
+router.get('/rebenchdb/dash/:projectId/results', async (ctx) =>
+  getLast100MeasurementsAsJson(ctx, db)
+);
+router.get('/rebenchdb/dash/:projectId/timeline/:runId', async (ctx) =>
+  getTimelineAsJson(ctx, db)
+);
 router.get(
   '/rebenchdb/dash/:projectSlug/profiles/:runId/:trialId',
-  async (ctx) => {
-    const start = startRequest();
-
-    ctx.body = await dashProfile(
-      Number(ctx.params.runId),
-      Number(ctx.params.trialId),
-      db
-    );
-    if (ctx.body === undefined) {
-      ctx.status = 404;
-      ctx.body = {};
-    }
-    ctx.type = 'application/json';
-    completeRequest(start, db, 'get-profiles');
-  }
+  async (ctx) => getProfileAsJson(ctx, db)
 );
-
 router.get(
   '/rebenchdb/dash/:projectSlug/measurements/:runId/:trialId1/:trialId2',
-  async (ctx) => {
-    const start = startRequest();
-
-    ctx.body = await dashMeasurements(
-      ctx.params.projectSlug,
-      Number(ctx.params.runId),
-      Number(ctx.params.trialId1),
-      Number(ctx.params.trialId2),
-      db
-    );
-
-    ctx.type = 'application/json';
-    completeRequest(start, db, 'get-measurements');
-  }
+  async (ctx) => getMeasurementsAsJson(ctx, db)
 );
-
-router.get('/rebenchdb/stats', async (ctx) => {
-  ctx.body = await dashStatistics(db);
-  ctx.body.version = packageJson.version;
-  ctx.type = 'application/json';
-});
-
-router.get('/rebenchdb/dash/:projectId/changes', async (ctx) => {
-  ctx.body = await dashChanges(Number(ctx.params.projectId), db);
-  ctx.type = 'application/json';
-});
+router.get('/rebenchdb/stats', async (ctx) => getSiteStatsAsJson(ctx, db));
+router.get('/rebenchdb/dash/:projectId/changes', async (ctx) =>
+  getChangesAsJson(ctx, db)
+);
 
 router.get('/rebenchdb/dash/:projectId/data-overview', async (ctx) => {
   ctx.body = await dashDataOverview(Number(ctx.params.projectId), db);
@@ -308,7 +256,7 @@ if (DEV) {
 router.get('/status', async (ctx) => {
   ctx.body = `# ReBenchDB Status
 
-- version ${packageJson.version}
+- version ${rebenchVersion}
 `;
   ctx.type = 'text';
 });

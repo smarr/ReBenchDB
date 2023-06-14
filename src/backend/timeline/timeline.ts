@@ -7,6 +7,20 @@ import { processTemplate } from '../../templates.js';
 import { TimelineSuite } from '../../api.js';
 import { Database } from '../../db.js';
 
+export async function getTimelineAsJson(
+  ctx: ParameterizedContext,
+  db: Database
+): Promise<void> {
+  ctx.body = await db.getTimelineForRun(
+    Number(ctx.params.projectId),
+    Number(ctx.params.runId)
+  );
+  if (ctx.body === null) {
+    ctx.status = 500;
+  }
+  ctx.type = 'application/json';
+}
+
 /**
  * @deprecated remove for 1.0
  */

@@ -3,7 +3,9 @@ import { fileURLToPath } from 'url';
 
 import { promisify } from 'node:util';
 import { gzip as gzipCallback } from 'node:zlib';
+import { readFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
+
 import { CanvasSettings } from 'charts';
 
 const gzip = promisify(gzipCallback);
@@ -109,3 +111,7 @@ export const siteAesthetics = {
 };
 
 export const TotalCriterion = 'total';
+
+export const rebenchVersion = JSON.parse(
+  readFileSync(robustPath('../package.json'), 'utf-8')
+).version;

@@ -15,7 +15,41 @@ import {
   closeMainDb,
   createAndInitializeDB
 } from '../../db-testing.js';
-import { getLast100Measurements } from '../../../src/backend/main/main.js';
+import {
+  getChanges,
+  getLast100Measurements,
+  getStatistics
+} from '../../../src/backend/main/main.js';
+
+describe('Test on empty DB', () => {
+  let db: TestDatabase;
+
+  beforeAll(async () => {
+    db = await createAndInitializeDB('main_empty');
+  });
+
+  afterAll(async () => {
+    return db.close();
+  });
+
+  it('Should get empty results request', async () => {
+    const result = await getLast100Measurements(0, db);
+    expect(result).toEqual([]);
+  });
+
+  it('Should get empty statistics', async () => {
+    const result = await getStatistics(db);
+    expect(result.stats.length).toBeGreaterThan(1);
+    for (const table of result.stats) {
+      expect(table.cnt).toEqual('0');
+    }
+  });
+
+  it('Should get empty changes', async () => {
+    const result = await getChanges(0, db);
+    expect(result.changes).toHaveLength(0);
+  });
+});
 
 describe('getLast100Measurements', () => {
   const env: Environment = {
@@ -105,7 +139,7 @@ describe('getLast100Measurements', () => {
 
   let db: TestDatabase;
   beforeAll(async () => {
-    db = await createAndInitializeDB('dash_basic', 25, true, false);
+    db = await createAndInitializeDB('main_basic', 25, true, false);
   });
 
   afterAll(async () => {

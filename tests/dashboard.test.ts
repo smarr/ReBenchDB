@@ -4,51 +4,21 @@ import {
   createAndInitializeDB,
   closeMainDb
 } from './db-testing.js';
-import {
-  dashStatistics,
-  dashChanges,
-  dashDataOverview
-} from '../src/dashboard';
+import { dashDataOverview } from '../src/dashboard';
 import { BenchmarkData } from '../src/api.js';
 import { readFileSync } from 'fs';
 import { getDirname } from '../src/util.js';
 
 const __dirname = getDirname(import.meta.url);
 
-import { getLast100Measurements } from '../src/backend/main/main.js';
+import {
+  getChanges,
+  getLast100Measurements,
+  getStatistics
+} from '../src/backend/main/main.js';
 
 const timeoutForLargeDataTest = 200 * 1000;
 jest.setTimeout(timeoutForLargeDataTest);
-
-describe('Test Dashboard on empty DB', () => {
-  let db: TestDatabase;
-
-  beforeAll(async () => {
-    db = await createAndInitializeDB('dash_empty');
-  });
-
-  afterAll(async () => {
-    return db.close();
-  });
-
-  it('Should get empty results request', async () => {
-    const result = await getLast100Measurements(0, db);
-    expect(result).toEqual([]);
-  });
-
-  it('Should get empty statistics', async () => {
-    const result = await dashStatistics(db);
-    expect(result.stats.length).toBeGreaterThan(1);
-    for (const table of result.stats) {
-      expect(table.cnt).toEqual('0');
-    }
-  });
-
-  it('Should get empty changes', async () => {
-    const result = await dashChanges(0, db);
-    expect(result.changes).toHaveLength(0);
-  });
-});
 
 describe('Test Dashboard with basic test data loaded', () => {
   let db: TestDatabase;
@@ -118,7 +88,7 @@ describe('Test Dashboard with basic test data loaded', () => {
   });
 
   it('Should get statistics', async () => {
-    const result = (await dashStatistics(db)).stats;
+    const result = (await getStatistics(db)).stats;
     expect(result.length).toBeGreaterThan(2);
 
     for (const table of result) {
@@ -138,7 +108,7 @@ describe('Test Dashboard with basic test data loaded', () => {
   });
 
   it('Should get changes', async () => {
-    const result = (await dashChanges(1, db)).changes;
+    const result = (await getChanges(1, db)).changes;
     expect(result).toHaveLength(3);
     expect(result[0].commitid).toEqual(
       '3333333333333333333333333333333333333333'

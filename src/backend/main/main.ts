@@ -1,7 +1,7 @@
 import { ParameterizedContext } from 'koa';
 import { QueryConfig } from 'pg';
 
-import { TotalCriterion, isReBenchDotDev } from '../../util.js';
+import { TotalCriterion, isReBenchDotDev, rebenchVersion } from '../../util.js';
 import { processTemplate } from '../../templates.js';
 import { completeRequest, startRequest } from '../../perf-tracker.js';
 import { AllResults } from '../../api.js';
@@ -87,4 +87,88 @@ export async function getLast100Measurements(
   const result = await db.query(q);
   resultsCache[projectId] = result.rows;
   return resultsCache[projectId];
+}
+
+export async function getSiteStatsAsJson(
+  ctx: ParameterizedContext,
+  db: Database
+): Promise<void> {
+  ctx.body = await getStatistics(db);
+  ctx.type = 'application/json';
+}
+
+let statisticsCache: { stats: any[]; version: number } | null = null;
+let statsCacheValid: TimedCacheValidity | null = null;
+
+export function statsCache(): TimedCacheValidity | null {
+  return statsCacheValid;
+}
+
+export async function getStatistics(
+  db: Database
+): Promise<{ stats: any[]; version: number }> {
+  if (
+    statisticsCache !== null &&
+    statsCacheValid !== null &&
+    statsCacheValid.isValid()
+  ) {
+    return statisticsCache;
+  }
+
+  statsCacheValid = db.getStatsCacheValidity();
+
+  const result = await db.query({
+    name: 'fetchStats',
+    text: `
+        SELECT * FROM (
+          SELECT 'Experiments' as table, count(*) as cnt FROM experiment
+          UNION ALL
+          SELECT 'Trials' as table, count(*) as cnt FROM trial
+          UNION ALL
+          SELECT 'Executors' as table, count(*) as cnt FROM executor
+          UNION ALL
+          SELECT 'Benchmarks' as table, count(*) as cnt FROM benchmark
+          UNION ALL
+          SELECT 'Projects' as table, count(*) as cnt FROM project
+          UNION ALL
+          SELECT 'Suites' as table, count(*) as cnt FROM suite
+          UNION ALL
+          SELECT 'Environments' as table, count(*) as cnt FROM environment
+          UNION ALL
+          SELECT 'Runs' as table, count(*) as cnt FROM run
+          UNION ALL
+          SELECT 'Measurements' as table, count(*) as cnt FROM measurement
+        ) as counts
+        ORDER BY counts.table`
+  });
+  statisticsCache = { stats: result.rows, version: rebenchVersion };
+  return statisticsCache;
+}
+
+export async function getChangesAsJson(
+  ctx: ParameterizedContext,
+  db: Database
+): Promise<void> {
+  ctx.body = await getChanges(Number(ctx.params.projectId), db);
+  ctx.type = 'application/json';
+}
+
+export async function getChanges(
+  projectId: number,
+  db: Database
+): Promise<{ changes: any[] }> {
+  const result = await db.query({
+    name: 'fetchAllChangesByProjectId',
+    text: ` SELECT commitId, branchOrTag, projectId, repoURL, commitMessage,
+                max(startTime) as experimentTime
+            FROM experiment
+            JOIN Trial ON expId = experiment.id
+            JOIN Source ON sourceId = source.id
+            JOIN Project ON projectId = project.id
+            WHERE project.id = $1
+            GROUP BY commitId, branchOrTag, projectId, repoURL, commitMessage
+            ORDER BY max(startTime) DESC`,
+    values: [projectId]
+  });
+  return { changes: result.rows };
 }
