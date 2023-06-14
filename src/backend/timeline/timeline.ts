@@ -1,17 +1,18 @@
 import { ParameterizedContext } from 'koa';
-import { db } from '../db/db-instance.js';
 import {
   respondProjectIdNotFound,
   respondProjectNotFound
 } from '../common/standard-responses.js';
 import { processTemplate } from '../../templates.js';
-import { TimelineSuite } from 'api.js';
+import { TimelineSuite } from '../../api.js';
+import { Database } from '../../db.js';
 
 /**
  * @deprecated remove for 1.0
  */
 export async function redirectToNewTimelineUrl(
-  ctx: ParameterizedContext
+  ctx: ParameterizedContext,
+  db: Database
 ): Promise<void> {
   const project = await db.getProject(Number(ctx.params.projectId));
   if (project) {
@@ -21,13 +22,16 @@ export async function redirectToNewTimelineUrl(
   }
 }
 
-export async function renderTimeline(ctx: ParameterizedContext): Promise<void> {
+export async function renderTimeline(
+  ctx: ParameterizedContext,
+  db: Database
+): Promise<void> {
   const project = await db.getProjectBySlug(ctx.params.projectSlug);
 
   if (project) {
     ctx.body = processTemplate('../backend/timeline/timeline.html', {
       project,
-      benchmarks: await getLatestBenchmarksForTimelineView(project.id)
+      benchmarks: await getLatestBenchmarksForTimelineView(project.id, db)
     });
     ctx.type = 'html';
   } else {
@@ -36,7 +40,8 @@ export async function renderTimeline(ctx: ParameterizedContext): Promise<void> {
 }
 
 async function getLatestBenchmarksForTimelineView(
-  projectId: number
+  projectId: number,
+  db: Database
 ): Promise<TimelineSuite[] | null> {
   const results = await db.getLatestBenchmarksForTimelineView(projectId);
   if (results === null) {

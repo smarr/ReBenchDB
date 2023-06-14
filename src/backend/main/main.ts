@@ -1,14 +1,16 @@
 import { ParameterizedContext } from 'koa';
 import { QueryConfig } from 'pg';
 
-import { db } from '../db/db-instance.js';
 import { TotalCriterion, isReBenchDotDev } from '../../util.js';
 import { processTemplate } from '../../templates.js';
 import { completeRequest, startRequest } from '../../perf-tracker.js';
 import { AllResults } from '../../api.js';
 import { Database, TimedCacheValidity } from '../../db.js';
 
-export async function renderMainPage(ctx: ParameterizedContext): Promise<void> {
+export async function renderMainPage(
+  ctx: ParameterizedContext,
+  db: Database
+): Promise<void> {
   const projects = await db.getAllProjects();
   ctx.body = processTemplate('../backend/main/index.html', {
     projects,
@@ -18,7 +20,8 @@ export async function renderMainPage(ctx: ParameterizedContext): Promise<void> {
 }
 
 export async function getLast100MeasurementsAsJson(
-  ctx: ParameterizedContext
+  ctx: ParameterizedContext,
+  db: Database
 ): Promise<void> {
   const start = startRequest();
 

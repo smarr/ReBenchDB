@@ -15,7 +15,6 @@ import {
   completeRequest
 } from './perf-tracker.js';
 import {
-  dashResults,
   dashStatistics,
   dashChanges,
   dashCompare,
@@ -28,10 +27,15 @@ import {
   dashMeasurements
 } from './dashboard.js';
 import { prepareTemplate, processTemplate } from './templates.js';
-import { dbConfig, robustPath, siteConfig } from './util.js';
+import {
+  cacheInvalidationDelay,
+  dbConfig,
+  robustPath,
+  siteConfig,
+  statsConfig
+} from './util.js';
 import { createGitHubClient } from './github.js';
 import { log } from './logging.js';
-import { db } from './backend/db/db-instance.js';
 import {
   getLast100MeasurementsAsJson,
   renderMainPage
@@ -54,6 +58,7 @@ import {
   serveStaticResource,
   serveViewJs
 } from './backend/dev-server/server.js';
+import { DatabaseWithPool } from './db.js';
 
 const packageJson = JSON.parse(
   readFileSync(robustPath('../package.json'), 'utf-8')
@@ -72,21 +77,48 @@ const refreshSecret =
 const app = new Koa();
 const router = new Router();
 
-router.get('/', renderMainPage);
-router.get('/:projectSlug', renderProjectPage);
-router.get('/:projectSlug/source/:sourceId', getSourceAsJson);
-router.get('/:projectSlug/timeline', renderTimeline);
-router.get('/:projectSlug/data', renderProjectDataPage);
-router.get('/:projectSlug/data/:expId', renderDataExport);
+export const db = new DatabaseWithPool(
+  dbConfig,
+  statsConfig.numberOfBootstrapSamples,
+  true,
+  cacheInvalidationDelay
+);
+
+router.get('/', async (ctx) => {
+  return renderMainPage(ctx, db);
+});
+router.get('/:projectSlug', async (ctx) => {
+  return renderProjectPage(ctx, db);
+});
+router.get('/:projectSlug/source/:sourceId', async (ctx) => {
+  return getSourceAsJson(ctx, db);
+});
+router.get('/:projectSlug/timeline', async (ctx) => {
+  return renderTimeline(ctx, db);
+});
+router.get('/:projectSlug/data', async (ctx) => {
+  return renderProjectDataPage(ctx, db);
+});
+router.get('/:projectSlug/data/:expId', async (ctx) => {
+  return renderDataExport(ctx, db);
+});
 
 // DEPRECATED: remove for 1.0
-router.get('/timeline/:projectId', redirectToNewTimelineUrl);
-router.get('/project/:projectId', redirectToNewProjectDataUrl);
-router.get('/rebenchdb/get-exp-data/:expId', redirectToNewProjectDataExportUrl);
+router.get('/timeline/:projectId', async (ctx) => {
+  return redirectToNewTimelineUrl(ctx, db);
+});
+router.get('/project/:projectId', async (ctx) => {
+  return redirectToNewProjectDataUrl(ctx, db);
+});
+router.get('/rebenchdb/get-exp-data/:expId', async (ctx) => {
+  return redirectToNewProjectDataExportUrl(ctx, db);
+});
 
 // todo: rename this to say that this endpoint gets the last 100 measurements
 //       for the project
-router.get('/rebenchdb/dash/:projectId/results', getLast100MeasurementsAsJson);
+router.get('/rebenchdb/dash/:projectId/results', async (ctx) => {
+  return getLast100MeasurementsAsJson(ctx, db);
+});
 
 router.get('/rebenchdb/dash/:projectId/benchmarks', async (ctx) => {
   const start = startRequest();

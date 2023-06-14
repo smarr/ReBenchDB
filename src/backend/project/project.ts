@@ -1,5 +1,4 @@
 import { ParameterizedContext } from 'koa';
-import { db } from '../db/db-instance.js';
 import { prepareTemplate, processTemplate } from '../../templates.js';
 import {
   respondExpIdNotFound,
@@ -9,11 +8,13 @@ import {
 } from '../common/standard-responses.js';
 import { completeRequest, startRequest } from '../../perf-tracker.js';
 import { getExpData } from './data-export.js';
+import { Database } from '../../db.js';
 
 const projectHtml = prepareTemplate('../backend/project/project.html');
 
 export async function renderProjectPage(
-  ctx: ParameterizedContext
+  ctx: ParameterizedContext,
+  db: Database
 ): Promise<void> {
   const project = await db.getProjectBySlug(ctx.params.projectSlug);
   if (project) {
@@ -25,7 +26,8 @@ export async function renderProjectPage(
 }
 
 export async function getSourceAsJson(
-  ctx: ParameterizedContext
+  ctx: ParameterizedContext,
+  db: Database
 ): Promise<void> {
   const result = await db.getSourceById(
     ctx.params.projectSlug,
@@ -48,7 +50,8 @@ export async function getSourceAsJson(
  * @deprecated remove for 1.0
  */
 export async function redirectToNewProjectDataUrl(
-  ctx: ParameterizedContext
+  ctx: ParameterizedContext,
+  db: Database
 ): Promise<void> {
   const project = await db.getProject(Number(ctx.params.projectId));
   if (project) {
@@ -63,7 +66,8 @@ export async function redirectToNewProjectDataUrl(
 }
 
 export async function renderProjectDataPage(
-  ctx: ParameterizedContext
+  ctx: ParameterizedContext,
+  db: Database
 ): Promise<void> {
   const project = await db.getProjectBySlug(ctx.params.projectSlug);
   if (project) {
@@ -80,7 +84,8 @@ export async function renderProjectDataPage(
  * @deprecated remove for 1.0
  */
 export async function redirectToNewProjectDataExportUrl(
-  ctx: ParameterizedContext
+  ctx: ParameterizedContext,
+  db: Database
 ): Promise<void> {
   const project = await db.getProjectByExpId(Number(ctx.params.expId));
   if (project) {
@@ -91,13 +96,15 @@ export async function redirectToNewProjectDataExportUrl(
 }
 
 export async function renderDataExport(
-  ctx: ParameterizedContext
+  ctx: ParameterizedContext,
+  db: Database
 ): Promise<void> {
   const start = startRequest();
 
   const data = await getExpData(
     ctx.params.projectSlug,
-    Number(ctx.params.expId)
+    Number(ctx.params.expId),
+    db
   );
 
   if (data.preparingData) {

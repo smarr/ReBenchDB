@@ -1,14 +1,15 @@
 import { existsSync } from 'node:fs';
 import { completeRequest, startRequest } from '../../perf-tracker.js';
-import { db } from '../db/db-instance.js';
 import { siteConfig, storeJsonGzip } from '../../util.js';
 import { log } from '../../logging.js';
+import { Database } from '../../db.js';
 
 const expDataPreparation = new Map();
 
 export async function getExpData(
   projectSlug: string,
-  expId: number
+  expId: number,
+  db: Database
 ): Promise<any> {
   const result = await db.getExperimentDetails(expId, projectSlug);
 
