@@ -1,17 +1,10 @@
-import { ValidateFunction } from 'ajv';
 import Koa from 'koa';
 import { koaBody } from 'koa-body';
 import Router from 'koa-router';
 
-import { BenchmarkData, TimelineRequest } from './api.js';
-import { createValidator } from './api-validator.js';
-
+import { initPerfTracker } from './perf-tracker.js';
 import {
-  initPerfTracker,
-  startRequest,
-  completeRequest
-} from './perf-tracker.js';
-import {
+  DEV,
   cacheInvalidationDelay,
   dbConfig,
   rebenchVersion,
@@ -49,18 +42,16 @@ import {
   deleteCachedReport,
   getMeasurementsAsJson,
   getProfileAsJson,
+  getTimelineDataAsJson,
   redirectToNewCompareUrl,
   renderComparePage,
   renderComparePageNew
 } from './backend/compare/compare.js';
 import { getAvailableDataAsJson } from './backend/project/data-export.js';
+import { submitTimelineUpdateJobs } from './backend/admin/operations.js';
+import { acceptResultData } from './backend/rebench/results.js';
 
 log.info('Starting ReBenchDB Version ' + rebenchVersion);
-
-const port = process.env.PORT || 33333;
-
-const DEBUG = 'DEBUG' in process.env ? process.env.DEBUG === 'true' : false;
-const DEV = 'DEV' in process.env ? process.env.DEV === 'true' : false;
 
 const app = new Koa();
 const router = new Router();
@@ -128,42 +119,17 @@ router.get('/rebenchdb/dash/:projectId/changes', async (ctx) =>
 router.get('/rebenchdb/dash/:projectId/data-overview', async (ctx) =>
   getAvailableDataAsJson(ctx, db)
 );
+router.post('/rebenchdb/dash/:projectName/timelines', koaBody(), async (ctx) =>
+  getTimelineDataAsJson(ctx, db)
+);
 
-router.get('/admin/perform-timeline-update', async (ctx) => {
-  db
-    .getTimelineUpdater()
-    ?.submitUpdateJobs()
-    .then((n) => n)
-    .catch((e) => e);
-  ctx.body = 'update process started';
-  ctx.type = 'text';
-  ctx.status = 200;
-});
-
+router.get('/admin/perform-timeline-update', async (ctx) =>
+  submitTimelineUpdateJobs(ctx, db)
+);
 router.post(
   '/admin/refresh/:project/:baseline/:change',
   koaBody({ urlencoded: true }),
   deleteCachedReport
-);
-
-router.post(
-  '/rebenchdb/dash/:projectName/timelines',
-  koaBody(),
-  async (ctx) => {
-    const timelineRequest = <TimelineRequest>ctx.request.body;
-    const result = await db.getTimelineData(
-      ctx.params.projectName,
-      timelineRequest
-    );
-    if (result === null) {
-      ctx.body = { error: 'Requested data was not found' };
-      ctx.status = 404;
-    } else {
-      ctx.body = result;
-      ctx.status = 200;
-    }
-    ctx.type = 'json';
-  }
 );
 
 if (DEV) {
@@ -183,73 +149,11 @@ router.get('/status', async (ctx) => {
   ctx.type = 'text';
 });
 
-const validateFn: ValidateFunction = DEBUG ? createValidator() : <any>undefined;
-
-function validateSchema(data: BenchmarkData, ctx: Router.IRouterContext) {
-  const result = validateFn(data);
-  if (!result) {
-    log.error('Data validation failed.', validateFn.errors);
-    ctx.status = 500;
-    ctx.body = `Request does not validate:
-${validateFn.errors}`;
-  } else {
-    log.debug('Data validated successfully.');
-  }
-}
-
 // curl -X PUT -H "Content-Type: application/json" -d '{"foo":"bar","baz":3}'
 //  http://localhost:33333/rebenchdb/results
 // DEBUG: koaBody({includeUnparsed: true})
-router.put(
-  '/rebenchdb/results',
-  koaBody({ jsonLimit: '500mb' }),
-  async (ctx) => {
-    const start = startRequest();
-
-    const data: BenchmarkData = await ctx.request.body;
-    ctx.type = 'text';
-
-    if (DEBUG) {
-      validateSchema(data, ctx);
-    }
-
-    if (!data.startTime) {
-      ctx.body = `Request misses a startTime setting,
-                which is needed to store results correctly.`;
-      ctx.status = 400;
-      return;
-    }
-
-    try {
-      const recRunsPromise = db.recordMetaDataAndRuns(data);
-      log.info(`/rebenchdb/results: Content-Length=${ctx.request.length}`);
-      const recordedRuns = await recRunsPromise;
-      db.recordAllData(data)
-        .then(([recMs, recPs]) =>
-          log.info(
-            // eslint-disable-next-line max-len
-            `/rebenchdb/results: stored ${recMs} measurements, ${recPs} profiles`
-          )
-        )
-        .catch((e) => {
-          log.error(
-            '/rebenchdb/results failed to store measurements:',
-            e.stack
-          );
-        });
-
-      ctx.body =
-        `Meta data for ${recordedRuns} stored.` +
-        ' Storing of measurements is ongoing';
-      ctx.status = 201;
-    } catch (e: any) {
-      ctx.status = 500;
-      ctx.body = `${e.stack}`;
-      log.error(e, e.stack);
-    }
-
-    completeRequest(start, db, 'put-results');
-  }
+router.put('/rebenchdb/results', koaBody({ jsonLimit: '500mb' }), async (ctx) =>
+  acceptResultData(ctx, db)
 );
 
 // curl -X PUT -H "Content-Type: application/json" \
@@ -279,6 +183,6 @@ app.use(router.allowedMethods());
 
   initPerfTracker();
 
-  log.info(`Starting server on http://localhost:${port}`);
-  app.listen(port);
+  log.info(`Starting server on http://localhost:${siteConfig.port}`);
+  app.listen(siteConfig.port);
 })();

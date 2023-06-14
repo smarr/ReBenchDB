@@ -71,11 +71,16 @@ export const isRunningTests =
   ('NODE_ENV' in process.env && process.env.NODE_ENV === 'test') ||
   ('JEST_WORKER_ID' in process.env && process.env.JEST_WORKER_ID !== undefined);
 
+export const DEBUG =
+  'DEBUG' in process.env ? process.env.DEBUG === 'true' : false;
+export const DEV = 'DEV' in process.env ? process.env.DEV === 'true' : false;
+
 export const statsConfig = {
   numberOfBootstrapSamples: 50
 };
 
 export const siteConfig = {
+  port: process.env.PORT || 33333,
   reportsUrl: process.env.REPORTS_URL || '/static/reports',
   staticUrl: process.env.STATIC_URL || '/static',
   publicUrl: process.env.PUBLIC_URL || _rebench_dev,

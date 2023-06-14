@@ -13,6 +13,7 @@ import { prepareTemplate, processTemplate } from '../../templates.js';
 import { deleteReport, renderCompare, renderCompareNew } from './report.js';
 import * as dataFormatters from '../../data-format.js';
 import * as viewHelpers from '../../views/helpers.js';
+import { TimelineRequest } from '../../api.js';
 
 export async function getProfileAsJson(
   ctx: ParameterizedContext,
@@ -170,6 +171,25 @@ async function getMeasurements(
   }
 
   return { trial1, trial2 };
+}
+
+export async function getTimelineDataAsJson(
+  ctx: ParameterizedContext,
+  db: Database
+): Promise<void> {
+  const timelineRequest = <TimelineRequest>ctx.request.body;
+  const result = await db.getTimelineData(
+    ctx.params.projectName,
+    timelineRequest
+  );
+  if (result === null) {
+    ctx.body = { error: 'Requested data was not found' };
+    ctx.status = 404;
+  } else {
+    ctx.body = result;
+    ctx.status = 200;
+  }
+  ctx.type = 'json';
 }
 
 /**
