@@ -5,7 +5,7 @@ import { basename, sep } from 'node:path';
 
 import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
-import { diffStringsUnified } from 'jest-diff';
+import { diffStringsUnified, diffStringsRaw, DIFF_EQUAL } from 'jest-diff';
 
 import { robustPath } from '../src/util.js';
 
@@ -134,6 +134,9 @@ function toBeIdenticalSvgFiles(
   const expected: string = readFileSync(expectedFile, 'utf8');
 
   if (actual !== expected) {
+    const diffArr = diffStringsRaw(expected, actual, true);
+    const diffCount = diffArr.filter((d) => d[0] !== DIFF_EQUAL).length;
+
     const diff = diffStringsUnified(expected, actual, { expand: false });
     // limit diff to first 10 lines
     const diffLines = diff.split('\n');
@@ -145,7 +148,7 @@ function toBeIdenticalSvgFiles(
     return {
       message: () =>
         `expected ${actualFile} to be identical to ${expectedFile},
-but they were different.
+but they had ${diffCount} lines different, out of ${diffArr.length}.
 See ${basename(actualFile)}.
 ${diffShort}`,
       pass: false
