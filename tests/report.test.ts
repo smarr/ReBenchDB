@@ -1,7 +1,7 @@
 import { describe, expect, afterAll, it } from '@jest/globals';
 import { readFileSync, unlinkSync, rmSync, existsSync } from 'fs';
 import type { DatabaseConfig } from '../src/backend/db/types.js';
-import { getDirname } from '../src/util.js';
+import { getDirname } from '../src/backend/util.js';
 import {
   getOutputImageFolder,
   getSummaryPlotFileName,

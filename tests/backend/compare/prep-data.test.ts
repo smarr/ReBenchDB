@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import { readFileSync, mkdirSync, existsSync } from 'node:fs';
 
-import { robustPath } from '../../../src/util.js';
+import { robustPath } from '../../../src/backend/util.js';
 import type {
   MeasurementData,
   Measurements,

@@ -8,7 +8,7 @@ import {
 } from './db-testing.js';
 
 import type { BenchmarkData } from '../src/shared/api.js';
-import { getDirname } from '../src/util.js';
+import { getDirname } from '../src/backend/util.js';
 import {
   getChanges,
   getLast100Measurements,

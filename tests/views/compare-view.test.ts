@@ -18,7 +18,7 @@ import type {
   StatsSummaryPartial,
   ReportConfig
 } from '../../src/views/view-types.js';
-import { robustPath } from '../../src/util.js';
+import { robustPath } from '../../src/backend/util.js';
 import {
   calculateAllStatisticsAndRenderPlots,
   getNavigation

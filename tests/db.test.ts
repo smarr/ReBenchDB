@@ -8,7 +8,7 @@ import {
 } from './db-testing.js';
 import { BenchmarkData, TimelineRequest } from '../src/shared/api.js';
 
-import { getDirname } from '../src/util.js';
+import { getDirname } from '../src/backend/util.js';
 import { Experiment, Environment } from '../src/backend/db/types.js';
 
 const __dirname = getDirname(import.meta.url);

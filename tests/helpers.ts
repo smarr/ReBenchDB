@@ -7,7 +7,7 @@ import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
 import { diffStringsUnified, diffStringsRaw, DIFF_EQUAL } from 'jest-diff';
 
-import { robustPath } from '../src/util.js';
+import { robustPath } from '../src/backend/util.js';
 
 declare module 'expect' {
   interface AsymmetricMatchers {

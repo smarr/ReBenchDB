@@ -5,7 +5,7 @@ import {
   CompilerOptions,
   PartialArgs
 } from 'typescript-json-schema';
-import { robustPath } from '../../util.js';
+import { robustPath } from '../util.js';
 
 export function createValidator(): ValidateFunction {
   const compilerOptions: CompilerOptions = {

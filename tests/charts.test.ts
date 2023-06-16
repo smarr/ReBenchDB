@@ -7,7 +7,7 @@ import {
   calculateDataForOverviewPlot,
   getMsFlattenedAndSorted
 } from '../src/backend/compare/prep-data.js';
-import { robustPath } from '../src/util.js';
+import { robustPath } from '../src/backend/util.js';
 import {
   createCanvas,
   renderInlinePlot,

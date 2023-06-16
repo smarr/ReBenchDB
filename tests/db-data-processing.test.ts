@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 import { readFileSync } from 'node:fs';
-import { robustPath } from '../src/util.js';
+import { robustPath } from '../src/backend/util.js';
 import { collateMeasurements } from '../src/backend/compare/db-data.js';
 import {
   ResultsByBenchmark,

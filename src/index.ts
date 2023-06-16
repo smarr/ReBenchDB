@@ -10,7 +10,7 @@ import {
   rebenchVersion,
   siteConfig,
   statsConfig
-} from './util.js';
+} from './backend/util.js';
 import { handleReBenchCompletion } from './backend/github/github.js';
 import { log } from './backend/logging.js';
 import {

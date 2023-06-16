@@ -8,7 +8,7 @@ import { createAppAuth } from '@octokit/auth-app';
 import { existsSync, readFileSync } from 'fs';
 import { log } from '../logging.js';
 import { BenchmarkCompletion } from '../../shared/api.js';
-import { dbConfig, siteConfig } from '../../util.js';
+import { dbConfig, siteConfig } from '../util.js';
 import { getSummaryPlotFileName, renderCompare } from '../compare/report.js';
 
 export async function handleReBenchCompletion(

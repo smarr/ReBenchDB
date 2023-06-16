@@ -8,7 +8,7 @@ import type {
   WarmupDataPerCriterion
 } from '../../views/view-types.js';
 import { respondProjectNotFound } from '../common/standard-responses.js';
-import { dbConfig, refreshSecret } from '../../util.js';
+import { dbConfig, refreshSecret } from '../util.js';
 import { prepareTemplate, processTemplate } from '../../templates.js';
 import { deleteReport, renderCompare, renderCompareNew } from './report.js';
 import * as dataFormatters from '../../shared/data-format.js';

@@ -6,7 +6,7 @@ import { gzip as gzipCallback } from 'node:zlib';
 import { readFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 
-import type { CanvasSettings } from './backend/compare/charts.js';
+import type { CanvasSettings } from './compare/charts.js';
 
 const gzip = promisify(gzipCallback);
 
@@ -30,10 +30,10 @@ const __dirname = getDirname(import.meta.url);
  */
 export const robustPath = __dirname.includes('dist/')
   ? function (path) {
-      return `${__dirname}/../../src/${path}`;
+      return `${__dirname}/../../../src/${path}`;
     }
   : function (path) {
-      return `${__dirname}/${path}`;
+      return `${__dirname}/../${path}`;
     };
 
 /**
@@ -41,10 +41,10 @@ export const robustPath = __dirname.includes('dist/')
  */
 export const robustSrcPath = __dirname.includes('dist/')
   ? function (path) {
-      return `${__dirname}/${path}`;
+      return `${__dirname}/../${path}`;
     }
   : function (path) {
-      return `${__dirname}/../dist/src/${path}`;
+      return `${__dirname}/../../dist/src/${path}`;
     };
 
 export const dbConfig = {

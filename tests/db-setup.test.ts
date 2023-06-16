@@ -15,7 +15,7 @@ import {
   createDB,
   closeMainDb
 } from './db-testing.js';
-import { getDirname } from '../src/util.js';
+import { getDirname } from '../src/backend/util.js';
 
 import { jest } from '@jest/globals';
 

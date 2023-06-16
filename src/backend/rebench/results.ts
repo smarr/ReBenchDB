@@ -4,7 +4,7 @@ import { ValidateFunction } from 'ajv';
 import { BenchmarkData } from '../../shared/api.js';
 import { Database } from '../db/db.js';
 import { createValidator } from './api-validator.js';
-import { DEBUG } from '../../util.js';
+import { DEBUG } from '../util.js';
 import { log } from '../logging.js';
 import { completeRequest, startRequest } from '../../perf-tracker.js';
 

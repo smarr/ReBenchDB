@@ -9,7 +9,7 @@ import {
   RunId,
   Source
 } from '../../../src/shared/api.js';
-import { TotalCriterion } from '../../../src/util.js';
+import { TotalCriterion } from '../../../src/backend/util.js';
 import {
   TestDatabase,
   closeMainDb,

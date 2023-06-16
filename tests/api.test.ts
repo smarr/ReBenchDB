@@ -3,7 +3,7 @@ import { describe, expect, beforeAll, it } from '@jest/globals';
 import { readFileSync } from 'fs';
 import { ValidateFunction } from 'ajv';
 import { createValidator } from '../src/backend/rebench/api-validator.js';
-import { getDirname } from '../src/util.js';
+import { getDirname } from '../src/backend/util.js';
 import { log } from '../src/backend/logging.js';
 
 const __dirname = getDirname(import.meta.url);
