@@ -1,7 +1,7 @@
 import { ParameterizedContext } from 'koa';
 import { readFileSync } from 'node:fs';
 
-import { log } from '../../logging.js';
+import { log } from '../logging.js';
 import { robustPath, robustSrcPath } from '../../util.js';
 
 export async function serveStaticResource(

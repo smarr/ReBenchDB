@@ -20,7 +20,7 @@ import {
   TimelineSuite
 } from '../../shared/api.js';
 import { robustPath, TotalCriterion } from '../../util.js';
-import { assert } from '../../logging.js';
+import { assert } from '../logging.js';
 import { simplifyCmdline } from '../../views/util.js';
 import type { SummaryStatistics } from '../../stats.js';
 import { BatchingTimelineUpdater } from '../../timeline-calc.js';

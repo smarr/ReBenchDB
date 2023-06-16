@@ -6,7 +6,7 @@ import { Database } from '../db/db.js';
 import { Octokit } from '@octokit/rest';
 import { createAppAuth } from '@octokit/auth-app';
 import { existsSync, readFileSync } from 'fs';
-import { log } from '../../logging.js';
+import { log } from '../logging.js';
 import { BenchmarkCompletion } from '../../shared/api.js';
 import { dbConfig, siteConfig } from '../../util.js';
 import { getSummaryPlotFileName, renderCompare } from '../compare/report.js';

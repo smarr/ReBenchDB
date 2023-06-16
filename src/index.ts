@@ -12,7 +12,7 @@ import {
   statsConfig
 } from './util.js';
 import { handleReBenchCompletion } from './backend/github/github.js';
-import { log } from './logging.js';
+import { log } from './backend/logging.js';
 import {
   getChangesAsJson,
   getLast100MeasurementsAsJson,
