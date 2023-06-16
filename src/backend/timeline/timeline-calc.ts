@@ -1,9 +1,9 @@
-import { Database } from './backend/db/db.js';
-import { SummaryStatistics } from './stats.js';
-import { robustSrcPath } from './backend/util.js';
+import { Database } from '../db/db.js';
+import { SummaryStatistics } from '../../stats.js';
+import { robustSrcPath } from '../util.js';
 import { Worker } from 'node:worker_threads';
-import { completeRequest, startRequest } from './perf-tracker.js';
-import { log } from './backend/logging.js';
+import { completeRequest, startRequest } from '../perf-tracker.js';
+import { log } from '../logging.js';
 
 export interface ComputeRequest {
   runId: number;

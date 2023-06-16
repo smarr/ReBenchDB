@@ -6,8 +6,12 @@ import {
   afterEach,
   it
 } from '@jest/globals';
-import type { BenchmarkData, Criterion, DataPoint } from '../src/shared/api.js';
-import { loadScheme } from '../src/backend/db/db.js';
+import type {
+  BenchmarkData,
+  Criterion,
+  DataPoint
+} from '../../../src/shared/api.js';
+import { loadScheme } from '../../../src/backend/db/db.js';
 import { readFileSync } from 'fs';
 import {
   TestDatabase,
@@ -15,11 +19,9 @@ import {
   createDB,
   closeMainDb
 } from './db-testing.js';
-import { getDirname } from '../src/backend/util.js';
+import { robustPath } from '../../../src/backend/util.js';
 
 import { jest } from '@jest/globals';
-
-const __dirname = getDirname(import.meta.url);
 
 const numTxStatements = 3;
 
@@ -30,12 +32,6 @@ function expectIdsToBeUnique(ids) {
   expect(ids.length).toBeGreaterThan(0);
   expect(new Set(ids).size).toEqual(ids.length);
 }
-
-describe('Test Setup', () => {
-  it('should execute tests in the right folder', () => {
-    expect(__dirname).toMatch(/tests$/);
-  });
-});
 
 describe('Setup of PostgreSQL DB', () => {
   let db: TestDatabase;
@@ -75,7 +71,7 @@ describe('Recording a ReBench execution data fragments', () => {
     db = await createAndInitializeDB('db_setup');
 
     basicTestData = JSON.parse(
-      readFileSync(`${__dirname}/small-payload.json`).toString()
+      readFileSync(robustPath('../tests/data/small-payload.json')).toString()
     );
   });
 
@@ -181,7 +177,7 @@ describe('Recording a ReBench execution data fragments', () => {
 
   it('should accept trial denoise info', async () => {
     const testData: BenchmarkData = JSON.parse(
-      readFileSync(`${__dirname}/small-payload.json`).toString()
+      readFileSync(robustPath('../tests/data/small-payload.json')).toString()
     );
 
     const e = testData.env;
@@ -238,13 +234,13 @@ describe('Recording a ReBench execution from payload files', () => {
     db = await createAndInitializeDB('db_setup_timeline', 25, true, false);
 
     smallTestData = JSON.parse(
-      readFileSync(`${__dirname}/small-payload.json`).toString()
+      readFileSync(robustPath('../tests/data/small-payload.json')).toString()
     );
     largeTestData = JSON.parse(
-      readFileSync(`${__dirname}/large-payload.json`).toString()
+      readFileSync(robustPath('../tests/data/large-payload.json')).toString()
     );
     profileTestData = JSON.parse(
-      readFileSync(`${__dirname}/profile-payload.json`).toString()
+      readFileSync(robustPath('../tests/data/profile-payload.json')).toString()
     );
   });
 

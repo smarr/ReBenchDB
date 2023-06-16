@@ -6,12 +6,10 @@ import {
   createAndInitializeDB,
   closeMainDb
 } from './db-testing.js';
-import { BenchmarkData, TimelineRequest } from '../src/shared/api.js';
+import { BenchmarkData, TimelineRequest } from '../../../src/shared/api.js';
 
-import { getDirname } from '../src/backend/util.js';
-import { Experiment, Environment } from '../src/backend/db/types.js';
-
-const __dirname = getDirname(import.meta.url);
+import { robustPath } from '../../../src/backend/util.js';
+import { Experiment, Environment } from '../../../src/backend/db/types.js';
 
 describe('Record Trial', () => {
   let db: TestDatabase;
@@ -21,7 +19,9 @@ describe('Record Trial', () => {
 
   beforeAll(async () => {
     db = await createAndInitializeDB('db_record_trial', 0, false, false);
-    const data = readFileSync(`${__dirname}/small-payload.json`).toString();
+    const data = readFileSync(
+      robustPath('../tests/data/small-payload.json')
+    ).toString();
     basicTestData = JSON.parse(data);
 
     env = await db.recordEnvironment(basicTestData.env);
@@ -89,7 +89,9 @@ describe('Timeline-plot Queries', () => {
   beforeAll(async () => {
     db = await createAndInitializeDB('db_ts_basic', 25, true, false);
 
-    const data = readFileSync(`${__dirname}/small-payload.json`).toString();
+    const data = readFileSync(
+      robustPath('../tests/data/small-payload.json')
+    ).toString();
     const basicTestData: BenchmarkData = JSON.parse(data);
     projectName = basicTestData.projectName;
 

@@ -1,7 +1,7 @@
 import { performance } from 'perf_hooks';
-import { Database } from './backend/db/db.js';
-import { BenchmarkData, DataPoint, Measure } from './shared/api.js';
-import { TotalCriterion, isRunningTests } from './backend/util.js';
+import { Database } from './db/db.js';
+import { BenchmarkData, DataPoint, Measure } from '../shared/api.js';
+import { TotalCriterion, isRunningTests } from './util.js';
 
 let startTime: string;
 const iterations = {

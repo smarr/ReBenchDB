@@ -110,7 +110,7 @@
     "update": "git pull && npm install . && pm2 restart 0",
     "watch": "tsc -w",
 
-    "pretest": "(cd tests; bzip2 -d -f -k large-payload.json.bz2; mkdir -p data/actual-results/charts; mkdir -p data/actual-results/stats-data-prep; mkdir -p data/actual-results/compare-view)",
+    "pretest": "(cd tests/data; bzip2 -d -f -k large-payload.json.bz2; mkdir -p actual-results/charts; mkdir -p actual-results/stats-data-prep; mkdir -p actual-results/compare-view)",
     "test": "node --no-warnings --experimental-vm-modules ./node_modules/jest/bin/jest.js",
 
     "update-expected-results": "UPDATE_EXPECTED_DATA=true npm test"

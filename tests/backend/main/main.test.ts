@@ -14,7 +14,7 @@ import {
   TestDatabase,
   closeMainDb,
   createAndInitializeDB
-} from '../../db-testing.js';
+} from '../db/db-testing.js';
 import {
   getChanges,
   getLast100Measurements,

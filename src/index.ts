@@ -2,7 +2,7 @@ import Koa from 'koa';
 import { koaBody } from 'koa-body';
 import Router from 'koa-router';
 
-import { initPerfTracker } from './perf-tracker.js';
+import { initPerfTracker } from './backend/perf-tracker.js';
 import {
   DEV,
   cacheInvalidationDelay,

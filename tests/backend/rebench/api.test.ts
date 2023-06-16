@@ -1,12 +1,10 @@
 import { describe, expect, beforeAll, it } from '@jest/globals';
-
-import { readFileSync } from 'fs';
+import { readFileSync } from 'node:fs';
 import { ValidateFunction } from 'ajv';
-import { createValidator } from '../src/backend/rebench/api-validator.js';
-import { getDirname } from '../src/backend/util.js';
-import { log } from '../src/backend/logging.js';
 
-const __dirname = getDirname(import.meta.url);
+import { createValidator } from '../../../src/backend/rebench/api-validator.js';
+import { robustPath } from '../../../src/backend/util.js';
+import { log } from '../../../src/backend/logging.js';
 
 describe('Ensure Test Payloads conform to API', () => {
   let validateFn: ValidateFunction;
@@ -15,13 +13,9 @@ describe('Ensure Test Payloads conform to API', () => {
     validateFn = createValidator();
   });
 
-  it('should execute tests in the right folder', () => {
-    expect(__dirname).toMatch(/tests$/);
-  });
-
   it('should validate small-payload.json', () => {
     const testData = JSON.parse(
-      readFileSync(`${__dirname}/small-payload.json`).toString()
+      readFileSync(robustPath('../tests/data/small-payload.json')).toString()
     );
 
     const result = validateFn(testData);
@@ -33,7 +27,7 @@ describe('Ensure Test Payloads conform to API', () => {
 
   it('should validate large-payload.json', () => {
     const testData = JSON.parse(
-      readFileSync(`${__dirname}/large-payload.json`).toString()
+      readFileSync(robustPath('../tests/data/large-payload.json')).toString()
     );
 
     const result = validateFn(testData);
@@ -45,7 +39,7 @@ describe('Ensure Test Payloads conform to API', () => {
 
   it('should validate profile-payload.json', () => {
     const testData = JSON.parse(
-      readFileSync(`${__dirname}/profile-payload.json`).toString()
+      readFileSync(robustPath('../tests/data/profile-payload.json')).toString()
     );
 
     const result = validateFn(testData);

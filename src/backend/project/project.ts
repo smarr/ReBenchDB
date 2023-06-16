@@ -6,7 +6,7 @@ import {
   respondProjectIdNotFound,
   respondProjectNotFound
 } from '../common/standard-responses.js';
-import { completeRequest, startRequest } from '../../perf-tracker.js';
+import { completeRequest, startRequest } from '../perf-tracker.js';
 import { getExpData } from './data-export.js';
 import { Database } from '../db/db.js';
 

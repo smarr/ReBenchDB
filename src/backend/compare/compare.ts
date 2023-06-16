@@ -1,7 +1,7 @@
 import { ParameterizedContext } from 'koa';
 
 import { Database } from '../db/db.js';
-import { completeRequest, startRequest } from '../../perf-tracker.js';
+import { completeRequest, startRequest } from '../perf-tracker.js';
 import type {
   WarmupData,
   WarmupDataForTrial,

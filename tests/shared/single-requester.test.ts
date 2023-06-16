@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { SingleRequestOnly } from '../src/single-requester.js';
+import { SingleRequestOnly } from '../../src/shared/single-requester.js';
 
 describe('Basic functionality of SingleRequestOnly', () => {
   it('should execute the request on a triggering', async () => {

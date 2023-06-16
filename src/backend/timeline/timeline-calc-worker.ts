@@ -1,5 +1,5 @@
 import { parentPort, workerData } from 'node:worker_threads';
-import { calculateSummaryStatistics } from './stats.js';
+import { calculateSummaryStatistics } from '../../stats.js';
 import { ComputeRequest, ComputeResult } from './timeline-calc.js';
 
 parentPort?.on('message', (message) => {

@@ -5,7 +5,7 @@ import { execFile, ChildProcessPromise } from 'promisify-child-process';
 import type { DatabaseConfig } from '../db/types.js';
 import { Database } from '../db/db.js';
 import { assert, log } from '../logging.js';
-import { completeRequest, startRequest } from '../../perf-tracker.js';
+import { completeRequest, startRequest } from '../perf-tracker.js';
 import { robustPath, siteConfig } from '../util.js';
 import type { CompareView } from '../../views/view-types.js';
 import { prepareCompareView } from './prep-data.js';

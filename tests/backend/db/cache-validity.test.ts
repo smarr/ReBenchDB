@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
-import { TimedCacheValidity } from '../src/backend/db/timed-cache-validity.js';
+// eslint-disable-next-line max-len
+import { TimedCacheValidity } from '../../../src/backend/db/timed-cache-validity.js';
 
 async function delayOf(ms): Promise<void> {
   return new Promise((resolve) => {

@@ -8,10 +8,10 @@ import type {
 } from 'pg';
 import pg from 'pg';
 
-import type { DatabaseConfig } from '../src/backend/db/types.js';
+import type { DatabaseConfig } from '../../../src/backend/db/types.js';
 
-import { Database } from '../src/backend/db/db.js';
-import { DatabaseWithPool } from '../src/backend/db/database-with-pool.js';
+import { Database } from '../../../src/backend/db/db.js';
+import { DatabaseWithPool } from '../../../src/backend/db/database-with-pool.js';
 
 export class TestDatabase extends Database {
   private readonly connectionPool: Pool;

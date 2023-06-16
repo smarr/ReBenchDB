@@ -5,23 +5,21 @@ import {
   TestDatabase,
   createAndInitializeDB,
   closeMainDb
-} from './db-testing.js';
+} from '../db/db-testing.js';
 
-import type { BenchmarkData } from '../src/shared/api.js';
-import { getDirname } from '../src/backend/util.js';
+import type { BenchmarkData } from '../../../src/shared/api.js';
+import { robustPath } from '../../../src/backend/util.js';
 import {
   getChanges,
   getLast100Measurements,
   getStatistics
-} from '../src/backend/main/main.js';
-import { getDataOverview } from '../src/backend/project/data-export.js';
-
-const __dirname = getDirname(import.meta.url);
+} from '../../../src/backend/main/main.js';
+import { getDataOverview } from '../../../src/backend/project/data-export.js';
 
 const timeoutForLargeDataTest = 200 * 1000;
 jest.setTimeout(timeoutForLargeDataTest);
 
-describe('Test Dashboard with basic test data loaded', () => {
+describe('Test with basic test data loaded', () => {
   let db: TestDatabase;
   let projectName: string;
   let baseBranch: string;
@@ -32,9 +30,11 @@ describe('Test Dashboard with basic test data loaded', () => {
   // switch suites to use a template database
 
   beforeAll(async () => {
-    db = await createAndInitializeDB('dash_basic', 25, true, false);
+    db = await createAndInitializeDB('main_basic', 25, true, false);
 
-    const data = readFileSync(`${__dirname}/small-payload.json`).toString();
+    const data = readFileSync(
+      robustPath('../tests/data/small-payload.json')
+    ).toString();
     const basicTestData: BenchmarkData = JSON.parse(data);
     projectName = basicTestData.projectName;
 
@@ -211,10 +211,6 @@ describe('Test Dashboard with basic test data loaded', () => {
     );
     expect(source?.branchortag).toEqual('exp2');
   });
-
-  // TODO
-  // dashCompare
-  // dashGetExpData
 });
 
 afterAll(async () => {

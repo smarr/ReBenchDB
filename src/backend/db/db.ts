@@ -23,7 +23,7 @@ import { robustPath, TotalCriterion } from '../util.js';
 import { assert } from '../logging.js';
 import { simplifyCmdline } from '../../views/util.js';
 import type { SummaryStatistics } from '../../stats.js';
-import { BatchingTimelineUpdater } from '../../timeline-calc.js';
+import { BatchingTimelineUpdater } from '../timeline/timeline-calc.js';
 import type {
   Baseline,
   Benchmark,

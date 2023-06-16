@@ -6,20 +6,20 @@ import {
   calculateAllChangeStatisticsAndInlinePlots,
   calculateDataForOverviewPlot,
   getMsFlattenedAndSorted
-} from '../src/backend/compare/prep-data.js';
-import { robustPath } from '../src/backend/util.js';
+} from '../../../src/backend/compare/prep-data.js';
+import { robustPath } from '../../../src/backend/util.js';
 import {
   createCanvas,
   renderInlinePlot,
   renderOverviewPlots
-} from '../src/backend/compare/charts.js';
-import type { Measurements } from '../src/backend/db/types.js';
-import { collateMeasurements } from '../src/backend/compare/db-data.js';
-import { ByExeSuiteComparison } from '../src/views/view-types.js';
+} from '../../../src/backend/compare/charts.js';
+import type { Measurements } from '../../../src/backend/db/types.js';
+import { collateMeasurements } from '../../../src/backend/compare/db-data.js';
+import { ByExeSuiteComparison } from '../../../src/views/view-types.js';
 import {
   initJestMatchers,
   isRequestedToUpdateExpectedData
-} from './helpers.js';
+} from '../../helpers.js';
 
 initJestMatchers();
 
