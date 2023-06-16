@@ -8,7 +8,7 @@ import {
   Run,
   RunId,
   Source
-} from '../../../src/api.js';
+} from '../../../src/shared/api.js';
 import { TotalCriterion } from '../../../src/util.js';
 import {
   TestDatabase,

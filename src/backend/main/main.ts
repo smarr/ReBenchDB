@@ -4,8 +4,9 @@ import { QueryConfig } from 'pg';
 import { TotalCriterion, isReBenchDotDev, rebenchVersion } from '../../util.js';
 import { processTemplate } from '../../templates.js';
 import { completeRequest, startRequest } from '../../perf-tracker.js';
-import { AllResults } from '../../api.js';
-import { Database, TimedCacheValidity } from '../../db.js';
+import { AllResults } from '../../shared/api.js';
+import { Database } from '../db/db.js';
+import { TimedCacheValidity } from '../db/timed-cache-validity.js';
 
 export async function renderMainPage(
   ctx: ParameterizedContext,

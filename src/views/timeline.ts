@@ -1,4 +1,4 @@
-import type { TimelineResponse } from 'api.js';
+import type { TimelineResponse } from '../shared/api.js';
 import { initializeFilters } from './filter.js';
 import { renderTimelinePlot } from './plots.js';
 

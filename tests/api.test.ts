@@ -2,7 +2,7 @@ import { describe, expect, beforeAll, it } from '@jest/globals';
 
 import { readFileSync } from 'fs';
 import { ValidateFunction } from 'ajv';
-import { createValidator } from '../src/api-validator.js';
+import { createValidator } from '../src/backend/rebench/api-validator.js';
 import { getDirname } from '../src/util.js';
 import { log } from '../src/logging.js';
 

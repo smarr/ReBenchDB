@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { completeRequest, startRequest } from '../../perf-tracker.js';
 import { siteConfig, storeJsonGzip } from '../../util.js';
 import { log } from '../../logging.js';
-import { Database } from '../../db.js';
+import { Database } from '../db/db.js';
 import { ParameterizedContext } from 'koa';
 
 const expDataPreparation = new Map();

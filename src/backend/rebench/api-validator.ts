@@ -1,14 +1,11 @@
 import Ajv, { ValidateFunction } from 'ajv';
-import { existsSync } from 'fs';
 import {
   getProgramFromFiles,
   generateSchema,
   CompilerOptions,
   PartialArgs
 } from 'typescript-json-schema';
-import { getDirname } from './util.js';
-
-const __dirname = getDirname(import.meta.url);
+import { robustPath } from '../../util.js';
 
 export function createValidator(): ValidateFunction {
   const compilerOptions: CompilerOptions = {
@@ -19,10 +16,7 @@ export function createValidator(): ValidateFunction {
     required: true
   };
 
-  let api = `${__dirname}/../src/api.ts`;
-  if (!existsSync(api)) {
-    api = `${__dirname}/../../src/api.ts`;
-  }
+  const api = robustPath('shared/api.ts');
 
   const program = getProgramFromFiles([api], compilerOptions);
   const schema = generateSchema(program, 'BenchmarkData', settings);

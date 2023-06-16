@@ -1,6 +1,6 @@
 import { ParameterizedContext } from 'koa';
 
-import { Database } from '../../db.js';
+import { Database } from '../db/db.js';
 import { completeRequest, startRequest } from '../../perf-tracker.js';
 import type {
   WarmupData,
@@ -11,9 +11,9 @@ import { respondProjectNotFound } from '../common/standard-responses.js';
 import { dbConfig, refreshSecret } from '../../util.js';
 import { prepareTemplate, processTemplate } from '../../templates.js';
 import { deleteReport, renderCompare, renderCompareNew } from './report.js';
-import * as dataFormatters from '../../data-format.js';
+import * as dataFormatters from '../../shared/data-format.js';
 import * as viewHelpers from '../../views/helpers.js';
-import { TimelineRequest } from '../../api.js';
+import { TimelineRequest } from '../../shared/api.js';
 
 export async function getProfileAsJson(
   ctx: ParameterizedContext,

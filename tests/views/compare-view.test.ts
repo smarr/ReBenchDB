@@ -1,9 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
 import { readFileSync } from 'fs';
 import { prepareTemplate } from '../../src/templates.js';
-import * as dataFormatters from '../../src/data-format.js';
+import * as dataFormatters from '../../src/shared/data-format.js';
 import * as viewHelpers from '../../src/views/helpers.js';
-import {
+import type {
   ButtonsAdditionalInfoPartial,
   CompareStatsRowAcrossExesPartial,
   CompareStatsRowAcrossVersionsPartial,
@@ -23,8 +23,8 @@ import {
   calculateAllStatisticsAndRenderPlots,
   getNavigation
 } from '../../src/backend/compare/prep-data.js';
-import { Environment } from '../../src/db.js';
-import { collateMeasurements } from '../../src/db-data-processing.js';
+import type { Environment } from '../../src/backend/db/types.js';
+import { collateMeasurements } from '../../src/backend/compare/db-data.js';
 import { initJestMatchers } from '../helpers.js';
 
 initJestMatchers();

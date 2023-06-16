@@ -1,4 +1,6 @@
 import { mkdirSync } from 'node:fs';
+import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
+
 import {
   ComparisonStatistics,
   ComparisonStatsWithUnit,
@@ -7,16 +9,15 @@ import {
   median,
   normalize
 } from '../../stats.js';
-import {
+import type {
   CriterionData,
   Environment,
-  HasProfile,
   MeasurementData,
   Measurements,
   ProcessedResult,
   RevisionComparison,
   RevisionData
-} from '../../db.js';
+} from '../db/types.js';
 import {
   ByExeSuiteComparison,
   CompareNavPartial,
@@ -30,10 +31,11 @@ import {
   createCanvas,
   renderInlinePlot,
   renderOverviewPlots
-} from '../../charts.js';
+} from './charts.js';
 import { siteAesthetics, siteConfig } from '../../util.js';
-import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
-import { collateMeasurements } from '../../db-data-processing.js';
+
+import { collateMeasurements } from './db-data.js';
+import { HasProfile } from '../db/has-profile.js';
 
 export function compareStringOrNull(
   a: string | null,

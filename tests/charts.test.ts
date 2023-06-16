@@ -12,9 +12,9 @@ import {
   createCanvas,
   renderInlinePlot,
   renderOverviewPlots
-} from '../src/charts.js';
-import { Measurements } from '../src/db.js';
-import { collateMeasurements } from '../src/db-data-processing.js';
+} from '../src/backend/compare/charts.js';
+import type { Measurements } from '../src/backend/db/types.js';
+import { collateMeasurements } from '../src/backend/compare/db-data.js';
 import { ByExeSuiteComparison } from '../src/views/view-types.js';
 import {
   initJestMatchers,

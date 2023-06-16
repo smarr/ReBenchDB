@@ -1,4 +1,3 @@
-import { Database, DatabaseConfig, DatabaseWithPool } from '../src/db.js';
 import type {
   Pool,
   PoolClient,
@@ -8,6 +7,11 @@ import type {
   QueryResultRow
 } from 'pg';
 import pg from 'pg';
+
+import type { DatabaseConfig } from '../src/backend/db/types.js';
+
+import { Database } from '../src/backend/db/db.js';
+import { DatabaseWithPool } from '../src/backend/db/database-with-pool.js';
 
 export class TestDatabase extends Database {
   private readonly connectionPool: Pool;

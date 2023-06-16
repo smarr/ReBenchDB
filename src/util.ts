@@ -6,7 +6,7 @@ import { gzip as gzipCallback } from 'node:zlib';
 import { readFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 
-import { CanvasSettings } from 'charts';
+import type { CanvasSettings } from './backend/compare/charts.js';
 
 const gzip = promisify(gzipCallback);
 
@@ -51,7 +51,7 @@ export const dbConfig = {
   user: process.env.RDB_USER || '',
   password: process.env.RDB_PASS || '',
   host: process.env.RDB_HOST || 'localhost',
-  database: process.env.RDB_DB || 'rdb_smde',
+  database: process.env.RDB_DB || 'rdb_smde2',
   port: 5432
 };
 

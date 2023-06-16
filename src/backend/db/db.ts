@@ -1,4 +1,6 @@
 import { readFileSync } from 'node:fs';
+import pg, { PoolConfig, QueryConfig } from 'pg';
+
 import {
   BenchmarkData,
   Executor as ApiExecutor,
@@ -15,301 +17,39 @@ import {
   TimelineResponse,
   PlotData,
   FullPlotData,
-  TimelineSuite,
-  BenchmarkId
-} from './api.js';
-import pg, { PoolConfig, QueryConfig, QueryResultRow } from 'pg';
-import { robustPath, TotalCriterion } from './util.js';
-import { assert } from './logging.js';
-import { simplifyCmdline } from './views/util.js';
-import { SummaryStatistics } from './stats.js';
-import { BatchingTimelineUpdater } from './timeline-calc.js';
+  TimelineSuite
+} from '../../shared/api.js';
+import { robustPath, TotalCriterion } from '../../util.js';
+import { assert } from '../../logging.js';
+import { simplifyCmdline } from '../../views/util.js';
+import type { SummaryStatistics } from '../../stats.js';
+import { BatchingTimelineUpdater } from '../../timeline-calc.js';
+import type {
+  Baseline,
+  Benchmark,
+  Criterion,
+  Environment,
+  Executor,
+  Experiment,
+  MeasurementData,
+  Project,
+  RevisionComparison,
+  RevisionData,
+  Run,
+  Source,
+  Suite,
+  Trial
+} from './types.js';
+import { TimedCacheValidity } from './timed-cache-validity.js';
+import { HasProfile } from './has-profile.js';
 
 function isUniqueViolationError(err) {
   return err.code === '23505';
 }
 
-export interface DatabaseConfig {
-  user: string;
-  password: string;
-  host: string;
-  database: string;
-  port: number;
-}
-
 export function loadScheme(): string {
   const schema = robustPath('backend/db/db.sql');
   return readFileSync(schema).toString();
-}
-
-export interface Executor {
-  id: number;
-  name: string;
-  description: string;
-}
-
-export interface Suite {
-  id: number;
-  name: string;
-  description: string;
-}
-
-export interface Benchmark {
-  id: number;
-  name: string;
-  description: string;
-}
-
-export interface SoftwareVersionInfo {
-  id: number;
-  name: string;
-  version: string;
-}
-
-export interface Environment {
-  id: number;
-  hostname: string;
-  ostype: string;
-  memory: number;
-  cpu: string;
-  clockspeed: number;
-  note: string;
-}
-
-export interface Unit {
-  name: string;
-  description: string;
-  lessisbetter: boolean;
-}
-
-export interface Criterion {
-  id: number;
-  name: string;
-  unit: string;
-}
-
-export interface Project {
-  id: number;
-  name: string;
-  slug: string;
-  description: string;
-  logo: string;
-  showchanges: boolean;
-  allresults: boolean;
-  githubnotification: boolean;
-  basebranch: string;
-}
-
-export interface Source {
-  id: number;
-  repourl: string;
-  branchortag: string;
-  commitid: string;
-  commitmessage: string;
-  authorname: string;
-  authoremail: string;
-  committername: string;
-  committeremail: string;
-}
-
-export interface Experiment {
-  id: number;
-
-  name: string;
-  projectid: number;
-
-  description: string;
-}
-
-export interface Trial {
-  id: number;
-  manualrun: boolean;
-  starttime: string;
-
-  expid: number;
-
-  username: string;
-  envid: number;
-  sourceid: number;
-
-  denoise: string;
-  endTime: string;
-}
-
-export interface SoftwareUse {
-  envid: string;
-  softid: string;
-}
-
-export interface Run {
-  id: number;
-  benchmarkid: number;
-  suiteid: number;
-  execid: number;
-  cmdline: string;
-
-  /** The current working directory. */
-  location: string;
-
-  varvalue: string | null;
-  cores: string | null;
-  inputsize: string | null;
-  extraargs: string | null;
-  maxinvocationtime: number;
-  miniterationtime: number;
-  warmup: number | null;
-}
-
-export interface Measurement {
-  runid: number;
-  trialid: number;
-  criterion: number;
-  invocation: number;
-  iteration: number;
-
-  value: number;
-}
-
-export interface Baseline extends Source {
-  firststart: string;
-}
-
-/** As returned from database queries */
-export interface MeasurementData {
-  expid: number;
-  runid: number;
-  trialid: number;
-  commitid: string;
-  bench: string;
-  exe: string;
-  suite: string;
-  cmdline: string;
-  varvalue: string | null;
-  cores: string | null;
-  inputsize: string | null;
-  extraargs: string | null;
-  invocation: number;
-  iteration: number;
-  warmup: number | null;
-  criterion: string;
-  unit: string;
-  value: number;
-  envid: number;
-}
-
-export interface AvailableProfile extends BenchmarkId {
-  trialid: number;
-  runid: number;
-}
-
-function sameBenchId(a: BenchmarkId, b: BenchmarkId): boolean {
-  // using here == instead of === is intentional
-  // otherwise we don't equate null and undefined
-  return (
-    a.b == b.b &&
-    a.e == b.e &&
-    a.s == b.s &&
-    a.v == b.v &&
-    a.c == b.c &&
-    a.i == b.i &&
-    a.ea == b.ea
-  );
-}
-
-export class HasProfile {
-  /**
-   * This is expected to be sorted by expid, runid, trialid
-   * as coming from the database.
-   */
-  private readonly availableProfiles: AvailableProfile[];
-
-  constructor(availableProfiles: AvailableProfile[]) {
-    this.availableProfiles = availableProfiles;
-  }
-
-  public get(
-    benchId: BenchmarkId
-  ): [AvailableProfile, AvailableProfile?] | false {
-    const idx = this.availableProfiles.findIndex((id) =>
-      sameBenchId(id, benchId)
-    );
-    if (idx >= 0) {
-      if (
-        idx === this.availableProfiles.length - 1 ||
-        !sameBenchId(this.availableProfiles[idx + 1], benchId)
-      ) {
-        return [this.availableProfiles[idx]];
-      }
-
-      return [this.availableProfiles[idx], this.availableProfiles[idx + 1]];
-    }
-    return false;
-  }
-}
-
-export interface RunSettings {
-  cmdline: string;
-
-  varValue: string | null;
-  cores: string | null;
-  inputSize: string | null;
-  extraArgs: string | null;
-  warmup: number | null;
-
-  simplifiedCmdline: string;
-}
-
-export interface CriterionData {
-  name: string;
-  unit: string;
-}
-
-export interface Measurements {
-  criterion: CriterionData;
-
-  /**
-   * Indexed first by invocation, than by iteration.
-   * Example to get the value of 3 invocation and 5 iteration: `values[3][5]`.
-   */
-  values: number[][];
-
-  envId: number;
-  runId: number;
-  trialId: number;
-  runSettings: RunSettings;
-  commitId: string;
-  stats?: SummaryStatistics;
-}
-
-export interface ProcessedResult {
-  exe: string;
-  suite: string;
-  bench: string;
-
-  measurements: Measurements[];
-}
-
-export interface RevisionData {
-  projectid: number;
-  name: string;
-  sourceid: number;
-  commitid: string;
-  repourl: string;
-  branchortag: string;
-  commitmessage: string;
-  authorname: string;
-}
-
-export interface RevisionComparison {
-  dataFound: boolean;
-  base?: RevisionData;
-  change?: RevisionData;
-
-  /** Keep the commit ids to simplify data passing. */
-  baseCommitId: string;
-  changeCommitId: string;
-  baseCommitId6: string;
-  changeCommitId6: string;
 }
 
 const measurementDataColumns = `
@@ -340,42 +80,6 @@ function filterCommitMessage(msg) {
     .replaceAll('\\n', '\n') // resolve new lines
     .replace(/Signed-off-by:.*/g, '') // remove signed-off-by lines
     .trim();
-}
-
-export class TimedCacheValidity {
-  private valid: boolean;
-  private scheduledInvalidation: boolean;
-
-  /** Delay in milliseconds. */
-  private readonly invalidationDelay: number;
-
-  constructor(invalidationDelay: number) {
-    this.invalidationDelay = invalidationDelay;
-    this.valid = true;
-    this.scheduledInvalidation = false;
-  }
-
-  public invalidateAndNew(): TimedCacheValidity {
-    if (!this.scheduledInvalidation) {
-      this.scheduledInvalidation = true;
-      if (this.invalidationDelay === 0) {
-        this.valid = false;
-      } else {
-        setTimeout(() => {
-          this.valid = false;
-        }, this.invalidationDelay);
-      }
-    }
-
-    if (this.valid) {
-      return this;
-    }
-    return new TimedCacheValidity(this.invalidationDelay);
-  }
-
-  public isValid(): boolean {
-    return this.valid;
-  }
 }
 
 export abstract class Database {
@@ -1979,32 +1683,5 @@ export abstract class Database {
       text: sql,
       values: parameters
     };
-  }
-}
-
-export class DatabaseWithPool extends Database {
-  private pool: pg.Pool;
-
-  constructor(
-    config: PoolConfig,
-    numReplicates = 1000,
-    timelineEnabled = false,
-    cacheInvalidationDelay = 0
-  ) {
-    super(config, numReplicates, timelineEnabled, cacheInvalidationDelay);
-    this.pool = new pg.Pool(config);
-  }
-
-  public async query<R extends QueryResultRow = any>(
-    queryConfig: QueryConfig<any[]>
-  ): Promise<pg.QueryResult<R>> {
-    return this.pool.query(queryConfig);
-  }
-
-  public async close(): Promise<void> {
-    await super.close();
-    this.statsValid.invalidateAndNew();
-    await this.pool.end();
-    (<any>this).pool = null;
   }
 }

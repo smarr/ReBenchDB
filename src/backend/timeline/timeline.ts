@@ -4,8 +4,8 @@ import {
   respondProjectNotFound
 } from '../common/standard-responses.js';
 import { processTemplate } from '../../templates.js';
-import { TimelineSuite } from '../../api.js';
-import { Database } from '../../db.js';
+import { TimelineSuite } from '../../shared/api.js';
+import { Database } from '../db/db.js';
 
 export async function getTimelineAsJson(
   ctx: ParameterizedContext,

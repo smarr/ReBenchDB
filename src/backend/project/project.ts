@@ -8,7 +8,7 @@ import {
 } from '../common/standard-responses.js';
 import { completeRequest, startRequest } from '../../perf-tracker.js';
 import { getExpData } from './data-export.js';
-import { Database } from '../../db.js';
+import { Database } from '../db/db.js';
 
 const projectHtml = prepareTemplate('../backend/project/project.html');
 

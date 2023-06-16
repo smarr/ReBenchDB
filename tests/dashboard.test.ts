@@ -7,7 +7,7 @@ import {
   closeMainDb
 } from './db-testing.js';
 
-import { BenchmarkData } from '../src/api.js';
+import type { BenchmarkData } from '../src/shared/api.js';
 import { getDirname } from '../src/util.js';
 import {
   getChanges,

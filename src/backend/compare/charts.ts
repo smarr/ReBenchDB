@@ -5,15 +5,15 @@ import {
   ChartJSNodeCanvas,
   ChartJSNodeCanvasOptions
 } from 'chartjs-node-canvas';
-import { ByGroupChangeData, ChangeData } from './backend/compare/prep-data.js';
+import { ByGroupChangeData, ChangeData } from './prep-data.js';
 import {
   ViolinController,
   Violin,
   BoxPlotController,
   BoxAndWiskers
 } from '@sgratzl/chartjs-chart-boxplot';
-import { medianUnsorted } from '../src/stats.js';
-import { robustPath, siteAesthetics } from './util.js';
+import { medianUnsorted } from '../../stats.js';
+import { robustPath, siteAesthetics } from '../../util.js';
 
 const fullyTransparent = 'rgba(0, 0, 0, 0)';
 

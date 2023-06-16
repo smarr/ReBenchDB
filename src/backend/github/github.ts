@@ -1,12 +1,13 @@
 import { ParameterizedContext } from 'koa';
 
-import { Database, DatabaseConfig, Source } from '../../db.js';
+import type { DatabaseConfig, Source } from '../db/types.js';
+import { Database } from '../db/db.js';
 
 import { Octokit } from '@octokit/rest';
 import { createAppAuth } from '@octokit/auth-app';
 import { existsSync, readFileSync } from 'fs';
 import { log } from '../../logging.js';
-import { BenchmarkCompletion } from '../../api.js';
+import { BenchmarkCompletion } from '../../shared/api.js';
 import { dbConfig, siteConfig } from '../../util.js';
 import { getSummaryPlotFileName, renderCompare } from '../compare/report.js';
 

@@ -1,6 +1,6 @@
 import { performance } from 'perf_hooks';
-import { Database } from './db.js';
-import { BenchmarkData, DataPoint, Measure } from './api.js';
+import { Database } from './backend/db/db.js';
+import { BenchmarkData, DataPoint, Measure } from './shared/api.js';
 import { TotalCriterion, isRunningTests } from './util.js';
 
 let startTime: string;

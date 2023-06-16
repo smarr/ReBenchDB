@@ -1,13 +1,15 @@
 import { describe, expect, beforeAll, afterAll, it } from '@jest/globals';
+import { readFileSync } from 'node:fs';
+
 import {
   TestDatabase,
   createAndInitializeDB,
   closeMainDb
 } from './db-testing.js';
-import { BenchmarkData, TimelineRequest } from '../src/api.js';
-import { readFileSync } from 'fs';
+import { BenchmarkData, TimelineRequest } from '../src/shared/api.js';
+
 import { getDirname } from '../src/util.js';
-import { Experiment, Environment } from 'db.js';
+import { Experiment, Environment } from '../src/backend/db/types.js';
 
 const __dirname = getDirname(import.meta.url);
 

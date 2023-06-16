@@ -1,6 +1,6 @@
 import { ParameterizedContext } from 'koa';
 
-import { Database } from '../../db.js';
+import { Database } from '../db/db.js';
 
 export async function submitTimelineUpdateJobs(
   ctx: ParameterizedContext,

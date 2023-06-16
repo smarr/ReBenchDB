@@ -1,4 +1,4 @@
-import type { AllResults } from 'api.js';
+import type { AllResults } from '../shared/api.js';
 import { renderResultsPlots } from './plots.js';
 
 export function filterCommitMessage(msg: string): string {

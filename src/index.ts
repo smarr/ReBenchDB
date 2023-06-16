@@ -37,7 +37,7 @@ import {
   serveStaticResource,
   serveViewJs
 } from './backend/dev-server/server.js';
-import { DatabaseWithPool } from './db.js';
+import { DatabaseWithPool } from './backend/db/database-with-pool.js';
 import {
   deleteCachedReport,
   getMeasurementsAsJson,

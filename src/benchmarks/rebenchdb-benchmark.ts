@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import { getDirname } from '../util.js';
-import { BenchmarkData } from '../api.js';
+import { BenchmarkData } from '../shared/api.js';
 import {
   closeMainDb,
   createAndInitializeDB,

@@ -1,13 +1,16 @@
 import { describe, expect, it } from '@jest/globals';
 import { readFileSync } from 'node:fs';
 import { robustPath } from '../src/util.js';
-import { collateMeasurements } from '../src/db-data-processing.js';
+import { collateMeasurements } from '../src/backend/compare/db-data.js';
 import {
   ResultsByBenchmark,
   ResultsByExeSuiteBenchmark,
   ResultsBySuiteBenchmark
 } from '../src/backend/compare/prep-data.js';
-import { MeasurementData, ProcessedResult } from '../src/db.js';
+import type {
+  MeasurementData,
+  ProcessedResult
+} from '../src/backend/db/types.js';
 
 const dataJsSOM = JSON.parse(
   readFileSync(

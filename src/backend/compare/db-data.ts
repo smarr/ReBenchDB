@@ -3,18 +3,15 @@
  * to make it easier to work with in the frontend.
  */
 
-import {
-  ResultsByBenchmark,
-  ResultsByExeSuiteBenchmark
-} from './backend/compare/prep-data.js';
-import {
+import { ResultsByBenchmark, ResultsByExeSuiteBenchmark } from './prep-data.js';
+import type {
   CriterionData,
   MeasurementData,
   Measurements,
   ProcessedResult,
   RunSettings
-} from './db.js';
-import { simplifyCmdline } from './views/util.js';
+} from '../db/types.js';
+import { simplifyCmdline } from '../../views/util.js';
 
 /**
  * Turn the flat list of measurements into a nested structure
@@ -181,6 +178,7 @@ function findMeasurements(
       mm.envId == row.envid &&
       mm.commitId == row.commitid &&
       mm.runId == row.runid &&
+      mm.trialId == row.trialid &&
       mm.criterion.name == row.criterion
     ) {
       m = mm;

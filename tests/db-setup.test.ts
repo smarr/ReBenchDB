@@ -6,8 +6,8 @@ import {
   afterEach,
   it
 } from '@jest/globals';
-import { BenchmarkData, Criterion, DataPoint } from '../src/api.js';
-import { loadScheme } from '../src/db.js';
+import type { BenchmarkData, Criterion, DataPoint } from '../src/shared/api.js';
+import { loadScheme } from '../src/backend/db/db.js';
 import { readFileSync } from 'fs';
 import {
   TestDatabase,

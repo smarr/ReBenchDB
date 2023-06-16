@@ -1,8 +1,13 @@
-import { BenchmarkId } from 'api';
-import { AvailableProfile, CriterionData, Environment, RevisionData } from 'db';
-import { ComparisonStatistics, SummaryStatsWithUnit } from 'stats';
+import type { BenchmarkId } from '../shared/api.js';
+import type {
+  AvailableProfile,
+  CriterionData,
+  Environment,
+  RevisionData
+} from '../backend/db/types.js';
+import type { ComparisonStatistics, SummaryStatsWithUnit } from '../stats.js';
 
-declare type DataFormat = typeof import('../data-format');
+declare type DataFormat = typeof import('../shared/data-format');
 declare type ViewHelpers = typeof import('./helpers');
 
 /** Summary statistics for the overall comparison. */

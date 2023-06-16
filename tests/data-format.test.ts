@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { Environment } from '../src/db.js';
+import type { Environment } from '../src/backend/db/types.js';
 import {
   asHumanHz,
   asHumanMem,
@@ -9,7 +9,7 @@ import {
   per,
   r0,
   r2
-} from '../src/data-format.js';
+} from '../src/shared/data-format.js';
 import { DataSeriesVersionComparison } from '../src/views/view-types.js';
 
 describe('Format Functions for Numerical Values', () => {
