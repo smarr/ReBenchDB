@@ -21,7 +21,7 @@ import {
   calculateSummaryOfChangeSummaries,
   normalize,
   ComparisonStatsWithUnit
-} from '../src/stats';
+} from '../../src/shared/stats';
 
 describe('basicSum()', () => {
   it('should produce the expected value', () => {

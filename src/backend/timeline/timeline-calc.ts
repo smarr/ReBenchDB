@@ -1,5 +1,5 @@
 import { Database } from '../db/db.js';
-import { SummaryStatistics } from '../../stats.js';
+import { SummaryStatistics } from '../../shared/stats.js';
 import { robustSrcPath } from '../util.js';
 import { Worker } from 'node:worker_threads';
 import { completeRequest, startRequest } from '../perf-tracker.js';

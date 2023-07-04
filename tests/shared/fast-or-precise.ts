@@ -1,8 +1,12 @@
+/**
+ * A little script to compare the results of the fast and precise confidence
+ * interval calculations.
+ */
 import Decimal from 'decimal.js';
 import {
   confidenceSliceIndicesFast,
   confidenceSliceIndicesPrecise
-} from '../src/stats.js';
+} from '../../src/shared/stats.js';
 
 const confidenceLevels = ['0.8', '0.85', '0.9', '0.99', '0.999', '0.99999'];
 

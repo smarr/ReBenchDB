@@ -5,7 +5,10 @@ import type {
   Environment,
   RevisionData
 } from '../backend/db/types.js';
-import type { ComparisonStatistics, SummaryStatsWithUnit } from '../stats.js';
+import type {
+  ComparisonStatistics,
+  SummaryStatsWithUnit
+} from '../shared/stats.js';
 
 declare type DataFormat = typeof import('../shared/data-format');
 declare type ViewHelpers = typeof import('./helpers');

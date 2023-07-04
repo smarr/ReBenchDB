@@ -8,7 +8,7 @@ import {
   calculateSummaryOfChangeSummaries,
   median,
   normalize
-} from '../../stats.js';
+} from '../../shared/stats.js';
 import type {
   CriterionData,
   Environment,

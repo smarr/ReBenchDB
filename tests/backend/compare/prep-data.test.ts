@@ -25,7 +25,7 @@ import {
   getChangeDataBySuiteAndExe,
   prepareCompareView
 } from '../../../src/backend/compare/prep-data.js';
-import { ComparisonStatsWithUnit } from '../../../src/stats.js';
+import { ComparisonStatsWithUnit } from '../../../src/shared/stats.js';
 import { collateMeasurements } from '../../../src/backend/compare/db-data.js';
 import {
   ByExeSuiteComparison,

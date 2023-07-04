@@ -1,5 +1,5 @@
 import { BenchmarkId } from '../../shared/api.js';
-import { SummaryStatistics } from '../../stats.js';
+import { SummaryStatistics } from '../../shared/stats.js';
 
 export interface DatabaseConfig {
   user: string;
