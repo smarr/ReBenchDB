@@ -22,7 +22,7 @@
   {% } %}
 </div>
 
-{%- include('compare/refresh-menu.html', it) %}
+{%- include('refresh-menu.html', it) %}
 </header>
 
 <div class="collapse card-columns" id="filters">
@@ -85,11 +85,11 @@
 
 <div class="container-fluid"><div class="row flex-xl-nowrap">
 
-{%- include('compare/navigation.html', it.navigation) %}
+{%- include('navigation.html', it.navigation) %}
 
 <main class="col-8" role="main">
 
-{%- include('compare/stats-summary.html', {
+{%- include('stats-summary.html', {
         ...it.statsSummary,
         dataFormatters: it.dataFormatters,
         config: it.config
@@ -103,7 +103,7 @@
 
 {% } %}
 
-{%- include('compare/compare-versions.html', {...it.stats, config: it.config}) %}
+{%- include('compare-versions.html', {...it.stats, config: it.config}) %}
 
   }
 

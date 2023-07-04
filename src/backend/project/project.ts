@@ -9,8 +9,9 @@ import {
 import { completeRequest, startRequest } from '../perf-tracker.js';
 import { getExpData } from './data-export.js';
 import { Database } from '../db/db.js';
+import { robustPath } from '../../backend/util.js';
 
-const projectHtml = prepareTemplate('../backend/project/project.html');
+const projectHtml = prepareTemplate(robustPath('backend/project/project.html'));
 
 export async function renderProjectPage(
   ctx: ParameterizedContext,

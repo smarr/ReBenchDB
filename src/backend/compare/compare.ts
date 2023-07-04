@@ -8,7 +8,7 @@ import type {
   WarmupDataPerCriterion
 } from '../../views/view-types.js';
 import { respondProjectNotFound } from '../common/standard-responses.js';
-import { dbConfig, refreshSecret } from '../util.js';
+import { dbConfig, refreshSecret, robustPath } from '../util.js';
 import { prepareTemplate, processTemplate } from '../templates.js';
 import { deleteReport, renderCompare, renderCompareNew } from './report.js';
 import * as dataFormatters from '../../shared/data-format.js';
@@ -235,7 +235,11 @@ export async function renderComparePage(
   completeRequest(start, db, 'change');
 }
 
-const compareTpl = prepareTemplate('compare-new.html');
+const compareTpl = prepareTemplate(
+  robustPath('backend/compare/html/index.html'),
+  false,
+  robustPath('backend/compare/html')
+);
 
 export async function renderComparePageNew(
   ctx: ParameterizedContext,

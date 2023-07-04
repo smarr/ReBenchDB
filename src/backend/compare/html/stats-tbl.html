@@ -1,10 +1,10 @@
 <table class="table table-sm benchmark-details">
-{%- include('compare/stats-tbl-header.html', {
+{%- include('stats-tbl-header.html', {
   criteria: it.criteria,
 }) %}
 <tbody>
 {%    for (const benchmark of it.benchmarks) {
-%}{%-   include('compare/stats-row.html', {
+%}{%-   include('stats-row.html', {
           config: it.config,
           stats: benchmark,
           environments: it.environments,

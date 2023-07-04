@@ -49,18 +49,18 @@ if (!stats.missing || hasTotal) {
 <th scope="row">{%= stats.benchId.b %}{%- args %}</th>
   <td class="inline-cmp"><img src="{%= it.config.reportsUrl %}/{%= stats.inlinePlot %}"></td>
 {%    if (stats.exeStats) {
-%}{%-   include('compare/stats-row-across-exes.html', {
+%}{%-   include('stats-row-across-exes.html', {
           exes: stats.exeStats,
           dataFormatters: it.dataFormatters,
           viewHelpers: it.viewHelpers}
       ) %}
 {%   } else {
-%}{%-   include('compare/stats-row-across-versions.html', {
+%}{%-   include('stats-row-across-versions.html', {
         stats: stats.versionStats,
         dataFormatters: it.dataFormatters}
       ) %}
 {%   }
-%}<td>{%- include('compare/stats-row-buttons-info.html', {
+%}<td>{%- include('stats-row-buttons-info.html', {
             benchId: stats.benchId,
             details: stats.details,
             environments: it.environments,

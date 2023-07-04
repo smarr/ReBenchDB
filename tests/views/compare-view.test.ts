@@ -121,7 +121,9 @@ const config: ReportConfig = {
 
 describe('Compare View Parts', () => {
   describe('Statistics in Row for Comparison Across Versions', () => {
-    const tpl = prepareTemplate('compare/stats-row-across-versions.html');
+    const tpl = prepareTemplate(
+      robustPath('backend/compare/html/stats-row-across-versions.html')
+    );
 
     it('should render <td> elements with the statistics', () => {
       const data: CompareStatsRowAcrossVersionsPartial = {
@@ -136,7 +138,10 @@ describe('Compare View Parts', () => {
   });
 
   describe('Statistics in Row for Comparison Across Executors', () => {
-    const tpl = prepareTemplate('compare/stats-row-across-exes.html', true);
+    const tpl = prepareTemplate(
+      robustPath('backend/compare/html/stats-row-across-exes.html'),
+      true
+    );
 
     it('should render <td> elements with the statistics', () => {
       const data: CompareStatsRowAcrossExesPartial = {
@@ -150,7 +155,10 @@ describe('Compare View Parts', () => {
   });
 
   describe('Buttons for Additional Information', () => {
-    const tpl = prepareTemplate('compare/stats-row-buttons-info.html', true);
+    const tpl = prepareTemplate(
+      robustPath('backend/compare/html/stats-row-buttons-info.html'),
+      true
+    );
 
     it('with full data, it should render all buttons', () => {
       const data: ButtonsAdditionalInfoPartial = {
@@ -166,7 +174,10 @@ describe('Compare View Parts', () => {
   });
 
   describe('Summary Statistics for Whole Comparison', () => {
-    const tpl = prepareTemplate('compare/stats-summary.html', true);
+    const tpl = prepareTemplate(
+      robustPath('backend/compare/html/stats-summary.html'),
+      true
+    );
 
     it('should render the data as expected', () => {
       const data: StatsSummaryPartial = {
@@ -188,7 +199,10 @@ describe('Compare View Parts', () => {
   });
 
   describe('Header for Statistics Table', () => {
-    const tpl = prepareTemplate('compare/stats-tbl-header.html', true);
+    const tpl = prepareTemplate(
+      robustPath('backend/compare/html/stats-tbl-header.html'),
+      true
+    );
 
     it('should render the data as expected', () => {
       const data: CompareStatsTableHeaderPartial = {
@@ -201,7 +215,10 @@ describe('Compare View Parts', () => {
   });
 
   describe('Row in Statistics Table', () => {
-    const tpl = prepareTemplate('compare/stats-row.html', true);
+    const tpl = prepareTemplate(
+      robustPath('backend/compare/html/stats-row.html'),
+      true
+    );
 
     it('should render the version comparison as expected', () => {
       const data: CompareStatsRowPartial = {
@@ -289,7 +306,10 @@ describe('Compare View Parts', () => {
   });
 
   describe('Statistics Table', () => {
-    const tpl = prepareTemplate('compare/stats-tbl.html', true);
+    const tpl = prepareTemplate(
+      robustPath('backend/compare/html/stats-tbl.html'),
+      true
+    );
 
     it('should render the data as expected', () => {
       const data: CompareStatsTablePartial = {
@@ -377,7 +397,10 @@ describe('Compare View Parts', () => {
       });
     });
 
-    const tpl = prepareTemplate('compare/navigation.html', true);
+    const tpl = prepareTemplate(
+      robustPath('backend/compare/html/navigation.html'),
+      true
+    );
 
     it('should render the JsSOM nav correctly to html', () => {
       const result = tpl(resultJ);
@@ -391,7 +414,11 @@ describe('Compare View Parts', () => {
   });
 
   describe('Full Compare Across Versions', () => {
-    const tpl = prepareTemplate('compare/compare-versions.html', true);
+    const tpl = prepareTemplate(
+      robustPath('backend/compare/html/compare-versions.html'),
+      true,
+      robustPath('backend/compare/html')
+    );
 
     it('should render the data as expected', () => {
       const benchmarks: CompareStatsTable = {

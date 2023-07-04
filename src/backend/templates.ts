@@ -28,9 +28,15 @@ const ejsConfig: Options = {
 
 export function prepareTemplate(
   filename: string,
-  rmWhitespace = false
+  rmWhitespace = false,
+  templateRoot: string | undefined = undefined
 ): TemplateFunction {
-  const fileContent = readFileSync(robustPath(`views/${filename}`)).toString();
+  const fileContent = readFileSync(filename).toString();
   const config = { ...ejsConfig, rmWhitespace };
+
+  if (templateRoot) {
+    config.root = templateRoot;
+    config.views?.push(templateRoot);
+  }
   return <TemplateFunction>compile(fileContent, config);
 }
