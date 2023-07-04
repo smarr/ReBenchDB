@@ -2,7 +2,7 @@ import { ParameterizedContext } from 'koa';
 import { QueryConfig } from 'pg';
 
 import { TotalCriterion, isReBenchDotDev, rebenchVersion } from '../util.js';
-import { processTemplate } from '../../templates.js';
+import { processTemplate } from '../templates.js';
 import { completeRequest, startRequest } from '../perf-tracker.js';
 import { AllResults } from '../../shared/api.js';
 import { Database } from '../db/db.js';

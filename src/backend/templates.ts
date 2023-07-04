@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import m from 'mustache';
-import { robustPath } from './backend/util.js';
+import { robustPath } from './util.js';
 import { compile, TemplateFunction, Options } from 'ejs';
 
 const headerHtml = readFileSync(robustPath('views/header.html')).toString();

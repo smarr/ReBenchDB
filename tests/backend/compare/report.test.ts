@@ -1,17 +1,15 @@
 import { describe, expect, afterAll, it } from '@jest/globals';
 import { readFileSync, unlinkSync, rmSync, existsSync } from 'fs';
-import type { DatabaseConfig } from '../src/backend/db/types.js';
-import { getDirname } from '../src/backend/util.js';
+import type { DatabaseConfig } from '../../../src/backend/db/types.js';
+import { robustPath } from '../../../src/backend/util.js';
 import {
   getOutputImageFolder,
   getSummaryPlotFileName,
   startReportGeneration
-} from '../src/backend/compare/report.js';
-
-const __dirname = getDirname(import.meta.url);
+} from '../../../src/backend/compare/report.js';
 
 describe('Report Generation', () => {
-  const reportFolder = `${__dirname}/../resources/reports`;
+  const reportFolder = robustPath('../resources/reports');
 
   describe('Report with varying set of benchmarks', () => {
     const outputFileWithoutExtension = `report.test.ts`;
@@ -20,8 +18,8 @@ describe('Report Generation', () => {
     it('Should successful execute generation', async () => {
       const baseHash = '5964b7';
       const changeHash = '253fc1';
-      const baseFile = `${__dirname}/data/bench-set-base.qs`;
-      const changeFile = `${__dirname}/data/bench-set-change.qs`;
+      const baseFile = robustPath(`../tests/data/bench-set-base.qs`);
+      const changeFile = robustPath(`../tests/data/bench-set-change.qs`);
 
       const extraCmd = `from-file;${baseFile};${changeFile}`;
 
@@ -63,7 +61,7 @@ describe('Report Generation', () => {
 
     it('Should not include the exec comparison', () => {
       const content: string = readFileSync(
-        `${__dirname}/../resources/reports/${outputFile}`,
+        robustPath(`../resources/reports/${outputFile}`),
         'utf8'
       );
       expect(content).not.toEqual(
@@ -85,8 +83,8 @@ describe('Report Generation', () => {
     it('Should successful execute generation', async () => {
       const baseHash = '2b04e9f74ca0bc3e95d3c50e04f67a17b9536e8e';
       const changeHash = '2ed3bac9e7de2bc0f7ebf70ad07066fb559f41d3';
-      const baseFile = `${__dirname}/data/renamed-exec-base.qs`;
-      const changeFile = `${__dirname}/data/renamed-exec-change.qs`;
+      const baseFile = robustPath(`../tests/data/renamed-exec-base.qs`);
+      const changeFile = robustPath(`../tests/data/renamed-exec-change.qs`);
 
       const extraCmd = `from-file;${baseFile};${changeFile}`;
 
@@ -130,8 +128,8 @@ describe('Report Generation', () => {
     it('Should successful execute generation', async () => {
       const baseHash = '8ed27e';
       const changeHash = 'f7408d';
-      const baseFile = `${__dirname}/data/rpython-all-base.qs`;
-      const changeFile = `${__dirname}/data/rpython-all-change.qs`;
+      const baseFile = robustPath(`../tests/data/rpython-all-base.qs`);
+      const changeFile = robustPath(`../tests/data/rpython-all-change.qs`);
 
       const extraCmd = `from-file;${baseFile};${changeFile}`;
 

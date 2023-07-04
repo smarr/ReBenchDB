@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 
 import { describe, expect, it } from '@jest/globals';
-import { simplifyCmdline } from '../src/views/util';
+import { simplifyCmdline } from '../../src/views/util.js';
 
 describe('Helper Functions for Rendering', () => {
   describe('Simplifying the command-line for display', () => {

@@ -33,7 +33,7 @@ import {
   CompareViewWithData,
   MissingData
 } from '../../../src/views/view-types.js';
-import { prepareTemplate } from '../../../src/templates.js';
+import { prepareTemplate } from '../../../src/backend/templates.js';
 import * as dataFormatters from '../../../src/shared/data-format.js';
 import * as viewHelpers from '../../../src/views/helpers.js';
 import {

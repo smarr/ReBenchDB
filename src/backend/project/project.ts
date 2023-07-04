@@ -1,5 +1,5 @@
 import { ParameterizedContext } from 'koa';
-import { prepareTemplate, processTemplate } from '../../templates.js';
+import { prepareTemplate, processTemplate } from '../templates.js';
 import {
   respondExpIdNotFound,
   respondProjectAndSourceNotFound,

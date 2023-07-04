@@ -3,7 +3,7 @@ import {
   respondProjectIdNotFound,
   respondProjectNotFound
 } from '../common/standard-responses.js';
-import { processTemplate } from '../../templates.js';
+import { processTemplate } from '../templates.js';
 import { TimelineSuite } from '../../shared/api.js';
 import { Database } from '../db/db.js';
 

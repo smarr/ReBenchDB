@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 import { readFileSync } from 'fs';
-import { prepareTemplate } from '../../src/templates.js';
+import { prepareTemplate } from '../../src/backend/templates.js';
 import * as dataFormatters from '../../src/shared/data-format.js';
 import * as viewHelpers from '../../src/views/helpers.js';
 import type {
