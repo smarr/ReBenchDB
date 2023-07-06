@@ -60,7 +60,7 @@ export async function redirectToNewProjectDataUrl(
   } else {
     respondProjectIdNotFound(ctx, Number(ctx.params.projectId));
   }
-  ctx.body = processTemplate('../backend/project/project-data.html', {
+  ctx.body = processTemplate('backend/project/project-data.html', {
     project
   });
   ctx.type = 'html';
@@ -72,7 +72,7 @@ export async function renderProjectDataPage(
 ): Promise<void> {
   const project = await db.getProjectBySlug(ctx.params.projectSlug);
   if (project) {
-    ctx.body = processTemplate('../backend/project/project-data.html', {
+    ctx.body = processTemplate('backend/project/project-data.html', {
       project
     });
     ctx.type = 'html';
@@ -109,7 +109,7 @@ export async function renderDataExport(
   );
 
   if (data.preparingData) {
-    ctx.body = processTemplate('get-exp-data.html', data);
+    ctx.body = processTemplate('backend/project/get-exp-data.html', data);
     ctx.type = 'html';
     ctx.set('Cache-Control', 'no-cache');
   } else {

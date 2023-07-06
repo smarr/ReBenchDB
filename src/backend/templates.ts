@@ -10,7 +10,7 @@ const headerHtml = readFileSync(robustPath('views/header.html')).toString();
  * @todo remove this function
  */
 export function processTemplate(filename: string, variables: any = {}): string {
-  const fileContent = readFileSync(robustPath(`views/${filename}`)).toString();
+  const fileContent = readFileSync(robustPath(filename)).toString();
 
   variables.headerHtml = headerHtml;
   return m.render(fileContent, variables);

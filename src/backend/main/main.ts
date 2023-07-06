@@ -13,7 +13,7 @@ export async function renderMainPage(
   db: Database
 ): Promise<void> {
   const projects = await db.getAllProjects();
-  ctx.body = processTemplate('../backend/main/index.html', {
+  ctx.body = processTemplate('backend/main/index.html', {
     projects,
     isReBenchDotDev: isReBenchDotDev()
   });

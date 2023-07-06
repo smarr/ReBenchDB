@@ -43,7 +43,7 @@ export async function renderTimeline(
   const project = await db.getProjectBySlug(ctx.params.projectSlug);
 
   if (project) {
-    ctx.body = processTemplate('../backend/timeline/timeline.html', {
+    ctx.body = processTemplate('backend/timeline/timeline.html', {
       project,
       benchmarks: await getLatestBenchmarksForTimelineView(project.id, db)
     });

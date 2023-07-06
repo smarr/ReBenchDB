@@ -225,7 +225,7 @@ export async function renderComparePage(
     dbConfig,
     db
   );
-  ctx.body = processTemplate('compare.html', data);
+  ctx.body = processTemplate('views/compare.html', data);
   ctx.type = 'html';
 
   if (data.generatingReport) {
