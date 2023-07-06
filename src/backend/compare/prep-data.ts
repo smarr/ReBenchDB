@@ -26,7 +26,7 @@ import {
   CompareViewWithData,
   DataSeriesVersionComparison,
   StatsSummary
-} from '../../views/view-types.js';
+} from '../../shared/view-types.js';
 import {
   createCanvas,
   renderInlinePlot,

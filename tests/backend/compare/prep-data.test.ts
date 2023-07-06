@@ -32,10 +32,10 @@ import {
   CompareStatsRow,
   CompareViewWithData,
   MissingData
-} from '../../../src/views/view-types.js';
+} from '../../../src/shared/view-types.js';
 import { prepareTemplate } from '../../../src/backend/templates.js';
 import * as dataFormatters from '../../../src/shared/data-format.js';
-import * as viewHelpers from '../../../src/views/helpers.js';
+import * as viewHelpers from '../../../src/shared/helpers.js';
 import {
   initJestMatchers,
   isRequestedToUpdateExpectedData,

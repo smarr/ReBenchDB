@@ -7,7 +7,7 @@ import { Database } from '../db/db.js';
 import { assert, log } from '../logging.js';
 import { completeRequest, startRequest } from '../perf-tracker.js';
 import { robustPath, siteConfig } from '../util.js';
-import type { CompareView } from '../../views/view-types.js';
+import type { CompareView } from '../../shared/view-types.js';
 import { prepareCompareView } from './prep-data.js';
 
 const reportOutputFolder = resolve(robustPath(`../resources/reports/`));

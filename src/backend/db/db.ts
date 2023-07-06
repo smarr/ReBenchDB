@@ -21,7 +21,7 @@ import {
 } from '../../shared/api.js';
 import { robustPath, TotalCriterion } from '../util.js';
 import { assert } from '../logging.js';
-import { simplifyCmdline } from '../../views/util.js';
+import { simplifyCmdline } from '../../shared/util.js';
 import type { SummaryStatistics } from '../../shared/stats.js';
 import { BatchingTimelineUpdater } from '../timeline/timeline-calc.js';
 import type {

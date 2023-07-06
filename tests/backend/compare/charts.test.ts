@@ -15,7 +15,7 @@ import {
 } from '../../../src/backend/compare/charts.js';
 import type { Measurements } from '../../../src/backend/db/types.js';
 import { collateMeasurements } from '../../../src/backend/compare/db-data.js';
-import { ByExeSuiteComparison } from '../../../src/views/view-types.js';
+import { ByExeSuiteComparison } from '../../../src/shared/view-types.js';
 import {
   initJestMatchers,
   isRequestedToUpdateExpectedData

@@ -3,7 +3,7 @@ import {
   commonStringStart,
   PerIterationOutput,
   withoutStart
-} from '../../src/views/helpers';
+} from '../../src/shared/helpers';
 
 describe('Helper functions for the views', () => {
   describe('commonStringStart()', () => {

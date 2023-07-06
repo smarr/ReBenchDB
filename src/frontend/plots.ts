@@ -2,7 +2,10 @@ import type { AllResults, PlotData, TimelineResponse } from '../shared/api.js';
 import type { Source } from '../backend/db/types.js';
 import { filterCommitMessage } from './render.js';
 import uPlot from '/static/uPlot.esm.min.js';
-import type { WarmupData, WarmupDataPerCriterion } from './view-types.js';
+import type {
+  WarmupData,
+  WarmupDataPerCriterion
+} from '../shared/view-types.js';
 
 function simpleSlug(str) {
   return str.replace(/[\W_]+/g, '');

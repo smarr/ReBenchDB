@@ -1,6 +1,6 @@
 import type { BenchmarkId } from '../shared/api.js';
 import type { Environment } from '../backend/db/types.js';
-import type { DataSeriesVersionComparison } from '../views/view-types.js';
+import type { DataSeriesVersionComparison } from './view-types.js';
 
 /**
  * Round to 0 decimal places.

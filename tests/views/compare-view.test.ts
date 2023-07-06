@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 import { readFileSync } from 'fs';
 import { prepareTemplate } from '../../src/backend/templates.js';
 import * as dataFormatters from '../../src/shared/data-format.js';
-import * as viewHelpers from '../../src/views/helpers.js';
+import * as viewHelpers from '../../src/shared/helpers.js';
 import type {
   ButtonsAdditionalInfoPartial,
   CompareStatsRowAcrossExesPartial,
@@ -17,7 +17,7 @@ import type {
   DetailedInfo,
   StatsSummaryPartial,
   ReportConfig
-} from '../../src/views/view-types.js';
+} from '../../src/shared/view-types.js';
 import { robustPath } from '../../src/backend/util.js';
 import {
   calculateAllStatisticsAndRenderPlots,

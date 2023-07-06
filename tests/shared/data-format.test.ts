@@ -10,7 +10,7 @@ import {
   r0,
   r2
 } from '../../src/shared/data-format.js';
-import { DataSeriesVersionComparison } from '../../src/views/view-types.js';
+import { DataSeriesVersionComparison } from '../../src/shared/view-types.js';
 
 describe('Format Functions for Numerical Values', () => {
   describe('r0 - round to 0 decimal places', () => {

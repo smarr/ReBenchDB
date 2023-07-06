@@ -1,17 +1,14 @@
-import type { BenchmarkId } from '../shared/api.js';
+import type { BenchmarkId } from './api.js';
 import type {
   AvailableProfile,
   CriterionData,
   Environment,
   RevisionData
 } from '../backend/db/types.js';
-import type {
-  ComparisonStatistics,
-  SummaryStatsWithUnit
-} from '../shared/stats.js';
+import type { ComparisonStatistics, SummaryStatsWithUnit } from './stats.js';
 
-declare type DataFormat = typeof import('../shared/data-format');
-declare type ViewHelpers = typeof import('./helpers');
+declare type DataFormat = typeof import('./data-format.js');
+declare type ViewHelpers = typeof import('./helpers.js');
 
 /** Summary statistics for the overall comparison. */
 export interface StatsSummary {
@@ -75,6 +72,7 @@ export interface DataSeriesVersionComparison {
   change: DataSeriesId;
 }
 
+// TODO: rename, DetailedInfo doesn't tell us much
 export interface DetailedInfo {
   cmdline: string;
 

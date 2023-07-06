@@ -1,6 +1,6 @@
 import { initializeFilters } from './filter.js';
 import { renderComparisonTimelinePlot, renderWarmupPlot } from './plots.js';
-import { WarmupData } from './view-types.js';
+import { WarmupData } from '../shared/view-types.js';
 
 function determineAndDisplaySignificance() {
   const val = $('#significance').val();

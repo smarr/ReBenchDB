@@ -6,13 +6,13 @@ import type {
   WarmupData,
   WarmupDataForTrial,
   WarmupDataPerCriterion
-} from '../../views/view-types.js';
+} from '../../shared/view-types.js';
 import { respondProjectNotFound } from '../common/standard-responses.js';
 import { dbConfig, refreshSecret, robustPath } from '../util.js';
 import { prepareTemplate, processTemplate } from '../templates.js';
 import { deleteReport, renderCompare, renderCompareNew } from './report.js';
 import * as dataFormatters from '../../shared/data-format.js';
-import * as viewHelpers from '../../views/helpers.js';
+import * as viewHelpers from '../../shared/helpers.js';
 import { TimelineRequest } from '../../shared/api.js';
 
 export async function getProfileAsJson(

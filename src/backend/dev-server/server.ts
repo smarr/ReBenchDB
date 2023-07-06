@@ -20,11 +20,11 @@ export async function serveStaticResource(
     if (filename.includes('uPlot')) {
       path = robustPath(`../resources/${filename}`);
     } else {
-      path = robustSrcPath(`views/${filename}`);
+      path = robustSrcPath(`frontend/${filename}`);
     }
   } else if (filename.endsWith('.map')) {
     ctx.type = 'application/json';
-    path = robustSrcPath(`views/${filename}`);
+    path = robustSrcPath(`frontend/${filename}`);
   } else if (filename.endsWith('.svg')) {
     ctx.type = 'image/svg+xml';
     path = robustPath(`../resources/${filename}`);
@@ -43,7 +43,7 @@ export async function serveViewJs(ctx: ParameterizedContext): Promise<void> {
   let path: string;
   if (ctx.params.filename.endsWith('.ts')) {
     ctx.type = 'application/typescript';
-    path = robustPath(`views/${ctx.params.filename}`);
+    path = robustPath(`frontend/${ctx.params.filename}`);
   } else {
     throw new Error(`Unsupported file type ${ctx.params.filename}`);
   }

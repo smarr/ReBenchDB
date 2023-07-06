@@ -11,7 +11,7 @@ import type {
   ProcessedResult,
   RunSettings
 } from '../db/types.js';
-import { simplifyCmdline } from '../../views/util.js';
+import { simplifyCmdline } from '../../shared/util.js';
 
 /**
  * Turn the flat list of measurements into a nested structure
