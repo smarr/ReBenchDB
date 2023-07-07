@@ -44,9 +44,12 @@ export class BatchingTimelineUpdater {
     this.requestsAtStart = 0;
     this.promise = null;
 
-    this.worker = new Worker(robustSrcPath('timeline-calc-worker.js'), {
-      workerData: { numBootstrapSamples }
-    });
+    this.worker = new Worker(
+      robustSrcPath('backend/timeline/timeline-calc-worker.js'),
+      {
+        workerData: { numBootstrapSamples }
+      }
+    );
 
     this.worker.on('message', (message) => this.processResponse(message));
     this.worker.on('error', (e) => {
