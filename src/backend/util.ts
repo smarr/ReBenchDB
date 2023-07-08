@@ -6,8 +6,6 @@ import { gzip as gzipCallback } from 'node:zlib';
 import { readFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 
-import type { CanvasSettings } from './compare/charts.js';
-
 const gzip = promisify(gzipCallback);
 
 export async function storeJsonGzip(
@@ -92,30 +90,6 @@ export const siteConfig = {
     return data.some((ms) => ms.length >= 5);
   },
   inlinePlotCriterion: 'total'
-};
-
-const inlinePlot: CanvasSettings = {
-  width: 336,
-  height: 38,
-  outputType: 'svg',
-  plotType: 'boxplot'
-};
-
-export const siteAesthetics = {
-  changeColor: '#e9b96e',
-  baseColor: '#729fcf',
-
-  changeColorLight: '#efd0a7',
-  baseColorLight: '#97c4f0',
-
-  fastColor: '#e4ffc7',
-  slowColor: '#ffcccc',
-
-  backgroundColor: '#ffffff',
-
-  overviewPlotWidth: 432,
-
-  inlinePlot
 };
 
 export const TotalCriterion = 'total';

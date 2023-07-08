@@ -32,7 +32,8 @@ import {
   renderInlinePlot,
   renderOverviewPlots
 } from './charts.js';
-import { siteAesthetics, siteConfig } from '../util.js';
+import { siteConfig } from '../util.js';
+import { siteAesthetics } from '../../shared/aesthetics.js';
 
 import { collateMeasurements } from './db-data.js';
 import { HasProfile } from '../db/has-profile.js';

@@ -13,7 +13,8 @@ import {
   BoxAndWiskers
 } from '@sgratzl/chartjs-chart-boxplot';
 import { medianUnsorted } from '../../shared/stats.js';
-import { robustPath, siteAesthetics } from '../util.js';
+import { robustPath } from '../util.js';
+import { siteAesthetics } from '../../shared/aesthetics.js';
 
 const fullyTransparent = 'rgba(0, 0, 0, 0)';
 

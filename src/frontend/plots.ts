@@ -6,6 +6,7 @@ import type {
   WarmupData,
   WarmupDataPerCriterion
 } from '../shared/view-types.js';
+import { siteAesthetics } from '../shared/aesthetics.js';
 
 function simpleSlug(str) {
   return str.replace(/[\W_]+/g, '');
@@ -100,25 +101,8 @@ function seriesConfig(
   return cfg;
 }
 
-// colors are from the Extended Tango Palette
-// https://emilis.info/other/extended_tango/
-const baselineColors = [
-  // '#00202a',	'#0a3050',
-  '#204a87',
-  '#3465a4',
-  '#729fcf',
-  '#97c4f0'
-  // '#daeeff'
-];
-
-const changeColors = [
-  // '#271700',	'#503000',
-  '#8f5902',
-  '#c17d11',
-  '#e9b96e',
-  '#efd0a7'
-  // '#faf0d7'
-];
+const baselineColors = siteAesthetics.baselineColorGradient;
+const changeColors = siteAesthetics.changeColorGradient;
 
 const totalColorIdx = 2;
 const lightColorIdx = 3;
@@ -442,7 +426,7 @@ function addSeries(
   data: number[][],
   series: any[],
   commitId: string,
-  colors: string[],
+  colors: readonly string[],
   styleMap: Record<string, any>
 ) {
   if (critData.values.length > 1) {

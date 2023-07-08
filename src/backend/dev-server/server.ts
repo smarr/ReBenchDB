@@ -38,6 +38,25 @@ export async function serveStaticResource(
   ctx.body = readFileSync(path);
 }
 
+export async function serveStaticSharedResource(
+  ctx: ParameterizedContext
+): Promise<void> {
+  const filename = ctx.params.filename;
+  log.debug(`serve ${filename}`);
+  let path: string;
+
+  if (filename.endsWith('.js')) {
+    ctx.type = 'application/javascript';
+    path = robustSrcPath(`shared/${filename}`);
+  } else if (filename.endsWith('.map')) {
+    ctx.type = 'application/json';
+    path = robustSrcPath(`shared/${filename}`);
+  } else {
+    throw new Error(`Unsupported file type. Filename: ${filename}`);
+  }
+  ctx.body = readFileSync(path);
+}
+
 export async function serveViewJs(ctx: ParameterizedContext): Promise<void> {
   log.debug(`serve ${ctx.params.filename}`);
   let path: string;
