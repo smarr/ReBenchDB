@@ -101,7 +101,7 @@
     "download-font": "node dist/src/download.js https://github.com/googlefonts/roboto/releases/download/v2.136/roboto-hinted.zip tmp/roboto-hinted.zip && unzip -o -d dist tmp/roboto-hinted.zip",
     
     "start": "node --enable-source-maps --experimental-json-modules ./dist/src/index.js",
-    "nodemon": "DEV=true nodemon --enable-source-maps --experimental-json-modules ./dist/src/index.js --watch ./dist/src --watch ./dist/package.json --ext js,json,html",
+    "nodemon": "DEV=true nodemon --enable-source-maps --experimental-json-modules ./dist/src/index.js --watch ./dist/src --watch ./package.json --watch ./src --ext js,json,html",
 
     "format": "prettier --config .prettierrc '{src,tests}/**/*.ts' --write",
     "verify": "npm run lint",
