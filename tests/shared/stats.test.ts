@@ -20,7 +20,9 @@ import {
   standardDeviation,
   calculateSummaryOfChangeSummaries,
   normalize,
-  ComparisonStatsWithUnit
+  ComparisonStatsWithUnit,
+  isSorted,
+  calculateChangeStatisticsForFirstAsBaseline
 } from '../../src/shared/stats';
 
 describe('basicSum()', () => {
@@ -302,15 +304,13 @@ describe('calculateChangeStatistics()', () => {
     );
   });
 
-  it('should work on unordered data', () => {
-    const stats: ComparisonStatistics = calculateChangeStatistics(
-      [0, 1, 2, 3, 4, 5, 6, 7, 8],
-      [9, 8, 7, 6, 5, 4, 3, 2, 1]
-    );
-
-    expect(stats.samples).toEqual(9);
-    expect(stats.median).toEqual(5);
-    expect(stats.change_m).toEqual(0.25);
+  it('should error on unordered data', () => {
+    expect(() => {
+      calculateChangeStatistics(
+        [0, 1, 2, 3, 4, 5, 6, 7, 8],
+        [9, 8, 7, 6, 5, 4, 3, 2, 1]
+      );
+    }).toThrow('Input arrays must be sorted.');
   });
 
   it('should handle 0 values', () => {
@@ -322,6 +322,114 @@ describe('calculateChangeStatistics()', () => {
     expect(stats.samples).toEqual(9);
     expect(stats.median).toEqual(0);
     expect(stats.change_m).toEqual(0);
+  });
+});
+
+describe('isSorted()', () => {
+  it('should return true for sorted arrays', () => {
+    expect(isSorted([1, 2, 3, 4, 5])).toBeTruthy();
+    expect(isSorted([1, 1, 1, 1, 1])).toBeTruthy();
+    expect(isSorted([1, 1, 1, 2, 2, 2])).toBeTruthy();
+    expect(isSorted([1, 1, 1, 2, 2, 2, 3, 3, 3])).toBeTruthy();
+  });
+
+  it('should return false for unsorted arrays', () => {
+    expect(isSorted([1, 2, 3, 4, 5, 4])).toBeFalsy();
+    expect(isSorted([1, 1, 1, 1, 1, 0])).toBeFalsy();
+    expect(isSorted([1, 1, 1, 2, 2, 2, 2, 1])).toBeFalsy();
+  });
+});
+
+describe('calculateChangeStatisticsForFirstAsBaseline()', () => {
+  it('should produce expected values for known data', () => {
+    const stats: ComparisonStatistics[] =
+      calculateChangeStatisticsForFirstAsBaseline([
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      ]);
+
+    expect(stats[0].samples).toEqual(10);
+    expect(stats[0].median).toEqual(4.5);
+    expect(stats[0].change_m).toEqual(0);
+
+    expect(stats[1].samples).toEqual(10);
+    expect(stats[1].median).toEqual(4.5);
+    expect(stats[1].change_m).toEqual(0);
+  });
+
+  it('should given an error when base and change have different length', () => {
+    expect(() => {
+      calculateChangeStatisticsForFirstAsBaseline([
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      ]);
+    }).toThrow(
+      `All arrays must have the same length, ` +
+        `but base has 10, while another has 11.`
+    );
+  });
+
+  it('should error on unordered data', () => {
+    expect(() => {
+      calculateChangeStatisticsForFirstAsBaseline([
+        [0, 1, 2, 3, 4, 5, 6, 7, 8],
+        [9, 8, 7, 6, 5, 4, 3, 2, 1]
+      ]);
+    }).toThrow('Input arrays must be sorted.');
+  });
+
+  it('should handle 0 values', () => {
+    const stats: ComparisonStatistics[] =
+      calculateChangeStatisticsForFirstAsBaseline([
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      ]);
+
+    expect(stats[0].samples).toEqual(9);
+    expect(stats[0].median).toEqual(0);
+    expect(stats[0].change_m).toEqual(0);
+  });
+
+  it('a base of zero gives a zero change', () => {
+    const stats: ComparisonStatistics[] =
+      calculateChangeStatisticsForFirstAsBaseline([
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [2, 2, 2, 2, 2, 2, 2, 2, 2]
+      ]);
+
+    expect(stats[0].samples).toEqual(9);
+    expect(stats[0].median).toEqual(0);
+    expect(stats[0].change_m).toEqual(0);
+
+    expect(stats[1].samples).toEqual(9);
+    expect(stats[1].median).toEqual(1);
+    expect(stats[1].change_m).toEqual(0);
+
+    expect(stats[2].samples).toEqual(9);
+    expect(stats[2].median).toEqual(2);
+    expect(stats[2].change_m).toEqual(0);
+  });
+
+  it('should handle many data series', () => {
+    const stats: ComparisonStatistics[] =
+      calculateChangeStatisticsForFirstAsBaseline([
+        [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        [2, 3, 4, 5, 6, 7, 8, 9, 10],
+        [3, 4, 5, 6, 7, 8, 9, 10, 11]
+      ]);
+
+    expect(stats[0].samples).toEqual(9);
+    expect(stats[0].median).toEqual(5);
+    expect(stats[0].change_m).toEqual(0);
+
+    expect(stats[1].samples).toEqual(9);
+    expect(stats[1].median).toEqual(6);
+    expect(stats[1].change_m).toEqual(0.19999999999999996);
+
+    expect(stats[2].samples).toEqual(9);
+    expect(stats[2].median).toEqual(7);
+    expect(stats[2].change_m).toEqual(0.3999999999999999);
   });
 });
 

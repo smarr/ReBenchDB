@@ -380,6 +380,10 @@ export function calculateChangeStatistics(
     );
   }
 
+  if (!isSorted(baseSorted) || !isSorted(changeSorted)) {
+    throw new Error('Input arrays must be sorted.');
+  }
+
   const baseMedian = median(baseSorted);
   const changeMedian = median(changeSorted);
 
@@ -396,6 +400,55 @@ export function calculateChangeStatistics(
     samples: baseSorted.length,
     change_m: changeMedian / baseMedian - 1.0
   };
+}
+
+export function isSorted(values: number[]): boolean {
+  for (let i = 1; i < values.length; i += 1) {
+    if (values[i - 1] > values[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function calculateChangeStatisticsForFirstAsBaseline(
+  sorted: number[][]
+): ComparisonStatistics[] {
+  for (const series of sorted) {
+    if (series.length !== sorted[0].length) {
+      throw new Error(
+        `All arrays must have the same length, but ` +
+          `base has ${sorted[0].length}, while another has ${series.length}.`
+      );
+    }
+    if (!isSorted(series)) {
+      throw new Error('Input arrays must be sorted.');
+    }
+  }
+
+  const result: ComparisonStatistics[] = [];
+
+  const baseMedian = median(sorted[0]);
+
+  for (const series of sorted) {
+    const changeMedian = median(series);
+
+    if (baseMedian === 0.0) {
+      result.push({
+        median: changeMedian,
+        samples: series.length,
+        change_m: 0.0
+      });
+    } else {
+      result.push({
+        median: changeMedian,
+        samples: series.length,
+        change_m: changeMedian / baseMedian - 1.0
+      });
+    }
+  }
+
+  return result;
 }
 
 export function normalize(data: number[], unitValue: number): number[] {
