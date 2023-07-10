@@ -16,7 +16,8 @@ import type {
   BySuiteComparison,
   DetailedInfo,
   StatsSummaryPartial,
-  ReportConfig
+  ReportConfig,
+  CompareStatsRowAcrossExes
 } from '../../src/shared/view-types.js';
 import { robustPath } from '../../src/backend/util.js';
 import {
@@ -95,9 +96,9 @@ const versionStats = {
   allocated: { median: 222, samples: 2, change_m: 646 }
 };
 
-const exeStats = [
+const exeStats: CompareStatsRowAcrossExes[] = [
   {
-    name: 'TruffleSOM-ast',
+    exeName: 'TruffleSOM-ast',
     criteria: {
       total: { median: 0.333, samples: 43, change_m: 546 },
       gcTime: { median: 0.111, samples: 1, change_m: 146 },
@@ -105,7 +106,7 @@ const exeStats = [
     }
   },
   {
-    name: 'TruffleSOM-bc',
+    exeName: 'TruffleSOM-bc',
     criteria: {
       total: { median: 0.4534, samples: 12, change_m: 34 },
       gcTime: { median: 0.256, samples: 1, change_m: 2323 },
@@ -434,7 +435,11 @@ describe('Compare View Parts', () => {
       };
 
       const data: CompareVersionsPartial = {
-        allMeasurements: new Map(),
+        acrossVersions: {
+          allMeasurements: new Map(),
+          summary: <any>{}
+        },
+        acrossExes: new Map(),
         environments,
         dataFormatters,
         viewHelpers,
@@ -442,7 +447,7 @@ describe('Compare View Parts', () => {
       };
 
       const suites: BySuiteComparison = new Map();
-      data.allMeasurements.set('exe1', suites);
+      data.acrossVersions.allMeasurements.set('exe1', suites);
       suites.set('suite1', benchmarks);
 
       const result = tpl(data);
@@ -463,6 +468,7 @@ describe('Compare View Statistics', () => {
     statsJ = (
       await calculateAllStatisticsAndRenderPlots(
         resultsJ,
+        [],
         null,
         'bc1105',
         '4dff7e',
@@ -470,10 +476,11 @@ describe('Compare View Statistics', () => {
         outputFolder,
         'inline-cvs1'
       )
-    ).summary;
+    ).acrossVersions.summary;
     statsT = (
       await calculateAllStatisticsAndRenderPlots(
         resultsT,
+        [],
         null,
         '5fa4bd',
         '5820ec',
@@ -481,7 +488,7 @@ describe('Compare View Statistics', () => {
         outputFolder,
         'inline-cvs2'
       )
-    ).summary;
+    ).acrossVersions.summary;
 
     expect(statsJ).toBeDefined();
     expect(statsT).toBeDefined();

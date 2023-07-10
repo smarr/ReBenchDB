@@ -37,7 +37,7 @@ export interface CompareStatsTableHeaderPartial {
 }
 
 export interface CompareStatsRowAcrossExes {
-  name: string;
+  exeName: string;
   criteria: Record<string, ComparisonStatistics>;
 }
 
@@ -140,6 +140,8 @@ export interface ButtonsAdditionalInfoPartial {
 export interface CompareStatsTable {
   criteria: CompareStatsTableHeader;
   benchmarks: CompareStatsRow[];
+  overviewSvgUrl?: string;
+  baselineExeName?: string;
 }
 
 export interface CompareStatsTablePartial extends CompareStatsTable {
@@ -157,12 +159,19 @@ export interface CompareNavPartial {
 export type BySuiteComparison = Map<string, CompareStatsTable>;
 export type ByExeSuiteComparison = Map<string, BySuiteComparison>;
 
-export interface CompareVersions {
-  allMeasurements: ByExeSuiteComparison;
+export interface AllStats {
+  acrossVersions: {
+    summary: StatsSummary;
+    allMeasurements: ByExeSuiteComparison;
+  };
+  acrossExes: BySuiteComparison;
+}
+
+export interface CompareStats extends AllStats {
   environments: Environment[];
 }
 
-export interface CompareVersionsPartial extends CompareVersions {
+export interface CompareVersionsPartial extends CompareStats {
   dataFormatters: DataFormat;
   viewHelpers: ViewHelpers;
   config: ReportConfig;
@@ -204,10 +213,11 @@ export interface CompareViewWithData extends CompareViewBasics {
   change: RevisionData;
 
   navigation: CompareNavPartial;
-  statsSummary: StatsSummary;
 
-  stats: CompareVersions;
+  stats: CompareStats;
   config: ReportConfig;
+
+  hasExeComparison: boolean;
 }
 
 export interface ReportConfig {

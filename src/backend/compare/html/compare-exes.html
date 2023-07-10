@@ -1,0 +1,17 @@
+<h2 id="exe-comparisons">Executor Comparisons</h2>
+{%
+  for (const [s, suite] of it.acrossExes) {
+%}
+    <h3 id="exe-comp-{%= s %}">{%= s %}</h3>
+    <p>Baseline: {%= suite.baselineExe %}</p>
+
+    <img src="{%= it.config.reportsUrl %}/{%= suite.overviewSvgUrl %}" width="{%= it.config.overviewPlotWidth %}">
+    {%- include('stats-tbl.html', {
+      config: it.config,
+      criteria: suite.criteria,
+      benchmarks: suite.benchmarks,
+      environments: it.environments,
+      dataFormatters: it.dataFormatters,
+      viewHelpers: it.viewHelpers
+    }) %}
+{% } %}

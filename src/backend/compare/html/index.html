@@ -14,7 +14,7 @@
 
 <header>
 <div class="jumbotron compare">
-  <h2>ReBenchDB for {%= it.project%}</h2>
+  <h2>ReBenchDB for {%= it.project %}</h2>
   {% if (it.revisionFound) { %}
   <h3>Comparing <a href="{%= it.base.repourl%}/compare/{%= it.baselineHash%}...{%= it.changeHash%}">{%= it.baselineHash6%} with {%= it.changeHash6%}</a></h3>
   {% } else { %}
@@ -90,7 +90,7 @@
 <main class="col-8" role="main">
 
 {%- include('stats-summary.html', {
-        ...it.statsSummary,
+        ...it.stats.acrossVersions.summary,
         dataFormatters: it.dataFormatters,
         config: it.config
     }) %}
@@ -105,7 +105,10 @@
 
 {%- include('compare-versions.html', {...it.stats, config: it.config}) %}
 
-  }
+{% if (it.hasExeComparison) {
+%}{%- include('compare-exes.html', {...it.stats, config: it.config}) %}{%
+   }
+%}
 
 </main>
 </div></div>

@@ -5,6 +5,7 @@ import {
   ComparisonStatistics,
   ComparisonStatsWithUnit,
   calculateChangeStatistics,
+  calculateChangeStatisticsForFirstAsBaseline,
   calculateSummaryOfChangeSummaries,
   median,
   normalize
@@ -19,17 +20,19 @@ import type {
   RevisionData
 } from '../db/types.js';
 import {
+  AllStats,
   ByExeSuiteComparison,
+  BySuiteComparison,
   CompareNavPartial,
   CompareStatsRow,
   CompareStatsTable,
   CompareViewWithData,
-  DataSeriesVersionComparison,
-  StatsSummary
+  DataSeriesVersionComparison
 } from '../../shared/view-types.js';
 import {
   createCanvas,
   renderInlinePlot,
+  renderOverviewPlot,
   renderOverviewPlots
 } from './charts.js';
 import { siteConfig } from '../util.js';
@@ -37,6 +40,7 @@ import { siteAesthetics } from '../../shared/aesthetics.js';
 
 import { collateMeasurements } from './db-data.js';
 import { HasProfile } from '../db/has-profile.js';
+import { assert } from '../../backend/logging.js';
 
 export function compareStringOrNull(
   a: string | null,
@@ -128,6 +132,13 @@ export interface ResultsByBenchmark {
 export type ResultsBySuiteBenchmark = Map<string, ResultsByBenchmark>;
 export type ResultsByExeSuiteBenchmark = Map<string, ResultsBySuiteBenchmark>;
 
+export interface AllResultsByBenchmark {
+  benchmarks: Map<string, ProcessedResult[]>; // list of results for each exe
+  criteria: Record<string, CriterionData>;
+}
+
+export type AcrossExesBySuite = Map<string, AllResultsByBenchmark>;
+
 let inlinePlotCanvas: ChartJSNodeCanvas | null = null;
 
 export function getDataNormalizedToBaselineMedian(
@@ -140,6 +151,18 @@ export function getDataNormalizedToBaselineMedian(
   const data: ChangeData = {
     labels: [base, change],
     data: [normalize(sortedBase, baseM), normalize(sortedChange, baseM)]
+  };
+  return data;
+}
+
+export function getDataSeriesNormalizedToBaselineMedian(
+  exeNames: string[],
+  sorted: number[][]
+): ChangeData {
+  const baseM = median(sorted[0]);
+  const data: ChangeData = {
+    labels: exeNames,
+    data: sorted.map((s) => normalize(s, baseM))
   };
   return data;
 }
@@ -552,7 +575,35 @@ async function createInlinePlot(
     data,
     outputFolder,
     plotName,
-    plotId
+    plotId,
+    true
+  );
+}
+
+async function createExeInlinePlot(
+  exeNames: string[],
+  values: number[][],
+  outputFolder: string,
+  plotName: string,
+  plotId: number
+): Promise<string> {
+  if (inlinePlotCanvas === null) {
+    // todo: we may want to vary the height depending on the number of exes
+    inlinePlotCanvas = createCanvas(siteAesthetics.inlinePlot);
+  }
+
+  const data: ChangeData = getDataSeriesNormalizedToBaselineMedian(
+    exeNames,
+    values
+  );
+
+  return await renderInlinePlot(
+    inlinePlotCanvas,
+    data,
+    outputFolder,
+    plotName,
+    plotId,
+    false
   );
 }
 
@@ -560,15 +611,15 @@ function recordPerCriteria(
   perCriteria: Map<string, ComparisonStatsWithUnit>,
   measurements: Measurements[],
   i: number,
-  baseOffset: number,
+  offset: number,
   changeStats: ComparisonStatistics
 ) {
-  const criterionName = measurements[i + baseOffset].criterion.name;
+  const criterionName = measurements[i + offset].criterion.name;
   let allStats = perCriteria.get(criterionName);
   if (allStats === undefined) {
     allStats = {
       data: [],
-      unit: measurements[i + baseOffset].criterion.unit
+      unit: measurements[i + offset].criterion.unit
     };
     perCriteria.set(criterionName, allStats);
   }
@@ -596,13 +647,13 @@ export async function calculateAllChangeStatisticsAndInlinePlots(
     const bySuiteCompare = new Map<string, CompareStatsTable>();
     comparisonData.set(exe, bySuiteCompare);
 
-    for (const [suite, byBench] of bySuite.entries()) {
+    for (const [suite, suiteWithBench] of bySuite.entries()) {
       const byBenchmark: CompareStatsTable = {
         benchmarks: [],
-        criteria: byBench.criteria
+        criteria: suiteWithBench.criteria
       };
 
-      for (const bench of byBench.benchmarks.values()) {
+      for (const bench of suiteWithBench.benchmarks.values()) {
         const result = await calculateChangeStatsForBenchmark(
           bench,
           hasProfiles,
@@ -626,6 +677,201 @@ export async function calculateAllChangeStatisticsAndInlinePlots(
     }
   }
   return { numRunConfigs, comparisonData };
+}
+
+/**
+ * Flip the data around. For each suite, we want to have
+ * all the data of the executors for each benchmark.
+ */
+export function groupDataBySuiteAndBenchmark(
+  byExeSuiteBench: ResultsByExeSuiteBenchmark,
+  suitesWithMultipleExecutors: string[]
+): AcrossExesBySuite {
+  const resultsBySuite = new Map<string, AllResultsByBenchmark>();
+  for (const [, bySuite] of byExeSuiteBench.entries()) {
+    for (const [suite, byBench] of bySuite.entries()) {
+      if (!suitesWithMultipleExecutors.includes(suite)) {
+        // skip suites that only have a single executor
+        continue;
+      }
+
+      let resultSuite = resultsBySuite.get(suite);
+      if (resultSuite === undefined) {
+        // TODO: the set of criteria here might differ
+        //       across executors and benchmarks
+        resultSuite = { benchmarks: new Map(), criteria: byBench.criteria };
+        resultsBySuite.set(suite, resultSuite);
+      }
+
+      for (const [bench, result] of byBench.benchmarks.entries()) {
+        let byBench = resultSuite.benchmarks.get(bench);
+        if (byBench === undefined) {
+          byBench = [];
+          resultSuite.benchmarks.set(bench, byBench);
+        }
+
+        byBench.push(result);
+      }
+    }
+  }
+
+  return resultsBySuite;
+}
+
+export async function calculateAcrossExesStatsAndAllPlots(
+  byExeSuiteBench: ResultsByExeSuiteBenchmark,
+  suitesWithMultipleExecutors: string[],
+  hasProfiles: HasProfile | null,
+  changeOffset: number,
+  criteria: Map<string, ComparisonStatsWithUnit>,
+  outputFolder: string,
+  plotName: string
+): Promise<BySuiteComparison> {
+  const result = new Map<string, CompareStatsTable>();
+
+  const resultsBySuite = groupDataBySuiteAndBenchmark(
+    byExeSuiteBench,
+    suitesWithMultipleExecutors
+  );
+
+  let lastPlotId = 0;
+
+  for (const [suite, suiteWithBench] of resultsBySuite.entries()) {
+    const byBenchmark: CompareStatsTable = {
+      benchmarks: [],
+      criteria: suiteWithBench.criteria
+    };
+    result.set(suite, byBenchmark);
+
+    for (const results of suiteWithBench.benchmarks.values()) {
+      // 1. calculate stats and inline plots per benchmark
+      const result = await calculateAcrossExesStatsForBenchmark(
+        results,
+        hasProfiles,
+        changeOffset,
+        criteria,
+        lastPlotId,
+        outputFolder,
+        plotName
+      );
+
+      lastPlotId = result.lastPlotId;
+      byBenchmark.benchmarks.push(...result.stats);
+    }
+
+    // 2. create per-suite overview plot
+    const changeData = getChangeDataByExe(byBenchmark, 'total');
+    const runTimeFactor = calculateRunTimeFactorFor(changeData);
+
+    byBenchmark.overviewSvgUrl = await renderOverviewPlot(
+      outputFolder,
+      plotName,
+      suite,
+      runTimeFactor
+    );
+    byBenchmark.baselineExeName = changeData.labels[0];
+  }
+
+  return result;
+}
+
+export async function calculateAcrossExesStatsForBenchmark(
+  results: ProcessedResult[],
+  hasProfiles: HasProfile | null,
+  changeOffset: number,
+  perCriteria: Map<string, ComparisonStatsWithUnit>,
+  lastPlotId: number,
+  outputFolder: string,
+  plotName: string
+): Promise<{
+  stats: CompareStatsRow[];
+  lastPlotId: number;
+}> {
+  const resultStats = new Map<string, CompareStatsRow>();
+
+  // sort results alphabetically, and results[0] is the baseline
+  results.sort((a, b) => a.exe.localeCompare(b.exe));
+
+  // identify the exes
+  const exes = new Set<string>();
+  for (const result of results) {
+    exes.add(result.exe);
+
+    // make sure we have the expected structure
+    assertBasicPropertiesOfSortedMeasurements(result, 0, 1);
+    assert(
+      result.measurements.length === results[0].measurements.length,
+      'For the rest of this code to work, ' +
+        'we assume that all results have the same shape, i.e., set of criteria.'
+    );
+  }
+
+  const exesArr = [...exes];
+
+  assert(exes.size === results.length, 'We expect a single result per exe');
+
+  const count = countVariantsAndDropMissing(results[0], '', '');
+
+  // the measurements may still mix different run ids
+  // since we assume the same set of criteria for all results,
+  // we iterate over the pairs of base/change
+  const iterM = results[0].measurements;
+  for (let i = 0; i < iterM.length; i += 2) {
+    const criterion = iterM[i + changeOffset].criterion.name;
+
+    const values: number[][] = [];
+
+    for (const result of results) {
+      assert(
+        result.measurements[i + changeOffset].criterion.name === criterion,
+        'We expect the same criteria to be at the same index'
+      );
+      const sorted = result.measurements[i + changeOffset].values.flat();
+      sorted.sort((a, b) => a - b);
+      values.push(sorted);
+    }
+
+    const stats = calculateChangeStatisticsForFirstAsBaseline(values);
+
+    const row = addOrGetCompareStatsRow(
+      resultStats,
+      count,
+      results[0].measurements[i + changeOffset],
+      results[0],
+      hasProfiles
+    );
+
+    // initialize the exeStats with the executor names
+    if (!row.exeStats) {
+      row.exeStats = [];
+      for (const result of results) {
+        row.exeStats.push({
+          exeName: result.exe,
+          criteria: {}
+        });
+      }
+    }
+
+    // populate the exeStats for the current criterion
+    for (let j = 0; j < stats.length; j += 1) {
+      row.exeStats[j].criteria[criterion] = stats[j];
+    }
+
+    if (criterion === siteConfig.inlinePlotCriterion) {
+      lastPlotId += 1;
+      row.inlinePlot = await createExeInlinePlot(
+        exesArr,
+        values,
+        outputFolder,
+        plotName,
+        lastPlotId
+      );
+    }
+
+    // TODO: extract per criteria for overview plot
+  }
+
+  return { stats: [...resultStats.values()], lastPlotId };
 }
 
 export interface ChangeData {
@@ -676,21 +922,52 @@ export function getChangeDataBySuiteAndExe(
   return bySuiteAndExe;
 }
 
+export function getChangeDataByExe(
+  byBenchmark: CompareStatsTable,
+  criterion: string
+): ChangeData {
+  const byExe: ChangeData = { labels: [], data: [] };
+
+  for (const b of byBenchmark.benchmarks) {
+    if (!b.exeStats) {
+      throw new Error('Expected exeStats to be defined already');
+    }
+    for (const e of b.exeStats) {
+      let i = byExe.labels.indexOf(e.exeName);
+      if (i < 0) {
+        i = byExe.labels.length;
+        byExe.labels.push(e.exeName);
+        byExe.data.push([]);
+      }
+
+      byExe.data[i].push(e.criteria[criterion].change_m);
+    }
+  }
+
+  return byExe;
+}
+
 export function calculateRunTimeFactor(
   changeData: BySuiteChangeData
 ): BySuiteChangeData {
   const bySuiteAndExe = new Map<string, ChangeData>();
 
   for (const [suite, data] of changeData.entries()) {
-    const bySuiteChangeData: ChangeData = { labels: data.labels, data: [] };
-    bySuiteAndExe.set(suite, bySuiteChangeData);
-
-    for (const exe of data.data) {
-      bySuiteChangeData.data.push(exe.map((v) => v + 1));
-    }
+    const result = calculateRunTimeFactorFor(data);
+    bySuiteAndExe.set(suite, result);
   }
 
   return bySuiteAndExe;
+}
+
+function calculateRunTimeFactorFor(data: ChangeData) {
+  const bySuiteChangeData: ChangeData = { labels: data.labels, data: [] };
+
+  for (const exe of data.data) {
+    bySuiteChangeData.data.push(exe.map((v) => v + 1));
+  }
+
+  return bySuiteChangeData;
 }
 
 /**
@@ -763,16 +1040,19 @@ export async function prepareCompareView(
   reportOutputFolder: string
 ): Promise<CompareViewWithData> {
   const collatedMs = collateMeasurements(results);
-  const { summary, allMeasurements } =
-    await calculateAllStatisticsAndRenderPlots(
-      collatedMs,
-      hasProfiles,
-      revDetails.baseCommitId,
-      revDetails.changeCommitId,
-      reportId,
-      reportOutputFolder,
-      `${reportId}/inline`
-    );
+
+  const navigation = getNavigation(collatedMs);
+
+  const allStats = await calculateAllStatisticsAndRenderPlots(
+    collatedMs,
+    navigation.navExeComparison.suites,
+    hasProfiles,
+    revDetails.baseCommitId,
+    revDetails.changeCommitId,
+    reportId,
+    reportOutputFolder,
+    `${reportId}/inline`
+  );
 
   const data: CompareViewWithData = {
     revisionFound: true,
@@ -783,16 +1063,14 @@ export async function prepareCompareView(
     changeHash6: revDetails.changeCommitId6,
     base: <RevisionData>revDetails.base,
     change: <RevisionData>revDetails.change,
-    navigation: getNavigation(collatedMs),
+
+    navigation,
+    hasExeComparison: navigation.navExeComparison.suites.length > 0,
 
     noData: false, // TODO: need to derive this from one of the stats details
     notInBoth: null, // TODO: need to get this out of the stats calculations
 
-    statsSummary: summary,
-    stats: {
-      allMeasurements,
-      environments
-    },
+    stats: { ...allStats, environments },
     config: {
       reportsUrl: siteConfig.reportsUrl,
       overviewPlotWidth: siteAesthetics.overviewPlotWidth
@@ -805,13 +1083,14 @@ export async function prepareCompareView(
 
 export async function calculateAllStatisticsAndRenderPlots(
   byExeSuiteBench: ResultsByExeSuiteBenchmark,
+  suitesWithMultipleExecutors: string[],
   hasProfiles: HasProfile | null,
   base: string,
   change: string,
   reportId: string,
   reportOutputFolder: string,
   inlinePlotName: string
-): Promise<{ summary: StatsSummary; allMeasurements: ByExeSuiteComparison }> {
+): Promise<AllStats> {
   const { baseOffset, changeOffset } = getCommitOffsetsInSortedMeasurements(
     base,
     change
@@ -820,7 +1099,8 @@ export async function calculateAllStatisticsAndRenderPlots(
   const absolutePath = `${reportOutputFolder}/${reportId}`;
   mkdirSync(absolutePath, { recursive: true });
 
-  const criteria = new Map<string, ComparisonStatsWithUnit>();
+  const criteriaAcrossVersions = new Map<string, ComparisonStatsWithUnit>();
+  const criteriaAcrossExes = new Map<string, ComparisonStatsWithUnit>();
 
   const { numRunConfigs, comparisonData } =
     await calculateAllChangeStatisticsAndInlinePlots(
@@ -830,10 +1110,20 @@ export async function calculateAllStatisticsAndRenderPlots(
       change,
       baseOffset,
       changeOffset,
-      criteria,
+      criteriaAcrossVersions,
       reportOutputFolder,
       inlinePlotName
     );
+
+  const acrossExes = await calculateAcrossExesStatsAndAllPlots(
+    byExeSuiteBench,
+    suitesWithMultipleExecutors,
+    hasProfiles,
+    changeOffset,
+    criteriaAcrossExes,
+    reportOutputFolder,
+    inlinePlotName + '-exe'
+  );
 
   const plotData = calculateDataForOverviewPlot(comparisonData, 'total');
 
@@ -844,13 +1134,16 @@ export async function calculateAllStatisticsAndRenderPlots(
   );
 
   return {
-    summary: {
-      stats: calculateSummaryOfChangeSummaries(criteria),
-      numRunConfigs,
-      overviewPngUrl: files.png,
-      overviewSvgUrls: files.svg
+    acrossVersions: {
+      summary: {
+        stats: calculateSummaryOfChangeSummaries(criteriaAcrossVersions),
+        numRunConfigs,
+        overviewPngUrl: files.png,
+        overviewSvgUrls: files.svg
+      },
+      allMeasurements: comparisonData
     },
-    allMeasurements: comparisonData
+    acrossExes
   };
 }
 

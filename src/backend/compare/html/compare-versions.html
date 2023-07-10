@@ -1,6 +1,6 @@
 <h2>Performance Changes between Versions</h2>
 {%
-for (const [exeName, suites] of it.allMeasurements.entries()) {
+for (const [exeName, suites] of it.acrossVersions.allMeasurements.entries()) {
   for (const [suiteName, suite] of suites.entries()) {
     if (suite.benchmarks.length > 0) {
 %}

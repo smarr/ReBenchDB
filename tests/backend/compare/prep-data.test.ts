@@ -11,6 +11,7 @@ import type {
   RunSettings
 } from '../../../src/backend/db/types.js';
 import {
+  AcrossExesBySuite,
   ResultsByBenchmark,
   ResultsByExeSuiteBenchmark,
   ResultsBySuiteBenchmark,
@@ -23,6 +24,8 @@ import {
   compareToSortForSinglePassChangeStats,
   countVariantsAndDropMissing,
   getChangeDataBySuiteAndExe,
+  getNavigation,
+  groupDataBySuiteAndBenchmark,
   prepareCompareView
 } from '../../../src/backend/compare/prep-data.js';
 import { ComparisonStatsWithUnit } from '../../../src/shared/stats.js';
@@ -797,6 +800,27 @@ describe('prepareCompareView()', () => {
           expect(true).toBe(false);
         }
       );
+    }
+  });
+});
+
+describe('groupDataBySuiteAndBenchmark()', () => {
+  const navT = getNavigation(resultTSOM);
+  const suitesWithMultipleExecutors = navT.navExeComparison.suites;
+
+  it('should group the data by suite and benchmark', () => {
+    const result: AcrossExesBySuite = groupDataBySuiteAndBenchmark(
+      resultTSOM,
+      suitesWithMultipleExecutors
+    );
+
+    const arr = [...result.keys()];
+    arr.sort((a, b) => a.localeCompare(b));
+
+    expect(suitesWithMultipleExecutors).toEqual(arr);
+
+    for (const suite of result.values()) {
+      expect(suite.benchmarks.size).toBeGreaterThan(0);
     }
   });
 });

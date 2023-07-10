@@ -226,7 +226,8 @@ describe('renderInlinePlot()', () => {
       data,
       outputFolder,
       'inline',
-      1
+      1,
+      true
     );
 
     expect(name).toEqual('inline-1.svg');

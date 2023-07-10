@@ -3068,90 +3068,1689 @@
 </div>
 
 
-<!-- 
+<h2 id="exe-comparisons">Executor Comparisons</h2>
 
-if (nrow(suites_for_comparison) > 0) {
-  out('<h2 id="exe-comparisons">Executor Comparisons</h2>\n')
+    <h3 id="exe-comp-micro-somsom">micro-somsom</h3>
+    <p>Baseline: </p>
 
-  for (s in suites_for_comparison$suite) {
-    # s <- "macro-startup"
-    out('<h3 id="exe-comp-', s ,'">', s ,'</h3>\n')
+    <img src="/static/reports/tsom/inline-exe-micro-somsom.svg" width="432">
+    <table class="table table-sm benchmark-details">
+<thead><tr>
+<th scope="col"></th>
+<th scope="col"></th>
+<th scope="col" title="Number of Samples">#M</th>
+<th scope="col">median time<br>in ms</th>
+<th scope="col">time diff %</th>
 
-    change_s <- change_data |>
-      filter(suite == s) |>
-      droplevels()
-    exes <- sort(levels(change_s$exe))
-    baseline_exe <- exes[[1]]
+<th scope="col"></th>
+</tr></thead>
 
-    out("<p>Baseline: ", baseline_exe, "</p>")
-
-
-    warmup_s <- warmup |>
-      restrict_to_change_data() |>
-      filter(suite == s)
-
-    peak_s <- peak |>
-      restrict_to_change_data() |>
-      filter(suite == s)
-
-    base_s <- peak_s |>
-      filter(exe == baseline_exe) |>
-      group_by(bench,
-               varvalue, cores, inputsize, extraargs, criterion) |>
-      summarise(base_mean = mean(value),
-                base_median = median(value),
-                .groups = "drop")
-
-    norm_s <- peak_s |>
-      left_join(base_s, by = c(
-        "bench", "varvalue", "cores", "inputsize", "extraargs", "criterion")) |>
-      group_by(bench, varvalue, cores, inputsize, extraargs, criterion) |>
-      transform(ratio_mean = value / base_mean,
-                ratio_median = value / base_median)
+<tbody>
+<tr>
+<th scope="row">List</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-1.svg"></td>
+<td class="stats-samples">
+ast 1
+<br>bc 1
+</td>
+<td><span class="stats-median" title="median">
+21624.67
+<br>28426.29
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">31</span>
+</td>
 
 
-    stats_s <- norm_s |>
-      group_by(exe, bench,
-               varvalue, cores, inputsize, extraargs, criterion) |>
-      filter(is.na(warmup) | iteration >= warmup) |>
-      calculate_stats()
 
-    not_in_both_s <- stats_s |>
-      filter(is.na(ratio) & criterion == "total")
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som-native-interp-ast -cp core-lib/Smalltalk:core-lib/TestSuite:core-lib/SomSom/src/compiler:core-lib/SomSom/src/vm:core-lib/SomSom/src/vmobjects:core-lib/SomSom/src/interpreter:core-lib/SomSom/src/primitives core-lib/SomSom/src/vm/Main.som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som List 1 0  1</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"List","e":"SomSom-native-interp-ast","s":"micro-somsom"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Loop</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-2.svg"></td>
+<td class="stats-samples">
+ast 1
+<br>bc 1
+</td>
+<td><span class="stats-median" title="median">
+15196.07
+<br>19723.08
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">30</span>
+</td>
 
-    stats_s <- stats_s |>
-      filter(!(is.na(ratio) & criterion == "total"))
 
-    p <- ggplot(stats_s |> filter(criterion == "total"), aes(ratio, exe, fill=exe)) +
-      geom_vline(aes(xintercept=1), colour="#999999", linetype="solid") +
-      geom_vline(aes(xintercept=slower_runtime_ratio), colour="#cccccc", linetype="dashed") +
-      geom_vline(aes(xintercept=faster_runtime_ratio), colour="#cccccc", linetype="dashed") +
-      geom_boxplot(aes(colour = exe),
-                   outlier.size = 0.9,
-                   outlier.alpha = 0.6) +
-      stat_summary(fun = negative_geometric.mean,
-                   size = 1, colour = "#503000", geom = "point") +
-      scale_x_log10() +
-      scale_y_discrete(limits = rev) +
-      ylab("") +
-      #coord_cartesian(xlim=c(0.5, 2.5)) +
-      theme_simple(8) +
-      scale_color_manual(values = exes_colors) +
-      scale_fill_manual(values = exes_colors_light) +
-      # scale_fill_manual(breaks=c("slower", "faster", "indeterminate"),
-      #                   values=c(slow_color, fast_color, NA)) +
-      theme(legend.position = "none")
 
-    ggsave(paste0('overview.', s, '.svg'), p, "svg", output_dir, width = 4.5, height = 2.5, units = "in")
-    ggsave(paste0('overview.', s, '.png'), p, "png", output_dir, width = 4.5, height = 2.5, units = "in")
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som-native-interp-ast -cp core-lib/Smalltalk:core-lib/TestSuite:core-lib/SomSom/src/compiler:core-lib/SomSom/src/vm:core-lib/SomSom/src/vmobjects:core-lib/SomSom/src/interpreter:core-lib/SomSom/src/primitives core-lib/SomSom/src/vm/Main.som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Loop 1 0  1</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Loop","e":"SomSom-native-interp-ast","s":"micro-somsom"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Mandelbrot</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-3.svg"></td>
+<td class="stats-samples">
+ast 1
+<br>bc 1
+</td>
+<td><span class="stats-median" title="median">
+351.52
+<br>456.26
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">30</span>
+</td>
 
-    out('<img src="', output_url, '/overview.', s, '.svg">')
 
-    row_count <- perf_diff_table_es(
-      norm_s, stats_s, warmup_s, NULL, row_count + 1, exe, exes_colors, exes_colors_light, FALSE)
-  }
 
-} -->
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som-native-interp-ast -cp core-lib/Smalltalk:core-lib/TestSuite:core-lib/SomSom/src/compiler:core-lib/SomSom/src/vm:core-lib/SomSom/src/vmobjects:core-lib/SomSom/src/interpreter:core-lib/SomSom/src/primitives core-lib/SomSom/src/vm/Main.som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Mandelbrot 1 0  3</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Mandelbrot","e":"SomSom-native-interp-ast","s":"micro-somsom"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Queens</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-4.svg"></td>
+<td class="stats-samples">
+ast 1
+<br>bc 1
+</td>
+<td><span class="stats-median" title="median">
+14760.86
+<br>18868.32
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">28</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som-native-interp-ast -cp core-lib/Smalltalk:core-lib/TestSuite:core-lib/SomSom/src/compiler:core-lib/SomSom/src/vm:core-lib/SomSom/src/vmobjects:core-lib/SomSom/src/interpreter:core-lib/SomSom/src/primitives core-lib/SomSom/src/vm/Main.som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Queens 1 0  1</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Queens","e":"SomSom-native-interp-ast","s":"micro-somsom"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Recurse</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-5.svg"></td>
+<td class="stats-samples">
+ast 1
+<br>bc 1
+</td>
+<td><span class="stats-median" title="median">
+13668.42
+<br>18004.65
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">32</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som-native-interp-ast -cp core-lib/Smalltalk:core-lib/TestSuite:core-lib/SomSom/src/compiler:core-lib/SomSom/src/vm:core-lib/SomSom/src/vmobjects:core-lib/SomSom/src/interpreter:core-lib/SomSom/src/primitives core-lib/SomSom/src/vm/Main.som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Recurse 1 0  1</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Recurse","e":"SomSom-native-interp-ast","s":"micro-somsom"}'></button>
+</td>
+</tr>
+</tbody>
+</table>
+
+
+    <h3 id="exe-comp-macro-startup">macro-startup</h3>
+    <p>Baseline: </p>
+
+    <img src="/static/reports/tsom/inline-exe-macro-startup.svg" width="432">
+    <table class="table table-sm benchmark-details">
+<thead><tr>
+<th scope="col"></th>
+<th scope="col"></th>
+<th scope="col" title="Number of Samples">#M</th>
+<th scope="col">median time<br>in ms</th>
+<th scope="col">time diff %</th>
+
+<th scope="col"></th>
+</tr></thead>
+
+<tbody>
+<tr>
+<th scope="row">DeltaBlue</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-6.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+275.04
+<br>292.45
+<br>71.54
+<br>76.58
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">6</span>
+<br><span class="stats-change" title="change over median run time">-74</span>
+<br><span class="stats-change" title="change over median run time">-72</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som DeltaBlue 1 0  100</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"DeltaBlue","e":"TruffleSOM-graal","s":"macro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">GraphSearch</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-7.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+182.46
+<br>212.70
+<br>59.00
+<br>69.81
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">17</span>
+<br><span class="stats-change" title="change over median run time">-68</span>
+<br><span class="stats-change" title="change over median run time">-62</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som GraphSearch 1 0  7</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"GraphSearch","e":"TruffleSOM-graal","s":"macro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Json</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-8.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+253.06
+<br>254.33
+<br>158.93
+<br>153.97
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">1</span>
+<br><span class="stats-change" title="change over median run time">-37</span>
+<br><span class="stats-change" title="change over median run time">-39</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som Json 1 0  1</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Json","e":"TruffleSOM-graal","s":"macro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">NBody</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-9.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+132.49
+<br>172.67
+<br>69.55
+<br>81.59
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">30</span>
+<br><span class="stats-change" title="change over median run time">-48</span>
+<br><span class="stats-change" title="change over median run time">-38</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som NBody 1 0  1000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"NBody","e":"TruffleSOM-graal","s":"macro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">PageRank</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-10.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+159.80
+<br>287.66
+<br>64.81
+<br>105.03
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">80</span>
+<br><span class="stats-change" title="change over median run time">-59</span>
+<br><span class="stats-change" title="change over median run time">-34</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som PageRank 1 0  75</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"PageRank","e":"TruffleSOM-graal","s":"macro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Richards</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-11.svg"></td>
+<td class="stats-samples">
+graal-bc 5
+<br>interp 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+689.30
+<br>357.33
+<br>412.86
+<br>624.07
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">-48</span>
+<br><span class="stats-change" title="change over median run time">-40</span>
+<br><span class="stats-change" title="change over median run time">-9</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som  -Dsom.interp=BC  -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som Richards 1 0  1</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Richards","e":"TruffleSOM-graal-bc","s":"macro-startup"}'></button>
+</td>
+</tr>
+</tbody>
+</table>
+
+
+    <h3 id="exe-comp-macro-steady">macro-steady</h3>
+    <p>Baseline: </p>
+
+    <img src="/static/reports/tsom/inline-exe-macro-steady.svg" width="432">
+    <table class="table table-sm benchmark-details">
+<thead><tr>
+<th scope="col"></th>
+<th scope="col"></th>
+<th scope="col" title="Number of Samples">#M</th>
+<th scope="col">median time<br>in ms</th>
+<th scope="col">time diff %</th>
+
+<th scope="col"></th>
+</tr></thead>
+
+<tbody>
+<tr>
+<th scope="row">DeltaBlue</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-12.svg"></td>
+<td class="stats-samples">
+ 120
+<br>-bc 120
+</td>
+<td><span class="stats-median" title="median">
+49.53
+<br>160.50
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">224</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som DeltaBlue 120 0  10000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"DeltaBlue","e":"TruffleSOM-graal","s":"macro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">GraphSearch</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-13.svg"></td>
+<td class="stats-samples">
+ 250
+<br>-bc 250
+</td>
+<td><span class="stats-median" title="median">
+71.07
+<br>72.17
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">2</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som GraphSearch 250 0  25</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"GraphSearch","e":"TruffleSOM-graal","s":"macro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Json</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-14.svg"></td>
+<td class="stats-samples">
+ 120
+<br>-bc 120
+</td>
+<td><span class="stats-median" title="median">
+105.25
+<br>111.11
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">6</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som Json 120 0  80</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Json","e":"TruffleSOM-graal","s":"macro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">NBody</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-15.svg"></td>
+<td class="stats-samples">
+ 120
+<br>-bc 120
+</td>
+<td><span class="stats-median" title="median">
+70.04
+<br>61.05
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">-13</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som NBody 120 0  200000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"NBody","e":"TruffleSOM-graal","s":"macro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">PageRank</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-16.svg"></td>
+<td class="stats-samples">
+ 120
+<br>-bc 120
+</td>
+<td><span class="stats-median" title="median">
+114.29
+<br>107.50
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">-6</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som PageRank 120 0  1000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"PageRank","e":"TruffleSOM-graal","s":"macro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Richards</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-17.svg"></td>
+<td class="stats-samples">
+ 130
+<br>-bc 130
+</td>
+<td><span class="stats-median" title="median">
+99.78
+<br>97.56
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">-2</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som Richards 130 0  40</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Richards","e":"TruffleSOM-graal","s":"macro-steady"}'></button>
+</td>
+</tr>
+</tbody>
+</table>
+
+
+    <h3 id="exe-comp-micro-startup">micro-startup</h3>
+    <p>Baseline: </p>
+
+    <img src="/static/reports/tsom/inline-exe-micro-startup.svg" width="432">
+    <table class="table table-sm benchmark-details">
+<thead><tr>
+<th scope="col"></th>
+<th scope="col"></th>
+<th scope="col" title="Number of Samples">#M</th>
+<th scope="col">median time<br>in ms</th>
+<th scope="col">time diff %</th>
+
+<th scope="col"></th>
+</tr></thead>
+
+<tbody>
+<tr>
+<th scope="row">Bounce</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-18.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+151.69
+<br>163.67
+<br>87.33
+<br>89.81
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">8</span>
+<br><span class="stats-change" title="change over median run time">-42</span>
+<br><span class="stats-change" title="change over median run time">-41</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Bounce 1 0  10</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Bounce","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">BubbleSort</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-19.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+129.31
+<br>141.15
+<br>70.28
+<br>95.55
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">9</span>
+<br><span class="stats-change" title="change over median run time">-46</span>
+<br><span class="stats-change" title="change over median run time">-26</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som BubbleSort 1 0  15</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"BubbleSort","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Dispatch</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-20.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+100.84
+<br>115.17
+<br>64.68
+<br>123.38
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">14</span>
+<br><span class="stats-change" title="change over median run time">-36</span>
+<br><span class="stats-change" title="change over median run time">22</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Dispatch 1 0  10</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Dispatch","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Fibonacci</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-21.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+134.85
+<br>231.00
+<br>60.74
+<br>139.68
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">71</span>
+<br><span class="stats-change" title="change over median run time">-55</span>
+<br><span class="stats-change" title="change over median run time">4</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Fibonacci 1 0  10</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Fibonacci","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">FieldLoop</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-22.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+47.32
+<br>65.15
+<br>34.76
+<br>22.88
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">38</span>
+<br><span class="stats-change" title="change over median run time">-27</span>
+<br><span class="stats-change" title="change over median run time">-52</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som FieldLoop 1 0  1</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"FieldLoop","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">IntegerLoop</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-23.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+89.40
+<br>228.15
+<br>55.56
+<br>150.75
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">155</span>
+<br><span class="stats-change" title="change over median run time">-38</span>
+<br><span class="stats-change" title="change over median run time">69</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som IntegerLoop 1 0  7</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"IntegerLoop","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">List</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-24.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+80.21
+<br>76.16
+<br>19.29
+<br>22.22
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">-5</span>
+<br><span class="stats-change" title="change over median run time">-76</span>
+<br><span class="stats-change" title="change over median run time">-72</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som List 1 0  2</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"List","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Loop</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-25.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+88.65
+<br>118.13
+<br>122.04
+<br>528.11
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">33</span>
+<br><span class="stats-change" title="change over median run time">38</span>
+<br><span class="stats-change" title="change over median run time">496</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Loop 1 0  100</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Loop","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Mandelbrot</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-26.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+123.19
+<br>244.78
+<br>105.75
+<br>124.67
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">99</span>
+<br><span class="stats-change" title="change over median run time">-14</span>
+<br><span class="stats-change" title="change over median run time">1</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Mandelbrot 1 0  50</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Mandelbrot","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Permute</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-27.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+145.52
+<br>189.32
+<br>107.63
+<br>129.47
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">30</span>
+<br><span class="stats-change" title="change over median run time">-26</span>
+<br><span class="stats-change" title="change over median run time">-11</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Permute 1 0  10</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Permute","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Queens</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-28.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+119.00
+<br>186.72
+<br>67.01
+<br>118.02
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">57</span>
+<br><span class="stats-change" title="change over median run time">-44</span>
+<br><span class="stats-change" title="change over median run time">-1</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Queens 1 0  10</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Queens","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">QuickSort</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-29.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+185.47
+<br>239.84
+<br>92.15
+<br>89.83
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">29</span>
+<br><span class="stats-change" title="change over median run time">-50</span>
+<br><span class="stats-change" title="change over median run time">-52</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som QuickSort 1 0  15</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"QuickSort","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Recurse</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-30.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+128.25
+<br>144.41
+<br>61.08
+<br>76.64
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">13</span>
+<br><span class="stats-change" title="change over median run time">-52</span>
+<br><span class="stats-change" title="change over median run time">-40</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Recurse 1 0  12</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Recurse","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Sieve</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-31.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+132.23
+<br>172.03
+<br>91.75
+<br>115.01
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">30</span>
+<br><span class="stats-change" title="change over median run time">-31</span>
+<br><span class="stats-change" title="change over median run time">-13</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Sieve 1 0  20</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Sieve","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Storage</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-32.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+158.52
+<br>179.38
+<br>68.34
+<br>77.53
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">13</span>
+<br><span class="stats-change" title="change over median run time">-57</span>
+<br><span class="stats-change" title="change over median run time">-51</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Storage 1 0  8</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Storage","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Sum</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-33.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+80.63
+<br>110.34
+<br>142.33
+<br>254.49
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">37</span>
+<br><span class="stats-change" title="change over median run time">77</span>
+<br><span class="stats-change" title="change over median run time">216</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Sum 1 0  40</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Sum","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Towers</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-34.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+140.07
+<br>178.94
+<br>45.54
+<br>69.94
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">28</span>
+<br><span class="stats-change" title="change over median run time">-67</span>
+<br><span class="stats-change" title="change over median run time">-50</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Towers 1 0  2</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Towers","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">TreeSort</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-35.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+156.97
+<br>217.42
+<br>57.86
+<br>79.03
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">39</span>
+<br><span class="stats-change" title="change over median run time">-63</span>
+<br><span class="stats-change" title="change over median run time">-50</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som TreeSort 1 0  7</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"TreeSort","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">WhileLoop</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-36.svg"></td>
+<td class="stats-samples">
+graal 5
+<br>graal-bc 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+67.42
+<br>225.86
+<br>84.46
+<br>92.71
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">235</span>
+<br><span class="stats-change" title="change over median run time">25</span>
+<br><span class="stats-change" title="change over median run time">37</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som WhileLoop 1 0  30</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"WhileLoop","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Fannkuch</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-37.svg"></td>
+<td class="stats-samples">
+graal-bc 5
+<br>interp 5
+<br>native-interp-ast 5
+<br>native-interp-bc 5
+</td>
+<td><span class="stats-median" title="median">
+194.92
+<br>123.53
+<br>44.35
+<br>71.65
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">-37</span>
+<br><span class="stats-change" title="change over median run time">-77</span>
+<br><span class="stats-change" title="change over median run time">-63</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som  -Dsom.interp=BC  -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Fannkuch 1 0  7</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Fannkuch","e":"TruffleSOM-graal-bc","s":"micro-startup"}'></button>
+</td>
+</tr>
+</tbody>
+</table>
+
+
+    <h3 id="exe-comp-micro-steady">micro-steady</h3>
+    <p>Baseline: </p>
+
+    <img src="/static/reports/tsom/inline-exe-micro-steady.svg" width="432">
+    <table class="table table-sm benchmark-details">
+<thead><tr>
+<th scope="col"></th>
+<th scope="col"></th>
+<th scope="col" title="Number of Samples">#M</th>
+<th scope="col">median time<br>in ms</th>
+<th scope="col">time diff %</th>
+
+<th scope="col"></th>
+</tr></thead>
+
+<tbody>
+<tr>
+<th scope="row">Bounce</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-38.svg"></td>
+<td class="stats-samples">
+ 60
+<br>-bc 60
+</td>
+<td><span class="stats-median" title="median">
+139.58
+<br>216.01
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">55</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Bounce 60 0  4000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Bounce","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">BubbleSort</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-39.svg"></td>
+<td class="stats-samples">
+ 55
+<br>-bc 55
+</td>
+<td><span class="stats-median" title="median">
+83.49
+<br>78.22
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">-6</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som BubbleSort 55 0  3000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"BubbleSort","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Dispatch</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-40.svg"></td>
+<td class="stats-samples">
+ 55
+<br>-bc 55
+</td>
+<td><span class="stats-median" title="median">
+223.33
+<br>196.97
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">-12</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Dispatch 55 0  10000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Dispatch","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Fannkuch</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-41.svg"></td>
+<td class="stats-samples">
+ 55
+<br>-bc 55
+</td>
+<td><span class="stats-median" title="median">
+46.52
+<br>195.80
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">321</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Fannkuch 55 0  9</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Fannkuch","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Fibonacci</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-42.svg"></td>
+<td class="stats-samples">
+ 60
+<br>-bc 60
+</td>
+<td><span class="stats-median" title="median">
+85.58
+<br>116.58
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">36</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Fibonacci 60 0  1000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Fibonacci","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">FieldLoop</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-43.svg"></td>
+<td class="stats-samples">
+ 55
+<br>-bc 55
+</td>
+<td><span class="stats-median" title="median">
+240.07
+<br>239.91
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">0</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som FieldLoop 55 0  900</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"FieldLoop","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">IntegerLoop</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-44.svg"></td>
+<td class="stats-samples">
+ 55
+<br>-bc 55
+</td>
+<td><span class="stats-median" title="median">
+155.00
+<br>268.56
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">73</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som IntegerLoop 55 0  8000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"IntegerLoop","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">List</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-45.svg"></td>
+<td class="stats-samples">
+ 65
+<br>-bc 65
+</td>
+<td><span class="stats-median" title="median">
+105.67
+<br>101.37
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">-4</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som List 65 0  1000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"List","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Loop</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-46.svg"></td>
+<td class="stats-samples">
+ 55
+<br>-bc 55
+</td>
+<td><span class="stats-median" title="median">
+2.41
+<br>175.47
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">7172</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Loop 55 0  10000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Loop","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Mandelbrot</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-47.svg"></td>
+<td class="stats-samples">
+ 110
+<br>-bc 110
+</td>
+<td><span class="stats-median" title="median">
+358.87
+<br>394.93
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">10</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Mandelbrot 110 0  1000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Mandelbrot","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Permute</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-48.svg"></td>
+<td class="stats-samples">
+ 55
+<br>-bc 55
+</td>
+<td><span class="stats-median" title="median">
+135.55
+<br>424.57
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">213</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Permute 55 0  1500</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Permute","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Queens</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-49.svg"></td>
+<td class="stats-samples">
+ 55
+<br>-bc 55
+</td>
+<td><span class="stats-median" title="median">
+119.42
+<br>106.88
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">-11</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Queens 55 0  1000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Queens","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">QuickSort</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-50.svg"></td>
+<td class="stats-samples">
+ 55
+<br>-bc 55
+</td>
+<td><span class="stats-median" title="median">
+121.89
+<br>246.59
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">102</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som QuickSort 55 0  2000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"QuickSort","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Recurse</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-51.svg"></td>
+<td class="stats-samples">
+ 65
+<br>-bc 65
+</td>
+<td><span class="stats-median" title="median">
+122.70
+<br>138.64
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">13</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Recurse 65 0  2000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Recurse","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Sieve</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-52.svg"></td>
+<td class="stats-samples">
+ 60
+<br>-bc 60
+</td>
+<td><span class="stats-median" title="median">
+100.75
+<br>102.64
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">2</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Sieve 60 0  2500</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Sieve","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Storage</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-53.svg"></td>
+<td class="stats-samples">
+ 60
+<br>-bc 60
+</td>
+<td><span class="stats-median" title="median">
+97.29
+<br>197.72
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">103</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Storage 60 0  1000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Storage","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Sum</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-54.svg"></td>
+<td class="stats-samples">
+ 55
+<br>-bc 55
+</td>
+<td><span class="stats-median" title="median">
+250.33
+<br>190.78
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">-24</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Sum 55 0  10000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Sum","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Towers</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-55.svg"></td>
+<td class="stats-samples">
+ 55
+<br>-bc 55
+</td>
+<td><span class="stats-median" title="median">
+343.36
+<br>335.06
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">-2</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Towers 55 0  1000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Towers","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">TreeSort</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-56.svg"></td>
+<td class="stats-samples">
+ 60
+<br>-bc 60
+</td>
+<td><span class="stats-median" title="median">
+154.65
+<br>159.52
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">3</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som TreeSort 60 0  1000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"TreeSort","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">WhileLoop</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-57.svg"></td>
+<td class="stats-samples">
+ 55
+<br>-bc 55
+</td>
+<td><span class="stats-median" title="median">
+181.69
+<br>787.93
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">334</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som WhileLoop 55 0  9000</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"WhileLoop","e":"TruffleSOM-graal","s":"micro-steady"}'></button>
+</td>
+</tr>
+</tbody>
+</table>
+
+
 
 </main>
 </div></div>
