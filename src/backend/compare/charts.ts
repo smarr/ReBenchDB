@@ -101,6 +101,41 @@ function toDataSetWithBaseChangeBackground(data: ChangeData): any[] {
   ];
 }
 
+function toDataSetWithExeColors(data: ChangeData): any[] {
+  if (data.labels.length < 2) {
+    throw new Error(
+      'Expect at least two data series, but only got ' + data.labels.length
+    );
+  }
+
+  // TODO: we would really like to have a consistent mapping of executors
+  // to colors, but for that, we would need to establish the mapping once
+  // per report and then use it for all plots here
+  const colors = siteAesthetics.exeColors.slice(0, data.labels.length);
+  const lightColors = colors.map((c) => siteAesthetics.lighten(c));
+
+  return [
+    {
+      backgroundColor: lightColors,
+      borderColor: colors,
+
+      outlierBackgroundColor: lightColors,
+      outlierBorderColor: colors,
+      outlierRadius: 1.5,
+
+      borderWidth: 1,
+      itemRadius: 2,
+
+      meanBackgroundColor: '#000',
+      meanBorderColor: '#000',
+      meanBorderWidth: 1,
+      meanRadius: 1.5,
+
+      data: <number[]>(<unknown>data.data)
+    }
+  ];
+}
+
 function toDataSetWithFastSlowBackground(data: ChangeData): any[] {
   const medianPerLabel = data.data.map((d) => medianUnsorted(d));
 
@@ -307,12 +342,27 @@ export async function renderOverviewPlots(
   return { png: `${plotName}.png`, svg: svgUrls };
 }
 
+export async function renderOverviewPlot(
+  outputFolder: string,
+  plotName: string,
+  group: string,
+  plotData: ChangeData
+): Promise<string> {
+  const absolutePath = `${outputFolder}/${plotName}-${group}.svg`;
+
+  const svg = await renderOverviewComparison(group, plotData, 'svg');
+  writeFileSync(absolutePath, svg);
+
+  return `${plotName}-${group}.svg`;
+}
+
 export async function renderInlinePlot(
   canvas: ChartJSNodeCanvas,
   data: ChangeData,
   outputFolder: string,
   plotName: string,
-  plotId: number
+  plotId: number,
+  isAcrossVersions: boolean
 ): Promise<string> {
   const buffer = await renderDataOnCanvas(
     canvas,
@@ -323,7 +373,9 @@ export async function renderInlinePlot(
     false,
     6,
     2,
-    toDataSetWithBaseChangeBackground
+    isAcrossVersions
+      ? toDataSetWithBaseChangeBackground
+      : toDataSetWithExeColors
   );
   const inlinePlotUrl = `${plotName}-${plotId}.svg`;
   writeFileSync(`${outputFolder}/${inlinePlotUrl}`, buffer);
