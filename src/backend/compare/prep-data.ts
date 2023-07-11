@@ -30,6 +30,7 @@ import {
   DataSeriesVersionComparison
 } from '../../shared/view-types.js';
 import {
+  calculateInlinePlotHeight,
   createCanvas,
   renderInlinePlot,
   renderOverviewPlot,
@@ -582,6 +583,8 @@ async function createInlinePlot(
   );
 }
 
+const inlinePlotCanvasByNumExes: ChartJSNodeCanvas[] = [];
+
 async function createExeInlinePlot(
   exeNames: string[],
   values: number[][],
@@ -590,9 +593,12 @@ async function createExeInlinePlot(
   plotId: number,
   exeColors: Map<string, string>
 ): Promise<string> {
-  if (inlinePlotCanvas === null) {
-    // todo: we may want to vary the height depending on the number of exes
-    inlinePlotCanvas = createCanvas(siteAesthetics.inlinePlot);
+  if (!inlinePlotCanvasByNumExes[exeNames.length]) {
+    const height = calculateInlinePlotHeight(exeNames.length);
+    inlinePlotCanvasByNumExes[exeNames.length] = createCanvas({
+      ...siteAesthetics.inlinePlot,
+      height
+    });
   }
 
   const data: ChangeData = getDataSeriesNormalizedToBaselineMedian(
@@ -603,7 +609,7 @@ async function createExeInlinePlot(
   const exeColorsArray = exeNames.map((e) => <string>exeColors.get(e));
 
   return await renderInlinePlot(
-    inlinePlotCanvas,
+    inlinePlotCanvasByNumExes[exeNames.length],
     data,
     outputFolder,
     plotName,

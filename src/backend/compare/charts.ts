@@ -31,6 +31,13 @@ function calculatePlotHeight(title: string | null, data: ChangeData): number {
   return result + marginTop;
 }
 
+export function calculateInlinePlotHeight(numExes: number): number {
+  const bottomMargin = 15;
+  const topMargin = 1;
+  const perExe = 14;
+  return bottomMargin + numExes * perExe + topMargin;
+}
+
 function getFivePercentLineAnnotations() {
   return {
     annotations: {
