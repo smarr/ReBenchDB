@@ -2,7 +2,7 @@
 FROM rebenchdb:latest
 
 RUN apt-get install -y git python3-pip
-RUN pip install git+https://github.com/smarr/ReBench.git
+RUN pip install --break-system-packages git+https://github.com/smarr/ReBench.git
 
 RUN echo 'echo Starting PostgreSQL Server\n\
 docker-entrypoint.sh postgres &\n\
