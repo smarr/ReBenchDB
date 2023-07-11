@@ -178,6 +178,10 @@ function assertBasicPropertiesOfSortedMeasurements(
   baseOffset: number,
   changeOffset: number
 ) {
+  if (bench.measurements.length === 0) {
+    return;
+  }
+
   if (bench.measurements.length % 2 !== 0 && bench.measurements.length <= 0) {
     throw new Error(
       'measurements.length must be even and >0, ' +
