@@ -6,7 +6,8 @@ export async function submitTimelineUpdateJobs(
   ctx: ParameterizedContext,
   db: Database
 ): Promise<void> {
-  db.getTimelineUpdater()
+  db
+    .getTimelineUpdater()
     ?.submitUpdateJobs()
     .then((n) => n)
     .catch((e) => e);
