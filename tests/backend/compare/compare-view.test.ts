@@ -1,8 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
 import { readFileSync } from 'fs';
-import { prepareTemplate } from '../../src/backend/templates.js';
-import * as dataFormatters from '../../src/shared/data-format.js';
-import * as viewHelpers from '../../src/shared/helpers.js';
+import { prepareTemplate } from '../../../src/backend/templates.js';
+import * as dataFormatters from '../../../src/shared/data-format.js';
+import * as viewHelpers from '../../../src/shared/helpers.js';
 import type {
   ButtonsAdditionalInfoPartial,
   CompareStatsRowAcrossExesPartial,
@@ -18,15 +18,15 @@ import type {
   StatsSummaryPartial,
   ReportConfig,
   CompareStatsRowAcrossExes
-} from '../../src/shared/view-types.js';
-import { robustPath } from '../../src/backend/util.js';
+} from '../../../src/shared/view-types.js';
+import { robustPath } from '../../../src/backend/util.js';
 import {
   calculateAllStatisticsAndRenderPlots,
   getNavigation
-} from '../../src/backend/compare/prep-data.js';
-import type { Environment } from '../../src/backend/db/types.js';
-import { collateMeasurements } from '../../src/backend/compare/db-data.js';
-import { initJestMatchers } from '../helpers.js';
+} from '../../../src/backend/compare/prep-data.js';
+import type { Environment } from '../../../src/backend/db/types.js';
+import { collateMeasurements } from '../../../src/backend/compare/db-data.js';
+import { initJestMatchers } from '../../helpers.js';
 
 initJestMatchers();
 
