@@ -756,7 +756,6 @@ export async function calculateAcrossExesStatsAndAllPlots(
       benchmarks: [],
       criteria: suiteWithBench.criteria
     };
-    result.set(suite, byBenchmark);
 
     for (const results of suiteWithBench.benchmarks.values()) {
       // 1. calculate stats and inline plots per benchmark
@@ -775,18 +774,23 @@ export async function calculateAcrossExesStatsAndAllPlots(
       byBenchmark.benchmarks.push(...result.stats);
     }
 
-    // 2. create per-suite overview plot
-    const changeData = getChangeDataByExe(byBenchmark, 'total');
-    const runTimeFactor = calculateRunTimeFactorFor(changeData);
+    // if there's no data, we don't report this as a result
+    if (byBenchmark.benchmarks.length > 0) {
+      // 2. create per-suite overview plot
+      const changeData = getChangeDataByExe(byBenchmark, 'total');
+      const runTimeFactor = calculateRunTimeFactorFor(changeData);
 
-    byBenchmark.overviewSvgUrl = await renderOverviewPlot(
-      outputFolder,
-      plotName,
-      suite,
-      runTimeFactor,
-      changeData.labels.map((l) => <string>exeColors.get(l))
-    );
-    byBenchmark.baselineExeName = changeData.labels[0];
+      byBenchmark.overviewSvgUrl = await renderOverviewPlot(
+        outputFolder,
+        plotName,
+        suite,
+        runTimeFactor,
+        changeData.labels.map((l) => <string>exeColors.get(l))
+      );
+      byBenchmark.baselineExeName = changeData.labels[0];
+
+      result.set(suite, byBenchmark);
+    }
   }
 
   return result;
