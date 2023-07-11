@@ -11,7 +11,6 @@ import type {
   RunSettings
 } from '../../../src/backend/db/types.js';
 import {
-  AcrossExesBySuite,
   ResultsByBenchmark,
   ResultsByExeSuiteBenchmark,
   ResultsBySuiteBenchmark,
@@ -809,18 +808,28 @@ describe('groupDataBySuiteAndBenchmark()', () => {
   const suitesWithMultipleExecutors = navT.navExeComparison.suites;
 
   it('should group the data by suite and benchmark', () => {
-    const result: AcrossExesBySuite = groupDataBySuiteAndBenchmark(
+    const { bySuite, executors } = groupDataBySuiteAndBenchmark(
       resultTSOM,
       suitesWithMultipleExecutors
     );
 
-    const arr = [...result.keys()];
+    const arr = [...bySuite.keys()];
     arr.sort((a, b) => a.localeCompare(b));
 
     expect(suitesWithMultipleExecutors).toEqual(arr);
 
-    for (const suite of result.values()) {
+    for (const suite of bySuite.values()) {
       expect(suite.benchmarks.size).toBeGreaterThan(0);
     }
+
+    expect([...executors]).toEqual([
+      'SomSom-native-interp-ast',
+      'SomSom-native-interp-bc',
+      'TruffleSOM-graal',
+      'TruffleSOM-graal-bc',
+      'TruffleSOM-interp',
+      'TruffleSOM-native-interp-ast',
+      'TruffleSOM-native-interp-bc'
+    ]);
   });
 });

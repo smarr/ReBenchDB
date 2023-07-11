@@ -251,7 +251,6 @@ export async function renderComparePageNew(
     ctx.params.baseline,
     ctx.params.change,
     ctx.params.projectSlug,
-    dbConfig,
     db
   );
   ctx.body = compareTpl({ ...data, dataFormatters, viewHelpers });

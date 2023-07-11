@@ -587,7 +587,8 @@ async function createExeInlinePlot(
   values: number[][],
   outputFolder: string,
   plotName: string,
-  plotId: number
+  plotId: number,
+  exeColors: Map<string, string>
 ): Promise<string> {
   if (inlinePlotCanvas === null) {
     // todo: we may want to vary the height depending on the number of exes
@@ -599,13 +600,16 @@ async function createExeInlinePlot(
     values
   );
 
+  const exeColorsArray = exeNames.map((e) => <string>exeColors.get(e));
+
   return await renderInlinePlot(
     inlinePlotCanvas,
     data,
     outputFolder,
     plotName,
     plotId,
-    false
+    false,
+    exeColorsArray
   );
 }
 
@@ -688,14 +692,16 @@ export async function calculateAllChangeStatisticsAndInlinePlots(
 export function groupDataBySuiteAndBenchmark(
   byExeSuiteBench: ResultsByExeSuiteBenchmark,
   suitesWithMultipleExecutors: string[]
-): AcrossExesBySuite {
+): { bySuite: AcrossExesBySuite; executors: Set<string> } {
   const resultsBySuite = new Map<string, AllResultsByBenchmark>();
-  for (const [, bySuite] of byExeSuiteBench.entries()) {
+  const executors = new Set<string>();
+  for (const [exe, bySuite] of byExeSuiteBench.entries()) {
     for (const [suite, byBench] of bySuite.entries()) {
       if (!suitesWithMultipleExecutors.includes(suite)) {
         // skip suites that only have a single executor
         continue;
       }
+      executors.add(exe);
 
       let resultSuite = resultsBySuite.get(suite);
       if (resultSuite === undefined) {
@@ -717,7 +723,7 @@ export function groupDataBySuiteAndBenchmark(
     }
   }
 
-  return resultsBySuite;
+  return { bySuite: resultsBySuite, executors };
 }
 
 export async function calculateAcrossExesStatsAndAllPlots(
@@ -731,14 +737,15 @@ export async function calculateAcrossExesStatsAndAllPlots(
 ): Promise<BySuiteComparison> {
   const result = new Map<string, CompareStatsTable>();
 
-  const resultsBySuite = groupDataBySuiteAndBenchmark(
+  const { bySuite, executors } = groupDataBySuiteAndBenchmark(
     byExeSuiteBench,
     suitesWithMultipleExecutors
   );
 
+  const exeColors = siteAesthetics.getColorsForExecutors(executors);
   let lastPlotId = 0;
 
-  for (const [suite, suiteWithBench] of resultsBySuite.entries()) {
+  for (const [suite, suiteWithBench] of bySuite.entries()) {
     const byBenchmark: CompareStatsTable = {
       benchmarks: [],
       criteria: suiteWithBench.criteria
@@ -754,7 +761,8 @@ export async function calculateAcrossExesStatsAndAllPlots(
         criteria,
         lastPlotId,
         outputFolder,
-        plotName
+        plotName,
+        exeColors
       );
 
       lastPlotId = result.lastPlotId;
@@ -784,7 +792,8 @@ export async function calculateAcrossExesStatsForBenchmark(
   perCriteria: Map<string, ComparisonStatsWithUnit>,
   lastPlotId: number,
   outputFolder: string,
-  plotName: string
+  plotName: string,
+  exeColors: Map<string, string>
 ): Promise<{
   stats: CompareStatsRow[];
   lastPlotId: number;
@@ -866,7 +875,8 @@ export async function calculateAcrossExesStatsForBenchmark(
         values,
         outputFolder,
         plotName,
-        lastPlotId
+        lastPlotId,
+        exeColors
       );
     }
 

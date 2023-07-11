@@ -91,5 +91,14 @@ export const siteAesthetics = {
       }
     }
     throw Error(`Color ${color} not found in allTangoShadesPerColor`);
+  },
+  getColorsForExecutors(executors: Set<string>): Map<string, string> {
+    const colors = new Map<string, string>();
+    let i = 0;
+    for (const exe of executors) {
+      colors.set(exe, this.exeColors[i]);
+      i++;
+    }
+    return colors;
   }
 } as const;

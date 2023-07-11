@@ -173,7 +173,6 @@ export async function renderCompareNew(
   base: string,
   change: string,
   projectSlug: string,
-  dbConfig: DatabaseConfig,
   db: Database
 ): Promise<CompareView> {
   const reportId = getReportId(projectSlug, base, change);

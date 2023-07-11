@@ -101,26 +101,22 @@ function toDataSetWithBaseChangeBackground(data: ChangeData): any[] {
   ];
 }
 
-function toDataSetWithExeColors(data: ChangeData): any[] {
+function toDataSetWithExeColors(data: ChangeData, exeColors: string[]): any[] {
   if (data.labels.length < 2) {
     throw new Error(
       'Expect at least two data series, but only got ' + data.labels.length
     );
   }
 
-  // TODO: we would really like to have a consistent mapping of executors
-  // to colors, but for that, we would need to establish the mapping once
-  // per report and then use it for all plots here
-  const colors = siteAesthetics.exeColors.slice(0, data.labels.length);
-  const lightColors = colors.map((c) => siteAesthetics.lighten(c));
+  const lightColors = exeColors.map((c) => siteAesthetics.lighten(c));
 
   return [
     {
       backgroundColor: lightColors,
-      borderColor: colors,
+      borderColor: exeColors,
 
       outlierBackgroundColor: lightColors,
-      outlierBorderColor: colors,
+      outlierBorderColor: exeColors,
       outlierRadius: 1.5,
 
       borderWidth: 1,
@@ -362,8 +358,14 @@ export async function renderInlinePlot(
   outputFolder: string,
   plotName: string,
   plotId: number,
-  isAcrossVersions: boolean
+  isAcrossVersions: boolean,
+  exeColorsArray?: string[]
 ): Promise<string> {
+  if (!isAcrossVersions && !exeColorsArray) {
+    throw new Error(
+      'Need exeColorsArray when plotting a comparison across executors'
+    );
+  }
   const buffer = await renderDataOnCanvas(
     canvas,
     null,
@@ -375,7 +377,8 @@ export async function renderInlinePlot(
     2,
     isAcrossVersions
       ? toDataSetWithBaseChangeBackground
-      : toDataSetWithExeColors
+      : (data: ChangeData) =>
+          toDataSetWithExeColors(data, <string[]>exeColorsArray)
   );
   const inlinePlotUrl = `${plotName}-${plotId}.svg`;
   writeFileSync(`${outputFolder}/${inlinePlotUrl}`, buffer);
