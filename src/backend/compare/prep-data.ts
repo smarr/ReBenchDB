@@ -468,9 +468,11 @@ export function getMsFlattenedAndSorted(
   base: Measurements,
   change: Measurements
 ): { sortedBase: number[]; sortedChange: number[] } {
+  // TODO: need to consider warmup setting there, before flattening
   const sortedBase = base.values.flat();
   sortedBase.sort((a, b) => a - b);
 
+  // TODO: need to consider warmup setting there, before flattening
   const sortedChange = change.values.flat();
   sortedChange.sort((a, b) => a - b);
   return { sortedBase, sortedChange };
