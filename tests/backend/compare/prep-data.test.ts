@@ -680,7 +680,6 @@ function getResultPath(fileName: string): string {
   );
 }
 
-// TODO: does this belong into compare-view.test.ts?
 describe('prepareCompareView()', () => {
   const compareTpl = prepareTemplate(
     robustPath('backend/compare/html/index.html'),
