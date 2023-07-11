@@ -373,12 +373,6 @@ export function calculateChangeStatistics(
   baseSorted: number[],
   changeSorted: number[]
 ): ComparisonStatistics {
-  if (baseSorted.length !== changeSorted.length) {
-    throw new Error(
-      `The base and change arrays must have the same length, but ` +
-        `base has ${baseSorted.length} and change has ${changeSorted.length}.`
-    );
-  }
 
   if (!isSorted(baseSorted) || !isSorted(changeSorted)) {
     throw new Error('Input arrays must be sorted.');
