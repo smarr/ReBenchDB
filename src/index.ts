@@ -301,7 +301,8 @@ router.get('/:projectSlug/compare/:baseline..:change', async (ctx) => {
 });
 
 router.get('/admin/perform-timeline-update', async (ctx) => {
-  db.getTimelineUpdater()
+  db
+    .getTimelineUpdater()
     ?.submitUpdateJobs()
     .then((n) => n)
     .catch((e) => e);

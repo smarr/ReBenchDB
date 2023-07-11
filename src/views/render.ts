@@ -65,17 +65,17 @@ export function renderProjectDataOverview(
         <td>${
           row.minstarttime == null ? '' : formatDateWithTime(row.minstarttime)
         } ${
-      row.maxendtime == null ? '' : formatDateWithTime(row.maxendtime)
-    }</td>
+          row.maxendtime == null ? '' : formatDateWithTime(row.maxendtime)
+        }</td>
         <td>${row.users}</td>
         <td>${shortenCommitIds(row.commitids)} <p>${formatCommitMessages(
-      row.commitmsgs
-    )}</p></td>
+          row.commitmsgs
+        )}</p></td>
         <td>${row.hostnames}</td>
         <td class="num-col">${row.runs}</td>
         <td class="num-col"><a href="/${projectSlug}/data/${row.expid}">${
-      row.measurements
-    }</a></td>
+          row.measurements
+        }</a></td>
       </tr>`);
   }
 
