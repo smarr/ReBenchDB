@@ -292,16 +292,14 @@ describe('calculateChangeStatistics()', () => {
     expect(stats.change_m).toEqual(0);
   });
 
-  it('should given an error when base and change have different length', () => {
-    expect(() => {
-      calculateChangeStatistics(
-        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-      );
-    }).toThrow(
-      `The base and change arrays must have the same length, ` +
-        `but base has 10 and change has 11.`
+  it('should give result when base and change have different length', () => {
+    const stats = calculateChangeStatistics(
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     );
+    expect(stats.samples).toEqual(10);
+    expect(stats.median).toEqual(5);
+    expect(stats.change_m).toEqual(0.11111111111111116);
   });
 
   it('should error on unordered data', () => {

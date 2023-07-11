@@ -373,7 +373,6 @@ export function calculateChangeStatistics(
   baseSorted: number[],
   changeSorted: number[]
 ): ComparisonStatistics {
-
   if (!isSorted(baseSorted) || !isSorted(changeSorted)) {
     throw new Error('Input arrays must be sorted.');
   }
