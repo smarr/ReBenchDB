@@ -36,6 +36,15 @@
 
 {% if (!it.revisionFound) { %}
 <div class="alert alert-warning compare" role="alert">
+  {% if (it.baselineHash === it.changeHash) { %}
+  <h4 class="alert-heading">Cannot Compare Revision with Itself</h4>
+
+  <p>The requested comparison was for:</p>
+  <ul>
+    <li>{%= it.baselineHash %}</li>
+    <li>{%= it.changeHash %}</li>
+  </ul>
+  {% } else { %}
   <h4 class="alert-heading">Revisions Not Found</h4>
 
   <p>The project {%= it.project %} does not seem to have data for at least one of the requested revisions.</p>
@@ -43,6 +52,7 @@
     <li>{%= it.baselineHash %}</li>
     <li>{%= it.changeHash %}</li>
   </ul>
+  {% } %}
 </div>
 {% } %}
 
