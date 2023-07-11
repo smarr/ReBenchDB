@@ -316,6 +316,21 @@ describe('countVariantsAndDropMissing()', () => {
     expect(mc2).toHaveLength(1);
     expect(mc2[0].criterion.name).toEqual('total');
   });
+
+  it('should consider different runIds as incompatible', () => {
+    const data: Measurements[] = [
+      makeM('total', 'ms', 1, 'a'),
+      makeM('total', 'ms', 1, 'a')
+    ];
+    data[0].runId = 2;
+
+    const result = countVariantsAndDropMissing(makeProRes(data), 'a', 'b');
+
+    expect(data).toHaveLength(0);
+    expect(result.missing).toBeDefined();
+    expect(result.missing.size).toEqual(1);
+    expect([...result.missing.values()][0].missing).toHaveLength(2);
+  });
 });
 
 const dataJsSOM: { results: MeasurementData[] } = JSON.parse(

@@ -81,7 +81,12 @@ export function compareToSortForSinglePassChangeStatsWithoutCommitId(
   a: Measurements,
   b: Measurements
 ): number {
-  let r = a.envId - b.envId;
+  let r = a.runId - b.runId;
+  if (r !== 0) {
+    return r;
+  }
+
+  r = a.envId - b.envId;
   if (r !== 0) {
     return r;
   }
