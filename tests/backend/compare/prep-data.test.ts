@@ -800,6 +800,27 @@ describe('prepareCompareView()', () => {
         }
       );
     }
+
+    it('should produce the same svg for plot 6 across exes', () => {
+      expect('tsom/inline-exe-6.svg').toBeIdenticalSvgFiles(
+        outputFolder,
+        getResultPath('tsom/inline-exe-6.svg')
+      );
+    });
+
+    it('should produce the same svg for plot 57 across exes', () => {
+      expect('tsom/inline-exe-57.svg').toBeIdenticalSvgFiles(
+        outputFolder,
+        getResultPath('tsom/inline-exe-57.svg')
+      );
+    });
+
+    it('should produce same svg for exe macro-startup overview plot', () => {
+      expect('tsom/inline-exe-macro-startup.svg').toBeIdenticalSvgFiles(
+        outputFolder,
+        getResultPath('tsom/inline-exe-macro-startup.svg')
+      );
+    });
   });
 });
 
