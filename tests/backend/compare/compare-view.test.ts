@@ -14,7 +14,7 @@ import type {
   CompareVersionsPartial,
   CompareStatsTable,
   BySuiteComparison,
-  DetailedInfo,
+  RunDetails,
   StatsSummaryPartial,
   ReportConfig,
   CompareStatsRowAcrossExes
@@ -66,7 +66,7 @@ const environments: Environment[] = [
   }
 ];
 
-const details: DetailedInfo = {
+const details: RunDetails = {
   cmdline: 'som/some-command with args',
   envId: 1,
   profileTrialIdBase: <any>{ trialid: 11, runid: 1 },

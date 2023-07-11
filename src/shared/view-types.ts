@@ -72,8 +72,7 @@ export interface DataSeriesVersionComparison {
   change: DataSeriesId;
 }
 
-// TODO: rename, DetailedInfo doesn't tell us much
-export interface DetailedInfo {
+export interface RunDetails {
   cmdline: string;
 
   envId: number;
@@ -111,7 +110,7 @@ export interface MissingData {
 
 export interface CompareStatsRow {
   benchId: BenchmarkId;
-  details: DetailedInfo;
+  details: RunDetails;
 
   missing?: MissingData[];
 
@@ -131,7 +130,7 @@ export interface CompareStatsRowPartial {
 }
 
 export interface ButtonsAdditionalInfoPartial {
-  details: DetailedInfo;
+  details: RunDetails;
   benchId: BenchmarkId;
   environments: Environment[];
   dataFormatters: DataFormat;
