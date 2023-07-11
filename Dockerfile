@@ -1,4 +1,4 @@
-FROM postgres:15-bullseye
+FROM postgres:15-bookworm
 # this allows the setup to ignore all of the ubuntu OS setup
 # thats not needed for this docker image (Time Zone for example)
 ARG DEBIAN_FRONTEND=noninteractive
@@ -10,9 +10,9 @@ ENV TZ=UTC
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Add Node.js repo
-RUN curl -sL https://deb.nodesource.com/setup_19.x | bash -
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 
-RUN sh -c 'echo "deb http://cloud.r-project.org/bin/linux/debian bullseye-cran40/" > /etc/apt/sources.list.d/r-project.list' && \
+RUN sh -c 'echo "deb http://cloud.r-project.org/bin/linux/debian bookworm-cran40/" > /etc/apt/sources.list.d/r-project.list' && \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-key '95C0FAF38DB3CCAD0C080A7BDC78B2DDEABC47B7'
 
 
