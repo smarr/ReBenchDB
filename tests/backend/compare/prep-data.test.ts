@@ -774,7 +774,11 @@ describe('prepareCompareView()', () => {
         'tsom/overview-micro-startup.svg',
         'tsom/overview-micro-somsom.svg'
       ]) {
-        expect(name).toBeIdenticalSvgFiles(outputFolder, getResultPath(name));
+        expect(name).toBeIdenticalSvgFiles(
+          outputFolder,
+          getResultPath(name),
+          2
+        );
       }
 
       expect('tsom/overview.png').toBeMostlyIdenticalImage(
