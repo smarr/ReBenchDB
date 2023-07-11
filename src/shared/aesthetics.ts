@@ -58,27 +58,33 @@ export const siteAesthetics = {
   exeColors: [
     // the colors are from the Extended Tango Palette, columns 4-6.
     // the order is randomized
-    '#fce94f',
+    '#f78787',
     '#3465a4',
     '#ffd797',
+
     '#ad7fa8',
-    '#edd400',
-    '#e0c0e4',
+    '#b7f774',
+    '#ef2929',
+
     '#e9b96e',
     '#729fcf',
     '#8ae234',
-    '#b7f774',
-    '#f78787',
+
+    '#edd400',
+    '#fce94f',
     '#cc0000',
+
     '#fffc9c',
     '#75507b',
     '#efd0a7',
+
     '#73d216',
     '#fcaf3e',
     '#c17d11',
+
     '#97c4f0',
     '#f57900',
-    '#ef2929'
+    '#e0c0e4'
   ],
   lighten(color: string): string {
     const colorWithoutHash = color[0] === '#' ? color.slice(1) : color;

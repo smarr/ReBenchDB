@@ -783,7 +783,8 @@ export async function calculateAcrossExesStatsAndAllPlots(
       outputFolder,
       plotName,
       suite,
-      runTimeFactor
+      runTimeFactor,
+      changeData.labels.map((l) => <string>exeColors.get(l))
     );
     byBenchmark.baselineExeName = changeData.labels[0];
   }

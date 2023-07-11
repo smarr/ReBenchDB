@@ -301,7 +301,8 @@ export async function renderOverviewComparison(
   title: string | null,
   data: ChangeData,
   outputType: 'svg' | 'png' = 'png',
-  plotType: 'boxplot' | 'violin' = 'boxplot'
+  plotType: 'boxplot' | 'violin' = 'boxplot',
+  conversionFn = toDataSetWithFastSlowBackground
 ): Promise<Buffer> {
   const chartJSNodeCanvas = createCanvas({
     height: calculatePlotHeight(title, data),
@@ -315,7 +316,11 @@ export async function renderOverviewComparison(
     title,
     data,
     outputType,
-    plotType
+    plotType,
+    undefined,
+    undefined,
+    undefined,
+    conversionFn
   );
 }
 
@@ -349,11 +354,18 @@ export async function renderOverviewPlot(
   outputFolder: string,
   plotName: string,
   group: string,
-  plotData: ChangeData
+  plotData: ChangeData,
+  exeColors: string[]
 ): Promise<string> {
   const absolutePath = `${outputFolder}/${plotName}-${group}.svg`;
 
-  const svg = await renderOverviewComparison(group, plotData, 'svg');
+  const svg = await renderOverviewComparison(
+    group,
+    plotData,
+    'svg',
+    'boxplot',
+    (data: ChangeData) => toDataSetWithExeColors(data, exeColors)
+  );
   writeFileSync(absolutePath, svg);
 
   return `${plotName}-${group}.svg`;
