@@ -11,6 +11,7 @@ import pg from 'pg';
 import type { DatabaseConfig } from '../../../src/backend/db/types.js';
 
 import { Database } from '../../../src/backend/db/db.js';
+// eslint-disable-next-line max-len
 import { DatabaseWithPool } from '../../../src/backend/db/database-with-pool.js';
 
 export class TestDatabase extends Database {
