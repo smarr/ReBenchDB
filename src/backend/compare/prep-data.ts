@@ -205,9 +205,9 @@ function assertBasicPropertiesOfSortedMeasurements(
   if (bench.measurements[0].commitId === bench.measurements[1].commitId) {
     throw new Error(
       'base and change are the same for ' +
-        `${bench.bench}, ${bench.exe}, ${bench.suite}, ` +
-        `but are expected to be different` +
-        `both are ${bench.measurements[0].commitId}`
+        `${bench.bench}, ${bench.exe}, ${bench.suite}. ` +
+        `The are expected to be different, ` +
+        `but both are ${bench.measurements[0].commitId}`
     );
   }
 }
