@@ -42,6 +42,7 @@ import { siteAesthetics } from '../../shared/aesthetics.js';
 import { collateMeasurements } from './db-data.js';
 import { HasProfile } from '../db/has-profile.js';
 import { assert } from '../../backend/logging.js';
+import { getBenchmarkArgumentsAsNamePart } from '../../shared/helpers.js';
 
 export function compareStringOrNull(
   a: string | null,
@@ -251,8 +252,10 @@ function addOrGetCompareStatsRow(
         numI: countsAndMissing === null ? 0 : countsAndMissing.numI,
         numEa: countsAndMissing === null ? 0 : countsAndMissing.numEa,
         numEnv: countsAndMissing === null ? 0 : countsAndMissing.numEnv
-      }
+      },
+      argumentsForDisplay: ''
     };
+    row.argumentsForDisplay = getBenchmarkArgumentsAsNamePart(row);
     variants.set(key, row);
   }
   return row;
@@ -329,6 +332,7 @@ export function countVariantsAndDropMissing(
         mi.details.numI = numI;
         mi.details.numEa = numEa;
         mi.details.numEnv = numEnv;
+        mi.argumentsForDisplay = getBenchmarkArgumentsAsNamePart(mi);
       }
     }
     return { numV, numC, numI, numEa, numEnv, missing };

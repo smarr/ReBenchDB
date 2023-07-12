@@ -96,17 +96,23 @@ function sortResultsAlphabetically(
   byExeSuiteBench: ResultsByExeSuiteBenchmark
 ) {
   const exeBySuiteBench = Array.from(byExeSuiteBench.entries());
-  exeBySuiteBench.sort((a, b) => a[0].localeCompare(b[0]));
+  exeBySuiteBench.sort((a, b) =>
+    a[0].localeCompare(b[0], undefined, { numeric: true })
+  );
 
   for (const exeSuitePair of exeBySuiteBench) {
     const bySuiteBench = exeSuitePair[1];
     const suiteByBench = Array.from(bySuiteBench.entries());
-    suiteByBench.sort((a, b) => a[0].localeCompare(b[0]));
+    suiteByBench.sort((a, b) =>
+      a[0].localeCompare(b[0], undefined, { numeric: true })
+    );
 
     for (const suiteBenchPair of suiteByBench) {
       const byBench = suiteBenchPair[1];
       const bench = Array.from(byBench.benchmarks.entries());
-      bench.sort((a, b) => a[0].localeCompare(b[0]));
+      bench.sort((a, b) =>
+        a[0].localeCompare(b[0], undefined, { numeric: true })
+      );
       byBench.benchmarks = new Map(bench);
     }
 

@@ -4,7 +4,8 @@
   isAcrossExes: it.isAcrossExes
 }) %}
 <tbody>
-{%    for (const benchmark of it.benchmarks) {
+{%  it.benchmarks.sort(it.viewHelpers.sortByNameAndArguments);
+    for (const benchmark of it.benchmarks) {
 %}{%-   include('stats-row.html', {
           config: it.config,
           stats: benchmark,

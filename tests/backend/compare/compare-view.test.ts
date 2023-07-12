@@ -227,7 +227,8 @@ describe('Compare View Parts', () => {
           benchId,
           details,
           inlinePlot: 'inline.png',
-          versionStats
+          versionStats,
+          argumentsForDisplay: ''
         },
         environments,
         dataFormatters,
@@ -245,7 +246,8 @@ describe('Compare View Parts', () => {
           benchId,
           details,
           inlinePlot: 'inline.png',
-          exeStats
+          exeStats,
+          argumentsForDisplay: ''
         },
         environments,
         dataFormatters,
@@ -265,7 +267,8 @@ describe('Compare View Parts', () => {
           inlinePlot: 'inline.png',
           missing: [
             { commitId: 'aaa', criterion: { name: 'total', unit: 'ms' } }
-          ]
+          ],
+          argumentsForDisplay: ''
         },
         environments,
         dataFormatters,
@@ -291,7 +294,8 @@ describe('Compare View Parts', () => {
               criterion: { name: 'some missing criterion', unit: 'ms' }
             }
           ],
-          versionStats
+          versionStats,
+          argumentsForDisplay: ''
         },
         environments,
         dataFormatters,
@@ -320,7 +324,8 @@ describe('Compare View Parts', () => {
             benchId,
             details,
             inlinePlot: 'inline.png',
-            versionStats
+            versionStats,
+            argumentsForDisplay: ''
           }
         ],
         environments,
@@ -429,7 +434,8 @@ describe('Compare View Parts', () => {
             benchId,
             details,
             inlinePlot: 'inline.png',
-            versionStats
+            versionStats,
+            argumentsForDisplay: ''
           }
         ]
       };

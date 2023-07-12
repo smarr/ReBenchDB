@@ -190,6 +190,10 @@ th[scope=col] {
   width: auto !important;
 }
 
+.compare .all-args {
+  margin-left: 0.25ex;
+}
+
 table.benchmark-details > tbody > tr > th:nth-child(1) {
   min-width: 5em;
   max-width: 7em;
