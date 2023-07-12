@@ -1,3 +1,5 @@
+import type { CompareStatsRow } from './view-types.js';
+
 /**
  * Returns the common start of a list of strings.
  */
@@ -51,4 +53,42 @@ export class PerIterationOutput {
     }
     return this.allButFirst;
   }
+}
+
+export function getBenchmarkArgumentsAsNamePart(
+  benchmark: CompareStatsRow
+): string {
+  let args = '';
+
+  if (benchmark.details.numV > 1) {
+    args += benchmark.benchId.v + ' ';
+  }
+  if (benchmark.details.numC > 1) {
+    args += benchmark.benchId.c + ' ';
+  }
+  if (benchmark.details.numI > 1) {
+    args += benchmark.benchId.i + ' ';
+  }
+  if (benchmark.details.numEa > 1) {
+    args += benchmark.benchId.ea + ' ';
+  }
+
+  return args.trim();
+}
+
+export function sortByNameAndArguments(
+  a: CompareStatsRow,
+  b: CompareStatsRow
+): number {
+  const result = a.benchId.b.localeCompare(b.benchId.b, undefined, {
+    numeric: true
+  });
+
+  if (result !== 0) {
+    return result;
+  }
+
+  return a.argumentsForDisplay.localeCompare(b.argumentsForDisplay, undefined, {
+    numeric: true
+  });
 }

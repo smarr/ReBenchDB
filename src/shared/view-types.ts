@@ -111,6 +111,7 @@ export interface MissingData {
 export interface CompareStatsRow {
   benchId: BenchmarkId;
   details: RunDetails;
+  argumentsForDisplay: string;
 
   missing?: MissingData[];
 

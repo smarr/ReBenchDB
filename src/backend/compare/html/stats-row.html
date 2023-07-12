@@ -2,14 +2,8 @@
 const stats = it.stats;
 
 let args = '';
-
-if (stats.details.numV  > 1) { args += stats.benchId.v + ' '; }
-if (stats.details.numC  > 1) { args += stats.benchId.c + ' '; }
-if (stats.details.numI  > 1) { args += stats.benchId.i + ' '; }
-if (stats.details.numEa > 1) { args += stats.benchId.ea + ' '; }
-
-if (args.length > 0) {
-  args = `<span class="all-args">${args.trim()}</span>`;
+if (stats.argumentsForDisplay.length > 0) {
+  args = `<span class="all-args">${stats.argumentsForDisplay}</span>`;
 }
 
 if (stats.missing) {

@@ -3818,6 +3818,43 @@ graal
 </td>
 </tr>
 <tr>
+<th scope="row">Fannkuch</th>
+  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-37.svg"></td>
+<td>
+graal-bc
+<br>interp
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
+<td class="stats-samples">
+5
+<br>5
+<br>5
+<br>5
+</td>
+<td><span class="stats-median" title="median">
+194.92
+<br>123.53
+<br>44.35
+<br>71.65
+</span></td>
+<td>
+<span class="stats-change" title="change over median run time">0</span>
+<br><span class="stats-change" title="change over median run time">-37</span>
+<br><span class="stats-change" title="change over median run time">-77</span>
+<br><span class="stats-change" title="change over median run time">-63</span>
+</td>
+
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som  -Dsom.interp=BC  -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Fannkuch 1 0  7</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Fannkuch","e":"TruffleSOM-graal-bc","s":"micro-startup"}'></button>
+</td>
+</tr>
+<tr>
 <th scope="row">Fibonacci</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-21.svg"></td>
 <td>
@@ -4407,43 +4444,6 @@ graal
 <button type="button" class="btn btn-sm btn-environment btn-popover"
     data-content=""></button>
 <button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"WhileLoop","e":"TruffleSOM-graal","s":"micro-startup"}'></button>
-</td>
-</tr>
-<tr>
-<th scope="row">Fannkuch</th>
-  <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-37.svg"></td>
-<td>
-graal-bc
-<br>interp
-<br>native-interp-ast
-<br>native-interp-bc
-</td>
-<td class="stats-samples">
-5
-<br>5
-<br>5
-<br>5
-</td>
-<td><span class="stats-median" title="median">
-194.92
-<br>123.53
-<br>44.35
-<br>71.65
-</span></td>
-<td>
-<span class="stats-change" title="change over median run time">0</span>
-<br><span class="stats-change" title="change over median run time">-37</span>
-<br><span class="stats-change" title="change over median run time">-77</span>
-<br><span class="stats-change" title="change over median run time">-63</span>
-</td>
-
-
-
-<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
-  data-content="<code>som  -Dsom.interp=BC  -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Fannkuch 1 0  7</code>"></button>
-<button type="button" class="btn btn-sm btn-environment btn-popover"
-    data-content=""></button>
-<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Fannkuch","e":"TruffleSOM-graal-bc","s":"micro-startup"}'></button>
 </td>
 </tr>
 </tbody>
