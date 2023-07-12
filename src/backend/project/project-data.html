@@ -1,19 +1,19 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta id="project-id" value="{{project.id}}">
-  <meta id="project-slug" value="{{project.slug}}">
-  <title>ReBench: {{project.name}}</title>
-  {{{headerHtml}}}
+  <meta id="project-id" value="{%= it.project.id %}">
+  <meta id="project-slug" value="{%= it.project.slug %}">
+  <title>ReBench: {%= it.project.name %}</title>
+  {%- include('header.html') %}
   <script src="/static/project-data.js" type="module"></script>
 </head>
 <body>
 
   <div class="jumbotron">
-    <h1 class="display-4">{{project.name}}</h1>
-    {{#project.description}}
-    <h2 class="display-5">{{project.description}}</h2>
-    {{/project.description}}
+    <h1 class="display-4">{%= it.project.name %}</h1>
+    {% if (it.project.description) { %}
+    <h2 class="display-5">{%= it.project.description %}</h2>
+    {% } %}
   </div>
 
   <div>

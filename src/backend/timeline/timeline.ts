@@ -3,9 +3,15 @@ import {
   respondProjectIdNotFound,
   respondProjectNotFound
 } from '../common/standard-responses.js';
-import { processTemplate } from '../templates.js';
+import { prepareTemplate } from '../templates.js';
 import { TimelineSuite } from '../../shared/api.js';
 import { Database } from '../db/db.js';
+import { robustPath } from '../util.js';
+
+const timelineTpl = prepareTemplate(
+  robustPath('backend/timeline/timeline.html'),
+  false
+);
 
 export async function getTimelineAsJson(
   ctx: ParameterizedContext,
@@ -43,7 +49,7 @@ export async function renderTimeline(
   const project = await db.getProjectBySlug(ctx.params.projectSlug);
 
   if (project) {
-    ctx.body = processTemplate('backend/timeline/timeline.html', {
+    ctx.body = timelineTpl({
       project,
       benchmarks: await getLatestBenchmarksForTimelineView(project.id, db)
     });
@@ -53,7 +59,7 @@ export async function renderTimeline(
   }
 }
 
-async function getLatestBenchmarksForTimelineView(
+export async function getLatestBenchmarksForTimelineView(
   projectId: number,
   db: Database
 ): Promise<TimelineSuite[] | null> {

@@ -15,6 +15,13 @@ import {
   getStatistics
 } from '../../../src/backend/main/main.js';
 import { getDataOverview } from '../../../src/backend/project/data-export.js';
+import { prepareTemplate } from '../../../src/backend/templates.js';
+
+import { initJestMatchers } from '../../helpers.js';
+// eslint-disable-next-line max-len
+import { getLatestBenchmarksForTimelineView } from '../../../src/backend/timeline/timeline.js';
+
+initJestMatchers();
 
 const timeoutForLargeDataTest = 200 * 1000;
 jest.setTimeout(timeoutForLargeDataTest);
@@ -210,6 +217,29 @@ describe('Test with basic test data loaded', () => {
       '2222222222222222222222222222222222222222'
     );
     expect(source?.branchortag).toEqual('exp2');
+  });
+
+  describe('renderMainPage', () => {
+    it('Should render the main page', async () => {
+      const projects = await db.getAllProjects();
+      const tpl = prepareTemplate(robustPath('backend/main/index.html'), true);
+      const html = tpl({ projects, isReBenchDotDev: false });
+      expect(html).toEqualHtmlFragment('main/index');
+    });
+  });
+
+  describe('renderTimeline', () => {
+    it('Should render the timeline page', async () => {
+      const project = await db.getProject(1);
+      const benchmarks = await getLatestBenchmarksForTimelineView(1, db);
+
+      const tpl = prepareTemplate(
+        robustPath('backend/timeline/timeline.html'),
+        true
+      );
+      const html = tpl({ project, benchmarks });
+      expect(html).toEqualHtmlFragment('timeline/index');
+    });
   });
 });
 

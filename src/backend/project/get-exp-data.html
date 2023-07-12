@@ -1,24 +1,24 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <title>ReBenchDB {{project}}: Preparing Data For Download</title>
+  <title>ReBenchDB {%= it.project %}: Preparing Data For Download</title>
 
-  {{{headerHtml}}}
+  {%- include('header.html') %}
 
   <meta http-equiv="refresh" content="10" />
 </head>
 <body class="compare">
 
 <div class="jumbotron">
-  <h2>ReBenchDB for {{project}}</h2>
-  <h3>Preparing Data for download of {{expName}}</h3>
+  <h2>ReBenchDB for {%= it.project %}</h2>
+  <h3>Preparing Data for download of {%= it.expName %}</h3>
 </div>
 
-{{#preparingData}}
+{% if (it.preparingData) { %}
 <div class="alert alert-secondary" role="alert">
   <h4 class="alert-heading">Data is currently being prepared for download</h4>
   <p>Please wait, the requested data is currently exported from the database.</p>
-  <p>Last page reload was at {{currentTime}}</p>
+  <p>Last page reload was at {%= it.currentTime %}</p>
   <hr>
   <p class="mb-0">Usually, this takes only a few seconds.
     For large experiments, this can take a couple of minutes.</p>
@@ -29,12 +29,12 @@
     </div>
   </div>
 </div>
-{{/preparingData}}
+{% } %}
 
-{{#generationFailed}}
+{% if (it.generationFailed) { %}
 <div class="alert alert-warning" role="alert">
   <h4 class="alert-heading">Data export failed</h4>
 </div>
-{{/generationFailed}}
+{% } %}
 </body>
 </html>

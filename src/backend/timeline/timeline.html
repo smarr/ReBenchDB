@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta id="project-id" value="{{project.id}}">
-  <meta id="project-slug" value="{{project.slug}}">
-  <title>ReBench: Timeline {{project.name}}</title>
-  {{{headerHtml}}}
+  <meta id="project-id" value="{%= it.project.id %}">
+  <meta id="project-slug" value="{%= it.project.slug %}">
+  <title>ReBench: Timeline {%= it.project.name %}</title>
+  {%- include('header.html') %}
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.appear/0.4.1/jquery.appear.min.js" integrity="sha256-19/eyBKQKb8IPrt7321hbLkI1+xyM8d/DpzjyiEKnCE=" crossorigin="anonymous"></script>
   <script src="/static/timeline.js" type="module"></script>
 </head>
@@ -12,10 +12,10 @@
 
 <header>
   <div class="jumbotron">
-    <h1 class="display-4">ReBench: Timeline {{project.name}}</h1>
-    {{#project.description}}
-    <h2 class="display-5">{{project.description}}</h2>
-    {{/project.description}}
+    <h1 class="display-4">ReBench: Timeline {%= it.project.name %}</h1>
+    {% if (it.project.description) { %}
+    <h2 class="display-5">{%= it.project.description %}</h2>
+    {% } %}
   </div>
   <div class="refresh">
     <div class="flex-nowrap navbar-light">
@@ -47,34 +47,32 @@
 
 <div class="container-fluid"><div class="row flex-xl-nowrap">
   <nav class="compare">
-  {{#benchmarks}}
-  {{#exec}}
-      <nav><span>{{execName}}</span>
-      <a href="#se-{{suiteId}}-{{execId}}">{{suiteName}}</a>
+  {% for (const b of it.benchmarks) {
+       for (const e of b.exec) { %}
+      <nav><span>{%= e.execName %}</span>
+      <a href="#se-{%= b.suiteId %}-{%= e.execId %}">{%= b.suiteName %}</a>
       </nav>
-  {{/exec}}
-  {{/benchmarks}}
+  {% } } %}
   </nav>
 
   <main role="main">
-  {{#benchmarks}}
-  {{#exec}}
+    {% for (const b of it.benchmarks) {
+      for (const e of b.exec) { %}
   <div class="exe-suite-group">
-    <h3 id="se-{{suiteId}}-{{execId}}">{{suiteName}}</h3>
-    <div class="title-executor">Executor: {{execName}}</div>
+    <h3 id="se-{%= b.suiteId %}-{%= e.execId %}">{%= b.suiteName %}</h3>
+    <div class="title-executor">Executor: {%= e.execName %}</div>
 
-    {{#benchmarks}}
-    <div class="benchmark" id="b-{{benchName}}-{{runId}}">
-    <h4><a href="#b-{{benchName}}-{{runId}}">{{benchName}}<span class="arguments">{{varValue}} {{cores}} {{inputSize}} {{extraArgs}}</span></a></h4>
-    <p><code>{{cmdline}}</code></p>
+    {% for (const bb of e.benchmarks) { %}
+    <div class="benchmark" id="b-{%= bb.benchName %}-{%= bb.runId %}">
+    <h4><a href="#b-{%= bb.benchName %}-{%= bb.runId %}">{%= bb.benchName %}<span class="arguments">{%= bb.varValue %} {%= bb.cores %} {%= bb.inputSize %} {%= bb.extraArgs %}</span></a></h4>
+    <p><code>{%= bb.cmdline %}</code></p>
 
-    <div class="timeline-plot" data-runid="{{runId}}"></div>
+    <div class="timeline-plot" data-runid="{%= bb.runId %}"></div>
     </div>
-    {{/benchmarks}}
+    {% } %}
   </div>
 
-  {{/exec}}
-  {{/benchmarks}}
+  {% } } %}
   </main>
   </div></div> <!-- closing class="row flex-nowrap" and class="container-fluid" -->
 </body>

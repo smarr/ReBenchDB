@@ -1,5 +1,5 @@
 import { ParameterizedContext } from 'koa';
-import { prepareTemplate, processTemplate } from '../templates.js';
+import { prepareTemplate } from '../templates.js';
 import {
   respondExpIdNotFound,
   respondProjectAndSourceNotFound,
@@ -60,11 +60,13 @@ export async function redirectToNewProjectDataUrl(
   } else {
     respondProjectIdNotFound(ctx, Number(ctx.params.projectId));
   }
-  ctx.body = processTemplate('backend/project/project-data.html', {
-    project
-  });
   ctx.type = 'html';
 }
+
+const projectDataTpl = prepareTemplate(
+  robustPath('backend/project/project-data.html'),
+  false
+);
 
 export async function renderProjectDataPage(
   ctx: ParameterizedContext,
@@ -72,9 +74,7 @@ export async function renderProjectDataPage(
 ): Promise<void> {
   const project = await db.getProjectBySlug(ctx.params.projectSlug);
   if (project) {
-    ctx.body = processTemplate('backend/project/project-data.html', {
-      project
-    });
+    ctx.body = projectDataTpl({ project });
     ctx.type = 'html';
   } else {
     respondProjectNotFound(ctx, ctx.params.projectSlug);
@@ -96,6 +96,11 @@ export async function redirectToNewProjectDataExportUrl(
   }
 }
 
+const expDataTpl = prepareTemplate(
+  robustPath('backend/project/get-exp-data.html'),
+  false
+);
+
 export async function renderDataExport(
   ctx: ParameterizedContext,
   db: Database
@@ -109,7 +114,7 @@ export async function renderDataExport(
   );
 
   if (data.preparingData) {
-    ctx.body = processTemplate('backend/project/get-exp-data.html', data);
+    ctx.body = expDataTpl(data);
     ctx.type = 'html';
     ctx.set('Cache-Control', 'no-cache');
   } else {
