@@ -1116,10 +1116,34 @@ export async function prepareCompareView(
 }
 
 function filterOutZeroChange(criteria: Map<string, ComparisonStatsWithUnit>) {
+  const removed: string[] = [];
   for (const key of criteria.keys()) {
     const stats = criteria.get(key);
     if (stats?.data.every((s) => s.change_m === 0 && s.median === 0)) {
       criteria.delete(key);
+      removed.push(key);
+    }
+  }
+  return removed;
+}
+
+function removeCriteriaV(
+  comparisonData: ByExeSuiteComparison,
+  removed: string[]
+) {
+  for (const bySuite of comparisonData.values()) {
+    for (const byBench of bySuite.values()) {
+      for (const r of removed) {
+        delete byBench.criteria[r];
+      }
+    }
+  }
+}
+
+function removeCriteriaE(acrossExes: BySuiteComparison, removed: string[]) {
+  for (const byBench of acrossExes.values()) {
+    for (const r of removed) {
+      delete byBench.criteria[r];
     }
   }
 }
@@ -1168,8 +1192,10 @@ export async function calculateAllStatisticsAndRenderPlots(
     inlinePlotName + '-exe'
   );
 
-  filterOutZeroChange(criteriaAcrossVersions);
-  filterOutZeroChange(criteriaAcrossExes);
+  const removedCriteriaV = filterOutZeroChange(criteriaAcrossVersions);
+  const removedCriteriaE = filterOutZeroChange(criteriaAcrossExes);
+  removeCriteriaV(comparisonData, removedCriteriaV);
+  removeCriteriaE(acrossExes, removedCriteriaE);
 
   const plotData = calculateDataForOverviewPlot(comparisonData, 'total');
 

@@ -9,10 +9,11 @@ function determineAndDisplaySignificance() {
 
 function displaySignificance(sig) {
   $('#significance-val').val(`${sig}%`);
-  $('.stats-change').each((i, e) => {
+  $('.stats-change.stats-total').each((i, e) => {
     const change = parseFloat(<string>e.textContent);
     const parent = $(e).parent();
-    const target = parent.find('.stats-change').length > 1 ? $(e) : parent;
+    const target =
+      parent.find('.stats-change.stats-total').length > 1 ? $(e) : parent;
     if (change < -sig) {
       target.css('background-color', '#e4ffc7');
     } else if (change > sig) {

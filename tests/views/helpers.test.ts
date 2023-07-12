@@ -2,6 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 import {
   commonStringStart,
   PerIterationOutput,
+  sortTotalToFront,
   withoutStart
 } from '../../src/shared/helpers';
 
@@ -110,6 +111,34 @@ describe('Helper functions for the views', () => {
       output.next();
       output.next();
       expect(output.next()).toBe('second');
+    });
+  });
+
+  describe('sortTotalToFront()', () => {
+    it('should sort the list of strings with total to the front', () => {
+      expect(sortTotalToFront(['foo', 'bar', 'total', 'baz'])).toEqual([
+        'total',
+        'foo',
+        'bar',
+        'baz'
+      ]);
+    });
+
+    it('should not change array if total is already at the front', () => {
+      expect(sortTotalToFront(['total', 'foo', 'bar', 'baz'])).toEqual([
+        'total',
+        'foo',
+        'bar',
+        'baz'
+      ]);
+    });
+
+    it('should not change array if total is not present', () => {
+      expect(sortTotalToFront(['foo', 'bar', 'baz'])).toEqual([
+        'foo',
+        'bar',
+        'baz'
+      ]);
     });
   });
 });

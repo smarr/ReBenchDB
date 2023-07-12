@@ -34,6 +34,9 @@ export type CompareStatsTableHeader = Record<string, CriterionData>;
 
 export interface CompareStatsTableHeaderPartial {
   criteria: CompareStatsTableHeader;
+  criteriaOrder: string[];
+  dataFormatters: DataFormat;
+  isAcrossExes: boolean;
 }
 
 export interface CompareStatsRowAcrossExes {
@@ -55,6 +58,8 @@ export type CompareStatsRowAcrossVersions = Record<
 export interface CompareStatsRowAcrossVersionsPartial {
   stats: CompareStatsRowAcrossVersions;
   dataFormatters: DataFormat;
+  criteriaOrder: string[];
+  criteria: CompareStatsTableHeader;
 }
 
 /**
@@ -128,6 +133,8 @@ export interface CompareStatsRowPartial {
   dataFormatters: DataFormat;
   viewHelpers: ViewHelpers;
   config: ReportConfig;
+  criteriaOrder: string[];
+  criteria: CompareStatsTableHeader;
 }
 
 export interface ButtonsAdditionalInfoPartial {
@@ -149,6 +156,7 @@ export interface CompareStatsTablePartial extends CompareStatsTable {
   dataFormatters: DataFormat;
   viewHelpers: ViewHelpers;
   config: ReportConfig;
+  isAcrossExes: boolean;
 }
 
 export interface CompareNavPartial {

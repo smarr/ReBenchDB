@@ -130,3 +130,32 @@ export function dataSeriesIds(
     `${ids.change.commitId}/${changeTrialId}`
   );
 }
+
+/**
+ * Turn the text into lower case, but keep abbreviations in upper case.
+ */
+export function smartLower(text: string): string {
+  const words = text.split(' ');
+  const result: string[] = [];
+  for (const word of words) {
+    if (word.length > 1 && word === word.toUpperCase()) {
+      result.push(word);
+    } else {
+      result.push(word.toLowerCase());
+    }
+  }
+  return result.join(' ');
+}
+
+export function shortenCriteria(text: string): string {
+  const words = text.split(' ');
+  const result: string[] = [];
+  for (const word of words) {
+    // skip the word 'time'
+    if (word.toLowerCase() === 'time') {
+      continue;
+    }
+    result.push(word);
+  }
+  return result.join(' ');
+}

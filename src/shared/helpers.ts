@@ -92,3 +92,12 @@ export function sortByNameAndArguments(
     numeric: true
   });
 }
+
+export function sortTotalToFront(criteria: string[]): string[] {
+  const i = criteria.indexOf('total');
+  if (i !== -1) {
+    criteria.splice(i, 1);
+    criteria.unshift('total');
+  }
+  return criteria;
+}

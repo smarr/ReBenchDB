@@ -1,7 +1,11 @@
 <table class="table table-sm benchmark-details">
-{%- include('stats-tbl-header.html', {
+{% const criteria = Object.keys(it.criteria);
+    it.viewHelpers.sortTotalToFront(criteria);
+%}{%- include('stats-tbl-header.html', {
   criteria: it.criteria,
-  isAcrossExes: it.isAcrossExes
+  criteriaOrder: criteria,
+  isAcrossExes: it.isAcrossExes,
+  dataFormatters: it.dataFormatters,
 }) %}
 <tbody>
 {%  it.benchmarks.sort(it.viewHelpers.sortByNameAndArguments);
@@ -12,7 +16,9 @@
           environments: it.environments,
           dataFormatters: it.dataFormatters,
           viewHelpers: it.viewHelpers,
-          isAcrossExes: it.isAcrossExes
+          isAcrossExes: it.isAcrossExes,
+          criteriaOrder: criteria,
+          criteria: it.criteria,
         }) %}
 {%  }
 %}</tbody>

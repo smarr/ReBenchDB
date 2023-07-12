@@ -3,15 +3,13 @@
 <th scope="col"></th>
 {% if (it.isAcrossExes) { %}<th scope="col" title="Executor, without common prefix with baseline">Exe</th>{% } %}
 <th scope="col" title="Number of Samples">#M</th>
-<th scope="col">median time<br>in {%= it.criteria.total.unit %}</th>
-<th scope="col">time diff %</th>
-{% if (it.criteria['GC time']) { %}
-<th scope="col">median GC<br>time in {%= it.criteria['GC time'].unit %}</th>
-<th scope="col">GC diff %</th>
-{% }
-   if (it.criteria.Allocated) { %}
-<th scope="col">median <br>allocated {%= it.criteria.Allocated.unit %}</th>
-<th scope="col">Alloc diff %</th>
+{% for (const i of it.criteriaOrder) {
+   const name = it.criteria[i].name;
+   const unit = it.criteria[i].unit;
+   const longLabel = it.dataFormatters.smartLower(name === 'total' ? 'time' : name);
+   const shortLabel = name === 'total' ? 'time' : it.dataFormatters.shortenCriteria(longLabel);
+%}<th scope="col" title="median {%= longLabel %}">median {%= shortLabel %}<br>in {%= unit %}</th>
+<th scope="col" title="difference in % of {%= longLabel %}">{%= shortLabel %} diff %</th>
 {% } %}
 <th scope="col"></th>
 </tr></thead>
