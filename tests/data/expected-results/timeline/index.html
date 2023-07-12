@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta id="project-id" value="1">
+<meta id="project-slug" value="Small-Example-Project">
+<title>ReBench: Timeline Small Example Project</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- Bootstrap from CDN -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+<!-- <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.appear/0.4.1/jquery.appear.min.js" integrity="sha256-19/eyBKQKb8IPrt7321hbLkI1+xyM8d/DpzjyiEKnCE=" crossorigin="anonymous"></script>
+<script src="/static/timeline.js" type="module"></script>
+</head>
+<body class="timeline-multi timeline">
+<header>
+<div class="jumbotron">
+<h1 class="display-4">ReBench: Timeline Small Example Project</h1>
+
+</div>
+<div class="refresh">
+<div class="flex-nowrap navbar-light">
+<button type="button" class="btn btn-outline-secondary btn-sm"
+data-toggle="collapse" data-target="#filters" aria-controls="#filters"
+aria-expanded="false" aria-label="Toggle Filters">
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-funnel" viewBox="0 0 16 16">
+<path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2h-11z"/>
+</svg>
+</button>
+<button class="navbar-toggler" type="button" data-toggle="collapse"
+data-target="nav.compare" aria-controls="nav.compare"
+aria-expanded="false" aria-label="Toggle Outline"
+id="report-nav-toggler">
+<span class="navbar-toggler-icon"></span>
+</button>
+</div>
+</div>
+</header>
+<div class="collapse card-columns" id="filters">
+<div>
+<button type="button" class="btn btn-secondary" id="filter-all">All</button>
+<button type="button" class="btn btn-secondary" id="filter-none">None</button>
+</div>
+<div id="filter-groups"></div>
+</div>
+<div class="container-fluid"><div class="row flex-xl-nowrap">
+<nav class="compare">
+
+<nav><span>SOMns-graal</span>
+<a href="#se-1-1">macro-startup</a>
+</nav>
+
+</nav>
+<main role="main">
+
+<div class="exe-suite-group">
+<h3 id="se-1-1">macro-startup</h3>
+<div class="title-executor">Executor: SOMns-graal</div>
+
+<div class="benchmark" id="b-NBody-1">
+<h4><a href="#b-NBody-1">NBody<span class="arguments">   </span></a></h4>
+<p><code>som -t1   core-lib/Benchmarks/Harness.ns NBody  1 0 10000</code></p>
+<div class="timeline-plot" data-runid="1"></div>
+</div>
+
+</div>
+
+</main>
+</div></div> <!-- closing class="row flex-nowrap" and class="container-fluid" -->
+</body>
+</html>

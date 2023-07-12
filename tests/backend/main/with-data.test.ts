@@ -18,6 +18,8 @@ import { getDataOverview } from '../../../src/backend/project/data-export.js';
 import { prepareTemplate } from '../../../src/backend/templates.js';
 
 import { initJestMatchers } from '../../helpers.js';
+// eslint-disable-next-line max-len
+import { getLatestBenchmarksForTimelineView } from '../../../src/backend/timeline/timeline.js';
 
 initJestMatchers();
 
@@ -223,6 +225,20 @@ describe('Test with basic test data loaded', () => {
       const tpl = prepareTemplate(robustPath('backend/main/index.html'), true);
       const html = tpl({ projects, isReBenchDotDev: false });
       expect(html).toEqualHtmlFragment('main/index');
+    });
+  });
+
+  describe('renderTimeline', () => {
+    it('Should render the timeline page', async () => {
+      const project = await db.getProject(1);
+      const benchmarks = await getLatestBenchmarksForTimelineView(1, db);
+
+      const tpl = prepareTemplate(
+        robustPath('backend/timeline/timeline.html'),
+        true
+      );
+      const html = tpl({ project, benchmarks });
+      expect(html).toEqualHtmlFragment('timeline/index');
     });
   });
 });
