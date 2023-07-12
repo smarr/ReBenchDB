@@ -1,6 +1,7 @@
 <table class="table table-sm benchmark-details">
 {%- include('stats-tbl-header.html', {
   criteria: it.criteria,
+  isAcrossExes: it.isAcrossExes
 }) %}
 <tbody>
 {%    for (const benchmark of it.benchmarks) {
@@ -9,7 +10,8 @@
           stats: benchmark,
           environments: it.environments,
           dataFormatters: it.dataFormatters,
-          viewHelpers: it.viewHelpers
+          viewHelpers: it.viewHelpers,
+          isAcrossExes: it.isAcrossExes
         }) %}
 {%  }
 %}</tbody>
