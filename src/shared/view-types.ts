@@ -48,6 +48,8 @@ export interface CompareStatsRowAcrossExesPartial {
   exes: CompareStatsRowAcrossExes[];
   dataFormatters: DataFormat;
   viewHelpers: ViewHelpers;
+  criteriaOrder: string[];
+  criteria: CompareStatsTableHeader;
 }
 
 export type CompareStatsRowAcrossVersions = Record<

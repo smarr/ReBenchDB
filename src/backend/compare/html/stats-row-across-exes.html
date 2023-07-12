@@ -18,12 +18,30 @@ const commonStart = h.commonStringStart(it.exes.map((e) => e.exeName));
   %}{%= e.criteria.total.samples %}
 {% }
 %}</td>
+{% for (const i of it.criteriaOrder) {
+  const cssClassForTotal = i === 'total' ? ' stats-total' : '';
+  let medianFmtFn;
+  if (i === 'total') {
+    medianFmtFn = f.r2;
+  } else {
+    switch (it.criteria[i].unit) {
+      case 'bytes':
+        medianFmtFn = f.asHumanMem;
+        break;
+      default:
+        medianFmtFn = f.r0;
+        break;
+    }
+  }
+
+  const changeFmtFn = f.per;
+%}
 <td><span class="stats-median" title="median">
 {%
   itOut = new h.PerIterationOutput('', '<br>');
   for (const e of it.exes) {
   %}{%- itOut.next()
-  %}{%= f.r2(e.criteria.total.median) %}
+  %}{%= medianFmtFn(e.criteria[i].median) %}
 {% }
 %}</span></td>
 <td>
@@ -31,39 +49,7 @@ const commonStart = h.commonStringStart(it.exes.map((e) => e.exeName));
   itOut = new h.PerIterationOutput('', '<br>');
   for (const e of it.exes) {
   %}{%- itOut.next()
-  %}<span class="stats-change" title="change over median run time">{%= f.per(e.criteria.total.change_m) %}</span>
+  %}<span class="stats-change{%= cssClassForTotal %}" title="diff %">{%= changeFmtFn(e.criteria[i].change_m) %}</span>
 {% }
-%}</td>
-{% if (it.exes[0].criteria.gcTime) {
-%}<td><span class="stats-median" title="median">
-{%
-  itOut = new h.PerIterationOutput('', '<br>');
-  for (const e of it.exes) {
-  %}{%- itOut.next()
-  %}{%= f.r0(e.criteria.gcTime.median) %}
-{% }
-%}</span></td>
-<td>
-{%
-  itOut = new h.PerIterationOutput('', '<br>');
-  for (const e of it.exes) {
-  %}{%- itOut.next()
-  %}<span class="stats-change" title="change over median GC time">{%= f.per(e.criteria.gcTime.change_m) %}</span>
-{% }
-%}</td>{% } %}
-{% if (it.exes[0].criteria.allocated) { %}<td><span class="stats-median" title="median">
-{%
-  itOut = new h.PerIterationOutput('', '<br>');
-  for (const e of it.exes) {
-  %}{%- itOut.next()
-  %}{%= f.asHumanMem(e.criteria.allocated.median) %}
-{% }
-%}</span></td>
-<td>
-{%
-  itOut = new h.PerIterationOutput('', '<br>');
-  for (const e of it.exes) {
-  %}{%- itOut.next()
-  %}<span class="stats-change" title="change over median allocated">{%= f.per(e.criteria.allocated.change_m) %}</span>
-{% }
-%}</td>{% } %}
+%}</td>{%
+  } %}

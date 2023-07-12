@@ -46,7 +46,9 @@ if (!stats.missing || hasTotal) {
 %}{%-   include('stats-row-across-exes.html', {
           exes: stats.exeStats,
           dataFormatters: it.dataFormatters,
-          viewHelpers: it.viewHelpers}
+          viewHelpers: it.viewHelpers,
+          criteriaOrder: it.criteriaOrder,
+          criteria: it.criteria}
       ) %}
 {%   } else {
 %}{%-   include('stats-row-across-versions.html', {

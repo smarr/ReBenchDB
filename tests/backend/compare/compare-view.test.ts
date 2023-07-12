@@ -158,7 +158,9 @@ describe('Compare View Parts', () => {
       const data: CompareStatsRowAcrossExesPartial = {
         exes: exeStats,
         dataFormatters,
-        viewHelpers
+        viewHelpers,
+        criteria: criteria2,
+        criteriaOrder: criteriaOrder2
       };
       const result = tpl(data);
       expect(result).toEqualHtmlFragment('compare-view/stats-row-across-exes');
