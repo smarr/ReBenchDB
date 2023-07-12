@@ -1,5 +1,5 @@
 import { ParameterizedContext } from 'koa';
-import { prepareTemplate, processTemplate } from '../templates.js';
+import { prepareTemplate } from '../templates.js';
 import {
   respondExpIdNotFound,
   respondProjectAndSourceNotFound,
@@ -96,6 +96,11 @@ export async function redirectToNewProjectDataExportUrl(
   }
 }
 
+const expDataTpl = prepareTemplate(
+  robustPath('backend/project/get-exp-data.html'),
+  false
+);
+
 export async function renderDataExport(
   ctx: ParameterizedContext,
   db: Database
@@ -109,7 +114,7 @@ export async function renderDataExport(
   );
 
   if (data.preparingData) {
-    ctx.body = processTemplate('backend/project/get-exp-data.html', data);
+    ctx.body = expDataTpl(data);
     ctx.type = 'html';
     ctx.set('Cache-Control', 'no-cache');
   } else {

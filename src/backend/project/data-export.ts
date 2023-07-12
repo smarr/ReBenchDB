@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { completeRequest, startRequest } from '../perf-tracker.js';
-import { siteConfig, storeJsonGzip } from '../util.js';
+import { robustPath, siteConfig, storeJsonGzip } from '../util.js';
 import { log } from '../logging.js';
 import { Database } from '../db/db.js';
 import { ParameterizedContext } from 'koa';
@@ -27,7 +27,7 @@ export async function getExpData(
 
   const expDataId = `${data.project}-${expId}`;
   const expFileName = `exp-data/${expDataId}.json.gz`;
-  const expDataFile = `${__dirname}/../../resources/${expFileName}`;
+  const expDataFile = robustPath(`../resources/${expFileName}`);
 
   if (existsSync(expDataFile)) {
     data.preparingData = false;
