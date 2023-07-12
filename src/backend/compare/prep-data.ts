@@ -1117,6 +1117,15 @@ export async function prepareCompareView(
   return data;
 }
 
+function filterOutZeroChange(criteria: Map<string, ComparisonStatsWithUnit>) {
+  for (const key of criteria.keys()) {
+    const stats = criteria.get(key);
+    if (stats?.data.every((s) => s.change_m === 0 && s.median === 0)) {
+      criteria.delete(key);
+    }
+  }
+}
+
 export async function calculateAllStatisticsAndRenderPlots(
   byExeSuiteBench: ResultsByExeSuiteBenchmark,
   suitesWithMultipleExecutors: string[],
@@ -1160,6 +1169,9 @@ export async function calculateAllStatisticsAndRenderPlots(
     reportOutputFolder,
     inlinePlotName + '-exe'
   );
+
+  filterOutZeroChange(criteriaAcrossVersions);
+  filterOutZeroChange(criteriaAcrossExes);
 
   const plotData = calculateDataForOverviewPlot(comparisonData, 'total');
 
