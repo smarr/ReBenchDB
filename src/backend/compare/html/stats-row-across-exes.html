@@ -2,12 +2,20 @@
 const h = it.viewHelpers;
 const f = it.dataFormatters;
 const commonStart = h.commonStringStart(it.exes.map((e) => e.exeName));
-%}<td class="stats-samples">
+%}<td>
 {%
   let itOut = new h.PerIterationOutput('', '<br>');
   for (const e of it.exes) {
   %}{%- itOut.next()
-  %}{%= h.withoutStart(commonStart, e.exeName) %} {%= e.criteria.total.samples %}
+  %}{%= h.withoutStart(commonStart, e.exeName) %}
+{% }
+%}</td>
+<td class="stats-samples">
+{%
+  itOut = new h.PerIterationOutput('', '<br>');
+  for (const e of it.exes) {
+  %}{%- itOut.next()
+  %}{%= e.criteria.total.samples %}
 {% }
 %}</td>
 <td><span class="stats-median" title="median">

@@ -3,7 +3,7 @@
   for (const [s, suite] of it.acrossExes) {
 %}
     <h3 id="exe-comp-{%= s %}">{%= s %}</h3>
-    <p>Baseline: {%= suite.baselineExe %}</p>
+    <p>Baseline: {%= suite.baselineExeName %}</p>
 
     <img src="{%= it.config.reportsUrl %}/{%= suite.overviewSvgUrl %}" width="{%= it.config.overviewPlotWidth %}">
     {%- include('stats-tbl.html', {
@@ -12,6 +12,7 @@
       benchmarks: suite.benchmarks,
       environments: it.environments,
       dataFormatters: it.dataFormatters,
-      viewHelpers: it.viewHelpers
+      viewHelpers: it.viewHelpers,
+      isAcrossExes: true
     }) %}
 {% } %}

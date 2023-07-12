@@ -180,6 +180,7 @@
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -277,6 +278,7 @@
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -374,6 +376,7 @@
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -471,6 +474,7 @@
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -589,6 +593,7 @@
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -896,6 +901,7 @@
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -1238,6 +1244,7 @@
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -1350,6 +1357,7 @@
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -1468,6 +1476,7 @@
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -1790,6 +1799,7 @@
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -2132,6 +2142,7 @@
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -2169,6 +2180,7 @@
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -2206,6 +2218,7 @@
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -2318,6 +2331,7 @@
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -2640,6 +2654,7 @@
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -2752,6 +2767,7 @@
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -3070,13 +3086,14 @@
 <h2 id="exe-comparisons">Executor Comparisons</h2>
 
     <h3 id="exe-comp-micro-somsom">micro-somsom</h3>
-    <p>Baseline: </p>
+    <p>Baseline: SomSom-native-interp-ast</p>
 
     <img src="/static/reports/tsom/inline-exe-micro-somsom.svg" width="432">
     <table class="table table-sm benchmark-details">
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+<th scope="col" title="Executor, without common prefix with baseline">Exe</th>
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -3088,9 +3105,13 @@
 <tr>
 <th scope="row">List</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-1.svg"></td>
+<td>
+ast
+<br>bc
+</td>
 <td class="stats-samples">
-ast 1
-<br>bc 1
+1
+<br>1
 </td>
 <td><span class="stats-median" title="median">
 21624.67
@@ -3113,9 +3134,13 @@ ast 1
 <tr>
 <th scope="row">Loop</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-2.svg"></td>
+<td>
+ast
+<br>bc
+</td>
 <td class="stats-samples">
-ast 1
-<br>bc 1
+1
+<br>1
 </td>
 <td><span class="stats-median" title="median">
 15196.07
@@ -3138,9 +3163,13 @@ ast 1
 <tr>
 <th scope="row">Mandelbrot</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-3.svg"></td>
+<td>
+ast
+<br>bc
+</td>
 <td class="stats-samples">
-ast 1
-<br>bc 1
+1
+<br>1
 </td>
 <td><span class="stats-median" title="median">
 351.52
@@ -3163,9 +3192,13 @@ ast 1
 <tr>
 <th scope="row">Queens</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-4.svg"></td>
+<td>
+ast
+<br>bc
+</td>
 <td class="stats-samples">
-ast 1
-<br>bc 1
+1
+<br>1
 </td>
 <td><span class="stats-median" title="median">
 14760.86
@@ -3188,9 +3221,13 @@ ast 1
 <tr>
 <th scope="row">Recurse</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-5.svg"></td>
+<td>
+ast
+<br>bc
+</td>
 <td class="stats-samples">
-ast 1
-<br>bc 1
+1
+<br>1
 </td>
 <td><span class="stats-median" title="median">
 13668.42
@@ -3215,13 +3252,14 @@ ast 1
 
 
     <h3 id="exe-comp-macro-startup">macro-startup</h3>
-    <p>Baseline: </p>
+    <p>Baseline: TruffleSOM-graal</p>
 
     <img src="/static/reports/tsom/inline-exe-macro-startup.svg" width="432">
     <table class="table table-sm benchmark-details">
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+<th scope="col" title="Executor, without common prefix with baseline">Exe</th>
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -3233,11 +3271,17 @@ ast 1
 <tr>
 <th scope="row">DeltaBlue</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-6.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 275.04
@@ -3264,11 +3308,17 @@ graal 5
 <tr>
 <th scope="row">GraphSearch</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-7.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 182.46
@@ -3295,11 +3345,17 @@ graal 5
 <tr>
 <th scope="row">Json</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-8.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 253.06
@@ -3326,11 +3382,17 @@ graal 5
 <tr>
 <th scope="row">NBody</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-9.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 132.49
@@ -3357,11 +3419,17 @@ graal 5
 <tr>
 <th scope="row">PageRank</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-10.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 159.80
@@ -3388,11 +3456,17 @@ graal 5
 <tr>
 <th scope="row">Richards</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-11.svg"></td>
+<td>
+graal-bc
+<br>interp
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal-bc 5
-<br>interp 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 689.30
@@ -3421,13 +3495,14 @@ graal-bc 5
 
 
     <h3 id="exe-comp-macro-steady">macro-steady</h3>
-    <p>Baseline: </p>
+    <p>Baseline: TruffleSOM-graal</p>
 
     <img src="/static/reports/tsom/inline-exe-macro-steady.svg" width="432">
     <table class="table table-sm benchmark-details">
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+<th scope="col" title="Executor, without common prefix with baseline">Exe</th>
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -3439,9 +3514,13 @@ graal-bc 5
 <tr>
 <th scope="row">DeltaBlue</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-12.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 120
-<br>-bc 120
+120
+<br>120
 </td>
 <td><span class="stats-median" title="median">
 49.53
@@ -3464,9 +3543,13 @@ graal-bc 5
 <tr>
 <th scope="row">GraphSearch</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-13.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 250
-<br>-bc 250
+250
+<br>250
 </td>
 <td><span class="stats-median" title="median">
 71.07
@@ -3489,9 +3572,13 @@ graal-bc 5
 <tr>
 <th scope="row">Json</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-14.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 120
-<br>-bc 120
+120
+<br>120
 </td>
 <td><span class="stats-median" title="median">
 105.25
@@ -3514,9 +3601,13 @@ graal-bc 5
 <tr>
 <th scope="row">NBody</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-15.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 120
-<br>-bc 120
+120
+<br>120
 </td>
 <td><span class="stats-median" title="median">
 70.04
@@ -3539,9 +3630,13 @@ graal-bc 5
 <tr>
 <th scope="row">PageRank</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-16.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 120
-<br>-bc 120
+120
+<br>120
 </td>
 <td><span class="stats-median" title="median">
 114.29
@@ -3564,9 +3659,13 @@ graal-bc 5
 <tr>
 <th scope="row">Richards</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-17.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 130
-<br>-bc 130
+130
+<br>130
 </td>
 <td><span class="stats-median" title="median">
 99.78
@@ -3591,13 +3690,14 @@ graal-bc 5
 
 
     <h3 id="exe-comp-micro-startup">micro-startup</h3>
-    <p>Baseline: </p>
+    <p>Baseline: TruffleSOM-graal</p>
 
     <img src="/static/reports/tsom/inline-exe-micro-startup.svg" width="432">
     <table class="table table-sm benchmark-details">
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+<th scope="col" title="Executor, without common prefix with baseline">Exe</th>
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -3609,11 +3709,17 @@ graal-bc 5
 <tr>
 <th scope="row">Bounce</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-18.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 151.69
@@ -3640,11 +3746,17 @@ graal 5
 <tr>
 <th scope="row">BubbleSort</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-19.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 129.31
@@ -3671,11 +3783,17 @@ graal 5
 <tr>
 <th scope="row">Dispatch</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-20.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 100.84
@@ -3702,11 +3820,17 @@ graal 5
 <tr>
 <th scope="row">Fibonacci</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-21.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 134.85
@@ -3733,11 +3857,17 @@ graal 5
 <tr>
 <th scope="row">FieldLoop</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-22.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 47.32
@@ -3764,11 +3894,17 @@ graal 5
 <tr>
 <th scope="row">IntegerLoop</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-23.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 89.40
@@ -3795,11 +3931,17 @@ graal 5
 <tr>
 <th scope="row">List</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-24.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 80.21
@@ -3826,11 +3968,17 @@ graal 5
 <tr>
 <th scope="row">Loop</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-25.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 88.65
@@ -3857,11 +4005,17 @@ graal 5
 <tr>
 <th scope="row">Mandelbrot</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-26.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 123.19
@@ -3888,11 +4042,17 @@ graal 5
 <tr>
 <th scope="row">Permute</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-27.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 145.52
@@ -3919,11 +4079,17 @@ graal 5
 <tr>
 <th scope="row">Queens</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-28.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 119.00
@@ -3950,11 +4116,17 @@ graal 5
 <tr>
 <th scope="row">QuickSort</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-29.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 185.47
@@ -3981,11 +4153,17 @@ graal 5
 <tr>
 <th scope="row">Recurse</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-30.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 128.25
@@ -4012,11 +4190,17 @@ graal 5
 <tr>
 <th scope="row">Sieve</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-31.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 132.23
@@ -4043,11 +4227,17 @@ graal 5
 <tr>
 <th scope="row">Storage</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-32.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 158.52
@@ -4074,11 +4264,17 @@ graal 5
 <tr>
 <th scope="row">Sum</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-33.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 80.63
@@ -4105,11 +4301,17 @@ graal 5
 <tr>
 <th scope="row">Towers</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-34.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 140.07
@@ -4136,11 +4338,17 @@ graal 5
 <tr>
 <th scope="row">TreeSort</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-35.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 156.97
@@ -4167,11 +4375,17 @@ graal 5
 <tr>
 <th scope="row">WhileLoop</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-36.svg"></td>
+<td>
+graal
+<br>graal-bc
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal 5
-<br>graal-bc 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 67.42
@@ -4198,11 +4412,17 @@ graal 5
 <tr>
 <th scope="row">Fannkuch</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-37.svg"></td>
+<td>
+graal-bc
+<br>interp
+<br>native-interp-ast
+<br>native-interp-bc
+</td>
 <td class="stats-samples">
-graal-bc 5
-<br>interp 5
-<br>native-interp-ast 5
-<br>native-interp-bc 5
+5
+<br>5
+<br>5
+<br>5
 </td>
 <td><span class="stats-median" title="median">
 194.92
@@ -4231,13 +4451,14 @@ graal-bc 5
 
 
     <h3 id="exe-comp-micro-steady">micro-steady</h3>
-    <p>Baseline: </p>
+    <p>Baseline: TruffleSOM-graal</p>
 
     <img src="/static/reports/tsom/inline-exe-micro-steady.svg" width="432">
     <table class="table table-sm benchmark-details">
 <thead><tr>
 <th scope="col"></th>
 <th scope="col"></th>
+<th scope="col" title="Executor, without common prefix with baseline">Exe</th>
 <th scope="col" title="Number of Samples">#M</th>
 <th scope="col">median time<br>in ms</th>
 <th scope="col">time diff %</th>
@@ -4249,9 +4470,13 @@ graal-bc 5
 <tr>
 <th scope="row">Bounce</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-38.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 60
-<br>-bc 60
+60
+<br>60
 </td>
 <td><span class="stats-median" title="median">
 139.58
@@ -4274,9 +4499,13 @@ graal-bc 5
 <tr>
 <th scope="row">BubbleSort</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-39.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 55
-<br>-bc 55
+55
+<br>55
 </td>
 <td><span class="stats-median" title="median">
 83.49
@@ -4299,9 +4528,13 @@ graal-bc 5
 <tr>
 <th scope="row">Dispatch</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-40.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 55
-<br>-bc 55
+55
+<br>55
 </td>
 <td><span class="stats-median" title="median">
 223.33
@@ -4324,9 +4557,13 @@ graal-bc 5
 <tr>
 <th scope="row">Fannkuch</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-41.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 55
-<br>-bc 55
+55
+<br>55
 </td>
 <td><span class="stats-median" title="median">
 46.52
@@ -4349,9 +4586,13 @@ graal-bc 5
 <tr>
 <th scope="row">Fibonacci</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-42.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 60
-<br>-bc 60
+60
+<br>60
 </td>
 <td><span class="stats-median" title="median">
 85.58
@@ -4374,9 +4615,13 @@ graal-bc 5
 <tr>
 <th scope="row">FieldLoop</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-43.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 55
-<br>-bc 55
+55
+<br>55
 </td>
 <td><span class="stats-median" title="median">
 240.07
@@ -4399,9 +4644,13 @@ graal-bc 5
 <tr>
 <th scope="row">IntegerLoop</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-44.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 55
-<br>-bc 55
+55
+<br>55
 </td>
 <td><span class="stats-median" title="median">
 155.00
@@ -4424,9 +4673,13 @@ graal-bc 5
 <tr>
 <th scope="row">List</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-45.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 65
-<br>-bc 65
+65
+<br>65
 </td>
 <td><span class="stats-median" title="median">
 105.67
@@ -4449,9 +4702,13 @@ graal-bc 5
 <tr>
 <th scope="row">Loop</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-46.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 55
-<br>-bc 55
+55
+<br>55
 </td>
 <td><span class="stats-median" title="median">
 2.41
@@ -4474,9 +4731,13 @@ graal-bc 5
 <tr>
 <th scope="row">Mandelbrot</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-47.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 110
-<br>-bc 110
+110
+<br>110
 </td>
 <td><span class="stats-median" title="median">
 358.87
@@ -4499,9 +4760,13 @@ graal-bc 5
 <tr>
 <th scope="row">Permute</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-48.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 55
-<br>-bc 55
+55
+<br>55
 </td>
 <td><span class="stats-median" title="median">
 135.55
@@ -4524,9 +4789,13 @@ graal-bc 5
 <tr>
 <th scope="row">Queens</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-49.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 55
-<br>-bc 55
+55
+<br>55
 </td>
 <td><span class="stats-median" title="median">
 119.42
@@ -4549,9 +4818,13 @@ graal-bc 5
 <tr>
 <th scope="row">QuickSort</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-50.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 55
-<br>-bc 55
+55
+<br>55
 </td>
 <td><span class="stats-median" title="median">
 121.89
@@ -4574,9 +4847,13 @@ graal-bc 5
 <tr>
 <th scope="row">Recurse</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-51.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 65
-<br>-bc 65
+65
+<br>65
 </td>
 <td><span class="stats-median" title="median">
 122.70
@@ -4599,9 +4876,13 @@ graal-bc 5
 <tr>
 <th scope="row">Sieve</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-52.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 60
-<br>-bc 60
+60
+<br>60
 </td>
 <td><span class="stats-median" title="median">
 100.75
@@ -4624,9 +4905,13 @@ graal-bc 5
 <tr>
 <th scope="row">Storage</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-53.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 60
-<br>-bc 60
+60
+<br>60
 </td>
 <td><span class="stats-median" title="median">
 97.29
@@ -4649,9 +4934,13 @@ graal-bc 5
 <tr>
 <th scope="row">Sum</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-54.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 55
-<br>-bc 55
+55
+<br>55
 </td>
 <td><span class="stats-median" title="median">
 250.33
@@ -4674,9 +4963,13 @@ graal-bc 5
 <tr>
 <th scope="row">Towers</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-55.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 55
-<br>-bc 55
+55
+<br>55
 </td>
 <td><span class="stats-median" title="median">
 343.36
@@ -4699,9 +4992,13 @@ graal-bc 5
 <tr>
 <th scope="row">TreeSort</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-56.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 60
-<br>-bc 60
+60
+<br>60
 </td>
 <td><span class="stats-median" title="median">
 154.65
@@ -4724,9 +5021,13 @@ graal-bc 5
 <tr>
 <th scope="row">WhileLoop</th>
   <td class="inline-cmp"><img src="/static/reports/tsom/inline-exe-57.svg"></td>
+<td>
+
+<br>-bc
+</td>
 <td class="stats-samples">
- 55
-<br>-bc 55
+55
+<br>55
 </td>
 <td><span class="stats-median" title="median">
 181.69
