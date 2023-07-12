@@ -539,28 +539,26 @@ async function computeStatisticsAndInlinePlot(
 
     row.versionStats[change.criterion.name] = changeStats;
 
-    if (
-      outputFolder !== null &&
-      plotName != null &&
-      change.criterion.name === inlinePlotCriterion
-    ) {
-      lastPlotId += 1;
-      row.inlinePlot = await createInlinePlot(
-        base.commitId,
-        change.commitId,
-        sortedBase,
-        sortedChange,
-        outputFolder,
-        plotName,
-        lastPlotId
-      );
+    if (change.criterion.name === inlinePlotCriterion) {
+      numRunConfigs += 1;
+
+      if (outputFolder !== null && plotName != null) {
+        lastPlotId += 1;
+        row.inlinePlot = await createInlinePlot(
+          base.commitId,
+          change.commitId,
+          sortedBase,
+          sortedChange,
+          outputFolder,
+          plotName,
+          lastPlotId
+        );
+      }
     }
 
     if (perCriteria !== null) {
       recordPerCriteria(perCriteria, measurements, i, baseOffset, changeStats);
     }
-
-    numRunConfigs += 1;
   }
 
   return { lastPlotId, numRunConfigs };
