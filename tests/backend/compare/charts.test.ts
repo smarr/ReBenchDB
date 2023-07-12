@@ -92,6 +92,11 @@ describe('renderOverviewPlots()', () => {
     expect(plotDataTSOM).toBeDefined();
   });
 
+  it('should have the correct number of run configurations', () => {
+    expect(jsSomStats.numRunConfigs).toEqual(26);
+    expect(tSomStats.numRunConfigs).toEqual(166);
+  });
+
   describe('with JsSOM data', () => {
     let result: { png: string; svg: string[] };
     it('should not error when rendering the plots', async () => {

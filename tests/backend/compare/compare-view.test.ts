@@ -47,6 +47,14 @@ const criteria = {
   'GC time': { name: 'GC time', unit: 'ms' },
   Allocated: { name: 'Allocated', unit: 'bytes' }
 };
+const criteriaOrder = ['total', 'GC time', 'Allocated'];
+
+const criteria2 = {
+  total: { name: 'total', unit: 'ms' },
+  gcTime: { name: 'gcTime', unit: 'ms' },
+  allocated: { name: 'allocated', unit: 'bytes' }
+};
+const criteriaOrder2 = ['total', 'gcTime', 'allocated'];
 
 const benchId = {
   b: 'my-benchmark',
@@ -129,7 +137,9 @@ describe('Compare View Parts', () => {
     it('should render <td> elements with the statistics', () => {
       const data: CompareStatsRowAcrossVersionsPartial = {
         stats: versionStats,
-        dataFormatters
+        dataFormatters,
+        criteriaOrder: criteriaOrder2,
+        criteria: criteria2
       };
       const result = tpl(data);
       expect(result).toEqualHtmlFragment(
@@ -148,7 +158,9 @@ describe('Compare View Parts', () => {
       const data: CompareStatsRowAcrossExesPartial = {
         exes: exeStats,
         dataFormatters,
-        viewHelpers
+        viewHelpers,
+        criteria: criteria2,
+        criteriaOrder: criteriaOrder2
       };
       const result = tpl(data);
       expect(result).toEqualHtmlFragment('compare-view/stats-row-across-exes');
@@ -207,7 +219,10 @@ describe('Compare View Parts', () => {
 
     it('should render the data as expected', () => {
       const data: CompareStatsTableHeaderPartial = {
-        criteria
+        criteria,
+        criteriaOrder,
+        dataFormatters,
+        isAcrossExes: false
       };
 
       const result = tpl(data);
@@ -233,7 +248,9 @@ describe('Compare View Parts', () => {
         environments,
         dataFormatters,
         viewHelpers,
-        config
+        config,
+        criteriaOrder: criteriaOrder2,
+        criteria: criteria2
       };
 
       const result = tpl(data);
@@ -252,7 +269,9 @@ describe('Compare View Parts', () => {
         environments,
         dataFormatters,
         viewHelpers,
-        config
+        config,
+        criteriaOrder: criteriaOrder2,
+        criteria: criteria2
       };
 
       const result = tpl(data);
@@ -273,7 +292,9 @@ describe('Compare View Parts', () => {
         environments,
         dataFormatters,
         viewHelpers,
-        config
+        config,
+        criteriaOrder: ['total'],
+        criteria: { total: { name: 'total', unit: 'ms' } }
       };
 
       const result = tpl(data);
@@ -300,7 +321,9 @@ describe('Compare View Parts', () => {
         environments,
         dataFormatters,
         viewHelpers,
-        config
+        config,
+        criteriaOrder: ['total'],
+        criteria: { total: { name: 'total', unit: 'ms' } }
       };
 
       const result = tpl(data);
@@ -318,7 +341,7 @@ describe('Compare View Parts', () => {
 
     it('should render the data as expected', () => {
       const data: CompareStatsTablePartial = {
-        criteria,
+        criteria: criteria2,
         benchmarks: [
           {
             benchId,
@@ -331,7 +354,8 @@ describe('Compare View Parts', () => {
         environments,
         dataFormatters,
         viewHelpers,
-        config
+        config,
+        isAcrossExes: false
       };
 
       const result = tpl(data);
@@ -428,7 +452,7 @@ describe('Compare View Parts', () => {
 
     it('should render the data as expected', () => {
       const benchmarks: CompareStatsTable = {
-        criteria,
+        criteria: criteria2,
         benchmarks: [
           {
             benchId,

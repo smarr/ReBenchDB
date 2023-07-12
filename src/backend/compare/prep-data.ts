@@ -539,28 +539,26 @@ async function computeStatisticsAndInlinePlot(
 
     row.versionStats[change.criterion.name] = changeStats;
 
-    if (
-      outputFolder !== null &&
-      plotName != null &&
-      change.criterion.name === inlinePlotCriterion
-    ) {
-      lastPlotId += 1;
-      row.inlinePlot = await createInlinePlot(
-        base.commitId,
-        change.commitId,
-        sortedBase,
-        sortedChange,
-        outputFolder,
-        plotName,
-        lastPlotId
-      );
+    if (change.criterion.name === inlinePlotCriterion) {
+      numRunConfigs += 1;
+
+      if (outputFolder !== null && plotName != null) {
+        lastPlotId += 1;
+        row.inlinePlot = await createInlinePlot(
+          base.commitId,
+          change.commitId,
+          sortedBase,
+          sortedChange,
+          outputFolder,
+          plotName,
+          lastPlotId
+        );
+      }
     }
 
     if (perCriteria !== null) {
       recordPerCriteria(perCriteria, measurements, i, baseOffset, changeStats);
     }
-
-    numRunConfigs += 1;
   }
 
   return { lastPlotId, numRunConfigs };
@@ -1117,6 +1115,39 @@ export async function prepareCompareView(
   return data;
 }
 
+function filterOutZeroChange(criteria: Map<string, ComparisonStatsWithUnit>) {
+  const removed: string[] = [];
+  for (const key of criteria.keys()) {
+    const stats = criteria.get(key);
+    if (stats?.data.every((s) => s.change_m === 0 && s.median === 0)) {
+      criteria.delete(key);
+      removed.push(key);
+    }
+  }
+  return removed;
+}
+
+function removeCriteriaV(
+  comparisonData: ByExeSuiteComparison,
+  removed: string[]
+) {
+  for (const bySuite of comparisonData.values()) {
+    for (const byBench of bySuite.values()) {
+      for (const r of removed) {
+        delete byBench.criteria[r];
+      }
+    }
+  }
+}
+
+function removeCriteriaE(acrossExes: BySuiteComparison, removed: string[]) {
+  for (const byBench of acrossExes.values()) {
+    for (const r of removed) {
+      delete byBench.criteria[r];
+    }
+  }
+}
+
 export async function calculateAllStatisticsAndRenderPlots(
   byExeSuiteBench: ResultsByExeSuiteBenchmark,
   suitesWithMultipleExecutors: string[],
@@ -1160,6 +1191,11 @@ export async function calculateAllStatisticsAndRenderPlots(
     reportOutputFolder,
     inlinePlotName + '-exe'
   );
+
+  const removedCriteriaV = filterOutZeroChange(criteriaAcrossVersions);
+  const removedCriteriaE = filterOutZeroChange(criteriaAcrossExes);
+  removeCriteriaV(comparisonData, removedCriteriaV);
+  removeCriteriaE(acrossExes, removedCriteriaE);
 
   const plotData = calculateDataForOverviewPlot(comparisonData, 'total');
 

@@ -120,11 +120,11 @@
 <img src="/static/reports/jssom/overview-som.svg" width="432">
 </div>
 <dl class="row">
-  <dt class="col-sm-5" style="white-space: nowrap;">Number of Run Configurations</dt>
-  <dd class="col-sm-5">26</dd>
+  <dt class="col-sm-3" style="white-space: nowrap;">Number of Run Configurations</dt>
+  <dd class="col-sm-7">26</dd>
 
-  <dt class="col-sm-5">Median Run time in ms</dt>
-  <dd class="col-sm-5">0.01 (min. -0.13, max. 0.09)</dd>
+  <dt class="col-sm-3">Change of Run time</dt>
+  <dd class="col-sm-7">median 1% (min. -13%, max. 9%)</dd>
 </dl>
 
 
@@ -142,8 +142,8 @@
 <th scope="col"></th>
 
 <th scope="col" title="Number of Samples">#M</th>
-<th scope="col">median time<br>in ms</th>
-<th scope="col">time diff %</th>
+<th scope="col" title="median time">median time<br>in ms</th>
+<th scope="col" title="difference in % of time">time diff %</th>
 
 <th scope="col"></th>
 </tr></thead>
@@ -153,10 +153,9 @@
 <th scope="row">DeltaBlue</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-1.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">90.54</span></td>
-<td><span class="stats-change" title="change over median run time">0</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">0</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som DeltaBlue 10 0  50</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -169,10 +168,9 @@
 <th scope="row">GraphSearch</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-2.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">51.72</span></td>
-<td><span class="stats-change" title="change over median run time">2</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">2</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som GraphSearch 10 0  4</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -185,10 +183,9 @@
 <th scope="row">JsonSmall</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-3.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">126.04</span></td>
-<td><span class="stats-change" title="change over median run time">-7</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">-7</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som JsonSmall 10 0  1</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -201,10 +198,9 @@
 <th scope="row">NBody</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-4.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">81.38</span></td>
-<td><span class="stats-change" title="change over median run time">-10</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">-10</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som NBody 10 0  500</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -217,10 +213,9 @@
 <th scope="row">PageRank</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-5.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">208.31</span></td>
-<td><span class="stats-change" title="change over median run time">4</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">4</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som PageRank 10 0  40</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -233,10 +228,9 @@
 <th scope="row">Richards</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-6.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">2589.35</span></td>
-<td><span class="stats-change" title="change over median run time">7</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">7</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som Richards 10 0  1</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -261,8 +255,8 @@
 <th scope="col"></th>
 
 <th scope="col" title="Number of Samples">#M</th>
-<th scope="col">median time<br>in ms</th>
-<th scope="col">time diff %</th>
+<th scope="col" title="median time">median time<br>in ms</th>
+<th scope="col" title="difference in % of time">time diff %</th>
 
 <th scope="col"></th>
 </tr></thead>
@@ -272,10 +266,9 @@
 <th scope="row">Bounce</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-7.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">80.36</span></td>
-<td><span class="stats-change" title="change over median run time">-2</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">-2</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Bounce 10 0  2</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -288,10 +281,9 @@
 <th scope="row">BubbleSort</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-8.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">127.88</span></td>
-<td><span class="stats-change" title="change over median run time">-4</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">-4</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som BubbleSort 10 0  3</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -304,10 +296,9 @@
 <th scope="row">Dispatch</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-9.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">70.81</span></td>
-<td><span class="stats-change" title="change over median run time">-13</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">-13</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Dispatch 10 0  2</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -320,10 +311,9 @@
 <th scope="row">Fannkuch</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-10.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">59.91</span></td>
-<td><span class="stats-change" title="change over median run time">5</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">5</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Fannkuch 10 0  6</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -336,10 +326,9 @@
 <th scope="row">Fibonacci</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-11.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">263.34</span></td>
-<td><span class="stats-change" title="change over median run time">-3</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">-3</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Fibonacci 10 0  3</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -352,10 +341,9 @@
 <th scope="row">FieldLoop</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-12.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">190.50</span></td>
-<td><span class="stats-change" title="change over median run time">4</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">4</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som FieldLoop 10 0  1</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -368,10 +356,9 @@
 <th scope="row">IntegerLoop</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-13.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">149.09</span></td>
-<td><span class="stats-change" title="change over median run time">3</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">3</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som IntegerLoop 10 0  2</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -384,10 +371,9 @@
 <th scope="row">List</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-14.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">124.80</span></td>
-<td><span class="stats-change" title="change over median run time">2</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">2</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som List 10 0  2</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -400,10 +386,9 @@
 <th scope="row">Loop</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-15.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">164.68</span></td>
-<td><span class="stats-change" title="change over median run time">5</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">5</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Loop 10 0  5</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -416,10 +401,9 @@
 <th scope="row">Mandelbrot</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-16.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">138.32</span></td>
-<td><span class="stats-change" title="change over median run time">-7</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">-7</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Mandelbrot 10 0  30</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -432,10 +416,9 @@
 <th scope="row">Permute</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-17.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">130.80</span></td>
-<td><span class="stats-change" title="change over median run time">0</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">0</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Permute 10 0  3</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -448,10 +431,9 @@
 <th scope="row">Queens</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-18.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">100.68</span></td>
-<td><span class="stats-change" title="change over median run time">1</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">1</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Queens 10 0  2</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -464,10 +446,9 @@
 <th scope="row">QuickSort</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-19.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">27.68</span></td>
-<td><span class="stats-change" title="change over median run time">2</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">2</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som QuickSort 10 0  1</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -480,10 +461,9 @@
 <th scope="row">Recurse</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-20.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">147.77</span></td>
-<td><span class="stats-change" title="change over median run time">1</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">1</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Recurse 10 0  3</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -496,10 +476,9 @@
 <th scope="row">Sieve</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-21.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">124.33</span></td>
-<td><span class="stats-change" title="change over median run time">-2</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">-2</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Sieve 10 0  4</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -512,10 +491,9 @@
 <th scope="row">Storage</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-22.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">34.65</span></td>
-<td><span class="stats-change" title="change over median run time">1</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">1</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Storage 10 0  1</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -528,10 +506,9 @@
 <th scope="row">Sum</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-23.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">64.02</span></td>
-<td><span class="stats-change" title="change over median run time">5</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">5</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Sum 10 0  2</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -544,10 +521,9 @@
 <th scope="row">Towers</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-24.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">176.06</span></td>
-<td><span class="stats-change" title="change over median run time">-3</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">-3</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Towers 10 0  2</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -560,10 +536,9 @@
 <th scope="row">TreeSort</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-25.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">80.91</span></td>
-<td><span class="stats-change" title="change over median run time">-1</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">-1</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som TreeSort 10 0  1</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
@@ -576,10 +551,9 @@
 <th scope="row">WhileLoop</th>
   <td class="inline-cmp"><img src="/static/reports/jssom/inline-26.svg"></td>
 <td class="stats-samples">10</td>
+
 <td><span class="stats-median" title="median">92.95</span></td>
-<td><span class="stats-change" title="change over median run time">9</span></td>
-
-
+<td><span class="stats-change stats-total" title="diff %">9</span></td>
 <td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som WhileLoop 10 0  10</code>"></button>
 <button type="button" class="btn btn-sm btn-environment btn-popover"
