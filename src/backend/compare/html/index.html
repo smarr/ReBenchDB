@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>ReBenchDB for {%= it.project %}: Comparing {%= it.baselineHash6 %} with {%= it.changeHash6 %}</title>
+  <meta id="baseHash" value="{%= it.baselineHash %}">
+  <meta id="changeHash" value="{%= it.changeHash %}">
+  <meta id="project-slug" value="{%= it.project %}">
+
+  {%- include('header.html') %}
+
+  <script src="/static/compare.js" type="module"></script>
+</head>
+<body class="compare timeline-multi">
+
+<header>
+<div class="jumbotron compare">
+  <h2>ReBenchDB for {%= it.project %}</h2>
+  {% if (it.revisionFound) { %}
+  <h3>Comparing <a href="{%= it.base.repourl%}/compare/{%= it.baselineHash%}...{%= it.changeHash%}">{%= it.baselineHash6%} with {%= it.changeHash6%}</a></h3>
+  {% } else { %}
+  <h3>Comparing {%= it.baselineHash6%} with {%= it.changeHash6%}</h3>
+  {% } %}
+</div>
+
+{%- include('refresh-menu.html', it) %}
+</header>
+
+<div class="collapse card-columns" id="filters">
+  <div>
+    <button type="button" class="btn btn-secondary" id="filter-all">All</button>
+    <button type="button" class="btn btn-secondary" id="filter-none">None</button>
+  </div>
+  <div id="filter-groups"></div>
+</div>
+
+
+{% if (!it.revisionFound) { %}
+<div class="alert alert-warning compare" role="alert">
+  {% if (it.baselineHash === it.changeHash) { %}
+  <h4 class="alert-heading">Cannot Compare Revision with Itself</h4>
+
+  <p>The requested comparison was for:</p>
+  <ul>
+    <li>{%= it.baselineHash %}</li>
+    <li>{%= it.changeHash %}</li>
+  </ul>
+  {% } else { %}
+  <h4 class="alert-heading">Revisions Not Found</h4>
+
+  <p>The project {%= it.project %} does not seem to have data for at least one of the requested revisions.</p>
+  <ul>
+    <li>{%= it.baselineHash %}</li>
+    <li>{%= it.changeHash %}</li>
+  </ul>
+  {% } %}
+</div>
+{% } %}
+
+{% if (it.noData) { %}
+<div class="compare">
+  <h3>Issue with Unexpected Data</h3>
+  <p>The data provided for baseline and change does not seem to have a common benchmarks/executors.</p>
+  <p>This is known to happen for instance, when benchmarks or parameters are changed, or executors renamed.</p>
+</div>
+{% } %}
+
+{% if (it.revisionFound) { %}
+<div id="version-details" class="compare">
+  <h2>Version Details</h2>
+  <dl class="row">
+    <dt class="col-sm-2">Baseline</dt>
+    <dd class="col-sm-9">
+      <a href="{%= it.base.repourl%}/compare/{%= it.baselineHash%}"><span class="baseline-badge">{%= it.baselineHash6%}</span></a> {%= it.base.branchortag%}<br/>
+       {%= it.base.authorname%}
+      <pre>{%= it.base.commitmessage%}</pre>
+
+      {%= it.base.name%}
+    </dd>
+    <dt class="col-sm-2">Change</dt>
+    <dd class="col-sm-9">
+      <a href="{%= it.base.repourl%}/compare/{%= it.changeHash%}"><span class="change-badge">{%= it.changeHash6%}</span></a> {%= it.change.branchortag%}<br/>
+       {%= it.change.authorname%}
+      <pre>{%= it.change.commitmessage%}</pre>
+
+      {%= it.change.name%}
+    </dd>
+    <dt class="col-sm-2">Significant Change</dt>
+      <dd class="col-sm-9"><div class="form-row">
+        <input type="range" class="col-6 custom-range" min="0" max="15" step="0.5" id="significance" style="padding-top: 1.75ex; padding-right: 1em;" value="5">
+        <input type="text" readonly class="col-4 form-control-plaintext" id="significance-val" value="5%">
+      </div></dd>
+  </dl>
+</div>
+
+
+<div class="container-fluid"><div class="row flex-xl-nowrap">
+
+{%- include('navigation.html', it.navigation) %}
+
+<main class="col-8" role="main">
+
+{%- include('stats-summary.html', {
+        ...it.stats.acrossVersions.summary,
+        dataFormatters: it.dataFormatters,
+        config: it.config
+    }) %}
+
+{% if (it.notInBoth) { %}
+<h3>Changes in Benchmark Set</h3>
+ TODO
+ show table with
+  commitid, exe, suite, bench, varvalue, cores, inputsize, extraargs
+
+{% } %}
+
+{%- include('compare-versions.html', {...it.stats, config: it.config}) %}
+
+{% if (it.hasExeComparison) {
+%}{%- include('compare-exes.html', {...it.stats, config: it.config}) %}{%
+   }
+%}
+
+</main>
+</div></div>
+
+{% } /* if (it.revisionFound) */ %}
+
+</body>
+</html>

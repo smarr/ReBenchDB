@@ -29,14 +29,13 @@ COPY ./src/stats/install.R /project/src/stats/
 # Installing R libraries
 RUN Rscript /project/src/stats/install.R
 
-
 # Copy only package.json to enable caching
 COPY ./package.json ./package-lock.json /project/
 
 # Set the working dir to the project & install and compile all dependency
 WORKDIR /project/
 
-RUN npm ci --ignore-scripts .
+RUN SKIP_COMPILE=true npm ci --ignore-scripts=false --foreground-scripts
 
 ENV POSTGRES_PASSWORD=docker
 ENV POSTGRES_USER=docker

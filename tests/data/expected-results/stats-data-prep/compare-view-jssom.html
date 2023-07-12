@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>ReBenchDB for jssom: Comparing 4dff7e with bc1105</title>
+  <meta id="baseHash" value="4dff7e">
+  <meta id="changeHash" value="bc1105">
+  <meta id="project-slug" value="jssom">
+
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<!-- Bootstrap from CDN -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+<!-- <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+<link rel="stylesheet" href="/static/style.css">
+
+
+  <script src="/static/compare.js" type="module"></script>
+</head>
+<body class="compare timeline-multi">
+
+<header>
+<div class="jumbotron compare">
+  <h2>ReBenchDB for jssom</h2>
+  
+  <h3>Comparing <a href="repo-url/compare/4dff7e...bc1105">4dff7e with bc1105</a></h3>
+  
+</div>
+
+<div class="refresh">
+  <div class="flex-nowrap navbar-light">
+    <button type="button" class="btn btn-outline-secondary btn-sm"
+        data-toggle="collapse" data-target="#filters" aria-controls="#filters"
+        aria-expanded="false" aria-label="Toggle Filters">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-funnel" viewBox="0 0 16 16">
+        <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2h-11z"/>
+      </svg>
+    </button>
+    <button id="show-refresh-form" type="button" class="btn btn-outline-secondary btn-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-repeat" viewBox="0 0 16 16">
+        <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/>
+        <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/>
+      </svg>
+    </button>
+    <button class="navbar-toggler" type="button" data-toggle="collapse"
+        data-target="nav.compare" aria-controls="nav.compare"
+        aria-expanded="false" aria-label="Toggle Outline"
+        id="report-nav-toggler">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <form method="post" action="/admin/refresh/jssom/4dff7e/bc1105" class="input-group-sm">
+      <input type="password" class="form-control" name="password"
+        placeholder="Password" aria-label="Password">
+    </form>
+  </div>
+</div>
+</header>
+
+<div class="collapse card-columns" id="filters">
+  <div>
+    <button type="button" class="btn btn-secondary" id="filter-all">All</button>
+    <button type="button" class="btn btn-secondary" id="filter-none">None</button>
+  </div>
+  <div id="filter-groups"></div>
+</div>
+
+
+
+
+
+
+
+<div id="version-details" class="compare">
+  <h2>Version Details</h2>
+  <dl class="row">
+    <dt class="col-sm-2">Baseline</dt>
+    <dd class="col-sm-9">
+      <a href="repo-url/compare/4dff7e"><span class="baseline-badge">4dff7e</span></a> main<br/>
+       foo@bar
+      <pre>msg1</pre>
+
+      som
+    </dd>
+    <dt class="col-sm-2">Change</dt>
+    <dd class="col-sm-9">
+      <a href="repo-url/compare/bc1105"><span class="change-badge">bc1105</span></a> main<br/>
+       foo@bar
+      <pre>msg2</pre>
+
+      som
+    </dd>
+    <dt class="col-sm-2">Significant Change</dt>
+      <dd class="col-sm-9"><div class="form-row">
+        <input type="range" class="col-6 custom-range" min="0" max="15" step="0.5" id="significance" style="padding-top: 1.75ex; padding-right: 1em;" value="5">
+        <input type="text" readonly class="col-4 form-control-plaintext" id="significance-val" value="5%">
+      </div></dd>
+  </dl>
+</div>
+
+
+<div class="container-fluid"><div class="row flex-xl-nowrap">
+
+<nav class="col-2 compare">
+<a href="#overview">Result Overview</a>
+<nav>
+<span>som</span>
+    <a href="#macro-som">macro</a>
+    <a href="#micro-som">micro</a>
+</nav>
+</nav>
+
+<main class="col-8" role="main">
+
+<h2 id="overview">Result Overview</h2>
+<div id="overview-plots">
+<img src="/static/reports/jssom/overview-som.svg" width="432">
+</div>
+<dl class="row">
+  <dt class="col-sm-5" style="white-space: nowrap;">Number of Run Configurations</dt>
+  <dd class="col-sm-5">26</dd>
+
+  <dt class="col-sm-5">Median Run time in ms</dt>
+  <dd class="col-sm-5">0.01 (min. -0.13, max. 0.09)</dd>
+</dl>
+
+
+
+
+<h2>Performance Changes between Versions</h2>
+
+<div class="exe-suite-group">
+<h3 id="macro-som">macro</h3>
+<div class="title-executor">Executor: som</div>
+
+<table class="table table-sm benchmark-details">
+<thead><tr>
+<th scope="col"></th>
+<th scope="col"></th>
+<th scope="col" title="Number of Samples">#M</th>
+<th scope="col">median time<br>in ms</th>
+<th scope="col">time diff %</th>
+
+<th scope="col"></th>
+</tr></thead>
+
+<tbody>
+<tr>
+<th scope="row">DeltaBlue</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-1.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">90.54</span></td>
+<td><span class="stats-change" title="change over median run time">0</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som DeltaBlue 10 0  50</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1979,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"DeltaBlue","e":"som","s":"macro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">GraphSearch</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-2.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">51.72</span></td>
+<td><span class="stats-change" title="change over median run time">2</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som GraphSearch 10 0  4</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1993,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"GraphSearch","e":"som","s":"macro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">JsonSmall</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-3.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">126.04</span></td>
+<td><span class="stats-change" title="change over median run time">-7</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som JsonSmall 10 0  1</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1986,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"JsonSmall","e":"som","s":"macro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">NBody</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-4.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">81.38</span></td>
+<td><span class="stats-change" title="change over median run time">-10</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som NBody 10 0  500</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1969,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"NBody","e":"som","s":"macro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">PageRank</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-5.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">208.31</span></td>
+<td><span class="stats-change" title="change over median run time">4</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som PageRank 10 0  40</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1992,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"PageRank","e":"som","s":"macro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Richards</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-6.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">2589.35</span></td>
+<td><span class="stats-change" title="change over median run time">7</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/GraphSearch Examples/Benchmarks/BenchmarkHarness.som Richards 10 0  1</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1994,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Richards","e":"som","s":"macro"}'></button>
+</td>
+</tr>
+</tbody>
+</table>
+
+
+</div>
+
+<div class="exe-suite-group">
+<h3 id="micro-som">micro</h3>
+<div class="title-executor">Executor: som</div>
+
+<table class="table table-sm benchmark-details">
+<thead><tr>
+<th scope="col"></th>
+<th scope="col"></th>
+<th scope="col" title="Number of Samples">#M</th>
+<th scope="col">median time<br>in ms</th>
+<th scope="col">time diff %</th>
+
+<th scope="col"></th>
+</tr></thead>
+
+<tbody>
+<tr>
+<th scope="row">Bounce</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-7.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">80.36</span></td>
+<td><span class="stats-change" title="change over median run time">-2</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Bounce 10 0  2</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1976,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Bounce","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">BubbleSort</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-8.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">127.88</span></td>
+<td><span class="stats-change" title="change over median run time">-4</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som BubbleSort 10 0  3</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1980,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"BubbleSort","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Dispatch</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-9.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">70.81</span></td>
+<td><span class="stats-change" title="change over median run time">-13</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Dispatch 10 0  2</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1981,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Dispatch","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Fannkuch</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-10.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">59.91</span></td>
+<td><span class="stats-change" title="change over median run time">5</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Fannkuch 10 0  6</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1970,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Fannkuch","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Fibonacci</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-11.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">263.34</span></td>
+<td><span class="stats-change" title="change over median run time">-3</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Fibonacci 10 0  3</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1971,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Fibonacci","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">FieldLoop</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-12.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">190.50</span></td>
+<td><span class="stats-change" title="change over median run time">4</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som FieldLoop 10 0  1</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1991,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"FieldLoop","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">IntegerLoop</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-13.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">149.09</span></td>
+<td><span class="stats-change" title="change over median run time">3</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som IntegerLoop 10 0  2</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1983,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"IntegerLoop","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">List</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-14.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">124.80</span></td>
+<td><span class="stats-change" title="change over median run time">2</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som List 10 0  2</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1973,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"List","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Loop</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-15.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">164.68</span></td>
+<td><span class="stats-change" title="change over median run time">5</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Loop 10 0  5</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1985,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Loop","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Mandelbrot</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-16.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">138.32</span></td>
+<td><span class="stats-change" title="change over median run time">-7</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Mandelbrot 10 0  30</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1988,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Mandelbrot","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Permute</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-17.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">130.80</span></td>
+<td><span class="stats-change" title="change over median run time">0</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Permute 10 0  3</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1978,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Permute","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Queens</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-18.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">100.68</span></td>
+<td><span class="stats-change" title="change over median run time">1</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Queens 10 0  2</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1982,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Queens","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">QuickSort</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-19.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">27.68</span></td>
+<td><span class="stats-change" title="change over median run time">2</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som QuickSort 10 0  1</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1974,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"QuickSort","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Recurse</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-20.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">147.77</span></td>
+<td><span class="stats-change" title="change over median run time">1</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Recurse 10 0  3</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1989,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Recurse","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Sieve</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-21.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">124.33</span></td>
+<td><span class="stats-change" title="change over median run time">-2</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Sieve 10 0  4</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1975,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Sieve","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Storage</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-22.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">34.65</span></td>
+<td><span class="stats-change" title="change over median run time">1</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Storage 10 0  1</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1990,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Storage","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Sum</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-23.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">64.02</span></td>
+<td><span class="stats-change" title="change over median run time">5</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Sum 10 0  2</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1987,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Sum","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">Towers</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-24.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">176.06</span></td>
+<td><span class="stats-change" title="change over median run time">-3</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som Towers 10 0  2</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1984,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"Towers","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">TreeSort</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-25.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">80.91</span></td>
+<td><span class="stats-change" title="change over median run time">-1</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som TreeSort 10 0  1</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1972,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"TreeSort","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+<tr>
+<th scope="row">WhileLoop</th>
+  <td class="inline-cmp"><img src="/static/reports/jssom/inline-26.svg"></td>
+<td class="stats-samples">10</td>
+<td><span class="stats-median" title="median">92.95</span></td>
+<td><span class="stats-change" title="change over median run time">9</span></td>
+
+
+<td><button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>som.sh -cp Smalltalk:Examples/Benchmarks/LanguageFeatures Examples/Benchmarks/BenchmarkHarness.som WhileLoop 10 0  10</code>"></button>
+<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content=""></button>
+<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="1977,4dff7e/1050,bc1105/1051"></button>
+<button type="button" class="btn btn-sm btn-timeline" data-content='{"b":"WhileLoop","e":"som","s":"micro"}'></button>
+</td>
+</tr>
+</tbody>
+</table>
+
+
+</div>
+
+
+
+
+</main>
+</div></div>
+
+
+
+</body>
+</html>

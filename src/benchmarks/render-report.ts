@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, readFileSync } from 'fs';
 import { tmpdir } from 'os';
 import * as path from 'path';
 import { RebenchDbBenchmark } from './rebenchdb-benchmark.js';
-import { startReportGeneration } from '../dashboard.js';
+import { startReportGeneration } from '../backend/compare/report.js';
 
 export default class RenderReport extends RebenchDbBenchmark {
   private baseHash: string | null = null;

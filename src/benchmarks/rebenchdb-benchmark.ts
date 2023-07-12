@@ -1,11 +1,11 @@
 import { readFileSync } from 'fs';
-import { getDirname } from '../util.js';
-import { BenchmarkData } from '../api.js';
+import { getDirname } from '../backend/util.js';
+import { BenchmarkData } from '../shared/api.js';
 import {
   closeMainDb,
   createAndInitializeDB,
   TestDatabase
-} from '../../tests/db-testing.js';
+} from '../../tests/backend/db/db-testing.js';
 import { Benchmark } from './benchmark.js';
 
 const __dirname = getDirname(import.meta.url);
@@ -22,7 +22,9 @@ export class RebenchDbBenchmark extends Benchmark {
     this.enableTimeline = false;
 
     this.testData = JSON.parse(
-      readFileSync(`${__dirname}/../../../tests/large-payload.json`).toString()
+      readFileSync(
+        `${__dirname}/../../../tests/data/large-payload.json`
+      ).toString()
     );
   }
 

@@ -81,6 +81,16 @@ jobs:
       - name: Run Tests
         run: |
           npm test
+      
+      - name: Upload image difference, if there are any
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: Image Differences of charts.test.ts
+          path: |
+            diff-*.png
+            *.svg
+          if-no-files-found: ignore
 
       - name: Lint and Formatting
         run: |

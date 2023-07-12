@@ -1,4 +1,7 @@
-import { BatchingTimelineUpdater, ComputeRequest } from '../timeline-calc.js';
+import {
+  BatchingTimelineUpdater,
+  ComputeRequest
+} from '../backend/timeline/timeline-calc.js';
 import { RebenchDbBenchmark } from './rebenchdb-benchmark.js';
 
 export default class ComputeTimeline extends RebenchDbBenchmark {

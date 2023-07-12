@@ -1,0 +1,23 @@
+<h2 id="overview">Result Overview</h2>
+<div id="overview-plots">
+{% 
+   const d = it.dataFormatters;
+   const s = it.stats;
+
+   for (const url of it.overviewSvgUrls) {
+     %}<img src="{%= it.config.reportsUrl %}/{%= url %}" width="{%= it.config.overviewPlotWidth %}">{%
+   }
+   
+%}
+</div>
+<dl class="row">
+  <dt class="col-sm-5" style="white-space: nowrap;">Number of Run Configurations</dt>
+  <dd class="col-sm-5">{%= it.numRunConfigs %}</dd>
+
+{% for (let name in s) {
+      const data = s[name];
+      const label = name === 'total' ? 'Run time' : name;
+%}  <dt class="col-sm-5">Median {%= label %} in {%= data.unit %}</dt>
+  <dd class="col-sm-5">{%= d.r2(data.median) %} (min. {%= d.r2(data.min) %}, max. {%= d.r2(data.max) %})</dd>
+{% }
+%}</dl>

@@ -1,4 +1,4 @@
-import { dashResults } from '../dashboard.js';
+import { getLast100Measurements } from '../backend/main/main.js';
 import { RebenchDbBenchmark } from './rebenchdb-benchmark.js';
 
 export default class RenderReport extends RebenchDbBenchmark {
@@ -37,7 +37,7 @@ export default class RenderReport extends RebenchDbBenchmark {
       throw new Error('this.db not initialized');
     }
     this.db.getStatsCacheValidity().invalidateAndNew();
-    return dashResults(1, this.db);
+    return getLast100Measurements(1, this.db);
   }
 
   public verifyResult(result: any): boolean {

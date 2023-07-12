@@ -1,0 +1,61 @@
+{%
+const h = it.viewHelpers;
+const f = it.dataFormatters;
+const commonStart = h.commonStringStart(it.exes.map((e) => e.exeName));
+%}<td class="stats-samples">
+{%
+  let itOut = new h.PerIterationOutput('', '<br>');
+  for (const e of it.exes) {
+  %}{%- itOut.next()
+  %}{%= h.withoutStart(commonStart, e.exeName) %} {%= e.criteria.total.samples %}
+{% }
+%}</td>
+<td><span class="stats-median" title="median">
+{%
+  itOut = new h.PerIterationOutput('', '<br>');
+  for (const e of it.exes) {
+  %}{%- itOut.next()
+  %}{%= f.r2(e.criteria.total.median) %}
+{% }
+%}</span></td>
+<td>
+{%
+  itOut = new h.PerIterationOutput('', '<br>');
+  for (const e of it.exes) {
+  %}{%- itOut.next()
+  %}<span class="stats-change" title="change over median run time">{%= f.per(e.criteria.total.change_m) %}</span>
+{% }
+%}</td>
+{% if (it.exes[0].criteria.gcTime) {
+%}<td><span class="stats-median" title="median">
+{%
+  itOut = new h.PerIterationOutput('', '<br>');
+  for (const e of it.exes) {
+  %}{%- itOut.next()
+  %}{%= f.r0(e.criteria.gcTime.median) %}
+{% }
+%}</span></td>
+<td>
+{%
+  itOut = new h.PerIterationOutput('', '<br>');
+  for (const e of it.exes) {
+  %}{%- itOut.next()
+  %}<span class="stats-change" title="change over median GC time">{%= f.per(e.criteria.gcTime.change_m) %}</span>
+{% }
+%}</td>{% } %}
+{% if (it.exes[0].criteria.allocated) { %}<td><span class="stats-median" title="median">
+{%
+  itOut = new h.PerIterationOutput('', '<br>');
+  for (const e of it.exes) {
+  %}{%- itOut.next()
+  %}{%= f.asHumanMem(e.criteria.allocated.median) %}
+{% }
+%}</span></td>
+<td>
+{%
+  itOut = new h.PerIterationOutput('', '<br>');
+  for (const e of it.exes) {
+  %}{%- itOut.next()
+  %}<span class="stats-change" title="change over median allocated">{%= f.per(e.criteria.allocated.change_m) %}</span>
+{% }
+%}</td>{% } %}

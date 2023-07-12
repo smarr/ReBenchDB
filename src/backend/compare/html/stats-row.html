@@ -1,0 +1,71 @@
+{%
+const stats = it.stats;
+
+let args = '';
+
+if (stats.details.numV  > 1) { args += stats.benchId.v + ' '; }
+if (stats.details.numC  > 1) { args += stats.benchId.c + ' '; }
+if (stats.details.numI  > 1) { args += stats.benchId.i + ' '; }
+if (stats.details.numEa > 1) { args += stats.benchId.ea + ' '; }
+
+if (args.length > 0) {
+  args = `<span class="all-args">${args.trim()}</span>`;
+}
+
+if (stats.missing) {
+%}<tr>
+%}<th scope="row">{%= stats.benchId.b %}{%- args %}</th>
+<td colspan="4">Missing data for {%
+  const byCommitId = new Map();
+  for (const m of stats.missing) {
+    let byCommit = byCommitId.get(m.commitId);
+    if (!byCommit) {
+      byCommit = [];
+      byCommitId.set(m.commitId, byCommit);
+    }
+    byCommit.push(m.criterion.name);
+  }
+
+  for (const [commitId, byCommit] of byCommitId) {
+    %}<span class="missing-data"><span class="commit-id">{%= commitId %}:</span> {%= byCommit.join(', ') %}{%
+  }
+%}
+</td>
+</tr>
+{%
+}
+
+let hasTotal = false;
+if (stats.exeStats && stats.exeStats.every((e) => e.criteria.total)) {
+  hasTotal = true;
+} else if (stats.versionStats && stats.versionStats.total) {
+  hasTotal = true;
+}
+if (!stats.missing || hasTotal) {
+    
+
+    if (hasTotal) {
+%}<tr>
+<th scope="row">{%= stats.benchId.b %}{%- args %}</th>
+  <td class="inline-cmp"><img src="{%= it.config.reportsUrl %}/{%= stats.inlinePlot %}"></td>
+{%    if (stats.exeStats) {
+%}{%-   include('stats-row-across-exes.html', {
+          exes: stats.exeStats,
+          dataFormatters: it.dataFormatters,
+          viewHelpers: it.viewHelpers}
+      ) %}
+{%   } else {
+%}{%-   include('stats-row-across-versions.html', {
+        stats: stats.versionStats,
+        dataFormatters: it.dataFormatters}
+      ) %}
+{%   }
+%}<td>{%- include('stats-row-buttons-info.html', {
+            benchId: stats.benchId,
+            details: stats.details,
+            environments: it.environments,
+            dataFormatters: it.dataFormatters}
+     ) %}</td>
+{% }
+%}</tr>{%
+} %}

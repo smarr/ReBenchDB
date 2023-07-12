@@ -1,0 +1,25 @@
+{%
+const d = it.details;
+const b = it.benchId;
+const f = it.dataFormatters;
+%}<button type="button" class="btn btn-sm btn-cmdline btn-popover"
+  data-content="<code>{%= d.cmdline %}</code>"></button>
+{%
+   if (it.environments) {
+%}<button type="button" class="btn btn-sm btn-environment btn-popover"
+    data-content="{%= f.formatEnvironment(d.envId, it.environments) %}"></button>
+{% }
+
+   if (d.hasWarmup) {
+%}<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="{%= f.dataSeriesIds(d.dataSeries, d.dataSeries.runId, d.dataSeries.base.trialId, d.dataSeries.change.trialId) %}"></button>
+{%
+   } 
+
+   if (d.profileTrialIdBase) {
+      const baseTrial = d.profileTrialIdBase.trialid;
+      const changeTrial = d.profileTrialIdChange.trialid;
+%}<button type="button" class="btn btn-sm btn-profile" data-content="{%= f.dataSeriesIds(d.dataSeries, d.profileTrialIdBase.runid, baseTrial, changeTrial) %}"></button>
+{%
+   }
+%}<button type="button" class="btn btn-sm btn-timeline" data-content='{%- JSON.stringify(
+  f.benchmarkId(b.b, b.e, b.s, b.v, d.numV, b.c, d.numC, b.i, d.numI, b.ea, d.numEa)) %}'></button>
