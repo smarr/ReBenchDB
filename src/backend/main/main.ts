@@ -1,19 +1,26 @@
 import { ParameterizedContext } from 'koa';
 import { QueryConfig } from 'pg';
 
-import { TotalCriterion, isReBenchDotDev, rebenchVersion } from '../util.js';
-import { processTemplate } from '../templates.js';
+import {
+  TotalCriterion,
+  isReBenchDotDev,
+  rebenchVersion,
+  robustPath
+} from '../util.js';
+import { prepareTemplate } from '../templates.js';
 import { completeRequest, startRequest } from '../perf-tracker.js';
 import { AllResults } from '../../shared/api.js';
 import { Database } from '../db/db.js';
 import { TimedCacheValidity } from '../db/timed-cache-validity.js';
+
+const mainTpl = prepareTemplate(robustPath('backend/main/index.html'), false);
 
 export async function renderMainPage(
   ctx: ParameterizedContext,
   db: Database
 ): Promise<void> {
   const projects = await db.getAllProjects();
-  ctx.body = processTemplate('backend/main/index.html', {
+  ctx.body = mainTpl({
     projects,
     isReBenchDotDev: isReBenchDotDev()
   });

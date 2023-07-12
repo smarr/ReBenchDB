@@ -15,6 +15,11 @@ import {
   getStatistics
 } from '../../../src/backend/main/main.js';
 import { getDataOverview } from '../../../src/backend/project/data-export.js';
+import { prepareTemplate } from '../../../src/backend/templates.js';
+
+import { initJestMatchers } from '../../helpers.js';
+
+initJestMatchers();
 
 const timeoutForLargeDataTest = 200 * 1000;
 jest.setTimeout(timeoutForLargeDataTest);
@@ -210,6 +215,15 @@ describe('Test with basic test data loaded', () => {
       '2222222222222222222222222222222222222222'
     );
     expect(source?.branchortag).toEqual('exp2');
+  });
+
+  describe('renderMainPage', () => {
+    it('Should render the main page', async () => {
+      const projects = await db.getAllProjects();
+      const tpl = prepareTemplate(robustPath('backend/main/index.html'), true);
+      const html = tpl({ projects, isReBenchDotDev: false });
+      expect(html).toEqualHtmlFragment('main/index');
+    });
   });
 });
 

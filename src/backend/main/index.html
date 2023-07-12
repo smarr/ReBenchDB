@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <title>ReBench</title>
-  {{{headerHtml}}}
+  {%- include('header.html') %}
   <script src="/static/index.js" type="module"></script>
 </head>
 <body>
@@ -24,33 +24,33 @@
   </div>
 
   <div id="projects">
-    {{#projects}}
-    <div class="card project-data" data-id="{{ id }}" data-showchanges="{{ showchanges }}" data-allresults="{{ allresults }}">
-      <h5 class="card-header" id="{{ slug }}"><a
-        href="/{{ slug }}/data">{{ name }}</a></h5>
+    {% for (const p of it.projects) { %}
+    <div class="card project-data" data-id="{%= p.id %}" data-showchanges="{%= p.showchanges %}" data-allresults="{%= p.allresults %}">
+      <h5 class="card-header" id="{%= p.slug %}"><a
+        href="/{%= p.slug %}/data">{%= p.name %}</a></h5>
       <div class="card-body">
-        {{#showchanges}}
+        {% if (p.showchanges) { %}
         <h5>Changes</h5>
         <div class="container min-padding"><div class="row">
           <div class="col-sm min-padding scroll-list">
-            <div class="list-group baseline" id="p{{ id }}-baseline"
-              data-project-slug="{{ slug }}"></div>
+            <div class="list-group baseline" id="p{%= p.id %}-baseline"
+              data-project-slug="{%= p.slug %}"></div>
           </div>
           <div class="col-sm min-padding scroll-list">
-            <div class="list-group change" id="p{{ id }}-change"></div>
+            <div class="list-group change" id="p{%= p.id %}-change"></div>
           </div>
         </div></div>
 
-        <a class="btn btn-primary" id="p{{ id }}-compare">Compare</a>
-        {{/showchanges}}
-        {{#allresults}}
-        <div id="p{{ id }}-results" class="timeline-single"></div>
-        {{/allresults}}
-        <a href="/{{ slug }}/timeline">Timeline</a>
+        <a class="btn btn-primary" id="p{%= p.id %}-compare">Compare</a>
+        {% }
+           if (p.allresults) { %}
+        <div id="p{%= p.id %}-results" class="timeline-single"></div>
+        {% } %}
+        <a href="/{%= p.slug %}/timeline">Timeline</a>
       </div>
     </div>
-    {{/projects}}
-    {{^projects}}
+    {% }
+       if (!it.projects || it.projects.length === 0) { %}
     <div class="card">
       <h5 class="card-header" id="setup-info">
         Welcome to your ReBenchDB Instance</h5>
@@ -70,10 +70,10 @@
       <script>
         document.getElementById('host-url').textContent = window.location.href;
       </script>
-    {{/projects}}
+    {% } %}
   </div>
 
-{{#isReBenchDotDev}}
+{% if (it.isReBenchDotDev) { %}
 <footer
   class="bg-secondary text-light text-center"
   style="font-size: 80%; padding: 1em 10% 1em 10%; position: relative; margin-top: 1em;">
@@ -98,6 +98,6 @@
 </div>
 
 </footer>
-{{/isReBenchDotDev}}
+{% } %}
 </body>
 </html>
