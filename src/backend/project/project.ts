@@ -60,11 +60,13 @@ export async function redirectToNewProjectDataUrl(
   } else {
     respondProjectIdNotFound(ctx, Number(ctx.params.projectId));
   }
-  ctx.body = processTemplate('backend/project/project-data.html', {
-    project
-  });
   ctx.type = 'html';
 }
+
+const projectDataTpl = prepareTemplate(
+  robustPath('backend/project/project-data.html'),
+  false
+);
 
 export async function renderProjectDataPage(
   ctx: ParameterizedContext,
@@ -72,9 +74,7 @@ export async function renderProjectDataPage(
 ): Promise<void> {
   const project = await db.getProjectBySlug(ctx.params.projectSlug);
   if (project) {
-    ctx.body = processTemplate('backend/project/project-data.html', {
-      project
-    });
+    ctx.body = projectDataTpl({ project });
     ctx.type = 'html';
   } else {
     respondProjectNotFound(ctx, ctx.params.projectSlug);
