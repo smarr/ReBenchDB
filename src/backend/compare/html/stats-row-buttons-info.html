@@ -11,14 +11,14 @@ const f = it.dataFormatters;
 {% }
 
    if (d.hasWarmup) {
-%}<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="{%= f.dataSeriesIds(d.dataSeries, d.dataSeries.runId, d.dataSeries.base.trialId, d.dataSeries.change.trialId) %}"></button>
+%}<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="{%= f.dataSeriesIds(d.dataSeries, d.dataSeries.runId, d.dataSeries.base.expId, d.dataSeries.change.expId) %}"></button>
 {%
    } 
 
-   if (d.profileTrialIdBase) {
-      const baseTrial = d.profileTrialIdBase.trialid;
-      const changeTrial = d.profileTrialIdChange.trialid;
-%}<button type="button" class="btn btn-sm btn-profile" data-content="{%= f.dataSeriesIds(d.dataSeries, d.profileTrialIdBase.runid, baseTrial, changeTrial) %}"></button>
+   if (d.profileBase) {
+      const baseExpId = d.profileBase.expid;
+      const changeExpId = d.profileChange.expid;
+%}<button type="button" class="btn btn-sm btn-profile" data-content="{%= f.dataSeriesIds(d.dataSeries, d.profileBase.runid, baseExpId, changeExpId) %}"></button>
 {%
    }
 %}<button type="button" class="btn btn-sm btn-timeline" data-content='{%- JSON.stringify(

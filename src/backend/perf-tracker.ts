@@ -29,6 +29,9 @@ const descriptions = {
   'get-exp-data': 'Starting to prepare experiment data',
   'project-benchmarks': 'Time of GET /rebenchdb/dash/:projectId/benchmarks',
   'get-profiles':
+    // this url was changed to use the expId instead of the trialId
+    // I'll leave this unchanged here to avoid issues
+    // with the performance tracking
     'Time of GET /rebenchdb/dash/:projectId/profiles/:runId/:trialId',
   'get-measurements': 'Time of GET /rebenchdb/dash/:projectId/measurements/...'
 };

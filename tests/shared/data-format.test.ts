@@ -213,11 +213,11 @@ describe('dataSeriesIds()', () => {
       runId: 1,
       base: {
         commitId: '123456',
-        trialId: 2
+        expId: 2
       },
       change: {
         commitId: '123457',
-        trialId: 4
+        expId: 4
       }
     };
 

@@ -121,13 +121,13 @@ export function benchmarkId(
 export function dataSeriesIds(
   ids: DataSeriesVersionComparison,
   runId: number,
-  baseTrialId: number,
-  changeTrialId: number
+  baseExpId: number,
+  changeExpId: number
 ): string {
   // format is parsed in compare.ts:insertProfiles()
   return (
-    `${runId},${ids.base.commitId}/${baseTrialId},` +
-    `${ids.change.commitId}/${changeTrialId}`
+    `${runId},${ids.base.commitId}/${baseExpId},` +
+    `${ids.change.commitId}/${changeExpId}`
   );
 }
 

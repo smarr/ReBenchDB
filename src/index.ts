@@ -105,12 +105,11 @@ router.get('/rebenchdb/dash/:projectId/results', async (ctx) =>
 router.get('/rebenchdb/dash/:projectId/timeline/:runId', async (ctx) =>
   getTimelineAsJson(ctx, db)
 );
-router.get(
-  '/rebenchdb/dash/:projectSlug/profiles/:runId/:trialId',
-  async (ctx) => getProfileAsJson(ctx, db)
+router.get('/rebenchdb/dash/:projectSlug/profiles/:runId/:expId', async (ctx) =>
+  getProfileAsJson(ctx, db)
 );
 router.get(
-  '/rebenchdb/dash/:projectSlug/measurements/:runId/:trialId1/:trialId2',
+  '/rebenchdb/dash/:projectSlug/measurements/:runId/:expId1/:expId2',
   async (ctx) => getMeasurementsAsJson(ctx, db)
 );
 router.get('/rebenchdb/stats', async (ctx) => getSiteStatsAsJson(ctx, db));

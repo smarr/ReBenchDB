@@ -163,7 +163,8 @@ function findOrConstructMeasurements(
     commitId: row.commitid,
     runSettings: runSetting,
     runId: row.runid,
-    trialId: row.trialid
+    trialId: row.trialid,
+    expId: row.expid
   };
   benchResult.measurements.push(m);
   forSuiteByBench.criteria[criterion.name] = criterion;
