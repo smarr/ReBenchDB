@@ -178,7 +178,6 @@ function findMeasurements(
   benchResult: ProcessedResult,
   row: MeasurementData
 ): Measurements | null {
-  let m: Measurements | null = null;
   for (const mm of benchResult.measurements) {
     if (
       mm.envId == row.envid &&
@@ -187,9 +186,8 @@ function findMeasurements(
       mm.expId == row.expid &&
       mm.criterion.name == row.criterion
     ) {
-      m = mm;
-      break;
+      return mm;
     }
   }
-  return m;
+  return null;
 }
