@@ -806,7 +806,7 @@ export abstract class Database {
             FROM
               ${measurementDataTableJoins}
             WHERE (commitId = $1 OR commitid = $2) AND Experiment.projectId = $3
-              ORDER BY expId, runId, invocation, iteration, criterion`,
+              ORDER BY expId, runId, trialId, invocation, iteration, criterion`,
       values: [commitHash1, commitHash2, projectId]
     });
     return result.rows;

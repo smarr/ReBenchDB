@@ -163,7 +163,6 @@ function findOrConstructMeasurements(
     commitId: row.commitid,
     runSettings: runSetting,
     runId: row.runid,
-    trialId: row.trialid,
     expId: row.expid
   };
   benchResult.measurements.push(m);
@@ -185,7 +184,7 @@ function findMeasurements(
       mm.envId == row.envid &&
       mm.commitId == row.commitid &&
       mm.runId == row.runid &&
-      mm.trialId == row.trialid &&
+      mm.expId == row.expid &&
       mm.criterion.name == row.criterion
     ) {
       m = mm;

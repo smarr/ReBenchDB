@@ -188,7 +188,6 @@ describe('collateMeasurements()', () => {
       return {
         expid: 1,
         runid,
-        trialid: 1,
         commitid,
 
         bench: 'b',
