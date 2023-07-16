@@ -243,9 +243,8 @@ function addOrGetCompareStatsRow(
       details: {
         cmdline: measurements.runSettings.simplifiedCmdline,
         envId,
-        profileTrialIdBase: profileIds ? profileIds[0] : false,
-        profileTrialIdChange:
-          profileIds && profileIds[1] ? profileIds[1] : false,
+        profileBase: profileIds ? profileIds[0] : false,
+        profileChange: profileIds && profileIds[1] ? profileIds[1] : false,
         hasWarmup: false,
         numV: countsAndMissing === null ? 0 : countsAndMissing.numV,
         numC: countsAndMissing === null ? 0 : countsAndMissing.numC,
@@ -469,11 +468,11 @@ function getDataSeriesIds(
     runId: base.runId,
     base: {
       commitId: base.commitId,
-      trialId: base.trialId
+      expId: base.expId
     },
     change: {
       commitId: change.commitId,
-      trialId: change.trialId
+      expId: change.expId
     }
   };
 }
@@ -527,7 +526,7 @@ async function computeStatisticsAndInlinePlot(
     row.details.hasWarmup = siteConfig.canShowWarmup(change.values);
 
     if (
-      (row.details.hasWarmup || row.details.profileTrialIdBase) &&
+      (row.details.hasWarmup || row.details.profileBase) &&
       !row.details.dataSeries
     ) {
       row.details.dataSeries = getDataSeriesIds(base, change);

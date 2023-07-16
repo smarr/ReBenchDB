@@ -66,11 +66,11 @@ export interface CompareStatsRowAcrossVersionsPartial {
 
 /**
  * Identifies the set of measurements of a specific run, i.e., a concrete
- * benchmark execution, and a specific trial, i.e., in a specific environment.
+ * benchmark execution, and a experiment.
  */
 export interface DataSeriesId {
   commitId: string; // this one is a bit redundant, it's implied by the trialId
-  trialId: number;
+  expId: number;
 }
 
 export interface DataSeriesVersionComparison {
@@ -86,8 +86,8 @@ export interface RunDetails {
 
   hasWarmup: boolean;
 
-  profileTrialIdBase: AvailableProfile | false;
-  profileTrialIdChange: AvailableProfile | false;
+  profileBase: AvailableProfile | false;
+  profileChange: AvailableProfile | false;
 
   dataSeries?: DataSeriesVersionComparison;
 

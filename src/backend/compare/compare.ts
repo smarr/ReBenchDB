@@ -23,7 +23,7 @@ export async function getProfileAsJson(
 
   ctx.body = await getProfile(
     Number(ctx.params.runId),
-    Number(ctx.params.trialId),
+    Number(ctx.params.expId),
     db
   );
   if (ctx.body === undefined) {
@@ -36,11 +36,11 @@ export async function getProfileAsJson(
 
 async function getProfile(
   runId: number,
-  trialId: number,
+  expId: number,
   db: Database
 ): Promise<any> {
   const result = await db.query({
-    name: 'fetchProfileDataByRunIdTrialId',
+    name: 'fetchProfileDataByRunIdExpId',
     text: `
           SELECT substring(commitId, 1, 6) as commitid,
             benchmark.name as bench, executor.name as exe, suite.name as suite,
@@ -48,14 +48,13 @@ async function getProfile(
             invocation, numIterations, warmup, value as profile
           FROM ProfileData
             JOIN Trial ON trialId = Trial.id
-            JOIN Experiment ON expId = Experiment.id
             JOIN Source ON source.id = sourceId
             JOIN Run ON runId = run.id
             JOIN Suite ON suiteId = suite.id
             JOIN Benchmark ON benchmarkId = benchmark.id
             JOIN Executor ON execId = executor.id
-          WHERE runId = $1 AND trialId = $2`,
-    values: [runId, trialId]
+          WHERE runId = $1 AND trial.expId = $2`,
+    values: [runId, expId]
   });
 
   const data = result.rows[0];
@@ -76,8 +75,8 @@ export async function getMeasurementsAsJson(
   ctx.body = await getMeasurements(
     ctx.params.projectSlug,
     Number(ctx.params.runId),
-    Number(ctx.params.trialId1),
-    Number(ctx.params.trialId2),
+    Number(ctx.params.expId1),
+    Number(ctx.params.expId2),
     db
   );
 
@@ -88,8 +87,8 @@ export async function getMeasurementsAsJson(
 async function getMeasurements(
   projectSlug: string,
   runId: number,
-  trialId1: number,
-  trialId2: number,
+  expId1: number,
+  expId2: number,
   db: Database
 ): Promise<WarmupData | null> {
   const q = {
@@ -109,9 +108,9 @@ async function getMeasurements(
               JOIN Project ON Project.id = Experiment.projectId
             WHERE Project.slug = $1
               AND runId = $2
-              AND (trialId = $3 OR trialId = $4)
+              AND (Trial.expId = $3 OR Trial.expId = $4)
             ORDER BY trialId, criterion, invocation, iteration;`,
-    values: [projectSlug, runId, trialId1, trialId2]
+    values: [projectSlug, runId, expId1, expId2]
   };
   const result = await db.query(q);
   if (result.rows.length === 0) {

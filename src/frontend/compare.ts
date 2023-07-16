@@ -31,7 +31,7 @@ async function fetchWarmupData(
 ) {
   const warmupR = await fetch(
     `/rebenchdb/dash/${projectSlug}/measurements/` +
-      `${dataIds.runId}/${dataIds.ids[0].trialId}/${dataIds.ids[1].trialId}`
+      `${dataIds.runId}/${dataIds.ids[0].expId}/${dataIds.ids[1].expId}`
   );
 
   const warmupData: WarmupData = await warmupR.json();
@@ -108,15 +108,15 @@ function fetchProfile(
   commitId: string,
   isBase: boolean,
   runId: number,
-  trialId: number,
+  expId: number,
   jqInsert: JQuery<HTMLElement>
 ) {
   const profileP = fetch(
-    `/rebenchdb/dash/${projectSlug}/profiles/${runId}/${trialId}`
+    `/rebenchdb/dash/${projectSlug}/profiles/${runId}/${expId}`
   );
   profileP.then(async (profileResponse) => {
     const profileData = await profileResponse.json();
-    const profId = `prof-${commitId}-${runId}-${trialId}`;
+    const profId = `prof-${commitId}-${runId}-${expId}`;
 
     const container = jqInsert.children();
     const labelClass = isBase ? 'baseline' : 'change';
@@ -145,7 +145,7 @@ function fetchProfile(
 
 interface DataSeriesIds {
   runId: number;
-  ids: { commitId: string; trialId: number }[];
+  ids: { commitId: string; expId: number }[];
 }
 
 /**
@@ -155,10 +155,10 @@ function parseDataSeriesIds(serialized: string): DataSeriesIds {
   const idPairs = serialized.split(',');
   const runId = <string>idPairs.shift();
 
-  const data: { commitId: string; trialId: number }[] = [];
+  const data: { commitId: string; expId: number }[] = [];
   for (const id of idPairs) {
-    const [commitId, trialId] = id.split('/');
-    data.push({ commitId, trialId: parseInt(trialId) });
+    const [commitId, expId] = id.split('/');
+    data.push({ commitId, expId: parseInt(expId) });
   }
 
   return { runId: parseInt(runId), ids: data };
@@ -174,8 +174,8 @@ function insertProfiles(e): void {
 
   const { runId, ids } = parseDataSeriesIds(jqButton.data('content'));
 
-  for (const { commitId, trialId } of ids) {
-    if (isNaN(trialId)) {
+  for (const { commitId, expId } of ids) {
+    if (isNaN(expId)) {
       continue;
     }
 
@@ -185,7 +185,7 @@ function insertProfiles(e): void {
     profileInsertTarget.after(jqInsert);
     profileInsertTarget = jqInsert;
     const isBase = baseHash?.startsWith(commitId) ?? false;
-    fetchProfile(projectSlug, commitId, isBase, runId, trialId, jqInsert);
+    fetchProfile(projectSlug, commitId, isBase, runId, expId, jqInsert);
   }
 }
 
