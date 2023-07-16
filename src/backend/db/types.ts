@@ -145,6 +145,7 @@ export interface Baseline extends Source {
 export interface MeasurementData {
   expid: number;
   runid: number;
+  trialid: number;
   commitid: string;
   bench: string;
   exe: string;
