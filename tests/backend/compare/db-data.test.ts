@@ -177,6 +177,65 @@ describe('collateMeasurements()', () => {
       expect(m1.values[0]).toHaveLength(120);
       expect(m2.values[0]).toHaveLength(120);
     });
+
+    it('should have the expected measurements for all benchmarks', () => {
+      const numValuesSteady: string[][] = [];
+      numValuesSteady[55] = [
+        'BubbleSort',
+        'Dispatch',
+        'Fannkuch',
+        'QuickSort',
+        'Queens',
+        'Permute',
+        'Loop',
+        'FieldLoop',
+        'IntegerLoop',
+        'WhileLoop',
+        'Sum',
+        'Towers'
+      ];
+      numValuesSteady[60] = [
+        'Bounce',
+        'Fibonacci',
+        'Sieve',
+        'Storage',
+        'TreeSort'
+      ];
+      numValuesSteady[65] = ['List', 'Recurse'];
+      numValuesSteady[110] = ['Mandelbrot'];
+      numValuesSteady[120] = ['DeltaBlue', 'Json', 'NBody', 'PageRank'];
+      numValuesSteady[130] = ['Richards'];
+      numValuesSteady[250] = ['GraphSearch'];
+
+      for (const [exe, suites] of result) {
+        for (const [suite, benchmarks] of suites) {
+          for (const [bench, processed] of benchmarks.benchmarks) {
+            expect(processed.measurements).toHaveLength(2);
+            for (const m of processed.measurements) {
+              if (exe.includes('SomSom')) {
+                expect(m.values).toHaveLength(1);
+                expect(m.values[0]).toHaveLength(1);
+              } else if (suite.includes('startup')) {
+                expect(m.values).toHaveLength(5);
+                for (const v of m.values) {
+                  expect(v).toHaveLength(1);
+                }
+              } else if (suite.includes('steady')) {
+                expect(m.values).toHaveLength(1);
+                expect(numValuesSteady[m.values[0].length]).toContain(bench);
+              } else {
+                expect(false).toBe({
+                  exe,
+                  suite,
+                  bench,
+                  values: m.values
+                });
+              }
+            }
+          }
+        }
+      }
+    });
   });
 
   describe('needs to distinguish different run ids', () => {
