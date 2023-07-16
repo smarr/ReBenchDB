@@ -92,7 +92,7 @@ async function getMeasurements(
   db: Database
 ): Promise<WarmupData | null> {
   const q = {
-    name: 'fetchMeasurementsByProjectIdRunIdTrialId',
+    name: 'fetchMeasurementsByProjectIdRunIdExpId',
     text: `SELECT
               trialId,
               invocation, iteration, warmup,
