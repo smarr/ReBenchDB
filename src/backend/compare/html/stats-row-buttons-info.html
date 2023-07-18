@@ -11,14 +11,12 @@ const f = it.dataFormatters;
 {% }
 
    if (d.hasWarmup) {
-%}<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="{%= f.dataSeriesIds(d.dataSeries, d.dataSeries.runId, d.dataSeries.base.expId, d.dataSeries.change.expId) %}"></button>
+%}<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="{%= d.runId %}"></button>
 {%
    } 
 
-   if (d.profileBase) {
-      const baseExpId = d.profileBase.expid;
-      const changeExpId = d.profileChange.expid;
-%}<button type="button" class="btn btn-sm btn-profile" data-content="{%= f.dataSeriesIds(d.dataSeries, d.profileBase.runid, baseExpId, changeExpId) %}"></button>
+   if (d.profiles) {
+%}<button type="button" class="btn btn-sm btn-profile" data-content="{%= d.runId %}"></button>
 {%
    }
 %}<button type="button" class="btn btn-sm btn-timeline" data-content='{%- JSON.stringify(

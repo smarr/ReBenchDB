@@ -4,13 +4,11 @@ import {
   asHumanHz,
   asHumanMem,
   benchmarkId,
-  dataSeriesIds,
   formatEnvironment,
   per,
   r0,
   r2
 } from '../../src/shared/data-format.js';
-import { DataSeriesVersionComparison } from '../../src/shared/view-types.js';
 
 describe('Format Functions for Numerical Values', () => {
   describe('r0 - round to 0 decimal places', () => {
@@ -204,23 +202,5 @@ describe('Format Functions for Numerical Values', () => {
         )
       ).toBe('{"b":"bench","e":"exe","s":"suite"}');
     });
-  });
-});
-
-describe('dataSeriesIds()', () => {
-  it('should return the expected string', () => {
-    const ids: DataSeriesVersionComparison = {
-      runId: 1,
-      base: {
-        commitId: '123456',
-        expId: 2
-      },
-      change: {
-        commitId: '123457',
-        expId: 4
-      }
-    };
-
-    expect(dataSeriesIds(ids, 1, 2, 4)).toBe('1,123456/2,123457/4');
   });
 });

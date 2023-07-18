@@ -3,7 +3,7 @@ import { ParameterizedContext } from 'koa';
 import { Database } from '../db/db.js';
 import { completeRequest, startRequest } from '../perf-tracker.js';
 import type {
-  WarmupData,
+  ProfileRow,
   WarmupDataForTrial,
   WarmupDataPerCriterion
 } from '../../shared/view-types.js';
@@ -23,7 +23,7 @@ export async function getProfileAsJson(
 
   ctx.body = await getProfile(
     Number(ctx.params.runId),
-    Number(ctx.params.expId),
+    ctx.params.commitId,
     db
   );
   if (ctx.body === undefined) {
@@ -36,32 +36,35 @@ export async function getProfileAsJson(
 
 async function getProfile(
   runId: number,
-  expId: number,
+  commitId: number,
   db: Database
-): Promise<any> {
+): Promise<ProfileRow[]> {
   const result = await db.query({
-    name: 'fetchProfileDataByRunIdExpId',
+    name: 'fetchProfileDataByRunIdCommitId',
     text: `
-          SELECT substring(commitId, 1, 6) as commitid,
+          SELECT commitid,
             benchmark.name as bench, executor.name as exe, suite.name as suite,
             cmdline, varValue, cores, inputSize, extraArgs,
             invocation, numIterations, warmup, value as profile
           FROM ProfileData
             JOIN Trial ON trialId = Trial.id
-            JOIN Source ON source.id = sourceId
+            JOIN Source ON source.id = trial.sourceId
             JOIN Run ON runId = run.id
             JOIN Suite ON suiteId = suite.id
             JOIN Benchmark ON benchmarkId = benchmark.id
             JOIN Executor ON execId = executor.id
-          WHERE runId = $1 AND trial.expId = $2`,
-    values: [runId, expId]
+          WHERE runId = $1 AND source.commitId = $2`,
+    values: [runId, commitId]
   });
 
-  const data = result.rows[0];
-  try {
-    data.profile = JSON.parse(data.profile);
-  } catch (e) {
-    /* let's just leave it as a string */
+  const data: ProfileRow[] = [];
+  for (const row of result.rows) {
+    try {
+      row.profile = JSON.parse(row.profile);
+    } catch (e) {
+      /* let's just leave it as a string */
+    }
+    data.push(row);
   }
   return data;
 }
@@ -75,8 +78,8 @@ export async function getMeasurementsAsJson(
   ctx.body = await getMeasurements(
     ctx.params.projectSlug,
     Number(ctx.params.runId),
-    Number(ctx.params.expId1),
-    Number(ctx.params.expId2),
+    ctx.params.baseId,
+    ctx.params.changeId,
     db
   );
 
@@ -87,14 +90,14 @@ export async function getMeasurementsAsJson(
 async function getMeasurements(
   projectSlug: string,
   runId: number,
-  expId1: number,
-  expId2: number,
+  baseCommitId: string,
+  changeCommitId: string,
   db: Database
-): Promise<WarmupData | null> {
+): Promise<WarmupDataForTrial[] | null> {
   const q = {
-    name: 'fetchMeasurementsByProjectIdRunIdTrialId',
+    name: 'fetchMeasurementsByProjectIdRunIdCommitId',
     text: `SELECT
-              trialId,
+              trialId, source.commitId as commitId,
               invocation, iteration, warmup,
               criterion.name as criterion,
               criterion.unit as unit,
@@ -102,52 +105,37 @@ async function getMeasurements(
             FROM
               Measurement
               JOIN Trial ON trialId = Trial.id
+              JOIN Source ON source.id = trial.sourceId
               JOIN Experiment ON Trial.expId = Experiment.id
               JOIN Criterion ON criterion = criterion.id
               JOIN Run ON runId = run.id
               JOIN Project ON Project.id = Experiment.projectId
             WHERE Project.slug = $1
               AND runId = $2
-              AND (Trial.expId = $3 OR Trial.expId = $4)
+              AND (source.commitId = $3 OR source.commitId = $4)
             ORDER BY trialId, criterion, invocation, iteration;`,
-    values: [projectSlug, runId, expId1, expId2]
+    values: [projectSlug, runId, baseCommitId, changeCommitId]
   };
   const result = await db.query(q);
   if (result.rows.length === 0) {
     return null;
   }
 
-  const trial1: WarmupDataForTrial = {
-    trialId: result.rows[0].trialid,
-    warmup: result.rows[0].warmup,
-    data: []
-  };
-  const trial2: WarmupDataForTrial = {
-    trialId: result.rows[result.rows.length - 1].trialid,
-    warmup: result.rows[result.rows.length - 1].warmup,
-    data: []
-  };
-  // preprocess rows, but should already have it like this in the database...
-
-  let trialId = 0;
+  const dataPerTrial: WarmupDataForTrial[] = [];
   let currentTrial: WarmupDataForTrial | null = null;
   let lastCriterion = null;
   let critObject: WarmupDataPerCriterion | null = null;
 
   for (const r of result.rows) {
-    if (trialId === 0) {
-      trialId = r.trialid;
-      currentTrial = trial1;
+    if (currentTrial === null || currentTrial.trialId !== r.trialid) {
+      currentTrial = {
+        trialId: r.trialid,
+        warmup: r.warmup,
+        commitId: r.commitid,
+        data: []
+      };
       lastCriterion = null;
-    } else if (trialId !== r.trialid) {
-      if (currentTrial === trial2) {
-        throw Error(
-          'Unexpected trialId change. We only expect two different ones.'
-        );
-      }
-      trialId = r.trialid;
-      currentTrial = trial2;
-      lastCriterion = null;
+      dataPerTrial.push(currentTrial);
     }
 
     if (lastCriterion === null || lastCriterion !== r.criterion) {
@@ -161,6 +149,7 @@ async function getMeasurements(
     }
 
     if (critObject) {
+      // this is fine, because we separate the data by trialId
       if (critObject.values[r.invocation - 1] === undefined) {
         critObject.values[r.invocation - 1] = [];
       }
@@ -169,7 +158,7 @@ async function getMeasurements(
     }
   }
 
-  return { trial1, trial2 };
+  return dataPerTrial;
 }
 
 export async function getTimelineDataAsJson(

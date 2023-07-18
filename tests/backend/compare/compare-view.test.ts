@@ -24,10 +24,7 @@ import {
   calculateAllStatisticsAndRenderPlots,
   getNavigation
 } from '../../../src/backend/compare/prep-data.js';
-import type {
-  AvailableProfile,
-  Environment
-} from '../../../src/backend/db/types.js';
+import type { Environment } from '../../../src/backend/db/types.js';
 import { collateMeasurements } from '../../../src/backend/compare/db-data.js';
 import { initJestMatchers } from '../../helpers.js';
 
@@ -80,20 +77,9 @@ const environments: Environment[] = [
 const details: RunDetails = {
   cmdline: 'som/some-command with args',
   envId: 1,
-  profileBase: <AvailableProfile>{ expid: 11, runid: 1 },
-  profileChange: <AvailableProfile>{ expid: 12, runid: 1 },
+  profiles: true,
   hasWarmup: true,
-  dataSeries: {
-    runId: 1,
-    base: {
-      commitId: '123456',
-      expId: 2
-    },
-    change: {
-      commitId: '123457',
-      expId: 4
-    }
-  },
+  runId: 1,
   numV: 0,
   numC: 0,
   numI: 0,

@@ -806,7 +806,7 @@ export abstract class Database {
             FROM
               ${measurementDataTableJoins}
             WHERE (commitId = $1 OR commitid = $2) AND Experiment.projectId = $3
-              ORDER BY expId, runId, invocation, iteration, criterion`,
+              ORDER BY expId, runId, trialId, invocation, iteration, criterion`,
       values: [commitHash1, commitHash2, projectId]
     });
     return result.rows;
@@ -1344,7 +1344,7 @@ export abstract class Database {
   ): Promise<HasProfile> {
     const q = {
       name: 'fetchProfileAvailability',
-      text: `SELECT
+      text: `SELECT DISTINCT
                 benchmark.name as b,
                 executor.name as e,
                 suite.name as s,
@@ -1352,7 +1352,7 @@ export abstract class Database {
                 cores as c,
                 inputSize as i,
                 extraArgs as ea,
-                expId, runId
+                commitId, runId
               FROM ProfileData pd
                 JOIN Trial ON pd.trialId = Trial.id
                 JOIN Experiment e ON trial.expId = e.id
@@ -1365,7 +1365,7 @@ export abstract class Database {
                 (commitId = $1 OR commitId = $2)
                 AND e.projectId = $3
               ORDER BY
-                b, e, s, v, c, i, ea, expId, runId, trialId`,
+                b, e, s, v, c, i, ea, runId, commitId`,
       values: [commitId1, commitId2, projectId]
     };
 

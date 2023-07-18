@@ -3,7 +3,7 @@ import type { Source } from '../backend/db/types.js';
 import { filterCommitMessage } from './render.js';
 import uPlot from '/static/uPlot.esm.min.js';
 import type {
-  WarmupData,
+  WarmupDataForTrial,
   WarmupDataPerCriterion
 } from '../shared/view-types.js';
 import { siteAesthetics } from '../shared/aesthetics.js';
@@ -457,41 +457,32 @@ function addSeries(
   return critData.values[0].length;
 }
 
-function collectUnitsAndCriteria(
-  trial1: WarmupDataPerCriterion[],
-  trial2: WarmupDataPerCriterion[]
-): { totalUnit: string; units: string[]; criteria: string[] } {
+function collectUnitsAndCriteria(data: WarmupDataForTrial[]): {
+  totalUnit: string;
+  units: string[];
+  criteria: string[];
+} {
   const units: string[] = [];
   const criteria: string[] = [];
   let totalUnit: string | null = null;
 
-  for (const critData of trial1) {
-    if (!criteria.includes(critData.criterion)) {
-      criteria.push(critData.criterion);
-    }
-
-    if (critData.criterion === 'total') {
-      totalUnit = critData.unit;
-    }
-
-    if (!units.includes(critData.unit)) {
-      units.push(critData.unit);
-    }
-  }
-
-  for (const critData of trial2) {
-    if (!criteria.includes(critData.criterion)) {
-      criteria.push(critData.criterion);
-    }
-
-    if (!units.includes(critData.unit)) {
-      if (critData.criterion === 'total') {
-        console.assert(
-          totalUnit === critData.unit,
-          'The two trials have different units'
-        );
+  for (const row of data) {
+    for (const d of row.data) {
+      if (!criteria.includes(d.criterion)) {
+        criteria.push(d.criterion);
       }
-      units.push(critData.unit);
+
+      if (d.criterion === 'total') {
+        console.assert(
+          totalUnit === null || totalUnit === d.unit,
+          'The two trials have different units for the total criterion.'
+        );
+        totalUnit = d.unit;
+      }
+
+      if (!units.includes(d.unit)) {
+        units.push(d.unit);
+      }
     }
   }
 
@@ -556,7 +547,7 @@ function createStyles(criteria: string[]) {
 }
 
 export function renderWarmupPlot(
-  warmupData: WarmupData,
+  warmupData: WarmupDataForTrial[],
   baseCommitId: string,
   changeCommitId: string,
   targetElement: JQuery<HTMLElement>
@@ -566,35 +557,26 @@ export function renderWarmupPlot(
   const data = [iterationNums];
   let maxIterations = 0;
 
-  const { totalUnit, units, criteria } = collectUnitsAndCriteria(
-    warmupData.trial1.data,
-    warmupData.trial2.data
-  );
+  const { totalUnit, units, criteria } = collectUnitsAndCriteria(warmupData);
 
   const styles = createStyles(criteria);
 
-  for (const critData of warmupData.trial1.data) {
-    const numIterations = addSeries(
-      critData,
-      data,
-      series,
-      baseCommitId,
-      baselineColors,
-      styles
-    );
-    maxIterations = Math.max(maxIterations, numIterations);
-  }
+  const base6 = baseCommitId.substring(0, 6);
+  const change6 = changeCommitId.substring(0, 6);
 
-  for (const critData of warmupData.trial2.data) {
-    const numIterations = addSeries(
-      critData,
-      data,
-      series,
-      changeCommitId,
-      changeColors,
-      styles
-    );
-    maxIterations = Math.max(maxIterations, numIterations);
+  for (const trial of warmupData) {
+    for (const critData of trial.data) {
+      const isBase = trial.commitId.startsWith(baseCommitId);
+      const numIterations = addSeries(
+        critData,
+        data,
+        series,
+        isBase ? base6 : change6,
+        isBase ? baselineColors : changeColors,
+        styles
+      );
+      maxIterations = Math.max(maxIterations, numIterations);
+    }
   }
 
   const axes = [{}];

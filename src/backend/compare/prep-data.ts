@@ -26,8 +26,7 @@ import {
   CompareNavPartial,
   CompareStatsRow,
   CompareStatsTable,
-  CompareViewWithData,
-  DataSeriesVersionComparison
+  CompareViewWithData
 } from '../../shared/view-types.js';
 import {
   calculateInlinePlotHeight,
@@ -236,15 +235,15 @@ function addOrGetCompareStatsRow(
   let row = variants.get(key);
   if (row === undefined) {
     const benchId = { b, e, s, v, c, i, ea };
-    const profileIds = hasProfiles ? hasProfiles.get(benchId) : false;
+    const hasProfile = hasProfiles ? hasProfiles.has(benchId) : false;
 
     row = {
       benchId,
       details: {
         cmdline: measurements.runSettings.simplifiedCmdline,
         envId,
-        profileBase: profileIds ? profileIds[0] : false,
-        profileChange: profileIds && profileIds[1] ? profileIds[1] : false,
+        runId: measurements.runId,
+        profiles: hasProfile,
         hasWarmup: false,
         numV: countsAndMissing === null ? 0 : countsAndMissing.numV,
         numC: countsAndMissing === null ? 0 : countsAndMissing.numC,
@@ -453,30 +452,6 @@ export async function calculateChangeStatsForBenchmark(
   };
 }
 
-function getDataSeriesIds(
-  base: Measurements,
-  change: Measurements
-): DataSeriesVersionComparison {
-  if (base.runId !== change.runId) {
-    throw new Error(
-      `runIds are expected to be the same but` +
-        ` are: ${base.runId} and ${change.runId}` +
-        ` for ${base.criterion.name}`
-    );
-  }
-  return {
-    runId: base.runId,
-    base: {
-      commitId: base.commitId,
-      expId: base.expId
-    },
-    change: {
-      commitId: change.commitId,
-      expId: change.expId
-    }
-  };
-}
-
 export function getMsFlattenedAndSorted(
   base: Measurements,
   change: Measurements
@@ -524,13 +499,6 @@ async function computeStatisticsAndInlinePlot(
 
     // add the various details
     row.details.hasWarmup = siteConfig.canShowWarmup(change.values);
-
-    if (
-      (row.details.hasWarmup || row.details.profileBase) &&
-      !row.details.dataSeries
-    ) {
-      row.details.dataSeries = getDataSeriesIds(base, change);
-    }
 
     if (!row.versionStats) {
       row.versionStats = {};

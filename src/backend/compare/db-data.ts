@@ -31,6 +31,11 @@ export function collateMeasurements(
   const runSettings = new Map<string, RunSettings>();
   const criteria = new Map<string, CriterionData>();
 
+  let lastInvocation = 0;
+  let lastTrialId = -1;
+  let lastMeasurements: Measurements | null = null;
+  let lastValues: number[] = [];
+
   for (const row of data) {
     const c = `${row.criterion}|${row.unit}`;
 
@@ -72,21 +77,35 @@ export function collateMeasurements(
       forExeBySuiteBench.set(row.suite, forSuiteByBench);
     }
 
-    const benchResult = findOrConstructProcessedResult(forSuiteByBench, row);
+    if (
+      lastMeasurements === null ||
+      !isSameInvocation(row, lastMeasurements, lastInvocation, lastTrialId)
+    ) {
+      const benchResult = findOrConstructProcessedResult(forSuiteByBench, row);
 
-    const m: Measurements = findOrConstructMeasurements(
-      benchResult,
-      row,
-      criterion,
-      runSetting,
-      forSuiteByBench
-    );
+      const m: Measurements = findOrConstructMeasurements(
+        benchResult,
+        row,
+        criterion,
+        runSetting,
+        forSuiteByBench
+      );
 
-    // adjust invocation and iteration to be zero-based
-    if (!m.values[row.invocation - 1]) {
-      m.values[row.invocation - 1] = [];
+      // We don't store the invocation number anymore
+      // I think this is fine, we don't really need it.
+      // We just need to distinguish iterations, but their ordering
+      // doesn't have any particular meaning.
+      // If we should need it for statistical analysis of inter-invocation
+      // effects, we may need to re-introduce it.
+      lastValues = [];
+      m.values.push(lastValues);
+      lastInvocation = row.invocation;
+      lastMeasurements = m;
+      lastTrialId = row.trialid;
     }
-    m.values[row.invocation - 1][row.iteration - 1] = row.value;
+
+    // adjusted to be zero-based
+    lastValues[row.iteration - 1] = row.value;
   }
 
   return sortResultsAlphabetically(byExeSuiteBench);
@@ -162,9 +181,7 @@ function findOrConstructMeasurements(
     envId: row.envid,
     commitId: row.commitid,
     runSettings: runSetting,
-    runId: row.runid,
-    trialId: row.trialid,
-    expId: row.expid
+    runId: row.runid
   };
   benchResult.measurements.push(m);
   forSuiteByBench.criteria[criterion.name] = criterion;
@@ -179,18 +196,32 @@ function findMeasurements(
   benchResult: ProcessedResult,
   row: MeasurementData
 ): Measurements | null {
-  let m: Measurements | null = null;
   for (const mm of benchResult.measurements) {
-    if (
-      mm.envId == row.envid &&
-      mm.commitId == row.commitid &&
-      mm.runId == row.runid &&
-      mm.trialId == row.trialid &&
-      mm.criterion.name == row.criterion
-    ) {
-      m = mm;
-      break;
+    if (isSameMeasurements(row, mm)) {
+      return mm;
     }
   }
-  return m;
+  return null;
+}
+
+function isSameMeasurements(row: MeasurementData, m: Measurements) {
+  return (
+    m.envId == row.envid &&
+    m.commitId == row.commitid &&
+    m.runId == row.runid &&
+    m.criterion.name == row.criterion
+  );
+}
+
+function isSameInvocation(
+  row: MeasurementData,
+  m: Measurements,
+  invocation: number,
+  trialId: number
+) {
+  return (
+    invocation == row.invocation &&
+    trialId == row.trialid &&
+    isSameMeasurements(row, m)
+  );
 }

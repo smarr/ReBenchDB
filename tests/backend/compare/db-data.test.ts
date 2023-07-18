@@ -177,6 +177,65 @@ describe('collateMeasurements()', () => {
       expect(m1.values[0]).toHaveLength(120);
       expect(m2.values[0]).toHaveLength(120);
     });
+
+    it('should have the expected measurements for all benchmarks', () => {
+      const numValuesSteady: string[][] = [];
+      numValuesSteady[55] = [
+        'BubbleSort',
+        'Dispatch',
+        'Fannkuch',
+        'QuickSort',
+        'Queens',
+        'Permute',
+        'Loop',
+        'FieldLoop',
+        'IntegerLoop',
+        'WhileLoop',
+        'Sum',
+        'Towers'
+      ];
+      numValuesSteady[60] = [
+        'Bounce',
+        'Fibonacci',
+        'Sieve',
+        'Storage',
+        'TreeSort'
+      ];
+      numValuesSteady[65] = ['List', 'Recurse'];
+      numValuesSteady[110] = ['Mandelbrot'];
+      numValuesSteady[120] = ['DeltaBlue', 'Json', 'NBody', 'PageRank'];
+      numValuesSteady[130] = ['Richards'];
+      numValuesSteady[250] = ['GraphSearch'];
+
+      for (const [exe, suites] of result) {
+        for (const [suite, benchmarks] of suites) {
+          for (const [bench, processed] of benchmarks.benchmarks) {
+            expect(processed.measurements).toHaveLength(2);
+            for (const m of processed.measurements) {
+              if (exe.includes('SomSom')) {
+                expect(m.values).toHaveLength(1);
+                expect(m.values[0]).toHaveLength(1);
+              } else if (suite.includes('startup')) {
+                expect(m.values).toHaveLength(5);
+                for (const v of m.values) {
+                  expect(v).toHaveLength(1);
+                }
+              } else if (suite.includes('steady')) {
+                expect(m.values).toHaveLength(1);
+                expect(numValuesSteady[m.values[0].length]).toContain(bench);
+              } else {
+                expect(false).toBe({
+                  exe,
+                  suite,
+                  bench,
+                  values: m.values
+                });
+              }
+            }
+          }
+        }
+      }
+    });
   });
 
   describe('needs to distinguish different run ids', () => {
@@ -188,8 +247,8 @@ describe('collateMeasurements()', () => {
       return {
         expid: 1,
         runid,
-        trialid: 1,
         commitid,
+        trialid: 1,
 
         bench: 'b',
         exe: 'e',
@@ -248,5 +307,150 @@ describe('collateMeasurements()', () => {
 
       expect(b.measurements).toHaveLength(4);
     });
+  });
+
+  describe('Needs to combine data from different trials but same runId', () => {
+    function createMeasure(
+      runid: number,
+      trialid: number,
+      inputsize: string,
+      commitid: string
+    ): MeasurementData {
+      return {
+        expid: 1,
+        runid,
+        commitid,
+        trialid,
+
+        bench: 'b',
+        exe: 'e',
+        suite: 's',
+
+        cmdline: 'b e s ' + inputsize,
+        varvalue: null,
+        cores: null,
+        inputsize,
+        extraargs: null,
+
+        iteration: 1,
+        invocation: 1,
+        warmup: null,
+
+        criterion: 'total',
+        unit: 'ms',
+        value: 1,
+
+        envid: 1
+      };
+    }
+
+    const data: MeasurementData[] = [
+      createMeasure(1, 1, '1', 'a'),
+      createMeasure(1, 2, '1', 'a'),
+      createMeasure(1, 3, '1', 'a'),
+      createMeasure(1, 4, '1', 'b'),
+      createMeasure(1, 5, '1', 'b'),
+      createMeasure(1, 6, '1', 'b'),
+      createMeasure(2, 7, '2', 'a'),
+      createMeasure(2, 8, '2', 'b')
+    ];
+
+    const result: ResultsByExeSuiteBenchmark = collateMeasurements(data);
+
+    it('should have 4 measurements', () => {
+      const suites = <ResultsBySuiteBenchmark>result.get('e');
+      const bs = <ResultsByBenchmark>suites.get('s');
+      const b = <ProcessedResult>bs.benchmarks.get('b');
+
+      expect(b.measurements).toHaveLength(4);
+    });
+
+    it(
+      'should have 3 invocations for the 1st and 2nd measurement,' +
+        ' and 1 for the rest',
+      () => {
+        const suites = <ResultsBySuiteBenchmark>result.get('e');
+        const bs = <ResultsByBenchmark>suites.get('s');
+        const b = <ProcessedResult>bs.benchmarks.get('b');
+
+        expect(b.measurements[0].values).toHaveLength(3);
+        expect(b.measurements[1].values).toHaveLength(3);
+        expect(b.measurements[2].values).toHaveLength(1);
+        expect(b.measurements[3].values).toHaveLength(1);
+      }
+    );
+  });
+
+  describe('Needs to combine data from different expIds but same runId', () => {
+    function createMeasure(
+      expid: number,
+      runid: number,
+      trialid: number,
+      inputsize: string,
+      commitid: string
+    ): MeasurementData {
+      return {
+        expid,
+        runid,
+        commitid,
+        trialid,
+
+        bench: 'b',
+        exe: 'e',
+        suite: 's',
+
+        cmdline: 'b e s ' + inputsize,
+        varvalue: null,
+        cores: null,
+        inputsize,
+        extraargs: null,
+
+        iteration: 1,
+        invocation: 1,
+        warmup: null,
+
+        criterion: 'total',
+        unit: 'ms',
+        value: 1,
+
+        envid: 1
+      };
+    }
+
+    const data: MeasurementData[] = [
+      createMeasure(1, 1, 1, '1', 'a'),
+      createMeasure(2, 1, 2, '1', 'a'),
+      createMeasure(2, 1, 3, '1', 'a'),
+      createMeasure(3, 1, 4, '1', 'b'),
+      createMeasure(3, 1, 5, '1', 'b'),
+      createMeasure(3, 1, 6, '1', 'b'),
+      createMeasure(1, 2, 7, '2', 'a'),
+      createMeasure(3, 2, 8, '2', 'b')
+    ];
+
+    const result: ResultsByExeSuiteBenchmark = collateMeasurements(data);
+
+    it('should have 4 measurements', () => {
+      const suites = <ResultsBySuiteBenchmark>result.get('e');
+      const bs = <ResultsByBenchmark>suites.get('s');
+      const b = <ProcessedResult>bs.benchmarks.get('b');
+
+      expect(b.measurements).toHaveLength(4);
+    });
+
+    it(
+      'should have 3 invocations for the 1st and 2nd measurement,' +
+        ' and 1 for the rest',
+      () => {
+        const suites = <ResultsBySuiteBenchmark>result.get('e');
+        const bs = <ResultsByBenchmark>suites.get('s');
+        const b = <ProcessedResult>bs.benchmarks.get('b');
+
+        expect(b.measurements[0].values).toHaveLength(3);
+        expect(b.measurements[1].values).toHaveLength(3);
+        expect(b.measurements[2].values).toHaveLength(1);
+        expect(b.measurements[3].values).toHaveLength(1);
+      }
+    );
   });
 });
