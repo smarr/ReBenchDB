@@ -279,7 +279,7 @@ function addMissingCompareStatsRow(
   }
 
   row.missing.push({
-    commitId: measurements.commitId === base ? change : base,
+    commitId: base.startsWith(measurements.commitId) ? change : base,
     criterion: measurements.criterion
   });
 }

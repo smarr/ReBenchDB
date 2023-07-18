@@ -9,7 +9,7 @@ if (stats.argumentsForDisplay.length > 0) {
 if (stats.missing) {
 %}<tr>
 %}<th scope="row">{%= stats.benchId.b %}{%- args %}</th>
-<td colspan="4">Missing data for {%
+<td colspan="20">No matching configuration for {%
   const byCommitId = new Map();
   for (const m of stats.missing) {
     let byCommit = byCommitId.get(m.commitId);
@@ -21,7 +21,7 @@ if (stats.missing) {
   }
 
   for (const [commitId, byCommit] of byCommitId) {
-    %}<span class="missing-data"><span class="commit-id">{%= commitId %}:</span> {%= byCommit.join(', ') %}{%
+    %}<br><span class="missing-data"><span class="commit-id">{%= commitId %}:</span> {%= byCommit.join(', ') %}{%
   }
 %}
 </td>
