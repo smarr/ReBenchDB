@@ -61,14 +61,6 @@
 </div>
 {% } %}
 
-{% if (it.noData) { %}
-<div class="compare">
-  <h3>Issue with Unexpected Data</h3>
-  <p>The data provided for baseline and change does not seem to have a common benchmarks/executors.</p>
-  <p>This is known to happen for instance, when benchmarks or parameters are changed, or executors renamed.</p>
-</div>
-{% } %}
-
 {% if (it.revisionFound) { %}
 <div id="version-details" class="compare">
   <h2>Version Details</h2>

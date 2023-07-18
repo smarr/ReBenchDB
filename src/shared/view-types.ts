@@ -210,7 +210,6 @@ export interface CompareViewWithoutData extends CompareViewBasics {
 export interface CompareViewWithData extends CompareViewBasics {
   revisionFound: true;
 
-  noData: boolean;
   notInBoth: boolean;
 
   base: RevisionData;

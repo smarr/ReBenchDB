@@ -1089,7 +1089,6 @@ export async function prepareCompareView(
     navigation,
     hasExeComparison: navigation.navExeComparison.suites.length > 0,
 
-    noData: false, // TODO: need to derive this from one of the stats details
     notInBoth: allStats.acrossVersions.missing.length > 0,
 
     stats: { ...allStats, environments },
