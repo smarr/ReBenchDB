@@ -355,16 +355,19 @@ describe('calculateChangeStatisticsForFirstAsBaseline()', () => {
     expect(stats[1].change_m).toEqual(0);
   });
 
-  it('should given an error when base and change have different length', () => {
-    expect(() => {
-      calculateChangeStatisticsForFirstAsBaseline([
-        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-      ]);
-    }).toThrow(
-      `All arrays must have the same length, ` +
-        `but base has 10, while another has 11.`
-    );
+  it('should give results when base and change have different length', () => {
+    const stats = calculateChangeStatisticsForFirstAsBaseline([
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    ]);
+
+    expect(stats[0].samples).toEqual(10);
+    expect(stats[0].median).toEqual(4.5);
+    expect(stats[0].change_m).toEqual(0);
+
+    expect(stats[1].samples).toEqual(11);
+    expect(stats[1].median).toEqual(5);
+    expect(stats[1].change_m).toEqual(0.11111111111111116);
   });
 
   it('should error on unordered data', () => {

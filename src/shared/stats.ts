@@ -408,12 +408,6 @@ export function calculateChangeStatisticsForFirstAsBaseline(
   sorted: number[][]
 ): ComparisonStatistics[] {
   for (const series of sorted) {
-    if (series.length !== sorted[0].length) {
-      throw new Error(
-        `All arrays must have the same length, but ` +
-          `base has ${sorted[0].length}, while another has ${series.length}.`
-      );
-    }
     if (!isSorted(series)) {
       throw new Error('Input arrays must be sorted.');
     }

@@ -6,7 +6,9 @@ const s = it.stats;
 {% for (const i of it.criteriaOrder) {
     const cssClassForTotal = i === 'total' ? ' stats-total' : '';
     let median;
-    if (i === 'total') {
+    if (!s[i]) {
+      median = '';
+    } else if (i === 'total') {
       median = f.r2(s[i].median);
     } else {
       switch (it.criteria[i].unit) {
@@ -19,7 +21,7 @@ const s = it.stats;
       }
     }
 
-    const change = f.per(s[i].change_m);
+    const change = (!s[i]) ? '' : f.per(s[i].change_m);
 %}
 <td><span class="stats-median" title="median">{%= median %}</span></td>
 <td><span class="stats-change{%= cssClassForTotal %}" title="diff %">{%= change %}</span></td>{%

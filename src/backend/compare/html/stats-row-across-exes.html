@@ -41,7 +41,7 @@ const commonStart = h.commonStringStart(it.exes.map((e) => e.exeName));
   itOut = new h.PerIterationOutput('', '<br>');
   for (const e of it.exes) {
   %}{%- itOut.next()
-  %}{%= medianFmtFn(e.criteria[i].median) %}
+  %}{%= (!e.criteria[i]) ? '' : medianFmtFn(e.criteria[i].median) %}
 {% }
 %}</span></td>
 <td>
@@ -49,7 +49,7 @@ const commonStart = h.commonStringStart(it.exes.map((e) => e.exeName));
   itOut = new h.PerIterationOutput('', '<br>');
   for (const e of it.exes) {
   %}{%- itOut.next()
-  %}<span class="stats-change{%= cssClassForTotal %}" title="diff %">{%= changeFmtFn(e.criteria[i].change_m) %}</span>
+  %}<span class="stats-change{%= cssClassForTotal %}" title="diff %">{%= (!e.criteria[i]) ? '' : changeFmtFn(e.criteria[i].change_m) %}</span>
 {% }
 %}</td>{%
   } %}
