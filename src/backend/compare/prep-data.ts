@@ -26,7 +26,8 @@ import {
   CompareNavPartial,
   CompareStatsRow,
   CompareStatsTable,
-  CompareViewWithData
+  CompareViewWithData,
+  MissingBenchmark
 } from '../../shared/view-types.js';
 import {
   calculateInlinePlotHeight,
@@ -632,8 +633,14 @@ export async function calculateAllChangeStatisticsAndInlinePlots(
   criteria: Map<string, ComparisonStatsWithUnit> | null = null,
   outputFolder: string | null = null,
   plotName: string | null = null
-): Promise<{ numRunConfigs: number; comparisonData: ByExeSuiteComparison }> {
+): Promise<{
+  numRunConfigs: number;
+  comparisonData: ByExeSuiteComparison;
+  missing: MissingBenchmark[];
+}> {
   const comparisonData = new Map<string, Map<string, CompareStatsTable>>();
+  const missing: MissingBenchmark[] = [];
+
   // those two counts are likely always the same,
   // but for the moment, I'll keep them separate
   let lastPlotId = 0;
@@ -663,6 +670,16 @@ export async function calculateAllChangeStatisticsAndInlinePlots(
           plotName
         );
 
+        for (const row of result.stats) {
+          if (row.missing) {
+            for (const m of row.missing) {
+              if (m.criterion.name === 'total') {
+                missing.push({ ...row.benchId, ...m });
+              }
+            }
+          }
+        }
+
         lastPlotId = result.lastPlotId;
         numRunConfigs += result.numRunConfigs;
 
@@ -672,7 +689,7 @@ export async function calculateAllChangeStatisticsAndInlinePlots(
       bySuiteCompare.set(suite, byBenchmark);
     }
   }
-  return { numRunConfigs, comparisonData };
+  return { numRunConfigs, comparisonData, missing };
 }
 
 /**
@@ -1072,8 +1089,7 @@ export async function prepareCompareView(
     navigation,
     hasExeComparison: navigation.navExeComparison.suites.length > 0,
 
-    noData: false, // TODO: need to derive this from one of the stats details
-    notInBoth: null, // TODO: need to get this out of the stats calculations
+    notInBoth: allStats.acrossVersions.missing.length > 0,
 
     stats: { ...allStats, environments },
     config: {
@@ -1140,7 +1156,7 @@ export async function calculateAllStatisticsAndRenderPlots(
   const criteriaAcrossVersions = new Map<string, ComparisonStatsWithUnit>();
   const criteriaAcrossExes = new Map<string, ComparisonStatsWithUnit>();
 
-  const { numRunConfigs, comparisonData } =
+  const { numRunConfigs, comparisonData, missing } =
     await calculateAllChangeStatisticsAndInlinePlots(
       byExeSuiteBench,
       hasProfiles,
@@ -1184,7 +1200,8 @@ export async function calculateAllStatisticsAndRenderPlots(
         overviewPngUrl: files.png,
         overviewSvgUrls: files.svg
       },
-      allMeasurements: comparisonData
+      allMeasurements: comparisonData,
+      missing
     },
     acrossExes
   };
