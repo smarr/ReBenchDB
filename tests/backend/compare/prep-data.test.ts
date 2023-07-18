@@ -352,7 +352,7 @@ describe('countVariantsAndDropMissing()', () => {
   it('should not drop different runIds', () => {
     const data: Measurements[] = [
       makeM('total', 'ms', 1, 'a', 1),
-      makeM('total', 'ms', 1, 'a', 2)
+      makeM('total', 'ms', 1, 'b', 2)
     ];
 
     const result = countVariantsAndDropMissing(makeProRes(data), 'a', 'b');

@@ -374,7 +374,12 @@ export function countVariantsAndDropMissing(
 
     const change = measurements[i + 1];
 
-    if (compareToSortForSinglePassChangeStatsNonStrict(base, change) !== 0) {
+    if (
+      // if the two set of measurements are not for the same thing
+      // or for the same commit, then they don't pair up
+      compareToSortForSinglePassChangeStatsNonStrict(base, change) !== 0 ||
+      base.commitId === change.commitId
+    ) {
       dropAsMissing(i);
     } else {
       i += 2;
