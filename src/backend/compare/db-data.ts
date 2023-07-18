@@ -181,8 +181,7 @@ function findOrConstructMeasurements(
     envId: row.envid,
     commitId: row.commitid,
     runSettings: runSetting,
-    runId: row.runid,
-    expId: row.expid
+    runId: row.runid
   };
   benchResult.measurements.push(m);
   forSuiteByBench.criteria[criterion.name] = criterion;
@@ -210,7 +209,6 @@ function isSameMeasurements(row: MeasurementData, m: Measurements) {
     m.envId == row.envid &&
     m.commitId == row.commitid &&
     m.runId == row.runid &&
-    m.expId == row.expid &&
     m.criterion.name == row.criterion
   );
 }

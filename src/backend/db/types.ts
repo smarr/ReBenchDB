@@ -165,7 +165,7 @@ export interface MeasurementData {
 }
 
 export interface AvailableProfile extends BenchmarkId {
-  expid: number;
+  commitid: string;
   runid: number;
 }
 
@@ -197,7 +197,6 @@ export interface Measurements {
 
   envId: number;
   runId: number;
-  expId: number;
   runSettings: RunSettings;
   commitId: string;
   stats?: SummaryStatistics;

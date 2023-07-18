@@ -1,6 +1,7 @@
 import { initializeFilters } from './filter.js';
 import { renderComparisonTimelinePlot, renderWarmupPlot } from './plots.js';
-import { WarmupData } from '../shared/view-types.js';
+import type { ProfileRow, WarmupDataForTrial } from '../shared/view-types.js';
+import type { ProfileElement } from '../shared/api.js';
 
 function determineAndDisplaySignificance() {
   const val = $('#significance').val();
@@ -26,27 +27,27 @@ function displaySignificance(sig) {
 
 async function fetchWarmupData(
   projectSlug: string,
-  dataIds: DataSeriesIds,
+  runId: number,
+  baseCommitId: string,
+  changeCommitId: string,
   targetElement: JQuery<HTMLElement>
 ) {
   const warmupR = await fetch(
     `/rebenchdb/dash/${projectSlug}/measurements/` +
-      `${dataIds.runId}/${dataIds.ids[0].expId}/${dataIds.ids[1].expId}`
+      `${runId}/${baseCommitId}/${changeCommitId}`
   );
 
-  const warmupData: WarmupData = await warmupR.json();
-  renderWarmupPlot(
-    warmupData,
-    dataIds.ids[0].commitId,
-    dataIds.ids[1].commitId,
-    targetElement
-  );
+  const warmupData: WarmupDataForTrial[] = await warmupR.json();
+  renderWarmupPlot(warmupData, baseCommitId, changeCommitId, targetElement);
 }
 
 async function insertWarmupPlot(e) {
   const jqButton = $(e.target);
   const projectSlug = <string>$('#project-slug').attr('value');
-  const dataIds = parseDataSeriesIds(jqButton.data('content'));
+  const baseHash = <string>$('#baseHash').attr('value');
+  const changeHash = <string>$('#changeHash').attr('value');
+
+  const runId = parseInt(jqButton.data('content'));
 
   const insert = `<tr><td class="warmup-plot show-legend" colspan="6">
   <div class="plot-container"></div></td></tr>`;
@@ -55,12 +56,24 @@ async function insertWarmupPlot(e) {
   jqInsert.insertAfter(jqButton.parent().parent());
   jqButton.remove();
 
-  await fetchWarmupData(projectSlug, dataIds, jqInsert.find('.plot-container'));
+  await fetchWarmupData(
+    projectSlug,
+    runId,
+    baseHash,
+    changeHash,
+    jqInsert.find('.plot-container')
+  );
 }
 
-function createEntry(e, profId, counter) {
+function createEntry(e: string | ProfileElement, profId, counter) {
+  counter.cnt += 1;
+
   let entryHtml = '';
   const justStr = typeof e === 'string';
+
+  if (!justStr && e.p <= 0.1) {
+    return '';
+  }
 
   const hasTrace = !justStr && e.t !== undefined;
 
@@ -84,7 +97,7 @@ function createEntry(e, profId, counter) {
     entryHtml += e.m;
   }
 
-  if (hasTrace) {
+  if (hasTrace && e.t !== undefined) {
     entryHtml += `</a>`;
 
     // eslint-disable-next-line max-len
@@ -108,33 +121,32 @@ function fetchProfile(
   commitId: string,
   isBase: boolean,
   runId: number,
-  expId: number,
   jqInsert: JQuery<HTMLElement>
 ) {
   const profileP = fetch(
-    `/rebenchdb/dash/${projectSlug}/profiles/${runId}/${expId}`
+    `/rebenchdb/dash/${projectSlug}/profiles/${runId}/${commitId}`
   );
   profileP.then(async (profileResponse) => {
-    const profileData = await profileResponse.json();
-    const profId = `prof-${commitId}-${runId}-${expId}`;
+    const profileData: ProfileRow[] = await profileResponse.json();
+    const profId = `prof-${commitId}-${runId}`;
 
     const container = jqInsert.children();
     const labelClass = isBase ? 'baseline' : 'change';
-    const label = `<span class="${labelClass}-badge">${commitId}</span>`;
-    let mainContent = `${label}<div class="list-group list-group-root">`;
 
-    const counter = { cnt: 0 };
-    for (const e of profileData.profile) {
-      counter.cnt += 1;
-      if (e.p <= 0.1) {
-        break;
+    let mainContent = '';
+
+    for (const row of profileData) {
+      const label = `<span class="${labelClass}-badge">${commitId}</span>`;
+      mainContent += `${label}<div class="list-group list-group-root">`;
+
+      const counter = { cnt: 0 };
+      for (const e of row.profile) {
+        mainContent += createEntry(e, profId, counter);
       }
-      mainContent += createEntry(e, profId, counter);
+      mainContent += `</div>`;
     }
 
-    mainContent += `</div>`;
     container.append(mainContent);
-
     $('.list-group-item').on('click', function () {
       $('.glyph', container)
         .toggleClass('glyph-plus')
@@ -143,49 +155,25 @@ function fetchProfile(
   });
 }
 
-interface DataSeriesIds {
-  runId: number;
-  ids: { commitId: string; expId: number }[];
-}
-
-/**
- * Parse the format serialized in data-format.ts:dataSeriesIds().
- */
-function parseDataSeriesIds(serialized: string): DataSeriesIds {
-  const idPairs = serialized.split(',');
-  const runId = <string>idPairs.shift();
-
-  const data: { commitId: string; expId: number }[] = [];
-  for (const id of idPairs) {
-    const [commitId, expId] = id.split('/');
-    data.push({ commitId, expId: parseInt(expId) });
-  }
-
-  return { runId: parseInt(runId), ids: data };
-}
-
 function insertProfiles(e): void {
   const projectSlug = <string>$('#project-slug').attr('value');
-  const baseHash = $('#baseHash').attr('value');
+  const baseHash = <string>$('#baseHash').attr('value');
+  const changeHash = <string>$('#changeHash').attr('value');
 
   const jqButton = $(e.target);
   let profileInsertTarget = jqButton.parent().parent();
   jqButton.remove();
 
-  const { runId, ids } = parseDataSeriesIds(jqButton.data('content'));
+  const runId = parseInt(jqButton.data('content'));
 
-  for (const { commitId, expId } of ids) {
-    if (isNaN(expId)) {
-      continue;
-    }
-
+  for (const commitId of [baseHash, changeHash]) {
     const jqInsert = $(
       `<tr><td class="profile-container" colspan="6"></td></tr>`
     );
     profileInsertTarget.after(jqInsert);
     profileInsertTarget = jqInsert;
-    const isBase = baseHash?.startsWith(commitId) ?? false;
-    fetchProfile(projectSlug, commitId, isBase, runId, expId, jqInsert);
+
+    fetchProfile(projectSlug, commitId, commitId === baseHash, runId, jqInsert);
   }
 }
 

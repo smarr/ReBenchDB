@@ -1,6 +1,5 @@
-import type { BenchmarkId } from './api.js';
+import type { BenchmarkId, ProfileElement } from './api.js';
 import type {
-  AvailableProfile,
   CriterionData,
   Environment,
   RevisionData
@@ -64,19 +63,10 @@ export interface CompareStatsRowAcrossVersionsPartial {
   criteria: CompareStatsTableHeader;
 }
 
-/**
- * Identifies the set of measurements of a specific run, i.e., a concrete
- * benchmark execution, and a experiment.
- */
-export interface DataSeriesId {
-  commitId: string; // this one is a bit redundant, it's implied by the trialId
-  expId: number;
-}
-
 export interface DataSeriesVersionComparison {
   runId: number;
-  base: DataSeriesId;
-  change: DataSeriesId;
+  baseCommitId: string;
+  changeCommitId: string;
 }
 
 export interface RunDetails {
@@ -86,10 +76,9 @@ export interface RunDetails {
 
   hasWarmup: boolean;
 
-  profileBase: AvailableProfile | false;
-  profileChange: AvailableProfile | false;
+  profiles: boolean;
 
-  dataSeries?: DataSeriesVersionComparison;
+  runId: number;
 
   /** Number of VarValues */
   numV: number;
@@ -246,11 +235,23 @@ export interface WarmupDataPerCriterion {
 
 export interface WarmupDataForTrial {
   trialId: number;
+  commitId: string;
   warmup: number;
   data: WarmupDataPerCriterion[];
 }
 
-export interface WarmupData {
-  trial1: WarmupDataForTrial;
-  trial2: WarmupDataForTrial;
+export interface ProfileRow {
+  commitid: string;
+  bench: string;
+  exe: string;
+  suite: string;
+  cmdline: string;
+  varvalue: string;
+  cores: string;
+  inputsize: string;
+  extraargs: string;
+  invocation: number;
+  numiterations: number;
+  warmup: number;
+  profile: string | ProfileElement[];
 }

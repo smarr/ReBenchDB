@@ -17,8 +17,9 @@ function sameBenchId(a: BenchmarkId, b: BenchmarkId): boolean {
 
 export class HasProfile {
   /**
-   * This is expected to be sorted by expid, runid, trialid
+   * This is expected to be sorted by runid, commitid
    * as coming from the database.
+   * This ensures that base and change profile availability is paired up.
    */
   private readonly availableProfiles: AvailableProfile[];
 
@@ -26,22 +27,10 @@ export class HasProfile {
     this.availableProfiles = availableProfiles;
   }
 
-  public get(
-    benchId: BenchmarkId
-  ): [AvailableProfile, AvailableProfile?] | false {
+  public has(benchId: BenchmarkId): boolean {
     const idx = this.availableProfiles.findIndex((id) =>
       sameBenchId(id, benchId)
     );
-    if (idx >= 0) {
-      if (
-        idx === this.availableProfiles.length - 1 ||
-        !sameBenchId(this.availableProfiles[idx + 1], benchId)
-      ) {
-        return [this.availableProfiles[idx]];
-      }
-
-      return [this.availableProfiles[idx], this.availableProfiles[idx + 1]];
-    }
-    return false;
+    return idx >= 0;
   }
 }
