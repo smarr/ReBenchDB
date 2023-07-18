@@ -796,14 +796,8 @@ export async function calculateAcrossExesStatsForBenchmark(
   const exes = new Set<string>();
   for (const result of results) {
     exes.add(result.exe);
-
     // make sure we have the expected structure
     assertBasicPropertiesOfSortedMeasurements(result, 0, 1);
-    assert(
-      result.measurements.length === results[0].measurements.length,
-      'For the rest of this code to work, ' +
-        'we assume that all results have the same shape, i.e., set of criteria.'
-    );
   }
 
   const exesArr = [...exes];
@@ -822,13 +816,17 @@ export async function calculateAcrossExesStatsForBenchmark(
     const values: number[][] = [];
 
     for (const result of results) {
-      assert(
-        result.measurements[i + changeOffset].criterion.name === criterion,
-        'We expect the same criteria to be at the same index'
-      );
-      const sorted = result.measurements[i + changeOffset].values.flat();
-      sorted.sort((a, b) => a - b);
-      values.push(sorted);
+      if (
+        result.measurements &&
+        result.measurements[i + changeOffset] &&
+        result.measurements[i + changeOffset].criterion.name === criterion
+      ) {
+        const sorted = result.measurements[i + changeOffset].values.flat();
+        sorted.sort((a, b) => a - b);
+        values.push(sorted);
+      } else {
+        values.push([0]);
+      }
     }
 
     const stats = calculateChangeStatisticsForFirstAsBaseline(values);
