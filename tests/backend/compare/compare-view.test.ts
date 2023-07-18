@@ -456,7 +456,8 @@ describe('Compare View Parts', () => {
       const data: CompareVersionsPartial = {
         acrossVersions: {
           allMeasurements: new Map(),
-          summary: <any>{}
+          summary: <any>{},
+          missing: []
         },
         acrossExes: new Map(),
         environments,

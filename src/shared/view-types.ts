@@ -104,6 +104,8 @@ export interface MissingData {
   criterion: CriterionData;
 }
 
+export type MissingBenchmark = BenchmarkId & MissingData;
+
 export interface CompareStatsRow {
   benchId: BenchmarkId;
   details: RunDetails;
@@ -164,6 +166,7 @@ export interface AllStats {
   acrossVersions: {
     summary: StatsSummary;
     allMeasurements: ByExeSuiteComparison;
+    missing: MissingBenchmark[];
   };
   acrossExes: BySuiteComparison;
 }
@@ -208,7 +211,7 @@ export interface CompareViewWithData extends CompareViewBasics {
   revisionFound: true;
 
   noData: boolean;
-  notInBoth: any; // TODO
+  notInBoth: boolean;
 
   base: RevisionData;
   change: RevisionData;
