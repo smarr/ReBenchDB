@@ -36,6 +36,10 @@ export function collateMeasurements(
   let lastMeasurements: Measurements | null = null;
   let lastValues: number[] = [];
 
+  // the data here needs to be sorted by
+  // runId, expId, trialId, criterion, invocation, iteration
+  // otherwise, we can't do it in a single pass without any lookups
+
   for (const row of data) {
     const c = `${row.criterion}|${row.unit}`;
 

@@ -82,14 +82,20 @@ const runSettings: RunSettings = {
   simplifiedCmdline: 'Exec TestBenchmark1'
 };
 
-function makeM(criterion, unit, envId, commitId) {
+function makeM(
+  criterion: string,
+  unit: string,
+  envId: number,
+  commitId: string,
+  runId = 1
+) {
   return {
     criterion: { name: criterion, unit },
     values: [[]],
     envId,
     commitId,
     runSettings,
-    runId: 1,
+    runId,
     trialId: 1,
     expId: 1
   };
@@ -210,6 +216,31 @@ describe('compareToSortForSinglePassChangeStats()', () => {
     expect(data[5].envId).toBe(2);
     expect(data[5].criterion.name).toBe('total');
   });
+
+  it(
+    'should place same criteria next to each other, ' +
+      'even when runId differs',
+    () => {
+      const data: Measurements[] = [
+        makeM('total', 'ms', 1, 'a', 1),
+        makeM('alloc', 'by', 1, 'b', 2),
+        makeM('total', 'ms', 1, 'b', 2),
+        makeM('alloc', 'by', 1, 'a', 1)
+      ];
+
+      data.sort(compareToSortForSinglePassChangeStats);
+
+      expect(data[0].commitId).toBe('a');
+      expect(data[0].criterion.name).toBe('alloc');
+      expect(data[1].commitId).toBe('b');
+      expect(data[1].criterion.name).toBe('alloc');
+
+      expect(data[2].commitId).toBe('a');
+      expect(data[2].criterion.name).toBe('total');
+      expect(data[3].commitId).toBe('b');
+      expect(data[3].criterion.name).toBe('total');
+    }
+  );
 });
 
 describe('countVariantsAndDropMissing()', () => {
@@ -318,19 +349,17 @@ describe('countVariantsAndDropMissing()', () => {
     expect(mc2[0].criterion.name).toEqual('total');
   });
 
-  it('should consider different runIds as incompatible', () => {
+  it('should not drop different runIds', () => {
     const data: Measurements[] = [
-      makeM('total', 'ms', 1, 'a'),
-      makeM('total', 'ms', 1, 'a')
+      makeM('total', 'ms', 1, 'a', 1),
+      makeM('total', 'ms', 1, 'b', 2)
     ];
-    data[0].runId = 2;
 
     const result = countVariantsAndDropMissing(makeProRes(data), 'a', 'b');
 
-    expect(data).toHaveLength(0);
+    expect(data).toHaveLength(2);
     expect(result.missing).toBeDefined();
-    expect(result.missing.size).toEqual(1);
-    expect([...result.missing.values()][0].missing).toHaveLength(2);
+    expect(result.missing.size).toEqual(0);
   });
 });
 

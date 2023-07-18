@@ -69,7 +69,12 @@ export function compareToSortForSinglePassChangeStats(
   a: Measurements,
   b: Measurements
 ): number {
-  const r = compareToSortForSinglePassChangeStatsWithoutCommitId(a, b);
+  let r = compareToSortForSinglePassChangeStatsNonStrict(a, b);
+  if (r !== 0) {
+    return r;
+  }
+
+  r = a.runId - b.runId;
   if (r !== 0) {
     return r;
   }
@@ -77,16 +82,11 @@ export function compareToSortForSinglePassChangeStats(
   return a.commitId.localeCompare(b.commitId);
 }
 
-export function compareToSortForSinglePassChangeStatsWithoutCommitId(
+export function compareToSortForSinglePassChangeStatsNonStrict(
   a: Measurements,
   b: Measurements
 ): number {
-  let r = a.runId - b.runId;
-  if (r !== 0) {
-    return r;
-  }
-
-  r = a.envId - b.envId;
+  let r = a.envId - b.envId;
   if (r !== 0) {
     return r;
   }
@@ -279,7 +279,7 @@ function addMissingCompareStatsRow(
   }
 
   row.missing.push({
-    commitId: measurements.commitId === base ? change : base,
+    commitId: base.startsWith(measurements.commitId) ? change : base,
     criterion: measurements.criterion
   });
 }
@@ -375,7 +375,10 @@ export function countVariantsAndDropMissing(
     const change = measurements[i + 1];
 
     if (
-      compareToSortForSinglePassChangeStatsWithoutCommitId(base, change) !== 0
+      // if the two set of measurements are not for the same thing
+      // or for the same commit, then they don't pair up
+      compareToSortForSinglePassChangeStatsNonStrict(base, change) !== 0 ||
+      base.commitId === change.commitId
     ) {
       dropAsMissing(i);
     } else {
@@ -499,6 +502,9 @@ async function computeStatisticsAndInlinePlot(
 
     // add the various details
     row.details.hasWarmup = siteConfig.canShowWarmup(change.values);
+    if (row.inconsistentRunIds === undefined || row.inconsistentRunIds) {
+      row.inconsistentRunIds = base.runId !== change.runId;
+    }
 
     if (!row.versionStats) {
       row.versionStats = {};

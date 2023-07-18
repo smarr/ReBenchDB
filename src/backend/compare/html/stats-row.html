@@ -9,7 +9,7 @@ if (stats.argumentsForDisplay.length > 0) {
 if (stats.missing) {
 %}<tr>
 %}<th scope="row">{%= stats.benchId.b %}{%- args %}</th>
-<td colspan="4">Missing data for {%
+<td colspan="20">No matching configuration for {%
   const byCommitId = new Map();
   for (const m of stats.missing) {
     let byCommit = byCommitId.get(m.commitId);
@@ -21,7 +21,7 @@ if (stats.missing) {
   }
 
   for (const [commitId, byCommit] of byCommitId) {
-    %}<span class="missing-data"><span class="commit-id">{%= commitId %}:</span> {%= byCommit.join(', ') %}{%
+    %}<br><span class="missing-data"><span class="commit-id">{%= commitId %}:</span> {%= byCommit.join(', ') %}{%
   }
 %}
 </td>
@@ -39,8 +39,16 @@ if (!stats.missing || hasTotal) {
     
 
     if (hasTotal) {
+      let inconsistent = '';
+      if (stats.inconsistentRunIds) {
+        inconsistent = `<div class="alert alert-warning" role="alert"
+            title="The run configuration changed between the two versions. Comparison is likely invalid.">
+          <svg class="bi flex-shrink-0 me-2" width="16" height="16" role="img"
+            aria-label="The run configuration changed between the two versions. Comparison is likely invalid."><use xlink:href="#exclamation-triangle-fill"/></svg>
+        </div>`;
+      }
 %}<tr>
-<th scope="row">{%= stats.benchId.b %}{%- args %}</th>
+<th scope="row">{%= stats.benchId.b %}{%- args %}{%- inconsistent %}</th>
   <td class="inline-cmp"><img src="{%= it.config.reportsUrl %}/{%= stats.inlinePlot %}"></td>
 {%    if (stats.exeStats) {
 %}{%-   include('stats-row-across-exes.html', {

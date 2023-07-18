@@ -228,6 +228,13 @@ table.benchmark-details .btn-sm {
   padding: 0 !important;
 }
 
+.benchmark-details .alert {
+  display: inline-block;
+  padding: 0rem 0.2rem;
+  margin: 0.1rem 0.5rem;
+  line-height: 1rem;
+}
+
 .warmup-benchmark {
   padding-right: 1.5ex;
   font-weight: bold;
