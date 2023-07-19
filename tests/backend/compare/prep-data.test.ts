@@ -673,7 +673,8 @@ const revDataJs: RevisionComparison = {
   baseCommitId: '4dff7e',
   changeCommitId: 'bc1105',
   baseCommitId6: '4dff7e',
-  changeCommitId6: 'bc1105'
+  changeCommitId6: 'bc1105',
+  minDistinctLength: 6
 };
 
 const revDataT: RevisionComparison = {
@@ -701,7 +702,8 @@ const revDataT: RevisionComparison = {
   baseCommitId: '5820ec',
   changeCommitId: '5fa4bd',
   baseCommitId6: '5820ec',
-  changeCommitId6: '5fa4bd'
+  changeCommitId6: '5fa4bd',
+  minDistinctLength: 6
 };
 
 function getResultPath(fileName: string): string {

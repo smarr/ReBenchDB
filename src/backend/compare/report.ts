@@ -225,6 +225,7 @@ export async function getCompareViewData(
 
   const results = await db.getMeasurementsForComparison(
     projectId,
+    revDetails.minDistinctLength,
     base,
     change
   );

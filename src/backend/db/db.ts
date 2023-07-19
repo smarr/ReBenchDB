@@ -54,7 +54,7 @@ export function loadScheme(): string {
 
 const measurementDataColumns = `
         expId, runId, trialId,
-        substring(commitId, 1, 6) as commitid,
+        substring(commitId, 1, $1) as commitid,
         benchmark.name as bench,
         executor.name as exe,
         suite.name as suite,
@@ -202,14 +202,29 @@ export abstract class Database {
     }
   }
 
+  private getSmallestDistinctCommitIdLength(
+    base: string,
+    change: string
+  ): number {
+    const minLength = Math.min(6, base.length, change.length);
+    const maxLength = Math.max(base.length, change.length);
+    let isDistinct = false;
+    for (let i = 0; i < maxLength; i++) {
+      if (base[i] !== change[i]) {
+        isDistinct = true;
+      }
+      if (isDistinct && i > minLength) {
+        return i;
+      }
+    }
+    return maxLength;
+  }
+
   public async revisionsExistInProject(
     projectSlug: string,
     base: string,
     change: string
   ): Promise<RevisionComparison> {
-    const baseCommitId6 = base.substring(0, 6);
-    const changeCommitId6 = change.substring(0, 6);
-
     const result = await this.query({
       name: 'fetchRevisionsInProjectByCommitIds',
       text: `SELECT DISTINCT
@@ -227,6 +242,13 @@ export abstract class Database {
           OR s.commitid = $3`,
       values: [projectSlug, base, change]
     });
+
+    const minDistinctLength = this.getSmallestDistinctCommitIdLength(
+      base,
+      change
+    );
+    const baseCommitId6 = base.substring(0, minDistinctLength);
+    const changeCommitId6 = change.substring(0, minDistinctLength);
 
     // we can have multiple experiments with the same revisions
     if (result.rowCount >= 2) {
@@ -258,7 +280,8 @@ export abstract class Database {
         baseCommitId: base,
         changeCommitId: change,
         baseCommitId6,
-        changeCommitId6
+        changeCommitId6,
+        minDistinctLength
       };
     } else {
       return {
@@ -266,7 +289,8 @@ export abstract class Database {
         baseCommitId: base,
         changeCommitId: change,
         baseCommitId6,
-        changeCommitId6
+        changeCommitId6,
+        minDistinctLength
       };
     }
   }
@@ -796,6 +820,7 @@ export abstract class Database {
 
   public async getMeasurementsForComparison(
     projectId: number,
+    minDistinctLength: number,
     commitHash1: string,
     commitHash2: string
   ): Promise<MeasurementData[]> {
@@ -805,9 +830,9 @@ export abstract class Database {
               ${measurementDataColumns}
             FROM
               ${measurementDataTableJoins}
-            WHERE (commitId = $1 OR commitid = $2) AND Experiment.projectId = $3
+            WHERE (commitId = $2 OR commitid = $3) AND Experiment.projectId = $4
               ORDER BY runId, expId, trialId, criterion, invocation, iteration`,
-      values: [commitHash1, commitHash2, projectId]
+      values: [minDistinctLength, commitHash1, commitHash2, projectId]
     });
     return result.rows;
   }
@@ -842,10 +867,10 @@ export abstract class Database {
               FROM
                 ${measurementDataTableJoins}
               WHERE
-                Experiment.id = $1
+                Experiment.id = $2
               ORDER BY
                 runId, trialId, cmdline, invocation, iteration, criterion`,
-      values: [expId]
+      values: [6, expId]
     });
     return result.rows;
   }
