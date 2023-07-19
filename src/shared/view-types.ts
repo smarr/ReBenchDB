@@ -223,6 +223,19 @@ export interface CompareViewWithData extends CompareViewBasics {
   hasExeComparison: boolean;
 }
 
+export interface CompareGenView extends CompareViewBasics {
+  generatingReport: boolean;
+  generationFailed: boolean;
+  generationOutput?: string;
+  revisionFound: boolean;
+
+  currentTime?: string;
+
+  base?: RevisionData;
+  change?: RevisionData;
+  completionPromise: Promise<void>;
+}
+
 export interface ReportConfig {
   /** The URL part where reports are stored, and publicly accessible. */
   reportsUrl: string;

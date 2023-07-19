@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, readFileSync } from 'fs';
 import { tmpdir } from 'os';
 import * as path from 'path';
 import { RebenchDbBenchmark } from './rebenchdb-benchmark.js';
-import { startReportGeneration } from '../backend/compare/report.js';
+import { renderCompareViewToFile } from '../backend/compare/report.js';
 
 export default class RenderReport extends RebenchDbBenchmark {
   private baseHash: string | null = null;
@@ -58,14 +58,16 @@ export default class RenderReport extends RebenchDbBenchmark {
         'RenderReport.oneTimeSetup did not set baseHash or changeHash'
       );
     }
-    const output = await startReportGeneration(
+
+    await renderCompareViewToFile(
       this.baseHash,
       this.changeHash,
+      'Large-Example-Project',
       path.join(this.tmpDir, 'benchmark.html'),
-      this.db.getDatabaseConfig()
+      this.db
     );
 
-    return output.code === 0;
+    return true;
   }
 
   public verifyResult(result: any): boolean {

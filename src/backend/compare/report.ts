@@ -1,14 +1,16 @@
 import { resolve } from 'node:path';
-import { existsSync, readFileSync, unlinkSync, rmSync } from 'node:fs';
-import { execFile, ChildProcessPromise } from 'promisify-child-process';
+import { writeFile, readFile } from 'node:fs/promises';
+import { existsSync, unlinkSync, rmSync } from 'node:fs';
 
-import type { DatabaseConfig } from '../db/types.js';
 import { Database } from '../db/db.js';
 import { assert, log } from '../logging.js';
 import { completeRequest, startRequest } from '../perf-tracker.js';
-import { robustPath, siteConfig } from '../util.js';
-import type { CompareView } from '../../shared/view-types.js';
+import { robustPath } from '../util.js';
+import type { CompareGenView, CompareView } from '../../shared/view-types.js';
 import { prepareCompareView } from './prep-data.js';
+import * as dataFormatters from '../../shared/data-format.js';
+import * as viewHelpers from '../../shared/helpers.js';
+import { prepareTemplate } from '../../backend/templates.js';
 
 const reportOutputFolder = resolve(robustPath(`../resources/reports/`));
 
@@ -34,28 +36,46 @@ export function getReportFilename(reportId: string): string {
   return `${reportOutputFolder}/${reportId}.html`;
 }
 
-const reportGeneration = new Map();
+interface ReportStatus {
+  inProgress: boolean;
+  e?: Error;
+}
+
+const reportGeneration = new Map<string, ReportStatus>();
+
+const compareGenTpl = prepareTemplate(
+  robustPath('backend/compare/html/gen-index.html'),
+  false,
+  robustPath('backend/compare/html')
+);
 
 export async function renderCompare(
   base: string,
   change: string,
   projectSlug: string,
-  dbConfig: DatabaseConfig,
   db: Database
-): Promise<any> {
+): Promise<{
+  content: string;
+  inProgress: boolean;
+  reportId: string;
+  completionPromise: Promise<void>;
+}> {
   const baselineHash6 = base.substring(0, 6);
   const changeHash6 = change.substring(0, 6);
 
   const reportId = getReportId(projectSlug, base, change);
 
-  const data: any = {
+  const data: CompareGenView = {
     project: projectSlug,
     baselineHash: base,
     changeHash: change,
     baselineHash6,
     changeHash6,
-    reportId,
-    completionPromise: Promise.resolve()
+    completionPromise: Promise.resolve(),
+
+    generatingReport: false,
+    generationFailed: false,
+    revisionFound: false
   };
 
   const revDetails = await db.revisionsExistInProject(
@@ -63,113 +83,119 @@ export async function renderCompare(
     base,
     change
   );
+
   if (!revDetails.dataFound) {
     data.generationFailed = true;
-    data.stdout =
+    data.generationOutput =
       `The requested project ${projectSlug} does not have data ` +
       `on the revisions ${base} and ${change}.`;
-    data.stderr = '';
     data.generatingReport = false;
-    return data;
+    data.revisionFound = false;
+    return {
+      content: compareGenTpl(data),
+      inProgress: false,
+      reportId,
+      completionPromise: data.completionPromise
+    };
   }
 
-  Object.assign(data, revDetails);
-  data.revDetails = revDetails.dataFound;
+  data.base = revDetails.base;
+  data.change = revDetails.change;
+  data.revisionFound = true;
 
+  const prevGenerationDetails = reportGeneration.get(reportId);
   const reportFile = getReportFilename(reportId);
-  if (existsSync(reportFile)) {
-    data.report = readFileSync(reportFile);
+
+  if (
+    (!prevGenerationDetails || !prevGenerationDetails.inProgress) &&
+    existsSync(reportFile)
+  ) {
+    return {
+      content: await readFile(reportFile, 'utf-8'),
+      inProgress: false,
+      reportId,
+      completionPromise: data.completionPromise
+    };
+  }
+
+  data.currentTime = new Date().toISOString();
+
+  // no previous attempt to generate
+  if (!prevGenerationDetails) {
+    const start = startRequest();
+
+    data.generatingReport = true;
+
+    // we are going to set of the report generation
+    // let's indicate that, before we do it
+    const reportStatus: ReportStatus = {
+      inProgress: true
+    };
+    reportGeneration.set(reportId, reportStatus);
+
+    const p = renderCompareViewToFile(
+      base,
+      change,
+      projectSlug,
+      reportFile,
+      db
+    );
+    const pp = p
+      .then(async () => {
+        reportStatus.inProgress = false;
+        await completeRequest(start, db, 'generate-report');
+      })
+      .catch(async (e) => {
+        log.error('Report generation error', e);
+        reportStatus.e = e;
+        reportStatus.inProgress = false;
+        await completeRequest(start, db, 'generate-report');
+      });
+    data.completionPromise = pp;
+  } else if (prevGenerationDetails.e) {
+    // if previous attempt failed
+    data.generationFailed = true;
     data.generatingReport = false;
   } else {
-    data.report = undefined;
-    data.currentTime = new Date().toISOString();
-
-    const prevGenerationDetails = reportGeneration.get(reportId);
-
-    // no previous attempt to generate
-    if (!prevGenerationDetails) {
-      const start = startRequest();
-
-      data.generatingReport = true;
-
-      // we are going to set of the report generation
-      // let's indicate that, before we do it
-      reportGeneration.set(reportId, {
-        inProgress: true
-      });
-
-      const p = startReportGeneration(
-        base,
-        change,
-        `${reportId}.html`,
-        dbConfig
-      );
-      const pp = p
-        .then(async (result) => {
-          reportGeneration.set(reportId, {
-            stdout: result.stdout,
-            stderr: result.stderr,
-            inProgress: false
-          });
-          await completeRequest(start, db, 'generate-report');
-        })
-        .catch(async (e) => {
-          const { stdout, stderr } = e;
-          log.error('Report generation error', e);
-          reportGeneration.set(reportId, {
-            e,
-            stdout,
-            stderr,
-            inProgress: false
-          });
-          await completeRequest(start, db, 'generate-report');
-        });
-      data.completionPromise = pp;
-    } else if (prevGenerationDetails.error) {
-      // if previous attempt failed
-      data.generationFailed = true;
-      data.stdout = prevGenerationDetails.stdout;
-      data.stderr = prevGenerationDetails.stderr;
-      data.generatingReport = false;
-    } else {
-      data.generatingReport = true;
-    }
+    data.generatingReport = true;
   }
 
-  return data;
+  return {
+    content: compareGenTpl(data),
+    inProgress: true,
+    reportId,
+    completionPromise: data.completionPromise
+  };
 }
 
-export function startReportGeneration(
+export async function renderCompareViewToFile(
   base: string,
   change: string,
-  outputFile: string,
-  dbConfig: DatabaseConfig,
-  extraCmd = ''
-): ChildProcessPromise {
-  const args = [
-    robustPath(`views/somns.R`),
-    outputFile,
-    getOutputImageFolder(outputFile),
-    // R ReBenchDB library directory
-    robustPath(`views/`),
-    siteConfig.reportsUrl,
-    base,
-    change,
-    dbConfig.database,
-    dbConfig.user,
-    dbConfig.password,
-    dbConfig.host,
-    String(dbConfig.port),
-    extraCmd
-  ];
-
-  const cmd = 'Rscript';
-  log.debug(`Generate Report: ${cmd} '${args.join(`' '`)}'`);
-
-  return execFile(cmd, args, { cwd: reportOutputFolder });
+  projectSlug: string,
+  file: string,
+  db: Database
+): Promise<void> {
+  const text = await renderCompareViewToString(base, change, projectSlug, db);
+  return writeFile(file, text, 'utf-8');
 }
 
-export async function renderCompareNew(
+const compareTpl = prepareTemplate(
+  robustPath('backend/compare/html/index.html'),
+  false,
+  robustPath('backend/compare/html')
+);
+
+export async function renderCompareViewToString(
+  base: string,
+  change: string,
+  projectSlug: string,
+  db: Database
+): Promise<string> {
+  const data = await getCompareViewData(base, change, projectSlug, db);
+  return compareTpl({ ...data, dataFormatters, viewHelpers });
+}
+
+export async function getCompareViewData(
   base: string,
   change: string,
   projectSlug: string,

@@ -12,22 +12,11 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # Add Node.js repo
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 
-RUN sh -c 'echo "deb http://cloud.r-project.org/bin/linux/debian bookworm-cran40/" > /etc/apt/sources.list.d/r-project.list' && \
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-key '95C0FAF38DB3CCAD0C080A7BDC78B2DDEABC47B7'
-
-
-# R, Node.js, PostgreSQL, headers for R packages
+# Node.js, PostgreSQL, headers for R packages
 RUN apt-get update && apt-get install -y \
-    r-base build-essential nodejs \
+    build-essential nodejs \
     libfontconfig1-dev \
     libpq-dev
-
-# Copy only the install.R to enable caching
-RUN mkdir -p /project/src/stats/
-COPY ./src/stats/install.R /project/src/stats/
-
-# Installing R libraries
-RUN Rscript /project/src/stats/install.R
 
 # Copy only package.json to enable caching
 COPY ./package.json ./package-lock.json /project/
