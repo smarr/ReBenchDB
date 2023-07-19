@@ -1,8 +1,8 @@
-import { mkdtempSync, rmSync, readFileSync } from 'fs';
+import { mkdtempSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import * as path from 'path';
 import { RebenchDbBenchmark } from './rebenchdb-benchmark.js';
-import { renderCompareViewToFile } from '../backend/compare/report.js';
+import { renderCompareViewToString } from '../backend/compare/report.js';
 
 export default class RenderReport extends RebenchDbBenchmark {
   private baseHash: string | null = null;
@@ -52,33 +52,26 @@ export default class RenderReport extends RebenchDbBenchmark {
     }
   }
 
-  public async benchmark(): Promise<any> {
+  public async benchmark(): Promise<string> {
     if (!this.baseHash || !this.changeHash || !this.tmpDir || !this.db) {
       throw new Error(
         'RenderReport.oneTimeSetup did not set baseHash or changeHash'
       );
     }
 
-    await renderCompareViewToFile(
+    return await renderCompareViewToString(
       this.baseHash,
       this.changeHash,
       'Large-Example-Project',
-      path.join(this.tmpDir, 'benchmark.html'),
       this.db
     );
-
-    return true;
   }
 
   public verifyResult(result: any): boolean {
-    const content = readFileSync(
-      path.join(<string>this.tmpDir, 'benchmark.html')
-    );
-
-    let r = result;
+    let r = true;
 
     for (const run of this.testData.data) {
-      r &&= content.includes(run.runId.benchmark.name);
+      r &&= result.includes(run.runId.benchmark.name);
     }
 
     return r;
