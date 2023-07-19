@@ -14,7 +14,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 
 # Node.js, PostgreSQL, headers for R packages
 RUN apt-get update && apt-get install -y \
-    build-essential nodejs \
+    build-essential nodejs unzip \
     libfontconfig1-dev \
     libpq-dev
 
