@@ -89,7 +89,6 @@ async function reportCompletion(
     baselineSha,
     changeSha,
     data.projectName,
-    dbConfig,
     db
   );
 
@@ -108,7 +107,7 @@ async function reportCompletion(
 
 function reportCompletionToGitHub(
   github: GitHub,
-  reportId,
+  reportId: string,
   completionPromise,
   change: Source | undefined,
   baselineSha: string,

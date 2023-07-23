@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>ReBenchDB for {%= it.project %}: Comparing {%= it.baselineHash6 %} with {%= it.changeHash6 %}</title>
+
+  {%- include('header.html') %}
+
+  {% if (it.generatingReport) { %}
+  <meta http-equiv="refresh" content="30" />
+  {% } %}
+</head>
+<body class="compare timeline-multi">
+
+<header>
+<div class="jumbotron compare">
+  <h2>ReBenchDB for {%= it.project %}</h2>
+  {% if (it.revisionFound) { %}
+  <h3>Comparing <a href="{%= it.base.repourl%}/compare/{%= it.baselineHash%}...{%= it.changeHash%}">{%= it.baselineHash6%} with {%= it.changeHash6%}</a></h3>
+  {% } else { %}
+  <h3>Comparing {%= it.baselineHash6%} with {%= it.changeHash6%}</h3>
+  {% } %}
+</div>
+</header>
+
+{% if (it.revisionFound) { %}
+<div id="version-details" class="compare">
+  <h2>Version Details</h2>
+  <dl class="row">
+    <dt class="col-sm-2">Baseline</dt>
+    <dd class="col-sm-9">
+      <a href="{%= it.base.repourl%}/compare/{%= it.baselineHash%}"><span class="baseline-badge">{%= it.baselineHash6%}</span></a> {%= it.base.branchortag%}<br/>
+       {%= it.base.authorname%}
+      <pre>{%= it.base.commitmessage%}</pre>
+
+      {%= it.base.name%}
+    </dd>
+    <dt class="col-sm-2">Change</dt>
+    <dd class="col-sm-9">
+      <a href="{%= it.base.repourl%}/compare/{%= it.changeHash%}"><span class="change-badge">{%= it.changeHash6%}</span></a> {%= it.change.branchortag%}<br/>
+       {%= it.change.authorname%}
+      <pre>{%= it.change.commitmessage%}</pre>
+
+      {%= it.change.name%}
+    </dd>
+    <dt class="col-sm-2">Significant Change</dt>
+      <dd class="col-sm-9"><div class="form-row">
+        <input type="range" class="col-6 custom-range" min="0" max="15" step="0.5" id="significance" style="padding-top: 1.75ex; padding-right: 1em;" value="5">
+        <input type="text" readonly class="col-4 form-control-plaintext" id="significance-val" value="5%">
+      </div></dd>
+  </dl>
+</div>
+{% } %}
+
+{% if (it.generatingReport) { %}
+<div class="alert alert-secondary compare" role="alert">
+  <h4 class="alert-heading">Report is currently being generated</h4>
+  <p>Please wait, the requested report is currently still generated.</p>
+  <p>Last page reload was at {%= it.currentTime %}</p>
+  <hr>
+  <p class="mb-0">This can take a couple of minutes and the page will reload automatically.</p>
+  <div class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+      <span class="sr-only">Loading...</span>
+    </div>
+  </div>
+</div>
+{% } %}
+
+{% if (it.generationFailed) { %}
+<div class="alert alert-warning compare" role="alert">
+  <h4 class="alert-heading">Report generation failed</h4>
+  <hr>
+  <h6>Error</h6>
+  <pre>{%= it.generationOutput %}</pre>
+</div>
+{% } %}
+</body>
+</html>

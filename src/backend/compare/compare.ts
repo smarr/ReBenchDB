@@ -8,11 +8,8 @@ import type {
   WarmupDataPerCriterion
 } from '../../shared/view-types.js';
 import { respondProjectNotFound } from '../common/standard-responses.js';
-import { dbConfig, refreshSecret, robustPath } from '../util.js';
-import { prepareTemplate, processTemplate } from '../templates.js';
-import { deleteReport, renderCompare, renderCompareNew } from './report.js';
-import * as dataFormatters from '../../shared/data-format.js';
-import * as viewHelpers from '../../shared/helpers.js';
+import { refreshSecret } from '../util.js';
+import { deleteReport, renderCompare } from './report.js';
 import { TimelineRequest } from '../../shared/api.js';
 
 export async function getProfileAsJson(
@@ -197,9 +194,6 @@ export async function redirectToNewCompareUrl(
   }
 }
 
-/**
- * @deprecated remove once the new compare page is feature complete
- */
 export async function renderComparePage(
   ctx: ParameterizedContext,
   db: Database
@@ -210,41 +204,16 @@ export async function renderComparePage(
     ctx.params.baseline,
     ctx.params.change,
     ctx.params.projectSlug,
-    dbConfig,
     db
   );
-  ctx.body = processTemplate('views/compare.html', data);
+  ctx.body = data.content;
   ctx.type = 'html';
 
-  if (data.generatingReport) {
+  if (data.inProgress) {
     ctx.set('Cache-Control', 'no-cache');
   }
 
   completeRequest(start, db, 'change');
-}
-
-const compareTpl = prepareTemplate(
-  robustPath('backend/compare/html/index.html'),
-  false,
-  robustPath('backend/compare/html')
-);
-
-export async function renderComparePageNew(
-  ctx: ParameterizedContext,
-  db: Database
-): Promise<void> {
-  const start = startRequest();
-
-  const data = await renderCompareNew(
-    ctx.params.baseline,
-    ctx.params.change,
-    ctx.params.projectSlug,
-    db
-  );
-  ctx.body = compareTpl({ ...data, dataFormatters, viewHelpers });
-  ctx.type = 'html';
-
-  completeRequest(start, db, 'change-new');
 }
 
 export async function deleteCachedReport(

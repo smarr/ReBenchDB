@@ -45,8 +45,7 @@ import {
   getProfileAsJson,
   getTimelineDataAsJson,
   redirectToNewCompareUrl,
-  renderComparePage,
-  renderComparePageNew
+  renderComparePage
 } from './backend/compare/compare.js';
 import { getAvailableDataAsJson } from './backend/project/data-export.js';
 import { submitTimelineUpdateJobs } from './backend/admin/operations.js';
@@ -79,10 +78,6 @@ router.get('/:projectSlug/data/:expId', async (ctx) =>
 router.get('/:projectSlug/compare/:baseline..:change', async (ctx) =>
   renderComparePage(ctx, db)
 );
-router.get('/:projectSlug/compare-new/:baseline..:change', async (ctx) =>
-  renderComparePageNew(ctx, db)
-);
-
 // DEPRECATED: remove for 1.0
 router.get('/timeline/:projectId', async (ctx) =>
   redirectToNewTimelineUrl(ctx, db)

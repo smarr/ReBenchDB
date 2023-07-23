@@ -231,4 +231,5 @@ export interface RevisionComparison {
   changeCommitId: string;
   baseCommitId6: string;
   changeCommitId6: string;
+  minDistinctLength: number;
 }

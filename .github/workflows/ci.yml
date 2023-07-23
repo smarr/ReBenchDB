@@ -37,26 +37,11 @@ jobs:
     steps:
       - name: Checkout ReBench
         uses: actions/checkout@v3
-      - name: Install R
-        uses: r-lib/actions/setup-r@v2
-        with:
-          r-version: '4.2.0'
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '19'
-
-      - name: Cache R packages
-        uses: actions/cache@v3
-        env:
-          cache-name: r-libs-420
-        with:
-          path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('src/stats/install.R') }}-2
-          # restore-keys: |
-          #   ${{ runner.os }}-${{ env.cache-name }}-
-          #   ${{ runner.os }}-
 
       - name: Cache node modules
         uses: actions/cache@v3
@@ -69,10 +54,6 @@ jobs:
          restore-keys: |
            ${{ runner.os }}-${{ env.cache-name }}-
            ${{ runner.os }}-
-
-      - name: Install R libs
-        run: |
-          Rscript src/stats/install.R
 
       - name: NPM CI
         run: |
