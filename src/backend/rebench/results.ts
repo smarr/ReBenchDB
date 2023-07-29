@@ -22,6 +22,15 @@ ${validateFn.errors}`;
   }
 }
 
+export async function reportResultApiVersion(
+  ctx: ParameterizedContext
+): Promise<void> {
+  ctx.set('X-ReBenchDB-Result-API-Version', '2.0.0');
+  ctx.set('Allow', 'PUT');
+  ctx.status = 200;
+  ctx.body = '';
+}
+
 export async function acceptResultData(
   ctx: ParameterizedContext,
   db: Database

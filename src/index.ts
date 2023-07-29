@@ -49,7 +49,10 @@ import {
 } from './backend/compare/compare.js';
 import { getAvailableDataAsJson } from './backend/project/data-export.js';
 import { submitTimelineUpdateJobs } from './backend/admin/operations.js';
-import { acceptResultData } from './backend/rebench/results.js';
+import {
+  acceptResultData,
+  reportResultApiVersion
+} from './backend/rebench/results.js';
 import { setTimeout } from 'node:timers/promises';
 import { reportConnectionRefused } from './shared/errors.js';
 
@@ -167,6 +170,9 @@ if (DEV) {
     serveReport
   );
 }
+
+// curl -X OPTIONS http://localhost:33333/rebenchdb/results -i
+router.options('/rebenchdb/results', reportResultApiVersion);
 
 // curl -X PUT -H "Content-Type: application/json" -d '{"foo":"bar","baz":3}'
 //  http://localhost:33333/rebenchdb/results
