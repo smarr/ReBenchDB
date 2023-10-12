@@ -1,9 +1,10 @@
 import { Database } from '../db/db.js';
-import { SummaryStatistics } from '../../shared/stats.js';
+import type { SummaryStatistics } from '../../shared/stats.js';
 import { robustSrcPath } from '../util.js';
 import { Worker } from 'node:worker_threads';
 import { completeRequest, startRequest } from '../perf-tracker.js';
 import { log } from '../logging.js';
+import type { ValuesPossiblyMissing } from '../../shared/api.js';
 
 export interface ComputeRequest {
   runId: number;
@@ -102,24 +103,32 @@ export class BatchingTimelineUpdater {
     }
   }
 
-  public addValue(
+  public addValues(
     runId: number,
     trialId: number,
     criterionId: number,
-    value: number
+    values: ValuesPossiblyMissing
   ): void {
+    let withoutMissing: number[];
     const id = `${trialId}-${runId}-${criterionId}`;
     if (!this.requests.has(id)) {
       const req: ComputeRequest = {
         runId,
         trialId,
         criterion: criterionId,
-        dataForCriterion: [value]
+        dataForCriterion: []
       };
 
       this.requests.set(id, req);
+      withoutMissing = req.dataForCriterion;
     } else {
-      this.requests.get(id)?.dataForCriterion.push(value);
+      withoutMissing = this.requests.get(id)!.dataForCriterion;
+    }
+
+    for (const v of values) {
+      if (v !== null) {
+        withoutMissing.push(v);
+      }
     }
   }
 

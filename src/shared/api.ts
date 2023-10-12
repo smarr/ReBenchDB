@@ -47,22 +47,12 @@ export interface Run {
   runId: RunId;
 }
 
-export interface Measure {
-  /** Criterion id. */
-  c: number;
-
-  /** Value */
-  v: number;
-}
-
 export interface DataPoint {
   /** Invocation */
   in: number;
 
-  /** Iteration */
-  it: number;
-
-  m: Measure[];
+  /** an array of criteria with values order by iteration */
+  m: number[][];
 }
 
 export interface ProfileElement {

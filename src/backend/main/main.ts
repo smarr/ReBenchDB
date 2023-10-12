@@ -63,7 +63,7 @@ export async function getLast100Measurements(
     name: 'all-results',
     text: ` WITH OrderedMeasurement AS (
               SELECT
-                  runId, trialId, criterion, invocation, value
+                  runId, trialId, criterion, invocation, values
                 FROM Measurement m
                   JOIN Trial t ON  m.trialId = t.id
                   JOIN Experiment e ON t.expId = e.id
@@ -76,7 +76,7 @@ export async function getLast100Measurements(
               SELECT m.runId, m.trialId, m.criterion,
                      m.invocation, a.value, a.iteration
               FROM OrderedMeasurement as m
-                LEFT JOIN LATERAL unnest(m.value)
+                LEFT JOIN LATERAL unnest(m.values)
                   WITH ORDINALITY AS a(value, iteration) ON true
             ),
             Results AS (

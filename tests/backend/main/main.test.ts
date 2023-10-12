@@ -109,22 +109,21 @@ describe('getLast100Measurements', () => {
       extraArgs: null
     };
 
+    const d: DataPoint[] = [];
+    result.push({
+      d,
+      runId
+    });
+
     for (let i = 0; i < numRuns; i += 1) {
-      const d: DataPoint[] = [];
+      const ms: number[][] = [[], []];
+      const invocation = { in: i, m: ms };
+      d.push(invocation);
+
       for (let j = 1; j <= numDataPoints; j += 1) {
-        d.push({
-          in: i,
-          it: j,
-          m: [
-            { c: 1, v: j + numDataPoints * (i + runOffset) },
-            { c: 2, v: 100 + j + numDataPoints * (i + runOffset) }
-          ]
-        });
+        ms[0].push(j + numDataPoints * (i + runOffset));
+        ms[1].push(100 + j + numDataPoints * (i + runOffset));
       }
-      result.push({
-        d,
-        runId
-      });
     }
 
     return result;

@@ -37,6 +37,20 @@ import type {
 import { TimedCacheValidity } from './timed-cache-validity.js';
 import { HasProfile } from './has-profile.js';
 
+export type AvailableMeasurements = {
+  [runId: number]: {
+    [critId: number]: { [inv: number]: number };
+  };
+};
+
+type MeasurementValueArray = [
+  /* runId */ number,
+  /* trialId */ number,
+  /* invocation */ number,
+  /* critId */ number,
+  /* values */ number[]
+];
+
 function isUniqueViolationError(err) {
   return err.code === '23505';
 }
@@ -53,10 +67,10 @@ const measurementDataColumns = `
         executor as exe,
         suite,
         cmdline, varValue, cores, inputSize, extraArgs,
-        invocation, iteration, warmup,
+        invocation, warmup,
         criterion.name as criterion,
         criterion.unit as unit,
-        value, envid`;
+        values, envid`;
 
 const measurementDataTableJoins = `
         Measurement
@@ -92,6 +106,7 @@ export abstract class Database {
   };
 
   private static readonly batchN = 50;
+  private static readonly batchInsertSize = 5;
 
   protected statsValid: TimedCacheValidity;
 
@@ -113,8 +128,11 @@ export abstract class Database {
     this.statsValid = new TimedCacheValidity(cacheInvalidationDelay);
 
     this.queries.insertMeasurementBatchedN = `INSERT INTO Measurement
-         (runId, trialId, invocation, criterion, value)
-       VALUES ${this.generateBatchInsert(Database.batchN, 5)}
+         (runId, trialId, invocation, criterion, values)
+       VALUES ${this.generateBatchInsert(
+         Database.batchN,
+         Database.batchInsertSize
+       )}
        ON CONFLICT DO NOTHING`;
 
     if (timelineEnabled) {
@@ -749,7 +767,7 @@ export abstract class Database {
             FROM
               ${measurementDataTableJoins}
             WHERE (commitId = $2 OR commitid = $3) AND Experiment.projectId = $4
-              ORDER BY runId, expId, trialId, criterion, invocation, iteration`,
+              ORDER BY runId, expId, trialId, criterion, invocation`,
       values: [minDistinctLength, commitHash1, commitHash2, projectId]
     });
     return result.rows;
@@ -787,7 +805,7 @@ export abstract class Database {
               WHERE
                 Experiment.id = $2
               ORDER BY
-                runId, trialId, cmdline, invocation, iteration, criterion`,
+                runId, trialId, cmdline, invocation, criterion`,
       values: [6, expId]
     });
     return result.rows;
@@ -884,14 +902,19 @@ export abstract class Database {
     return criteria;
   }
 
-  private async retrieveAvailableMeasurements(trialId: number) {
+  private async retrieveAvailableMeasurements(
+    trialId: number
+  ): Promise<AvailableMeasurements> {
     const results = await this.query({
       name: 'fetchAvailableMeasurements',
       text: `SELECT
-              runId, criterion, invocation as inv, max(iteration) as ite
+              runId,
+              criterion,
+              invocation as inv,
+              array_length(values, 1) as ite
             FROM Measurement
             WHERE trialId = $1
-            GROUP BY runId, criterion, invocation
+            GROUP BY runId, criterion, invocation, values
             ORDER BY runId, inv, ite, criterion`,
       values: [trialId]
     });
@@ -922,16 +945,16 @@ export abstract class Database {
   }
 
   private alreadyRecorded(
-    measurements,
-    [runId, _expId, inv, ite, critId, _val]: any[]
+    measurements: AvailableMeasurements,
+    runId: number,
+    inv: number,
+    critId: number
   ) {
     if (runId in measurements) {
       const run = measurements[runId];
       if (critId in run) {
         const crit = run[critId];
-        if (inv in crit) {
-          return crit[inv] >= ite;
-        }
+        return inv in crit;
       }
     }
 
@@ -942,10 +965,17 @@ export abstract class Database {
     let recordedMeasurements = 0;
 
     while (batchedValues.length > 0) {
-      // there are 5 parameters, i.e., values
-      const rest = batchedValues.splice(5 * 1);
+      // there are `batchInsertSize` parameters, i.e., values
+      const rest = batchedValues.splice(Database.batchInsertSize * 1);
       try {
-        const result = await this.recordMeasurement(batchedValues);
+        assert(
+          batchedValues.length == Database.batchInsertSize,
+          `batchedValues.length was ${batchedValues.length} ` +
+            `but expected ${Database.batchInsertSize}`
+        );
+        const result = await this.recordMeasurement(
+          <MeasurementValueArray>batchedValues
+        );
         recordedMeasurements += result;
       } catch (err) {
         // looks like we already have this data
@@ -983,80 +1013,72 @@ export abstract class Database {
     return recordedProfiles;
   }
 
-  /**
-   * preProcess Measurements datapoints and maps unique ids
-   * to all of the iterations for that ID
-   */
-  public async preProcessMeasurements(
+  /** Batched insertion is faster. */
+  public createValueBatchForInsertion(
     dataPoints: ApiDataPoint[],
-    run: any,
-    trial: any,
+    run: Run,
+    trial: Trial,
     criteria: Map<number, Criterion>,
-    availableMs: any
-  ): Promise<Map<string, Array<number>>> {
-    const iterationMap = new Map<string, Array<number>>();
-
+    availableMs: AvailableMeasurements,
+    batchedValues: any[]
+  ): void {
     for (const d of dataPoints) {
+      // a dataPoint contains m, which is a list of measurements per criterion
+      let criterionId = 0;
       for (const m of d.m) {
+        if (m === null || m === undefined) {
+          continue;
+        }
+
+        const criterion = criteria.get(criterionId)!;
+
         // batched inserts are much faster
         // so let's do this
-        const criterion = <Criterion>criteria.get(m.c);
-        const values = [run.id, trial.id, d.in, d.it, criterion.id, m.v];
-        if (this.alreadyRecorded(availableMs, values)) {
+        if (this.alreadyRecorded(availableMs, run.id, d.in, criterion.id)) {
           // then,just skip this one.
           continue;
         }
 
         if (this.timelineUpdater && criterion.name === TotalCriterion) {
-          this.timelineUpdater.addValue(run.id, trial.id, criterion.id, m.v);
+          this.timelineUpdater.addValues(run.id, trial.id, criterion.id, m);
         }
-        let iMID = '';
-        // the following will now map unique id's
-        // to all of the iterations for that ID
-        // only once all data points are processed
-        // do we know we have all of the values for the array of a given ID
-        iMID = `${run.id} ${trial.id} ${d.in} ${criterion.id}`;
-        if (iterationMap.has(iMID)) {
-          let value = iterationMap.get(iMID) as number[];
-          value = value.concat([m.v]);
-          iterationMap.set(iMID, value);
-        } else {
-          iterationMap.set(iMID, [m.v]);
-        }
+
+        // batchedValues.push(run.id, trial.id, d.in, criterion.id, m);
+        batchedValues.push(run.id, trial.id, d.in, criterion.id);
+        batchedValues.push(m);
+
+        criterionId += 1;
       }
     }
-    return iterationMap;
   }
 
   public async recordMeasurements(
     dataPoints: ApiDataPoint[],
-    run: any,
-    trial: any,
+    run: Run,
+    trial: Trial,
     criteria: Map<number, Criterion>,
-    availableMs: any
+    availableMs: AvailableMeasurements
   ): Promise<number> {
     let recordedMeasurements = 0;
     let batchedValues: any[] = [];
 
-    const iterationMap = await this.preProcessMeasurements(
+    this.createValueBatchForInsertion(
       dataPoints,
       run,
       trial,
       criteria,
-      availableMs
+      availableMs,
+      batchedValues
     );
 
-    // build list of batchedValues
-    for (const [key, value] of iterationMap) {
-      const IDs: number[] = key.split(' ').map(Number);
-      batchedValues = batchedValues.concat(IDs, [value]);
-    }
+    // first try to use the Database.batchN
+    while (batchedValues.length >= Database.batchInsertSize * Database.batchN) {
+      const rest = batchedValues.splice(
+        Database.batchInsertSize * Database.batchN
+      );
 
-    while (batchedValues.length >= 5 * 10) {
-      // there are 5 parameters, i.e., values
-      const rest = batchedValues.splice(5 * 10);
       try {
-        const result = await this.recordMeasurementBatched10(batchedValues);
+        const result = await this.recordMeasurementBatchedN(batchedValues);
         recordedMeasurements += result;
       } catch (err) {
         if (isUniqueViolationError(err)) {
@@ -1067,10 +1089,36 @@ export abstract class Database {
       batchedValues = rest;
     }
 
+    // afterwards try batch of 10
+    while (batchedValues.length >= Database.batchInsertSize * 10) {
+      const rest = batchedValues.splice(Database.batchInsertSize * 10);
+      try {
+        const result = await this.recordMeasurementBatched10(batchedValues);
+        recordedMeasurements += result;
+      } catch (err) {
+        if (isUniqueViolationError(err)) {
+          recordedMeasurements +=
+            await this.recordMeasurementsFromBatch(batchedValues);
+        }
+      }
+
+      batchedValues = rest;
+    }
+
+    // and now handle remaining individually
     recordedMeasurements +=
       await this.recordMeasurementsFromBatch(batchedValues);
 
     return recordedMeasurements;
+  }
+
+  public async recordAdditionalMeasurementValue(
+    _run: Run,
+    _trial: Trial,
+    _criterionId: number,
+    _value: number
+  ): Promise<void> {
+    throw new Error('Not yet implemented');
   }
 
   public async recordMetaData(data: BenchmarkData): Promise<{
@@ -1083,11 +1131,11 @@ export abstract class Database {
     const exp = await this.recordExperiment(data);
     const trial = await this.recordTrial(data, env, exp);
 
-    let criteria;
+    let criteria: Map<number, Criterion>;
     if (data.criteria) {
       criteria = await this.resolveCriteria(data.criteria);
     } else {
-      criteria = null;
+      criteria = new Map();
     }
 
     return { env, exp, trial, criteria };
@@ -1151,7 +1199,7 @@ export abstract class Database {
     const q = {
       name: 'insertMeasurement10',
       text: `INSERT INTO Measurement
-          (runId, trialId, invocation, criterion, value)
+          (runId, trialId, invocation, criterion, values)
         VALUES
           ($1, $2, $3, $4, $5),
           ($6, $7, $8, $9, $10),
@@ -1164,7 +1212,7 @@ export abstract class Database {
           ($41, $42, $43, $44, $45),
           ($46, $47, $48, $49, $50)
           ON CONFLICT DO NOTHING`,
-      // [runId, trialId, invocation, critId, value];
+      // [runId, trialId, invocation, critId, values];
       values
     };
 
@@ -1174,23 +1222,26 @@ export abstract class Database {
   // TODO: not used any longer, is this correct??
 
   public async recordMeasurementBatchedN(values: any[]): Promise<number> {
+    assert(values.length === Database.batchInsertSize * Database.batchN);
     const q = {
       name: 'insertMeasurementN',
       text: this.queries.insertMeasurementBatchedN,
-      // [runId, trialId, invocation, iteration, critId, value];
+      // [runId, trialId, invocation, critId, values];
       values
     };
     return (await this.query(q)).rowCount || 0;
   }
 
-  public async recordMeasurement(values: any[]): Promise<number> {
+  public async recordMeasurement(
+    values: MeasurementValueArray
+  ): Promise<number> {
     const q = {
       name: 'insertMeasurement',
       text: `INSERT INTO Measurement
-          (runId, trialId, invocation, iteration, criterion, value)
-        VALUES ($1, $2, $3, $4, $5, $6)
+          (runId, trialId, invocation, criterion, values)
+        VALUES ($1, $2, $3, $4, $5)
         ON CONFLICT DO NOTHING`,
-      // [runId, trialId, invocation, iteration, critId, value];
+      // [runId, trialId, invocation, critId, value]s;
       values
     };
 

@@ -215,8 +215,8 @@ describe('Recording a ReBench execution from payload files', () => {
     // into an array of length 1
     const expectedValues = [[383.821], [432.783], [482.53]];
     for (const elm in expectedValues) {
-      expect(measurements.rows[elm].value.length).toEqual(1);
-      expect(measurements.rows[elm].value).toEqual(expectedValues[elm]);
+      expect(measurements.rows[elm].values.length).toEqual(1);
+      expect(measurements.rows[elm].values).toEqual(expectedValues[elm]);
     }
   });
 
@@ -270,7 +270,7 @@ describe('Recording a ReBench execution from payload files', () => {
 
       // sql to find total number of values that exist in the table
       const totalNumberOfValuesQuery = await db.query({
-        text: 'SELECT SUM(cardinality(value)) FROM Measurement'
+        text: 'SELECT SUM(cardinality(values)) FROM Measurement'
       });
 
       // this finds all no unique IDs
@@ -278,11 +278,11 @@ describe('Recording a ReBench execution from payload files', () => {
       // then this will be > 0
       const numNonUniqueIDsQuery = await db.query({
         text: `SELECT runid, trialid, criterion, invocation
-        FROM measurement 
+        FROM measurement
         WHERE (runid, trialid, criterion, invocation) IN
-        (SELECT runid, trialid, criterion, invocation 
-          FROM measurement 
-          GROUP BY runid, trialid, criterion, invocation 
+        (SELECT runid, trialid, criterion, invocation
+          FROM measurement
+          GROUP BY runid, trialid, criterion, invocation
           HAVING COUNT(*) > 1);`
       });
 
@@ -348,54 +348,6 @@ describe('Recording a ReBench execution from payload files', () => {
     const profileData = JSON.parse(profileStr);
     expect(profileData.length).toEqual(16);
     expect(profileData[0].m).toEqual('GreyObjectsWalker_walkGreyObjects');
-  });
-
-  it(`should not combine single iterations,
-   and combine multiple iterations`, async () => {
-    await db.recordMetaDataAndRuns(smallTestData);
-    await db.recordAllData(smallTestData);
-
-    // obtain the bits, this should match what `recordData` does above
-    const { trial, criteria } = await db.recordMetaData(smallTestData);
-
-    // now, manually do the recording
-    const r = smallTestData.data[0];
-
-    // and pretend there's no data yet
-    const availableMs = {};
-
-    const run = await db.recordRun(r.runId);
-
-    // let returnedJobs;
-    // let returnedIterationMap = new Map<string, Array<number>>();
-    const returnedIterationMap = await db.preProcessMeasurements(
-      <DataPoint[]>r.d,
-      run,
-      trial,
-      criteria,
-      availableMs
-    );
-
-    const IterationMap = returnedIterationMap as Map<string, Array<number>>;
-    expect(IterationMap.size).toEqual(3);
-    expect(IterationMap.entries().next().value[1].length).toEqual(1);
-
-    // add all of the datapoint to it self.
-    // this should cause every row to have another value.
-    // and no new rows should be added
-    const doubleDataPoints = <DataPoint[]>r.d?.concat(r.d);
-
-    const returnedIterationMap2 = await db.preProcessMeasurements(
-      doubleDataPoints,
-      run,
-      trial,
-      criteria,
-      availableMs
-    );
-
-    const IterationMap2 = returnedIterationMap2 as Map<string, Array<number>>;
-    expect(IterationMap2.size).toEqual(3);
-    expect(IterationMap2.entries().next().value[1].length).toEqual(2);
   });
 });
 
