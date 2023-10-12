@@ -1093,9 +1093,8 @@ export abstract class Database {
             // we may have concurrent inserts, or partially inserted data,
             // where a request aborted
             if (isUniqueViolationError(err)) {
-              recordedMeasurements += await this.recordMeasurementsFromBatch(
-                batchedValues
-              );
+              recordedMeasurements +=
+                await this.recordMeasurementsFromBatch(batchedValues);
             } else {
               throw err;
             }
@@ -1114,17 +1113,15 @@ export abstract class Database {
         recordedMeasurements += result;
       } catch (err) {
         if (isUniqueViolationError(err)) {
-          recordedMeasurements += await this.recordMeasurementsFromBatch(
-            batchedValues
-          );
+          recordedMeasurements +=
+            await this.recordMeasurementsFromBatch(batchedValues);
         }
       }
       batchedValues = rest;
     }
 
-    recordedMeasurements += await this.recordMeasurementsFromBatch(
-      batchedValues
-    );
+    recordedMeasurements +=
+      await this.recordMeasurementsFromBatch(batchedValues);
 
     return recordedMeasurements;
   }
