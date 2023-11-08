@@ -186,7 +186,7 @@ export abstract class Database {
                 FROM   information_schema.tables
                 WHERE  table_name = 'executor'`
     });
-    return result.rowCount <= 0;
+    return result.rowCount === null || result.rowCount <= 0;
   }
 
   public async initializeDatabase(): Promise<void> {
@@ -251,7 +251,7 @@ export abstract class Database {
     const changeCommitId6 = change.substring(0, minDistinctLength);
 
     // we can have multiple experiments with the same revisions
-    if (result.rowCount >= 2) {
+    if (result.rowCount !== null && result.rowCount >= 2) {
       let baseData: RevisionData | undefined = undefined;
       let changeData: RevisionData | undefined = undefined;
       for (const row of result.rows) {
@@ -678,7 +678,7 @@ export abstract class Database {
       values: [projectName, currentCommitId]
     });
 
-    if (result.rowCount < 1) {
+    if (result.rowCount === null || result.rowCount < 1) {
       return undefined;
     } else {
       return result.rows[0];
@@ -702,7 +702,7 @@ export abstract class Database {
     };
 
     const result = await this.query(q);
-    if (result.rowCount < 1) {
+    if (result.rowCount === null || result.rowCount < 1) {
       return null;
     }
     return result.rows[0];
@@ -723,7 +723,7 @@ export abstract class Database {
       values: [projectName, experimentName]
     });
 
-    if (result.rowCount < 1) {
+    if (result.rowCount === null || result.rowCount < 1) {
       return undefined;
     } else {
       return result.rows[0];
@@ -773,7 +773,7 @@ export abstract class Database {
       values: [projectName, experimentName]
     });
 
-    if (result.rowCount < 1) {
+    if (result.rowCount === null || result.rowCount < 1) {
       return undefined;
     }
     return result.rows[0];
@@ -1221,7 +1221,7 @@ export abstract class Database {
       values
     };
 
-    return (await this.query(q)).rowCount;
+    return (await this.query(q)).rowCount || 0;
   }
 
   public async recordMeasurementBatchedN(values: any[]): Promise<number> {
@@ -1233,7 +1233,7 @@ export abstract class Database {
     };
 
     q.values = values;
-    return (await this.query(q)).rowCount;
+    return (await this.query(q)).rowCount || 0;
   }
 
   public async recordMeasurement(values: any[]): Promise<number> {
@@ -1247,7 +1247,7 @@ export abstract class Database {
       values
     };
 
-    return (await this.query(q)).rowCount;
+    return (await this.query(q)).rowCount || 0;
   }
 
   public async recordTimeline(
@@ -1288,7 +1288,7 @@ export abstract class Database {
         stats.bci95up
       ]
     };
-    return (await this.query(q)).rowCount;
+    return (await this.query(q)).rowCount || 0;
   }
 
   public async recordProfile(
@@ -1307,7 +1307,7 @@ export abstract class Database {
         ON CONFLICT DO NOTHING`,
       values: [runId, trialId, invocation, numIterations, value]
     };
-    return (await this.query(q)).rowCount;
+    return (await this.query(q)).rowCount || 0;
   }
 
   public async awaitQuiescentTimelineUpdater(): Promise<void> {
@@ -1333,7 +1333,7 @@ export abstract class Database {
     };
     const result = await this.query(q);
 
-    if (result.rowCount < 1) {
+    if (result.rowCount === null || result.rowCount < 1) {
       return null;
     }
 
@@ -1441,7 +1441,7 @@ export abstract class Database {
     };
 
     const result = await this.query(q);
-    if (result.rowCount < 1) {
+    if (result.rowCount === null || result.rowCount < 1) {
       return null;
     }
 
@@ -1495,7 +1495,7 @@ export abstract class Database {
     const q = this.constructTimelineQueryForRun(projectId, runId);
     const result = await this.query(q);
 
-    if (result.rowCount < 1) {
+    if (result.rowCount === null || result.rowCount < 1) {
       return null;
     }
 
@@ -1519,7 +1519,7 @@ export abstract class Database {
     const q = this.constructTimelineQuery(projectName, branches, request);
     const result = await this.query(q);
 
-    if (result.rowCount < 1) {
+    if (result.rowCount === null || result.rowCount < 1) {
       return null;
     }
 
