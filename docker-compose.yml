@@ -12,6 +12,7 @@ services:
       RDB_USER: docker
       RDB_PASS: docker
       RDB_DB: rebenchdb
+      RDB_PORT: 5432
       REFRESH_SECRET: refresh
     depends_on:
       - postgres
