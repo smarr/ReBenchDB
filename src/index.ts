@@ -50,6 +50,7 @@ import {
 import { getAvailableDataAsJson } from './backend/project/data-export.js';
 import { submitTimelineUpdateJobs } from './backend/admin/operations.js';
 import { acceptResultData } from './backend/rebench/results.js';
+import { setTimeout } from 'node:timers/promises';
 
 log.info('Starting ReBenchDB Version ' + rebenchVersion);
 
@@ -164,18 +165,28 @@ router.put('/rebenchdb/completion', koaBody(), async (ctx) =>
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-(async () => {
-  log.info('Initialize Database');
+async function tryToConnect(n: number): Promise<boolean> {
+  if (n <= 0) {
+    return false;
+  }
+
   try {
     await db.initializeDatabase();
+    return true;
   } catch (e: any) {
     if (e.code == 'ECONNREFUSED') {
-      log.error(
-        `Unable to connect to database on port ${e.address}:${e.port}\n` +
-          'ReBenchDB requires a Postgres database to work.'
-      );
-      process.exit(1);
+      reportConnectionRefused(e);
+      await setTimeout(5000);
+      return await tryToConnect(n - 1);
     }
+    throw e;
+  }
+}
+
+(async () => {
+  log.info('Initialize Database');
+  if (!(await tryToConnect(5))) {
+    process.exit(1);
   }
 
   initPerfTracker();
@@ -183,3 +194,26 @@ app.use(router.allowedMethods());
   log.info(`Starting server on http://localhost:${siteConfig.port}`);
   app.listen(siteConfig.port);
 })();
+
+function reportConnectionRefused(e: any) {
+  if (e.errors && e.errors.length > 0) {
+    for (const currentE of e.errors) {
+      if (currentE.code == 'ECONNREFUSED' && currentE.port) {
+        log.error(
+          `Unable to connect to database on port ` +
+            `${currentE.address}:${currentE.port}.\n`
+        );
+      }
+    }
+    log.error(
+      'Connection refused.\n' +
+        'ReBenchDB requires a Postgres database to work.'
+    );
+  } else {
+    log.error(
+      `Unable to connect to database on port ${e.address}:${e.port}.\n` +
+        'Connection refused.\n' +
+        'ReBenchDB requires a Postgres database to work.'
+    );
+  }
+}
