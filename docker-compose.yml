@@ -14,6 +14,7 @@ services:
       RDB_DB: rebenchdb
       RDB_PORT: 5432
       REFRESH_SECRET: refresh
+      DEV: true
     depends_on:
       - postgres
     ports:
@@ -25,6 +26,5 @@ services:
       POSTGRES_USER: docker
       POSTGRES_PASSWORD: docker
       POSTGRES_DB: rebenchdb
-      DEV: true
     ports:
       - '5432:5432'
