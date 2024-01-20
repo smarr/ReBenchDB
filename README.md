@@ -45,6 +45,24 @@ ReBenchDB isn't
 - a statistics library:
   We currently use R for our statistic needs, but anything outputting HTML would be suitable.
 
+## Docker/Podman Setup
+
+The repository contains a `Dockerfile` and a `docker-compose.yml`, which will
+install all dependencies and setup the required PostgreSQL database.
+
+With Docker, this should be usable with:
+
+```bash
+docker compose -f ./docker-compose.yml up
+```
+
+For Podman users, podman-compose is needed:
+
+```bash
+pip3 install podman-compose  # if not already available
+podman-compose up
+```
+
 ## Installation and Usage
 
 <a id="install"></a>
