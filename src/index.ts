@@ -67,6 +67,15 @@ export const db = new DatabaseWithPool(
 router.get('/', async (ctx) => {
   return renderMainPage(ctx, db);
 });
+
+router.get('/status', async (ctx) => {
+  ctx.body = `# ReBenchDB Status
+
+- version ${rebenchVersion}
+`;
+  ctx.type = 'text';
+});
+
 router.get('/:projectSlug', async (ctx) => renderProjectPage(ctx, db));
 router.get('/:projectSlug/source/:sourceId', async (ctx) =>
   getSourceAsJson(ctx, db)
@@ -138,14 +147,6 @@ if (DEV) {
     serveReport
   );
 }
-
-router.get('/status', async (ctx) => {
-  ctx.body = `# ReBenchDB Status
-
-- version ${rebenchVersion}
-`;
-  ctx.type = 'text';
-});
 
 // curl -X PUT -H "Content-Type: application/json" -d '{"foo":"bar","baz":3}'
 //  http://localhost:33333/rebenchdb/results
