@@ -23,18 +23,18 @@ ReBenchDB is designed to
 
 ### Features
 
- - compare performance between specific commits
-   - show aggregated results on an overview plot
-   - give summary statistics
-   - show per-benchmark details
-     - a plot that allows to judge noise
-     - a plot with per-iteration data
-     - a plot of previous results
-     - various metrics and the command line
-     - profiling information
-   - compare performance across different executors
- - per-project timeline view
- - per-project data inventory and data export
+- compare performance between specific commits
+  - show aggregated results on an overview plot
+  - give summary statistics
+  - show per-benchmark details
+    - a plot that allows to judge noise
+    - a plot with per-iteration data
+    - a plot of previous results
+    - various metrics and the command line
+    - profiling information
+  - compare performance across different executors
+- per-project timeline view
+- per-project data inventory and data export
 
 ## Non-Goals
 
