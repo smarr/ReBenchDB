@@ -45,12 +45,16 @@ export const robustSrcPath = __dirname.includes('dist/')
       return `${__dirname}/../../dist/src/${path}`;
     };
 
+const port: number = process.env.RDB_PORT
+  ? parseInt(process.env.RDB_PORT)
+  : 5432;
+
 export const dbConfig = {
   user: process.env.RDB_USER || '',
   password: process.env.RDB_PASS || '',
   host: process.env.RDB_HOST || 'localhost',
   database: process.env.RDB_DB || 'rdb_smde2',
-  port: 5432
+  port
 };
 
 export const refreshSecret =

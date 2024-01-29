@@ -23,18 +23,18 @@ ReBenchDB is designed to
 
 ### Features
 
- - compare performance between specific commits
-   - show aggregated results on an overview plot
-   - give summary statistics
-   - show per-benchmark details
-     - a plot that allows to judge noise
-     - a plot with per-iteration data
-     - a plot of previous results
-     - various metrics and the command line
-     - profiling information
-   - compare performance across different executors
- - per-project timeline view
- - per-project data inventory and data export
+- compare performance between specific commits
+  - show aggregated results on an overview plot
+  - give summary statistics
+  - show per-benchmark details
+    - a plot that allows to judge noise
+    - a plot with per-iteration data
+    - a plot of previous results
+    - various metrics and the command line
+    - profiling information
+  - compare performance across different executors
+- per-project timeline view
+- per-project data inventory and data export
 
 ## Non-Goals
 
@@ -44,6 +44,24 @@ ReBenchDB isn't
   Check [ReBench](https://github.com/smarr/ReBench) if you need one
 - a statistics library:
   We currently use R for our statistic needs, but anything outputting HTML would be suitable.
+
+## Docker/Podman Setup
+
+The repository contains a `Dockerfile` and a `docker-compose.yml`, which will
+install all dependencies and setup the required PostgreSQL database.
+
+With Docker, this should be usable with:
+
+```bash
+docker compose -f ./docker-compose.yml up
+```
+
+For Podman users, podman-compose is needed:
+
+```bash
+pip3 install podman-compose  # if not already available
+podman-compose up
+```
 
 ## Installation and Usage
 

@@ -50,6 +50,8 @@ import {
 import { getAvailableDataAsJson } from './backend/project/data-export.js';
 import { submitTimelineUpdateJobs } from './backend/admin/operations.js';
 import { acceptResultData } from './backend/rebench/results.js';
+import { setTimeout } from 'node:timers/promises';
+import { reportConnectionRefused } from './shared/errors.js';
 
 log.info('Starting ReBenchDB Version ' + rebenchVersion);
 
@@ -66,6 +68,15 @@ export const db = new DatabaseWithPool(
 router.get('/', async (ctx) => {
   return renderMainPage(ctx, db);
 });
+
+router.get('/status', async (ctx) => {
+  ctx.body = `# ReBenchDB Status
+
+- version ${rebenchVersion}
+`;
+  ctx.type = 'text';
+});
+
 router.get('/:projectSlug', async (ctx) => renderProjectPage(ctx, db));
 router.get('/:projectSlug/source/:sourceId', async (ctx) =>
   getSourceAsJson(ctx, db)
@@ -138,14 +149,6 @@ if (DEV) {
   );
 }
 
-router.get('/status', async (ctx) => {
-  ctx.body = `# ReBenchDB Status
-
-- version ${rebenchVersion}
-`;
-  ctx.type = 'text';
-});
-
 // curl -X PUT -H "Content-Type: application/json" -d '{"foo":"bar","baz":3}'
 //  http://localhost:33333/rebenchdb/results
 // DEBUG: koaBody({includeUnparsed: true})
@@ -164,18 +167,28 @@ router.put('/rebenchdb/completion', koaBody(), async (ctx) =>
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-(async () => {
-  log.info('Initialize Database');
+async function tryToConnect(n: number): Promise<boolean> {
+  if (n <= 0) {
+    return false;
+  }
+
   try {
     await db.initializeDatabase();
+    return true;
   } catch (e: any) {
     if (e.code == 'ECONNREFUSED') {
-      log.error(
-        `Unable to connect to database on port ${e.address}:${e.port}\n` +
-          'ReBenchDB requires a Postgres database to work.'
-      );
-      process.exit(1);
+      reportConnectionRefused(e);
+      await setTimeout(5000);
+      return await tryToConnect(n - 1);
     }
+    throw e;
+  }
+}
+
+(async () => {
+  log.info('Initialize Database');
+  if (!(await tryToConnect(5))) {
+    process.exit(1);
   }
 
   initPerfTracker();

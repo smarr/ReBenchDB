@@ -1,14 +1,10 @@
 # Used for benchmarking
-FROM rebenchdb:latest
+FROM rebenchdb-app:latest
 
 RUN apt-get install -y git python3-pip
 RUN pip install --break-system-packages git+https://github.com/smarr/ReBench.git
 
-RUN echo 'echo Starting PostgreSQL Server\n\
-docker-entrypoint.sh postgres &\n\
-rebench "$@"' > ./start-server-and-rebench.sh
-
 RUN npm run pretest
 
-ENTRYPOINT ["bash", "./start-server-and-rebench.sh"]
+ENTRYPOINT ["rebench"]
 CMD ["--help"]

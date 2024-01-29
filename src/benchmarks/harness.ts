@@ -19,7 +19,8 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-import type { Benchmark } from './benchmark';
+import { reportConnectionRefused } from '../shared/errors.js';
+import type { Benchmark } from './benchmark.js';
 
 class IncorrectResultError extends Error {
   constructor() {
@@ -102,6 +103,10 @@ class Run {
     try {
       await benchmark.oneTimeSetup(this.problemSize);
       await this.doRuns(benchmark);
+    } catch (e: any) {
+      if (e.code == 'ECONNREFUSED') {
+        reportConnectionRefused(e);
+      }
     } finally {
       await benchmark.oneTimeTeardown();
     }
