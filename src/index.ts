@@ -77,6 +77,16 @@ router.get('/status', async (ctx) => {
   ctx.type = 'text';
 });
 
+router.get('/robots.txt', async (ctx) => {
+  ctx.body = `User-agent: *
+
+Disallow: /status
+Disallow: /*/data*
+Disallow: /rebenchdb*
+`;
+  ctx.type = 'text';
+});
+
 router.get('/:projectSlug', async (ctx) => renderProjectPage(ctx, db));
 router.get('/:projectSlug/source/:sourceId', async (ctx) =>
   getSourceAsJson(ctx, db)
