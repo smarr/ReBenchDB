@@ -1,6 +1,6 @@
 {
   "name": "rebenchdb",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A Web-Based Database for ReBench Results",
   "main": "index.js",
   "author": {
@@ -88,29 +88,22 @@
   },
   "scripts": {
     "postinstall": "if [ -z \"${SKIP_COMPILE}\" ]; then npm run compile; fi",
-
     "precompile": "npm run prep-folders && npm run compile-uplot",
     "prep-folders": "mkdir -p tmp/interm tmp/knit resources/reports resources/exp-data",
-
     "compile-uplot": "terser --module --ecma 2018 --compress --mangle -o ./resources/uPlot.esm.min.js -- node_modules/uplot/dist/uPlot.esm.js",
     "compile": "tsc",
     "postcompile": "npm run prep-static && npm run download-font",
     "prep-static": "cp dist/src/frontend/*.js ./resources/",
     "download-font": "node dist/src/download.js https://github.com/googlefonts/roboto/releases/download/v2.136/roboto-hinted.zip tmp/roboto-hinted.zip && unzip -o -d dist tmp/roboto-hinted.zip",
-    
     "start": "node --enable-source-maps --experimental-json-modules ./dist/src/index.js",
     "nodemon": "DEV=true nodemon --enable-source-maps --experimental-json-modules ./dist/src/index.js --watch ./dist/src --watch ./package.json --watch ./src --ext js,json,html",
-
     "format": "prettier --config .prettierrc '{src,tests}/**/*.ts' --write",
     "verify": "npm run lint",
     "lint": "eslint . --ext .ts,.tsx",
-
     "update": "git pull && npm install . && pm2 restart 0",
     "watch": "tsc -w",
-
     "pretest": "(cd tests/data; bzip2 -d -f -k large-payload.json.bz2; mkdir -p actual-results/charts; mkdir -p actual-results/stats-data-prep; mkdir -p actual-results/compare-view)",
     "test": "node --no-warnings --experimental-vm-modules ./node_modules/jest/bin/jest.js",
-
     "update-expected-results": "UPDATE_EXPECTED_DATA=true npm test"
   }
 }
