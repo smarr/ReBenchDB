@@ -73,9 +73,8 @@ export function renderProjectDataOverview(
         )}</p></td>
         <td>${row.hostnames}</td>
         <td class="num-col">${row.runs}</td>
-        <td class="num-col"><a href="/${projectSlug}/data/${row.expid}">${
-          row.measurements
-        }</a></td>
+        <td class="num-col"><a rel="nofollow"
+          href="/${projectSlug}/data/${row.expid}">${row.measurements}</a></td>
       </tr>`);
   }
 
