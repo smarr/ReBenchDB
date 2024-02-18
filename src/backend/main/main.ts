@@ -63,9 +63,9 @@ export async function getLast100Measurements(
     name: 'all-results',
     text: ` WITH Results AS (
               SELECT
-                    value, b.name as benchmark,
+                    value, benchmark,
                     rank() OVER (
-                      PARTITION BY b.id
+                      PARTITION BY benchmark
                       ORDER BY
                         t.startTime DESC,
                         m.invocation DESC,
@@ -75,7 +75,6 @@ export async function getLast100Measurements(
                       JOIN Trial t ON  m.trialId = t.id
                       JOIN Experiment e ON t.expId = e.id
                       JOIN Run r ON m.runId = r.id
-                      JOIN Benchmark b ON r.benchmarkId = b.id
                       JOIN Criterion c ON m.criterion = c.id
                     WHERE projectId = $1 AND
                       c.name = '${TotalCriterion}'
@@ -133,13 +132,7 @@ export async function getStatistics(
           UNION ALL
           SELECT 'Trials' as table, count(*) as cnt FROM trial
           UNION ALL
-          SELECT 'Executors' as table, count(*) as cnt FROM executor
-          UNION ALL
-          SELECT 'Benchmarks' as table, count(*) as cnt FROM benchmark
-          UNION ALL
           SELECT 'Projects' as table, count(*) as cnt FROM project
-          UNION ALL
-          SELECT 'Suites' as table, count(*) as cnt FROM suite
           UNION ALL
           SELECT 'Environments' as table, count(*) as cnt FROM environment
           UNION ALL

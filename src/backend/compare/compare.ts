@@ -40,16 +40,13 @@ async function getProfile(
     name: 'fetchProfileDataByRunIdCommitId',
     text: `
           SELECT commitid,
-            benchmark.name as bench, executor.name as exe, suite.name as suite,
+            benchmark as bench, executor as exe, suite,
             cmdline, varValue, cores, inputSize, extraArgs,
             invocation, numIterations, warmup, value as profile
           FROM ProfileData
             JOIN Trial ON trialId = Trial.id
             JOIN Source ON source.id = trial.sourceId
             JOIN Run ON runId = run.id
-            JOIN Suite ON suiteId = suite.id
-            JOIN Benchmark ON benchmarkId = benchmark.id
-            JOIN Executor ON execId = executor.id
           WHERE runId = $1 AND source.commitId = $2`,
     values: [runId, commitId]
   });

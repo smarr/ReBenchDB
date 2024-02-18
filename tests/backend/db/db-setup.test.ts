@@ -83,53 +83,6 @@ describe('Recording a ReBench execution data fragments', () => {
     return db.rollback();
   });
 
-  it('should accept executor information', async () => {
-    const ids: number[] = [];
-
-    for (const datum of basicTestData.data) {
-      const e = datum.runId.benchmark.suite.executor;
-      const result = await db.recordExecutor(e);
-      expect(e.name).toEqual(result.name);
-      expect(e.desc).toEqual(result.description);
-      expect(result.id).toBeGreaterThan(0);
-      ids.push(result.id);
-    }
-
-    expectIdsToBeUnique(ids);
-  });
-
-  it('should accept suite information', async () => {
-    const ids: number[] = [];
-
-    for (const datum of basicTestData.data) {
-      const s = datum.runId.benchmark.suite;
-      const result = await db.recordSuite(s);
-      expect(s.name).toEqual(result.name);
-      expect(s.desc).toEqual(result.description);
-      expect(result.id).toBeGreaterThan(0);
-      ids.push(result.id);
-    }
-
-    expectIdsToBeUnique(ids);
-  });
-
-  it('should accept benchmark information', async () => {
-    const ids: number[] = [];
-
-    for (const datum of basicTestData.data) {
-      const b = datum.runId.benchmark;
-      const result = await db.recordBenchmark(b);
-      expect(b.name).toEqual(result.name);
-      if (b.desc !== undefined) {
-        expect(b.desc).toEqual(result.description);
-      }
-      expect(result.id).toBeGreaterThan(0);
-      ids.push(result.id);
-    }
-
-    expectIdsToBeUnique(ids);
-  });
-
   it('should accept complete run information', async () => {
     const ids: number[] = [];
 
@@ -138,10 +91,6 @@ describe('Recording a ReBench execution data fragments', () => {
       const result = await db.recordRun(run);
       expect(run.cmdline).toEqual(result.cmdline);
       expect(run.location).toEqual(result.location);
-
-      expect(typeof result.benchmarkid).toEqual('number');
-      expect(typeof result.suiteid).toEqual('number');
-      expect(typeof result.execid).toEqual('number');
 
       expect(result.id).toBeGreaterThan(0);
       ids.push(result.id);
