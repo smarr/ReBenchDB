@@ -77,15 +77,34 @@ router.get('/status', async (ctx) => {
   ctx.type = 'text';
 });
 
+router.get('/robots.txt', async (ctx) => {
+  ctx.body = `User-agent: *
+
+Disallow: /status
+Disallow: /*/data*
+Disallow: /rebenchdb*
+`;
+  ctx.type = 'text';
+});
+
 router.get('/:projectSlug', async (ctx) => renderProjectPage(ctx, db));
 router.get('/:projectSlug/source/:sourceId', async (ctx) =>
   getSourceAsJson(ctx, db)
 );
 router.get('/:projectSlug/timeline', async (ctx) => renderTimeline(ctx, db));
 router.get('/:projectSlug/data', async (ctx) => renderProjectDataPage(ctx, db));
-router.get('/:projectSlug/data/:expId', async (ctx) =>
-  renderDataExport(ctx, db)
-);
+router.get('/:projectSlug/data/:expId', async (ctx) => {
+  if (
+    ctx.header['X-Purpose'] === 'preview' ||
+    ctx.header['Purpose'] === 'prefetch' ||
+    ctx.header['X-Moz'] === 'prefetch'
+  ) {
+    ctx.set('Cache-Control', 'must-revalidate');
+    ctx.status = 425; // HTTP Code for 'Too Early'
+    return;
+  }
+  return renderDataExport(ctx, db);
+});
 router.get('/:projectSlug/compare/:baseline..:change', async (ctx) =>
   renderComparePage(ctx, db)
 );
