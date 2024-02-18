@@ -157,7 +157,6 @@ describe('Test with basic test data loaded', () => {
     await db.awaitQuiescentTimelineUpdater();
     const data = await db.getBenchmarksByProjectId(1);
     expect(data).toHaveLength(1);
-    expect(data[0].benchid).toEqual(1);
     expect(data[0].benchmark).toEqual('NBody');
   });
 
@@ -170,7 +169,6 @@ describe('Test with basic test data loaded', () => {
           {
             benchmarks: [
               {
-                benchId: 1,
                 benchName: 'NBody',
                 cmdline:
                   'som -t1   core-lib/Benchmarks/Harness.ns NBody  1 0 10000',
@@ -181,11 +179,9 @@ describe('Test with basic test data loaded', () => {
                 varValue: null
               }
             ],
-            execId: 1,
             execName: 'SOMns-graal'
           }
         ],
-        suiteId: 1,
         suiteName: 'macro-startup'
       }
     ]);

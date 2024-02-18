@@ -1,11 +1,15 @@
 export interface Executor {
   name: string;
+
+  /* no longer used */
   desc: string | null;
 }
 
 export interface Suite {
   name: string;
   desc: string | null;
+
+  /* no longer used */
   executor: Executor;
 }
 
@@ -19,6 +23,8 @@ export interface Benchmark {
   name: string;
   suite: Suite;
   runDetails: RunDetails;
+
+  /* no longer used */
   desc?: string;
 }
 
@@ -249,19 +255,16 @@ export interface AllResults {
 export type PlotData = FullPlotData | BasePlotData;
 
 export interface TimelineSuite {
-  suiteId: number;
   suiteName: string;
   exec: TimelineExecutor[];
 }
 
 export interface TimelineExecutor {
-  execId: number;
   execName: string;
   benchmarks: TimelineBenchmark[];
 }
 
 export interface TimelineBenchmark {
-  benchId: number;
   benchName: string;
   cmdline: string;
   runId: number;

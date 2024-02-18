@@ -1,24 +1,3 @@
--- A named program/configuration for executing benchmarks.
-CREATE TABLE Executor (
-  id serial primary key,
-  name varchar unique,
-  description text
-);
-
--- A set of benchmarks.
-CREATE TABLE Suite (
-  id serial primary key,
-  name varchar unique,
-  description text
-);
-
--- A specific benchmark program.
-CREATE TABLE Benchmark (
-  id serial primary key,
-  name varchar unique,
-  description varchar
-);
-
 -- A specific software version, possibly used by multiple environments
 -- or versions of environments.
 CREATE TABLE SoftwareVersionInfo (
@@ -163,9 +142,9 @@ CREATE TABLE SoftwareUse (
 -- which we refer to as iterations of a run.
 CREATE TABLE Run (
   id serial primary key,
-  benchmarkId smallint NOT NULL,
-  suiteId smallint NOT NULL,
-  execId smallint NOT NULL,
+  benchmark varchar NOT NULL,
+  suite varchar NOT NULL,
+  executor varchar NOT NULL,
   cmdline text unique NOT NULL,
   location text,
   varValue varchar,
@@ -174,11 +153,7 @@ CREATE TABLE Run (
   extraArgs varchar,
   maxInvocationTime int NOT NULL,
   minIterationTime int NOT NULL,
-  warmup int,
-
-  foreign key (execId) references Executor (id),
-  foreign key (benchmarkId) references Benchmark (id),
-  foreign key (suiteId) references Suite (id)
+  warmup int
 );
 
 -- One value for one specific criterion.

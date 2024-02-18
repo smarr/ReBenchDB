@@ -110,9 +110,6 @@ export interface SoftwareUse {
 
 export interface Run {
   id: number;
-  benchmarkid: number;
-  suiteid: number;
-  execid: number;
   cmdline: string;
 
   /** The current working directory. */

@@ -3,9 +3,6 @@ import pg, { PoolConfig, QueryConfig } from 'pg';
 
 import {
   BenchmarkData,
-  Executor as ApiExecutor,
-  Suite as ApiSuite,
-  Benchmark as ApiBenchmark,
   RunId as ApiRunId,
   Source as ApiSource,
   Environment as ApiEnvironment,
@@ -26,10 +23,8 @@ import type { SummaryStatistics } from '../../shared/stats.js';
 import { BatchingTimelineUpdater } from '../timeline/timeline-calc.js';
 import type {
   Baseline,
-  Benchmark,
   Criterion,
   Environment,
-  Executor,
   Experiment,
   MeasurementData,
   Project,
@@ -37,7 +32,6 @@ import type {
   RevisionData,
   Run,
   Source,
-  Suite,
   Trial
 } from './types.js';
 import { TimedCacheValidity } from './timed-cache-validity.js';
@@ -55,9 +49,9 @@ export function loadScheme(): string {
 const measurementDataColumns = `
         expId, runId, trialId,
         substring(commitId, 1, $1) as commitid,
-        benchmark.name as bench,
-        executor.name as exe,
-        suite.name as suite,
+        benchmark as bench,
+        executor as exe,
+        suite,
         cmdline, varValue, cores, inputSize, extraArgs,
         invocation, iteration, warmup,
         criterion.name as criterion,
@@ -70,10 +64,7 @@ const measurementDataTableJoins = `
           JOIN Experiment ON expId = Experiment.id
           JOIN Source ON source.id = sourceId
           JOIN Criterion ON criterion = criterion.id
-          JOIN Run ON runId = run.id
-          JOIN Suite ON suiteId = suite.id
-          JOIN Benchmark ON benchmarkId = benchmark.id
-          JOIN Executor ON execId = executor.id`;
+          JOIN Run ON runId = run.id`;
 
 function filterCommitMessage(msg) {
   return msg
@@ -85,9 +76,6 @@ function filterCommitMessage(msg) {
 export abstract class Database {
   protected readonly dbConfig: PoolConfig;
 
-  private readonly executors: Map<string, Executor>;
-  private readonly suites: Map<string, Suite>;
-  private readonly benchmarks: Map<string, Benchmark>;
   private readonly runs: Map<string, Run>;
   private readonly sources: Map<string, Source>;
   private readonly envs: Map<string, Environment>;
@@ -115,9 +103,6 @@ export abstract class Database {
   ) {
     assert(config !== undefined);
     this.dbConfig = config;
-    this.executors = new Map();
-    this.suites = new Map();
-    this.benchmarks = new Map();
     this.runs = new Map();
     this.sources = new Map();
     this.envs = new Map();
@@ -167,9 +152,6 @@ export abstract class Database {
   ): Promise<pg.QueryResult<R>>;
 
   public clearCache(): void {
-    this.executors.clear();
-    this.suites.clear();
-    this.benchmarks.clear();
     this.runs.clear();
     this.sources.clear();
     this.envs.clear();
@@ -308,8 +290,8 @@ export abstract class Database {
   }
 
   private async recordCached(
-    cache,
-    cacheKey,
+    cache: Map<string, any>,
+    cacheKey: string,
     fetchQ: QueryConfig,
     insertQ: QueryConfig
   ) {
@@ -336,79 +318,22 @@ export abstract class Database {
     return result.rows[0];
   }
 
-  public async recordExecutor(e: ApiExecutor): Promise<Executor> {
-    return this.recordCached(
-      this.executors,
-      e.name,
-      {
-        name: 'fetchExecutorByName',
-        text: 'SELECT * from Executor WHERE name = $1',
-        values: [e.name]
-      },
-      {
-        name: 'insertExecutor',
-        text: `INSERT INTO Executor (name, description)
-                  VALUES ($1, $2) RETURNING *`,
-        values: [e.name, e.desc]
-      }
-    );
-  }
-
-  public async recordSuite(s: ApiSuite): Promise<Suite> {
-    return this.recordCached(
-      this.suites,
-      s.name,
-      {
-        name: 'fetchSuiteByName',
-        text: 'SELECT * from Suite WHERE name = $1',
-        values: [s.name]
-      },
-      {
-        name: 'insertSuite',
-        text: `INSERT INTO Suite (name, description)
-                  VALUES ($1, $2) RETURNING *`,
-        values: [s.name, s.desc]
-      }
-    );
-  }
-
-  public async recordBenchmark(b: ApiBenchmark): Promise<Benchmark> {
-    return this.recordCached(
-      this.benchmarks,
-      b.name,
-      {
-        name: 'fetchBenchmarkByName',
-        text: 'SELECT * from Benchmark WHERE name = $1',
-        values: [b.name]
-      },
-      {
-        name: 'insertBenchmark',
-        text: `INSERT INTO Benchmark (name, description)
-                  VALUES ($1, $2) RETURNING *`,
-        values: [b.name, b.desc]
-      }
-    );
-  }
-
   public async getBenchmarksByProjectId(projectId: number): Promise<
     {
       name: string;
       hostname: string;
       cmdline: string;
       benchmark: string;
-      benchid: number;
       suitename: string;
-      suiteid: number;
       execname: string;
-      execid: number;
     }[]
   > {
     const result = await this.query({
       name: 'fetchBenchmarksByProjectId',
       text: `
-          SELECT DISTINCT p.name, env.hostname, r.cmdline, b.name as benchmark,
-              b.id as benchId, s.name as suiteName, s.id as suiteId,
-              exe.name as execName, exe.id as execId
+          SELECT DISTINCT p.name, env.hostname, r.cmdline, r.benchmark,
+              r.suite as suiteName,
+              r.executor as execName
             FROM Project p
             JOIN Experiment exp    ON exp.projectId = p.id
             JOIN Trial t           ON t.expId = exp.id
@@ -416,9 +341,6 @@ export abstract class Database {
             JOIN Environment env   ON t.envId = env.id
             JOIN Timeline tl       ON tl.trialId = t.id
             JOIN Run r             ON tl.runId = r.id
-            JOIN Benchmark b       ON r.benchmarkId = b.id
-            JOIN Suite s           ON r.suiteId = s.id
-            JOIN Executor exe      ON r.execId = exe.id
             WHERE p.id = $1
           ORDER BY suiteName, execName, benchmark, hostname`,
       values: [projectId]
@@ -430,10 +352,6 @@ export abstract class Database {
     if (this.runs.has(run.cmdline)) {
       return <Run>this.runs.get(run.cmdline);
     }
-
-    const exec = await this.recordExecutor(run.benchmark.suite.executor);
-    const suite = await this.recordSuite(run.benchmark.suite);
-    const benchmark = await this.recordBenchmark(run.benchmark);
 
     return this.recordCached(
       this.runs,
@@ -447,7 +365,7 @@ export abstract class Database {
         name: 'insertRun',
         text: `INSERT INTO Run (
                   cmdline,
-                  benchmarkId, execId, suiteId,
+                  benchmark, executor, suite,
                   location,
                   cores, inputSize, varValue, extraArgs,
                   maxInvocationTime, minIterationTime, warmup)
@@ -455,9 +373,9 @@ export abstract class Database {
                 RETURNING *`,
         values: [
           run.cmdline,
-          benchmark.id,
-          exec.id,
-          suite.id,
+          run.benchmark.name,
+          run.benchmark.suite.executor.name,
+          run.benchmark.suite.name,
           run.location,
           run.cores,
           run.inputSize,
@@ -1367,9 +1285,9 @@ export abstract class Database {
     const q = {
       name: 'fetchProfileAvailability',
       text: `SELECT DISTINCT
-                benchmark.name as b,
-                executor.name as e,
-                suite.name as s,
+                benchmark as b,
+                executor as e,
+                suite as s,
                 varValue as v,
                 cores as c,
                 inputSize as i,
@@ -1380,9 +1298,6 @@ export abstract class Database {
                 JOIN Experiment e ON trial.expId = e.id
                 JOIN Source ON source.id = sourceId
                 JOIN Run ON runId = run.id
-                JOIN Suite ON run.suiteId = suite.id
-                JOIN Benchmark ON run.benchmarkId = benchmark.id
-                JOIN Executor ON execId = executor.id
               WHERE
                 (commitId = $1 OR commitId = $2)
                 AND e.projectId = $3
@@ -1413,9 +1328,9 @@ export abstract class Database {
                 LIMIT 1
               )
               SELECT DISTINCT
-                s.id as suiteId, s.name as suiteName,
-                exe.id as execId, exe.name as execName,
-                b.id as benchId, b.name as benchmark,
+                suite as suiteName,
+                executor as execName,
+                benchmark,
                 r.cmdline,
                 r.id as runId,
                 r.varValue,
@@ -1429,9 +1344,6 @@ export abstract class Database {
                 JOIN Environment env   ON t.envId = env.id
                 JOIN Timeline tl       ON tl.trialId = t.id
                 JOIN Run r             ON tl.runId = r.id
-                JOIN Benchmark b       ON r.benchmarkId = b.id
-                JOIN Suite s           ON r.suiteId = s.id
-                JOIN Executor exe      ON r.execId = exe.id
                 JOIN LatestExperiment le ON exp.id = le.expId
               WHERE
                 p.id = $1 AND
@@ -1445,36 +1357,33 @@ export abstract class Database {
       return null;
     }
 
-    let suiteId: number | null = null;
-    let exeId: number | null = null;
+    let suite: string | null = null;
+    let executor: string | null = null;
 
     const suites: TimelineSuite[] = [];
     let currentSuite: TimelineSuite | null = null;
     let currentExec: any = null;
 
     for (const r of result.rows) {
-      if (r.suiteid !== suiteId) {
+      if (r.suitename !== suite) {
         currentSuite = {
-          suiteId: r.suiteid,
           suiteName: r.suitename,
           exec: []
         };
         suites.push(currentSuite);
-        suiteId = r.suiteId;
+        suite = r.suitename;
       }
 
-      if (r.execid !== exeId) {
+      if (r.execname !== executor) {
         currentExec = {
-          execId: r.execid,
           execName: r.execname,
           benchmarks: []
         };
         currentSuite?.exec.push(currentExec);
-        exeId = r.execid;
+        executor = r.execname;
       }
 
       currentExec.benchmarks.push({
-        benchId: r.benchid,
         benchName: r.benchmark,
         cmdline: simplifyCmdline(r.cmdline),
         runId: r.runid,
@@ -1645,16 +1554,13 @@ export abstract class Database {
         JOIN Experiment e  ON tr.expId = e.id
         JOIN Project    p  ON p.id = e.projectId
         JOIN Run        r  ON r.id = ti.runId
-        JOIN Executor  exe ON exe.id = r.execId
-        JOIN Benchmark  b  ON b.id = r.benchmarkId
-        JOIN Suite      su ON su.id = r.suiteId
         JOIN Criterion  c  ON ti.criterion = c.id
       WHERE
         s.branchOrTag IN ($3, $4) AND
-        p.name = $5   AND
-        b.name = $6   AND
-        su.name = $7  AND
-        exe.name = $8 AND
+        p.name    = $5   AND
+        benchmark = $6   AND
+        suite    = $7  AND
+        executor = $8 AND
         c.name   = '${TotalCriterion}'
         ::ADDITIONAL-PARAMETERS::
       ORDER BY tr.startTime ASC;
