@@ -166,7 +166,7 @@ export abstract class Database {
       name: 'doTableExist',
       text: `SELECT *
                 FROM   information_schema.tables
-                WHERE  table_name = 'executor'`
+                WHERE  table_name = 'run'`
     });
     return result.rowCount === null || result.rowCount <= 0;
   }
