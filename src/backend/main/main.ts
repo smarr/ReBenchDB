@@ -8,8 +8,11 @@ import {
   robustPath
 } from '../util.js';
 import { prepareTemplate } from '../templates.js';
-import { completeRequest, startRequest } from '../perf-tracker.js';
-import { AllResults } from '../../shared/api.js';
+import {
+  completeRequestAndHandlePromise,
+  startRequest
+} from '../perf-tracker.js';
+import type { AllResults } from '../../shared/api.js';
 import { Database } from '../db/db.js';
 import { TimedCacheValidity } from '../db/timed-cache-validity.js';
 
@@ -36,7 +39,7 @@ export async function getLast100MeasurementsAsJson(
   ctx.body = await getLast100Measurements(Number(ctx.params.projectId), db);
   ctx.type = 'application/json';
 
-  completeRequest(start, db, 'get-results');
+  completeRequestAndHandlePromise(start, db, 'get-results');
 }
 
 const resultsCache: AllResults[][] = [];

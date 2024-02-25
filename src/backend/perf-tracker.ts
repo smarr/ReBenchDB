@@ -151,3 +151,13 @@ export async function completeRequest(
     time
   );
 }
+
+export function completeRequestAndHandlePromise(
+  reqStart: number,
+  db: Database,
+  request: string
+): void {
+  completeRequest(reqStart, db, request).catch((e) => {
+    log.error('Error while recording performance data:', e);
+  });
+}

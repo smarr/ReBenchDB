@@ -4,7 +4,10 @@ import { existsSync, unlinkSync, rmSync } from 'node:fs';
 
 import { Database } from '../db/db.js';
 import { assert, log } from '../logging.js';
-import { completeRequest, startRequest } from '../perf-tracker.js';
+import {
+  completeRequestAndHandlePromise,
+  startRequest
+} from '../perf-tracker.js';
 import { robustPath } from '../util.js';
 import type { CompareGenView, CompareView } from '../../shared/view-types.js';
 import { prepareCompareView } from './prep-data.js';
@@ -141,15 +144,15 @@ export async function renderCompare(
       db
     );
     const pp = p
-      .then(async () => {
+      .then(() => {
         reportStatus.inProgress = false;
-        await completeRequest(start, db, 'generate-report');
+        completeRequestAndHandlePromise(start, db, 'generate-report');
       })
-      .catch(async (e) => {
+      .catch((e) => {
         log.error('Report generation error', e);
         reportStatus.e = e;
         reportStatus.inProgress = false;
-        await completeRequest(start, db, 'generate-report');
+        completeRequestAndHandlePromise(start, db, 'generate-report');
       });
     data.completionPromise = pp;
   } else if (prevGenerationDetails.e) {

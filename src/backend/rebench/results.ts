@@ -6,7 +6,10 @@ import { Database } from '../db/db.js';
 import { createValidator } from './api-validator.js';
 import { DEBUG } from '../util.js';
 import { log } from '../logging.js';
-import { completeRequest, startRequest } from '../perf-tracker.js';
+import {
+  completeRequestAndHandlePromise,
+  startRequest
+} from '../perf-tracker.js';
 
 const validateFn: ValidateFunction = DEBUG ? createValidator() : <any>undefined;
 
@@ -76,5 +79,5 @@ export async function acceptResultData(
     log.error(e, e.stack);
   }
 
-  completeRequest(start, db, 'put-results');
+  completeRequestAndHandlePromise(start, db, 'put-results');
 }

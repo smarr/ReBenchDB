@@ -2,7 +2,10 @@ import { Database } from '../db/db.js';
 import type { SummaryStatistics } from '../../shared/stats.js';
 import { robustSrcPath } from '../util.js';
 import { Worker } from 'node:worker_threads';
-import { completeRequest, startRequest } from '../perf-tracker.js';
+import {
+  completeRequestAndHandlePromise,
+  startRequest
+} from '../perf-tracker.js';
 import { log } from '../logging.js';
 import type { ValuesPossiblyMissing } from '../../shared/api.js';
 
@@ -92,13 +95,11 @@ export class BatchingTimelineUpdater {
       if (this.resolve && message.requestStart) {
         this.resolve(this.requestsAtStart);
         this.resolve = null;
-        completeRequest(
+        completeRequestAndHandlePromise(
           <number>message.requestStart,
           this.db,
           'generate-timeline'
-        )
-          .then((val) => val)
-          .catch((e) => e);
+        );
       }
     }
   }

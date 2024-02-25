@@ -1,5 +1,8 @@
 import { existsSync } from 'node:fs';
-import { completeRequest, startRequest } from '../perf-tracker.js';
+import {
+  completeRequestAndHandlePromise,
+  startRequest
+} from '../perf-tracker.js';
 import { dbConfig, siteConfig, storeJsonGzip } from '../util.js';
 import { log } from '../logging.js';
 import { Database } from '../db/db.js';
@@ -68,14 +71,16 @@ export async function getExpData(
             inProgress: false
           });
         })
-        .catch(async (error) => {
+        .catch((error) => {
           log.error('Data preparation failed', error);
           expDataPreparation.set(expRequestId, {
             error,
             inProgress: false
           });
         })
-        .finally(async () => await completeRequest(start, db, 'prep-exp-data'));
+        .finally(() =>
+          completeRequestAndHandlePromise(start, db, 'prep-exp-data')
+        );
     } else if (prevPrepDetails.error) {
       // if previous attempt failed
       data.generationFailed = true;
