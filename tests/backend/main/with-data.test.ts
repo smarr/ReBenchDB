@@ -45,7 +45,6 @@ describe('Test with basic test data loaded', () => {
     const basicTestData: BenchmarkData = JSON.parse(data);
     projectName = basicTestData.projectName;
 
-    await db.recordMetaDataAndRuns(basicTestData);
     await db.recordAllData(basicTestData);
     baseBranch = basicTestData.source.branchOrTag;
     db.setProjectBaseBranch(projectName, basicTestData.source.branchOrTag);
@@ -57,7 +56,6 @@ describe('Test with basic test data loaded', () => {
     basicTestData.source.branchOrTag = 'exp2';
     basicTestData.source.commitId = '2222222222222222222222222222222222222222';
 
-    await db.recordMetaDataAndRuns(basicTestData);
     await db.recordAllData(basicTestData);
 
     // have a merge in the database
@@ -69,7 +67,6 @@ describe('Test with basic test data loaded', () => {
 
     numExperiments = 3;
 
-    await db.recordMetaDataAndRuns(basicTestData);
     await db.recordAllData(basicTestData);
   });
 
