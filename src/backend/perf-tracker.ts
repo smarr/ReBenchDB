@@ -1,22 +1,25 @@
 import { performance } from 'perf_hooks';
 import { Database } from './db/db.js';
-import { BenchmarkData, DataPoint, Measure } from '../shared/api.js';
+import type { BenchmarkData } from '../shared/api.js';
 import { TotalCriterion, isRunningTests } from './util.js';
+import type { Run, Trial } from './db/types.js';
+import { assert, log } from './logging.js';
+
+// Performance tracking design
+// - when ReBenchDB starts up, this marks a new trial with a single invocation
+// - at startup, we eagerly create the measurement records
+// - and then for the performance tracking, we append to the values array of
+//   the specific row
 
 let startTime: string;
-const iterations = {
-  'get-results': 0,
-  'put-results': 0,
-  change: 0,
-  'change-new': 0,
-  'generate-report': 0,
-  'generate-timeline': 0,
-  'prep-exp-data': 0,
-  'get-exp-data': 0,
-  'project-benchmarks': 0,
-  'get-profiles': 0,
-  'get-measurements': 0
-};
+
+interface TrialDetails {
+  trial: Trial;
+  run: Run;
+  criterionId: number;
+}
+
+const trialDetails: { [key: string]: TrialDetails } = {};
 
 const descriptions = {
   'get-results': 'Time of GET /rebenchdb/dash/:projectId/results',
@@ -36,50 +39,28 @@ const descriptions = {
   'get-measurements': 'Time of GET /rebenchdb/dash/:projectId/measurements/...'
 };
 
-export function initPerfTracker(): void {
+export async function initPerfTracker(db: Database): Promise<void> {
   startTime = new Date().toISOString();
+
+  const benchmarkNames = Object.keys(descriptions);
+  const initializationData = constructInitialization(benchmarkNames);
+  const { metadata, runs } = await db.recordMetaDataAndRuns(initializationData);
+
+  const criterion = [...metadata.criteria.values()][0];
+
+  for (const run of runs) {
+    trialDetails[run.cmdline] = {
+      trial: metadata.trial,
+      run,
+      criterionId: criterion.id
+    };
+  }
 }
 
-function constructData(time: number, it: number, benchmark: string) {
-  const measure: Measure = { c: 0, v: time };
-  const dataPoint: DataPoint = {
-    in: 0,
-    it: it,
-    m: [measure]
-  };
-
+function constructInitialization(benchmarkNames: string[]) {
   const data: BenchmarkData = {
     experimentName: 'monitoring',
-    data: [
-      {
-        d: [dataPoint],
-        runId: {
-          benchmark: {
-            name: benchmark,
-            suite: {
-              name: 'ReBenchDB API',
-              desc: 'Performance tracking of the ReBenchDB API',
-              executor: {
-                name: 'Node.js',
-                desc: null
-              }
-            },
-            runDetails: {
-              maxInvocationTime: 0,
-              minIterationTime: 0,
-              warmup: null
-            },
-            desc: descriptions[benchmark]
-          },
-          cmdline: benchmark,
-          location: '',
-          varValue: null,
-          cores: null,
-          inputSize: null,
-          extraArgs: null
-        }
-      }
-    ],
+    data: [],
     criteria: [{ i: 0, c: TotalCriterion, u: 'ms' }],
     env: {
       hostName: 'self',
@@ -102,10 +83,41 @@ function constructData(time: number, it: number, benchmark: string) {
       committerEmail: '',
       committerName: ''
     },
-    startTime: startTime,
+    startTime,
     endTime: null,
     projectName: 'ReBenchDB Self-Tracking'
   };
+
+  for (const name of benchmarkNames) {
+    data.data.push({
+      d: [],
+      runId: {
+        benchmark: {
+          name: name,
+          suite: {
+            name: 'ReBenchDB API',
+            desc: 'Performance tracking of the ReBenchDB API',
+            executor: {
+              name: 'Node.js',
+              desc: null
+            }
+          },
+          runDetails: {
+            maxInvocationTime: 0,
+            minIterationTime: 0,
+            warmup: null
+          },
+          desc: descriptions[name]
+        },
+        cmdline: name,
+        location: '',
+        varValue: null,
+        cores: null,
+        inputSize: null,
+        extraArgs: null
+      }
+    });
+  }
 
   return data;
 }
@@ -124,9 +136,18 @@ export async function completeRequest(
   }
 
   const time = performance.now() - reqStart;
-  iterations[request] += 1;
-  return db.recordAllData(
-    constructData(time, iterations[request], request),
-    true
+
+  assert(
+    trialDetails[request] !== undefined,
+    'Performance tracking not initialized'
+  );
+
+  const details = trialDetails[request];
+
+  return db.recordAdditionalMeasurementValue(
+    details.run,
+    details.trial,
+    details.criterionId,
+    time
   );
 }

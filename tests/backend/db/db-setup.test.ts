@@ -287,10 +287,19 @@ describe('Recording a ReBench execution from payload files', () => {
       const expectedNumberRows = 464;
       const expectedNumberValues = 459932;
 
+      const timeline = await db.query({ text: 'SELECT * from Timeline' });
+
+      console.log(`recMs: ${recMs}
+      recPs: ${recPs}
+      measurements.rows[0].cnt: ${measurements.rows[0].cnt}
+      totalNumberOf.rows[0].sum: ${totalNumberOfValuesQuery.rows[0].sum}
+      timeline.rowCount: ${timeline.rowCount}
+      `);
+
       expect(recMs).toEqual(numberRowsAdded);
       expect(recPs).toEqual(0);
       expect(parseInt(measurements.rows[0].cnt)).toEqual(expectedNumberRows);
-      const timeline = await db.query({ text: 'SELECT * from Timeline' });
+
       expect(timeline.rowCount).toEqual(expectedTimelineRowCount);
       expect(parseInt(totalNumberOfValuesQuery.rows[0].sum)).toEqual(
         expectedNumberValues

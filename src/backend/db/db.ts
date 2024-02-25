@@ -27,6 +27,7 @@ import type {
   Environment,
   Experiment,
   MeasurementData,
+  Metadata,
   Project,
   RevisionComparison,
   RevisionData,
@@ -1113,20 +1114,21 @@ export abstract class Database {
   }
 
   public async recordAdditionalMeasurementValue(
-    _run: Run,
-    _trial: Trial,
-    _criterionId: number,
-    _value: number
+    run: Run,
+    trial: Trial,
+    criterionId: number,
+    value: number
   ): Promise<void> {
-    throw new Error('Not yet implemented');
+    const q = {
+      name: 'callRecordAdditionalMeasurement',
+      text: 'CALL recordAdditionalMeasurement($1, $2, $3, $4)',
+      values: [run.id, trial.id, criterionId, value]
+    };
+
+    await this.query(q);
   }
 
-  public async recordMetaData(data: BenchmarkData): Promise<{
-    env: Environment;
-    exp: Experiment;
-    trial: Trial;
-    criteria: Map<number, Criterion>;
-  }> {
+  public async recordMetaData(data: BenchmarkData): Promise<Metadata> {
     const env = await this.recordEnvironment(data.env);
     const exp = await this.recordExperiment(data);
     const trial = await this.recordTrial(data, env, exp);
@@ -1185,14 +1187,17 @@ export abstract class Database {
     return this.timelineUpdater;
   }
 
-  public async recordMetaDataAndRuns(data: BenchmarkData): Promise<number> {
-    await this.recordMetaData(data);
+  public async recordMetaDataAndRuns(
+    data: BenchmarkData
+  ): Promise<{ metadata: Metadata; runs: Run[] }> {
+    const metadata = await this.recordMetaData(data);
+    const runs: Run[] = [];
 
     for (const r of data.data) {
-      await this.recordRun(r.runId);
+      runs.push(await this.recordRun(r.runId));
     }
 
-    return data.data.length;
+    return { metadata, runs };
   }
 
   public async recordMeasurementBatched10(values: any[]): Promise<number> {

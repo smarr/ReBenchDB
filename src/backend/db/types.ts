@@ -33,6 +33,13 @@ export interface SoftwareVersionInfo {
   version: string;
 }
 
+export interface Metadata {
+  env: Environment;
+  exp: Experiment;
+  trial: Trial;
+  criteria: Map<number, Criterion>;
+}
+
 export interface Environment {
   id: number;
   hostname: string;

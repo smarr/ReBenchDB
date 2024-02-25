@@ -216,7 +216,7 @@ async function tryToConnect(n: number): Promise<boolean> {
     process.exit(1);
   }
 
-  initPerfTracker();
+  await initPerfTracker(db);
 
   log.info(`Starting server on http://localhost:${siteConfig.port}`);
   app.listen(siteConfig.port);

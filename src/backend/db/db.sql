@@ -199,3 +199,27 @@ CREATE TABLE Timeline (
   foreign key (runId) references Run (id),
   foreign key (criterion) references Criterion (id)
 );
+
+-- Used by ReBenchDB's perf-tracker, for self-performance tracking
+CREATE PROCEDURE recordAdditionalMeasurement(
+  runId smallint,
+  trialId smallint,
+  criterionId smallint,
+  value float4)
+LANGUAGE plpgsql
+AS $$
+  BEGIN
+    UPDATE Measurement m
+      SET values = array_append(values, value)
+      WHERE
+        m.runId = runId AND
+        m.trialId = trialId AND
+        m.criterion = criterionId AND
+        m.invocation = 1;
+
+    IF NOT FOUND THEN
+      INSERT INTO Measurement (runId, trialId, criterion, invocation, values)
+      VALUES (runId, trialId, criterionId, 1, ARRAY[value]);
+    END IF;
+  END;
+$$;
