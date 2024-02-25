@@ -8,6 +8,9 @@ import { PNG } from 'pngjs';
 import { diffStringsUnified, diffStringsRaw, DIFF_EQUAL } from 'jest-diff';
 
 import { robustPath } from '../src/backend/util.js';
+import { convertToCurrentApi } from '../src/backend/common/api-v1.js';
+
+import type { BenchmarkData } from '../src/shared/api.js';
 
 declare module 'expect' {
   interface AsymmetricMatchers {
@@ -237,4 +240,12 @@ export function isRequestedToUpdateExpectedData(): boolean {
 
 export function isSupportingSvgTests(): boolean {
   return type() === 'Linux';
+}
+
+export function loadLargePayload(): BenchmarkData {
+  const testData = JSON.parse(
+    readFileSync(robustPath('../tests/data/large-payload.json')).toString()
+  );
+
+  return convertToCurrentApi(testData);
 }
