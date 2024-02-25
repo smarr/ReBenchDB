@@ -828,21 +828,6 @@ export abstract class Database {
     return exp;
   }
 
-  private async recordUnit(unitName: string) {
-    const result = await this.query({
-      name: 'fetchUnitByName',
-      text: 'SELECT * from Unit WHERE name = $1',
-      values: [unitName]
-    });
-    if (result.rowCount === 0) {
-      await this.query({
-        name: 'insertUnit',
-        text: 'INSERT INTO Unit (name) VALUES ($1)',
-        values: [unitName]
-      });
-    }
-  }
-
   public async recordCriterion(c: ApiCriterion): Promise<Criterion> {
     const cacheKey = `${c.c}::${c.u}`;
 
@@ -850,7 +835,6 @@ export abstract class Database {
       return <Criterion>this.criteria.get(cacheKey);
     }
 
-    await this.recordUnit(c.u);
     return this.recordCached(
       this.criteria,
       cacheKey,
