@@ -22,13 +22,6 @@ CREATE TABLE Environment (
   note text
 );
 
--- The unit of a measure.
-CREATE TABLE Unit (
-  name varchar primary key,
-  description text,
-  lessIsBetter boolean
-);
-
 -- A specific criterion that is measured for a benchmark.
 -- This can be anything, from total time over memory consumption
 -- to other things or parts worth measuring.
@@ -37,8 +30,7 @@ CREATE TABLE Criterion (
   name varchar,
   unit varchar,
 
-  unique (name, unit),
-  foreign key (unit) references Unit (name)
+  unique (name, unit)
 );
 
 -- Groups all the data that belongs together.
