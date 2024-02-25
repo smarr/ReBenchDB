@@ -4,15 +4,17 @@ import {
   beforeAll,
   afterAll,
   afterEach,
-  it
+  it,
+  jest
 } from '@jest/globals';
+import { readFileSync } from 'fs';
+
 import type {
   BenchmarkData,
   Criterion,
   DataPoint
 } from '../../../src/shared/api.js';
 import { loadScheme } from '../../../src/backend/db/db.js';
-import { readFileSync } from 'fs';
 import {
   TestDatabase,
   createAndInitializeDB,
@@ -20,8 +22,7 @@ import {
   closeMainDb
 } from './db-testing.js';
 import { robustPath } from '../../../src/backend/util.js';
-
-import { jest } from '@jest/globals';
+import { loadLargePayload } from '../../helpers.js';
 
 const numTxStatements = 3;
 
@@ -185,9 +186,7 @@ describe('Recording a ReBench execution from payload files', () => {
     smallTestData = JSON.parse(
       readFileSync(robustPath('../tests/data/small-payload.json')).toString()
     );
-    largeTestData = JSON.parse(
-      readFileSync(robustPath('../tests/data/large-payload.json')).toString()
-    );
+    largeTestData = loadLargePayload();
     profileTestData = JSON.parse(
       readFileSync(robustPath('../tests/data/profile-payload.json')).toString()
     );
