@@ -897,8 +897,9 @@ export abstract class Database {
     data: ApiCriterion[]
   ): Promise<Map<number, Criterion>> {
     const criteria: Map<number, Criterion> = new Map();
-    for (const c of data) {
-      criteria.set(c.i, await this.recordCriterion(c));
+    for (const cId in data) {
+      const c = data[cId];
+      criteria.set(parseInt(cId), await this.recordCriterion(c));
     }
     return criteria;
   }
@@ -1032,6 +1033,9 @@ export abstract class Database {
         }
 
         const criterion = criteria.get(criterionId)!;
+        if (!criterion) {
+          throw new Error(`Could not find criterion with id ${criterionId}`);
+        }
 
         // batched inserts are much faster
         // so let's do this
@@ -1246,7 +1250,7 @@ export abstract class Database {
           (runId, trialId, invocation, criterion, values)
         VALUES ($1, $2, $3, $4, $5)
         ON CONFLICT DO NOTHING`,
-      // [runId, trialId, invocation, critId, value]s;
+      // [runId, trialId, invocation, critId, values];
       values
     };
 
