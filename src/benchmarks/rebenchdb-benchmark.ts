@@ -5,7 +5,7 @@ import {
   TestDatabase
 } from '../../tests/backend/db/db-testing.js';
 import { Benchmark } from './benchmark.js';
-import { loadLargePayload } from '../../tests/payload.js';
+import { loadLargePayloadApiV1 } from '../../tests/payload.js';
 
 export class RebenchDbBenchmark extends Benchmark {
   protected readonly testData: BenchmarkData;
@@ -19,7 +19,7 @@ export class RebenchDbBenchmark extends Benchmark {
     this.problemSize = '';
     this.enableTimeline = false;
 
-    this.testData = loadLargePayload();
+    this.testData = loadLargePayloadApiV1();
   }
 
   public async oneTimeSetup(problemSize: string): Promise<void> {

@@ -5,7 +5,7 @@ import { ValidateFunction } from 'ajv';
 import { createValidator } from '../../../src/backend/rebench/api-validator.js';
 import { robustPath } from '../../../src/backend/util.js';
 import { assert, log } from '../../../src/backend/logging.js';
-import { loadLargePayload } from '../../payload.js';
+import { loadLargePayload, loadLargePayloadApiV1 } from '../../payload.js';
 import type { BenchmarkData } from '../../../src/shared/api.js';
 import type { DataPointV1 } from '../../../src/backend/common/api-v1.js';
 
@@ -99,9 +99,7 @@ describe('Ensure Test Payloads conform to API', () => {
   });
 
   it('expected number of values in raw large-payload.json: 1st run', () => {
-    const testData = JSON.parse(
-      readFileSync(robustPath('../tests/data/large-payload.json')).toString()
-    );
+    const testData = loadLargePayloadApiV1();
     testData.data.splice(1);
     expect(countValuesApiV1(testData)).toBe(2999);
   });
@@ -113,9 +111,7 @@ describe('Ensure Test Payloads conform to API', () => {
   });
 
   it('should give expected number of values in raw large-payload.json', () => {
-    const testData = JSON.parse(
-      readFileSync(robustPath('../tests/data/large-payload.json')).toString()
-    );
+    const testData = loadLargePayloadApiV1();
     expect(testData.data).toHaveLength(316);
     expect(countValuesApiV1(testData)).toBe(459928);
   });

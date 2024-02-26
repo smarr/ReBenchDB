@@ -1,3 +1,4 @@
+import { convertToCurrentApi } from '../backend/common/api-v1.js';
 import {
   BatchingTimelineUpdater,
   ComputeRequest
@@ -37,6 +38,7 @@ export default class ComputeTimeline extends RebenchDbBenchmark {
     } else {
       throw new Error('Unsupported problem size given: ' + problemSize);
     }
+    (<any>this).testData = convertToCurrentApi(this.testData);
 
     this.testData.experimentName = 'Benchmark 1';
     this.testData.source.commitId = 'commit-1';

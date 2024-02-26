@@ -1,3 +1,4 @@
+import { convertToCurrentApi } from '../backend/common/api-v1.js';
 import { getLast100Measurements } from '../backend/main/main.js';
 import { RebenchDbBenchmark } from './rebenchdb-benchmark.js';
 
@@ -24,6 +25,7 @@ export default class RenderReport extends RebenchDbBenchmark {
     } else {
       throw new Error('Unsupported problem size given: ' + problemSize);
     }
+    (<any>this).testData = convertToCurrentApi(this.testData);
 
     for (let i = 1; i <= 2; i += 1) {
       this.testData.experimentName = 'Benchmark ' + i;

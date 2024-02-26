@@ -11,3 +11,9 @@ export function loadLargePayload(): BenchmarkData {
 
   return convertToCurrentApi(testData);
 }
+
+export function loadLargePayloadApiV1(): any {
+  return JSON.parse(
+    readFileSync(robustPath('../tests/data/large-payload.json')).toString()
+  );
+}
