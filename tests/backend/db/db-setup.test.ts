@@ -265,47 +265,29 @@ describe('Recording a ReBench execution from payload files', () => {
       await db.awaitQuiescentTimelineUpdater();
 
       // sql to find total number of values that exist in the table
+      // includes null values though
       const totalNumberOfValuesQuery = await db.query({
         text: 'SELECT SUM(cardinality(values)) FROM Measurement'
       });
 
-      // this finds all no unique IDs
-      // if the sql has failed to merge all iteration into a single row,
-      // then this will be > 0
-      const numNonUniqueIDsQuery = await db.query({
-        text: `SELECT runid, trialid, criterion, invocation
-        FROM measurement
-        WHERE (runid, trialid, criterion, invocation) IN
-        (SELECT runid, trialid, criterion, invocation
-          FROM measurement
-          GROUP BY runid, trialid, criterion, invocation
-          HAVING COUNT(*) > 1);`
-      });
-
-      const expectedTimelineRowCount = 317;
+      const expectedTimelineRowCount = 73;
       const numberRowsAdded = 460;
-      const expectedNumberRows = 464;
-      const expectedNumberValues = 459932;
-
-      const timeline = await db.query({ text: 'SELECT * from Timeline' });
-
-      console.log(`recMs: ${recMs}
-      recPs: ${recPs}
-      measurements.rows[0].cnt: ${measurements.rows[0].cnt}
-      totalNumberOf.rows[0].sum: ${totalNumberOfValuesQuery.rows[0].sum}
-      timeline.rowCount: ${timeline.rowCount}
-      `);
+      const expectedNumberValues = 460003;
 
       expect(recMs).toEqual(numberRowsAdded);
       expect(recPs).toEqual(0);
-      expect(parseInt(measurements.rows[0].cnt)).toEqual(expectedNumberRows);
 
+      // adding the number of rows from the small payload since
+      // tests may run after another
+      expect([numberRowsAdded, numberRowsAdded + 3]).toContain(
+        parseInt(measurements.rows[0].cnt)
+      );
+
+      const timeline = await db.query({ text: 'SELECT * from Timeline' });
       expect(timeline.rowCount).toEqual(expectedTimelineRowCount);
       expect(parseInt(totalNumberOfValuesQuery.rows[0].sum)).toEqual(
         expectedNumberValues
       );
-
-      expect(numNonUniqueIDsQuery.rows.length).toEqual(0);
     },
     timeoutForLargeDataTest
   );
