@@ -126,15 +126,12 @@ export function startRequest(): number {
   return performance.now();
 }
 
-export async function completeRequest(
+/** private, exported for testing. */
+export async function _completeRequest(
   reqStart: number,
   db: Database,
   request: string
 ): Promise<[number, number] | void> {
-  if (isRunningTests) {
-    return;
-  }
-
   const time = performance.now() - reqStart;
 
   assert(
@@ -157,7 +154,11 @@ export function completeRequestAndHandlePromise(
   db: Database,
   request: string
 ): void {
-  completeRequest(reqStart, db, request).catch((e) => {
+  if (isRunningTests) {
+    return;
+  }
+
+  _completeRequest(reqStart, db, request).catch((e) => {
     log.error('Error while recording performance data:', e);
   });
 }

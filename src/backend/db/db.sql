@@ -202,24 +202,24 @@ CREATE TABLE Timeline (
 
 -- Used by ReBenchDB's perf-tracker, for self-performance tracking
 CREATE PROCEDURE recordAdditionalMeasurement(
-  runId smallint,
-  trialId smallint,
-  criterionId smallint,
-  value float4)
+  aRunId smallint,
+  aTrialId smallint,
+  aCriterionId smallint,
+  aValue float4)
 LANGUAGE plpgsql
 AS $$
   BEGIN
     UPDATE Measurement m
-      SET values = array_append(values, value)
+      SET values = array_append(values, aValue)
       WHERE
-        m.runId = runId AND
-        m.trialId = trialId AND
-        m.criterion = criterionId AND
+        m.runId = aRunId AND
+        m.trialId = aTrialId AND
+        m.criterion = aCriterionId AND
         m.invocation = 1;
 
     IF NOT FOUND THEN
       INSERT INTO Measurement (runId, trialId, criterion, invocation, values)
-      VALUES (runId, trialId, criterionId, 1, ARRAY[value]);
+      VALUES (aRunId, aTrialId, aCriterionId, 1, ARRAY[aValue]);
     END IF;
   END;
 $$;
