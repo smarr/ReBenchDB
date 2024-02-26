@@ -5,7 +5,7 @@ import {
   TestDatabase
 } from '../../tests/backend/db/db-testing.js';
 import { Benchmark } from './benchmark.js';
-import { loadLargePayload } from '../../tests/helpers.js';
+import { loadLargePayload } from '../../tests/payload.js';
 
 export class RebenchDbBenchmark extends Benchmark {
   protected readonly testData: BenchmarkData;

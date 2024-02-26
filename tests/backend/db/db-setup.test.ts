@@ -22,7 +22,7 @@ import {
   closeMainDb
 } from './db-testing.js';
 import { robustPath } from '../../../src/backend/util.js';
-import { loadLargePayload } from '../../helpers.js';
+import { loadLargePayload } from '../../payload.js';
 
 const numTxStatements = 3;
 

@@ -5,7 +5,7 @@ import { ValidateFunction } from 'ajv';
 import { createValidator } from '../../../src/backend/rebench/api-validator.js';
 import { robustPath } from '../../../src/backend/util.js';
 import { assert, log } from '../../../src/backend/logging.js';
-import { loadLargePayload } from '../../helpers.js';
+import { loadLargePayload } from '../../payload.js';
 import type { BenchmarkData } from '../../../src/shared/api.js';
 import type { DataPointV1 } from '../../../src/backend/common/api-v1.js';
 
