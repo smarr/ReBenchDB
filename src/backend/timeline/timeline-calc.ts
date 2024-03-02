@@ -25,29 +25,22 @@ export interface ComputeResult {
   requestStart: number;
 }
 
-export class BatchingTimelineUpdater {
-  private readonly db: Database;
+export interface ResultReceiver {
+  receiveResult(result: ComputeResult): Promise<void>;
+}
+
+/**
+ * This class is responsible for managing the web worker that calculates
+ * summary statistics for the timeline.
+ * It provides the interface for the interaction.
+ */
+export class TimelineWorker {
   private readonly worker: Worker;
-  private readonly requests: Map<string, ComputeRequest>;
-
-  private activeRequests: number;
-
-  private requestsAtStart: number;
-  private promise: Promise<number> | null;
-  private resolve: ((value: number) => void) | null;
-
   private shutdownResolve: ((value: void) => void) | null;
+  private shutdownPromise: Promise<void> | null;
+  private updater: ResultReceiver;
 
-  constructor(db: Database, numBootstrapSamples: number) {
-    this.db = db;
-    this.activeRequests = 0;
-    this.shutdownResolve = null;
-
-    this.requests = new Map();
-    this.resolve = null;
-    this.requestsAtStart = 0;
-    this.promise = null;
-
+  constructor(numBootstrapSamples: number, updater: ResultReceiver) {
     this.worker = new Worker(
       robustSrcPath('backend/timeline/timeline-calc-worker.js'),
       {
@@ -62,14 +55,14 @@ export class BatchingTimelineUpdater {
     this.worker.on('exit', (exitCode) => {
       log.info(`Timeline worker exited with code: ${exitCode}`);
     });
+
+    this.shutdownResolve = null;
+    this.shutdownPromise = null;
+    this.updater = updater;
   }
 
-  public shutdown(): Promise<void> {
-    const promise: Promise<void> = new Promise((resolve) => {
-      this.shutdownResolve = resolve;
-    });
-    this.worker.postMessage('exit');
-    return promise;
+  public sendRequest(request: ComputeRequest): void {
+    this.worker.postMessage(request);
   }
 
   protected async processResponse(message: any): Promise<void> {
@@ -82,6 +75,55 @@ export class BatchingTimelineUpdater {
     }
 
     const result = <ComputeResult>message;
+    this.updater.receiveResult(result);
+  }
+
+  public async shutdown(): Promise<void> {
+    if (this.shutdownPromise) {
+      return this.shutdownPromise;
+    }
+
+    this.shutdownPromise = new Promise((resolve) => {
+      this.shutdownResolve = resolve;
+    });
+
+    this.worker.postMessage('exit');
+    return this.shutdownPromise;
+  }
+}
+
+/**
+ * This class is responsible for batching up requests to the timeline worker
+ * and managing the promises for the requests.
+ */
+export class BatchingTimelineUpdater implements ResultReceiver {
+  private readonly db: Database;
+  private readonly worker: TimelineWorker;
+  private readonly requests: Map<string, ComputeRequest>;
+
+  private activeRequests: number;
+
+  private requestsAtStart: number;
+  private promise: Promise<number> | null;
+  private resolve: ((value: number) => void) | null;
+
+  constructor(db: Database, numBootstrapSamples: number) {
+    this.db = db;
+    this.activeRequests = 0;
+
+    this.requests = new Map();
+    this.resolve = null;
+    this.requestsAtStart = 0;
+    this.promise = null;
+
+    this.worker = new TimelineWorker(numBootstrapSamples, this);
+  }
+
+  public async shutdown(): Promise<void> {
+    return this.worker.shutdown();
+  }
+
+  public async receiveResult(result: ComputeResult): Promise<void> {
     await this.db.recordTimeline(
       result.runId,
       result.trialId,
@@ -92,11 +134,11 @@ export class BatchingTimelineUpdater {
     this.activeRequests -= 1;
 
     if (this.activeRequests === 0) {
-      if (this.resolve && message.requestStart) {
+      if (this.resolve && result.requestStart) {
         this.resolve(this.requestsAtStart);
         this.resolve = null;
         completeRequestAndHandlePromise(
-          <number>message.requestStart,
+          result.requestStart,
           this.db,
           'generate-timeline'
         );
@@ -155,7 +197,7 @@ export class BatchingTimelineUpdater {
 
     for (const r of jobs) {
       r.requestStart = requestStart;
-      this.worker.postMessage(r);
+      this.worker.sendRequest(r);
     }
 
     this.promise = new Promise((resolve) => {
