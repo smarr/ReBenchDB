@@ -62,6 +62,9 @@ jobs:
       - name: Run Tests
         run: |
           npm test
+          echo "## Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+          cat coverage/coverage-summary.txt | grep -v "===" | tail -n4 >> $GITHUB_STEP_SUMMARY
 
       - name: Upload image difference, if there are any
         if: failure()
