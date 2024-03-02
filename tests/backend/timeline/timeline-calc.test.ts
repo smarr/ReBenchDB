@@ -1,9 +1,11 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import {
+  BatchingTimelineUpdater,
   ComputeRequest,
   ComputeResult,
   TimelineWorker
 } from '../../../src/backend/timeline/timeline-calc.js';
+import { Database } from '../../../src/backend/db/db.js';
 
 describe('TimelineWorker', () => {
   const request: ComputeRequest = {
@@ -72,4 +74,57 @@ describe('TimelineWorker', () => {
   });
 });
 
-describe('BatchingTimelineUpdater', () => {});
+describe('BatchingTimelineUpdater', () => {
+  const db = jest.spyOn(Database.prototype, 'recordTimeline');
+
+  beforeEach(() => {
+    db.mockClear();
+  });
+
+  it('should not record missing values to for the timeline', async () => {
+    const updater = new BatchingTimelineUpdater(<any>db, 0);
+
+    updater.addValues(1, 1, 1, [1, null, 2, null, 3]);
+
+    await updater.shutdown();
+    expect(db).not.toHaveBeenCalled();
+
+    const requests = updater.getUpdateJobsForBenchmarking();
+    expect(requests).toHaveLength(1);
+    expect(requests[0].dataForCriterion).toEqual([1, 2, 3]);
+  });
+
+  it('should not add job without values (empty array)', async () => {
+    const updater = new BatchingTimelineUpdater(<any>db, 0);
+
+    updater.addValues(1, 1, 1, []);
+
+    await updater.shutdown();
+    expect(db).not.toHaveBeenCalled();
+
+    const requests = updater.getUpdateJobsForBenchmarking();
+    expect(requests).toHaveLength(0);
+  });
+
+  it('should not add job without values (array with nulls)', async () => {
+    const updater = new BatchingTimelineUpdater(<any>db, 0);
+
+    updater.addValues(1, 1, 1, [null, null]);
+
+    await updater.shutdown();
+    expect(db).not.toHaveBeenCalled();
+
+    const requests = updater.getUpdateJobsForBenchmarking();
+    expect(requests).toHaveLength(0);
+  });
+
+  it('should await quiescence without any requests', async () => {
+    db.mockClear();
+
+    const updater = new BatchingTimelineUpdater(<any>db, 0);
+    await updater.getQuiescencePromise();
+    await updater.shutdown();
+
+    expect(db).not.toHaveBeenCalled();
+  });
+});

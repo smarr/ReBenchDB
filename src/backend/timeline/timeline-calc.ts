@@ -152,43 +152,64 @@ export class BatchingTimelineUpdater implements ResultReceiver {
     criterionId: number,
     values: ValuesPossiblyMissing
   ): void {
-    let withoutMissing: number[];
     const id = `${trialId}-${runId}-${criterionId}`;
     if (!this.requests.has(id)) {
+      const withoutMissing: number[] = <number[]>(
+        values.filter((v) => v !== null)
+      );
+      if (withoutMissing.length === 0) {
+        return;
+      }
+
       const req: ComputeRequest = {
         runId,
         trialId,
         criterion: criterionId,
-        dataForCriterion: []
+        dataForCriterion: withoutMissing
       };
 
       this.requests.set(id, req);
-      withoutMissing = req.dataForCriterion;
     } else {
-      withoutMissing = this.requests.get(id)!.dataForCriterion;
-    }
-
-    for (const v of values) {
-      if (v !== null) {
-        withoutMissing.push(v);
+      const withoutMissing = this.requests.get(id)!.dataForCriterion;
+      for (const v of values) {
+        if (v !== null) {
+          withoutMissing.push(v);
+        }
       }
     }
   }
 
-  public getUpdateJobs(): ComputeRequest[] {
+  /**
+   * Trigger processing of timeline jobs.
+   * Typically triggered once all data from the client was recorded.
+   */
+  public submitUpdateJobs(): Promise<number> {
+    const requestStart = startRequest();
+
+    const requests = this.getUpdateJobsForBenchmarking();
+    return this.processUpdateJobs(requests, requestStart);
+  }
+
+  /**
+   * This method is only used for benchmarking purposes.
+   */
+  public getUpdateJobsForBenchmarking(): ComputeRequest[] {
     const requests = Array.from(this.requests.values());
     this.requests.clear();
     return requests;
   }
 
-  public submitUpdateJobs(): Promise<number> {
-    const requestStart = startRequest();
-
-    const requests = this.getUpdateJobs();
-    return this.processUpdateJobs(requests, requestStart);
+  /**
+   * This method is only used for benchmarking purposes.
+   */
+  public async processUpdateJobsForBenchmarking(
+    jobs: ComputeRequest[],
+    requestStart: number
+  ): Promise<number> {
+    return this.processUpdateJobs(jobs, requestStart);
   }
 
-  public processUpdateJobs(
+  private processUpdateJobs(
     jobs: ComputeRequest[],
     requestStart: number
   ): Promise<number> {

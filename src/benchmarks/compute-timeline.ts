@@ -49,7 +49,7 @@ export default class ComputeTimeline extends RebenchDbBenchmark {
     await this.db.recordAllData(this.testData, true);
 
     this.updater = this.db.getTimelineUpdater();
-    this.jobs = <ComputeRequest[]>this.updater?.getUpdateJobs();
+    this.jobs = <ComputeRequest[]>this.updater?.getUpdateJobsForBenchmarking();
   }
 
   public async benchmark(): Promise<any> {
@@ -62,7 +62,10 @@ export default class ComputeTimeline extends RebenchDbBenchmark {
 
     // the processStart being 1 is just here for a consistent start time
     // that's not zero
-    const numJobs = await this.updater.processUpdateJobs(this.jobs, 1);
+    const numJobs = await this.updater.processUpdateJobsForBenchmarking(
+      this.jobs,
+      1
+    );
 
     const result = await this.db.query({
       text: `SELECT count(*) FROM Timeline`
