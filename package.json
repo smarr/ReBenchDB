@@ -59,6 +59,21 @@
   },
   "jest": {
     "collectCoverage": true,
+    "coverageReporters": [
+      "json",
+      [
+        "text",
+        {
+          "file": "coverage.txt"
+        }
+      ],
+      [
+        "text-summary",
+        {
+          "file": "coverage-summary.txt"
+        }
+      ]
+    ],
     "preset": "ts-jest/presets/default-esm",
     "testEnvironment": "node",
     "transform": {
