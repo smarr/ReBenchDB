@@ -61,12 +61,7 @@
     "collectCoverage": true,
     "coverageReporters": [
       "json",
-      [
-        "text",
-        {
-          "file": "coverage.txt"
-        }
-      ],
+      "text",
       [
         "text-summary",
         {
