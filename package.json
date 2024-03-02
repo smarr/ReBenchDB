@@ -58,6 +58,7 @@
     "typescript-json-schema": "0.63.0"
   },
   "jest": {
+    "collectCoverage": true,
     "preset": "ts-jest/presets/default-esm",
     "testEnvironment": "node",
     "transform": {
