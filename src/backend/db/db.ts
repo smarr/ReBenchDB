@@ -1021,13 +1021,13 @@ export abstract class Database {
   ): void {
     for (const d of dataPoints) {
       // a dataPoint contains m, which is a list of measurements per criterion
-      let criterionId = 0;
-      for (const m of d.m) {
+      for (const criterionId in d.m) {
+        const m = d.m[criterionId];
         if (m === null || m === undefined) {
           continue;
         }
 
-        const criterion = criteria.get(criterionId)!;
+        const criterion = criteria.get(parseInt(criterionId))!;
         if (!criterion) {
           throw new Error(`Could not find criterion with id ${criterionId}`);
         }
@@ -1046,8 +1046,6 @@ export abstract class Database {
         // batchedValues.push(run.id, trial.id, d.in, criterion.id, m);
         batchedValues.push(run.id, trial.id, d.in, criterion.id);
         batchedValues.push(m);
-
-        criterionId += 1;
       }
     }
   }
