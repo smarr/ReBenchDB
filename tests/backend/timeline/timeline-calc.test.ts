@@ -87,41 +87,70 @@ describe('BatchingTimelineUpdater', () => {
     recordTimeline.mockClear();
   });
 
-  it('should not record missing values to for the timeline', async () => {
-    const updater = new BatchingTimelineUpdater(db, 0);
+  describe('addValues()', () => {
+    it('should not record missing values to for the timeline', async () => {
+      const updater = new BatchingTimelineUpdater(db, 0);
 
-    updater.addValues(1, 1, 1, [1, null, 2, null, 3]);
+      updater.addValues(1, 1, 1, [1, null, 2, null, 3]);
 
-    await updater.shutdown();
-    expect(recordTimeline).not.toHaveBeenCalled();
+      await updater.shutdown();
+      expect(recordTimeline).not.toHaveBeenCalled();
 
-    const requests = updater.consumeUpdateJobsForBenchmarking();
-    expect(requests).toHaveLength(1);
-    expect(requests[0].dataForCriterion).toEqual([1, 2, 3]);
-  });
+      const requests = updater.consumeUpdateJobsForBenchmarking();
+      expect(requests).toHaveLength(1);
+      expect(requests[0].dataForCriterion).toEqual([1, 2, 3]);
+    });
 
-  it('should not add job without values (empty array)', async () => {
-    const updater = new BatchingTimelineUpdater(db, 0);
+    it('should not add job without values (empty array)', async () => {
+      const updater = new BatchingTimelineUpdater(db, 0);
 
-    updater.addValues(1, 1, 1, []);
+      updater.addValues(1, 1, 1, []);
 
-    await updater.shutdown();
-    expect(recordTimeline).not.toHaveBeenCalled();
+      await updater.shutdown();
+      expect(recordTimeline).not.toHaveBeenCalled();
 
-    const requests = updater.consumeUpdateJobsForBenchmarking();
-    expect(requests).toHaveLength(0);
-  });
+      const requests = updater.consumeUpdateJobsForBenchmarking();
+      expect(requests).toHaveLength(0);
+    });
 
-  it('should not add job without values (array with nulls)', async () => {
-    const updater = new BatchingTimelineUpdater(db, 0);
+    it('should not add job without values (array with nulls)', async () => {
+      const updater = new BatchingTimelineUpdater(db, 0);
 
-    updater.addValues(1, 1, 1, [null, null]);
+      updater.addValues(1, 1, 1, [null, null]);
 
-    await updater.shutdown();
-    expect(recordTimeline).not.toHaveBeenCalled();
+      await updater.shutdown();
+      expect(recordTimeline).not.toHaveBeenCalled();
 
-    const requests = updater.consumeUpdateJobsForBenchmarking();
-    expect(requests).toHaveLength(0);
+      const requests = updater.consumeUpdateJobsForBenchmarking();
+      expect(requests).toHaveLength(0);
+    });
+
+    it('should combine values with the same ids', async () => {
+      const updater = new BatchingTimelineUpdater(db, 0);
+      updater.addValues(1, 1, 1, [1, 2]);
+      updater.addValues(1, 1, 1, [3, 4]);
+      await updater.shutdown();
+
+      const requests = updater.consumeUpdateJobsForBenchmarking();
+      expect(requests).toHaveLength(1);
+      expect(requests[0].dataForCriterion).toEqual([1, 2, 3, 4]);
+    });
+
+    it('should not combine values with different ids', async () => {
+      const updater = new BatchingTimelineUpdater(db, 0);
+      updater.addValues(1, 1, 1, [1, 2]);
+      updater.addValues(1, 1, 2, [3, 4]);
+      updater.addValues(1, 2, 1, [5, 6]);
+      updater.addValues(2, 1, 1, [7, 8]);
+      await updater.shutdown();
+
+      const requests = updater.consumeUpdateJobsForBenchmarking();
+      expect(requests).toHaveLength(4);
+      expect(requests[0].dataForCriterion).toEqual([1, 2]);
+      expect(requests[1].dataForCriterion).toEqual([3, 4]);
+      expect(requests[2].dataForCriterion).toEqual([5, 6]);
+      expect(requests[3].dataForCriterion).toEqual([7, 8]);
+    });
   });
 
   it('should await quiescence without any requests', async () => {
