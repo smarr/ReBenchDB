@@ -1,15 +1,35 @@
-import { describe, expect, beforeAll, afterAll, it } from '@jest/globals';
+import {
+  describe,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterAll,
+  it,
+  jest
+} from '@jest/globals';
 import { readFileSync } from 'node:fs';
+import { PoolConfig, QueryConfig, QueryResult, QueryResultRow } from 'pg';
 
 import {
   TestDatabase,
   createAndInitializeDB,
   closeMainDb
 } from './db-testing.js';
-import { BenchmarkData, TimelineRequest } from '../../../src/shared/api.js';
+import {
+  BenchmarkData,
+  DataPoint,
+  TimelineRequest
+} from '../../../src/shared/api.js';
 
 import { robustPath } from '../../../src/backend/util.js';
-import { Experiment, Environment } from '../../../src/backend/db/types.js';
+import {
+  Experiment,
+  Environment,
+  Run,
+  Trial,
+  Criterion
+} from '../../../src/backend/db/types.js';
+import { Database } from '../../../src/backend/db/db.js';
 
 describe('Record Trial', () => {
   let db: TestDatabase;
@@ -244,6 +264,114 @@ describe('Timeline-plot Queries', () => {
       expect(result?.data[0]).toEqual([1576277396, 1576450196]);
       expect(result?.data[2]).toEqual([432.783, 432.783]);
     });
+  });
+});
+
+describe('createValueBatchForInsertion()', () => {
+  const addValues = jest.fn();
+  const setDatabase = jest.fn();
+
+  beforeEach(() => {
+    addValues.mockClear();
+  });
+
+  class BatchTestDatabase extends Database {
+    constructor() {
+      super({} as PoolConfig, { addValues, setDatabase } as any);
+    }
+
+    public query<R extends QueryResultRow = any>(
+      _queryConfig: QueryConfig<any[]>
+    ): Promise<QueryResult<R>> {
+      return <any>null;
+    }
+  }
+
+  const run1 = { id: 1 } as Run;
+  const trial1 = { id: 1 } as Trial;
+
+  const dps: DataPoint[] = [
+    {
+      in: 1,
+      m: [
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9]
+      ]
+    }
+  ];
+
+  const criteria = new Map<number, Criterion>([
+    [0, { id: 10, name: 'c1', unit: 'u1' }],
+    [1, { id: 11, name: 'c2', unit: 'u2' }],
+    [2, { id: 12, name: 'total', unit: 'u3' }]
+  ]);
+
+  it('should add to the batchedValues', async () => {
+    const db = new BatchTestDatabase();
+    const batched: any[] = [];
+    db.createValueBatchForInsertion(dps, run1, trial1, criteria, {}, batched);
+
+    expect(batched).toHaveLength(3 * Database.batchInsertSize);
+
+    const bIdx = 4; // 5th element in the batch
+    expect(batched[Database.batchInsertSize * 0 + bIdx]).toEqual([1, 2, 3]);
+    expect(batched[Database.batchInsertSize * 1 + bIdx]).toEqual([4, 5, 6]);
+    expect(batched[Database.batchInsertSize * 2 + bIdx]).toEqual([7, 8, 9]);
+  });
+
+  it('should add "total" values to timeline updater', () => {
+    const db = new BatchTestDatabase();
+    const batched: any[] = [];
+    db.createValueBatchForInsertion(dps, run1, trial1, criteria, {}, batched);
+
+    expect(addValues).toHaveBeenCalledWith(1, 1, 12, [7, 8, 9]);
+  });
+
+  it('should map criteria to correct db ids (simple)', () => {
+    const db = new BatchTestDatabase();
+    const batched: any[] = [];
+    db.createValueBatchForInsertion(dps, run1, trial1, criteria, {}, batched);
+
+    const bIdx = 3; // 4th element in the batch
+    expect(batched[Database.batchInsertSize * 0 + bIdx]).toEqual(10);
+    expect(batched[Database.batchInsertSize * 1 + bIdx]).toEqual(11);
+    expect(batched[Database.batchInsertSize * 2 + bIdx]).toEqual(12);
+  });
+
+  it('should map criteria to correct db ids (null array)', () => {
+    const dps: DataPoint[] = [
+      {
+        in: 1,
+        m: [null, [4, 5, 6], [7, 8, 9]]
+      }
+    ];
+    const db = new BatchTestDatabase();
+    const batched: any[] = [];
+    db.createValueBatchForInsertion(dps, run1, trial1, criteria, {}, batched);
+
+    expect(batched).toHaveLength(2 * Database.batchInsertSize);
+
+    const bIdx = 3; // 4th element in the batch
+    expect(batched[Database.batchInsertSize * 0 + bIdx]).toEqual(11);
+    expect(batched[Database.batchInsertSize * 1 + bIdx]).toEqual(12);
+  });
+
+  it('should map criteria to correct db ids (multiple null arrays)', () => {
+    const dps: DataPoint[] = [
+      {
+        in: 1,
+        m: [null, null, [7, 8, 9]]
+      }
+    ];
+    const db = new BatchTestDatabase();
+    const batched: any[] = [];
+    db.createValueBatchForInsertion(dps, run1, trial1, criteria, {}, batched);
+
+    expect(batched).toHaveLength(1 * Database.batchInsertSize);
+
+    const bIdx = 3; // 4th element in the batch
+    expect(batched[Database.batchInsertSize * 0 + bIdx]).toEqual(12);
   });
 });
 
