@@ -6,7 +6,7 @@ import {
   completeRequestAndHandlePromise,
   startRequest
 } from '../perf-tracker.js';
-import { log } from '../logging.js';
+import { log, assert } from '../logging.js';
 import type { ValuesPossiblyMissing } from '../../shared/api.js';
 
 export interface ComputeJob {
@@ -19,6 +19,12 @@ export interface ComputeJob {
 export interface ComputeRequest {
   jobs: ComputeJob[];
   requestStart: number;
+  requestId: number;
+}
+
+export interface ActiveRequest {
+  request: ComputeRequest;
+  resolveWithNumberOfJobs: (value: number) => void;
 }
 
 export interface ComputeResult {
@@ -31,6 +37,7 @@ export interface ComputeResult {
 export interface ComputeResults {
   results: ComputeResult[];
   requestStart: number;
+  requestId: number;
 }
 
 export interface ResultReceiver {
@@ -108,21 +115,18 @@ export class BatchingTimelineUpdater implements ResultReceiver {
   private readonly db: Database;
   private readonly worker: TimelineWorker;
   private readonly requests: Map<string, ComputeJob>;
+  private readonly activeRequests: Map<number, ActiveRequest>;
 
-  private activeRequests: number;
-
-  private requestsAtStart: number;
-  private promise: Promise<number> | null;
-  private resolveJobsPromiseWithNumberOfJobs: ((value: number) => void) | null;
+  private nextRequestId: number;
+  private pendingPromises: Promise<number>[];
 
   constructor(db: Database, numBootstrapSamples: number) {
     this.db = db;
-    this.activeRequests = 0;
+    this.nextRequestId = 0;
 
     this.requests = new Map();
-    this.resolveJobsPromiseWithNumberOfJobs = null;
-    this.requestsAtStart = 0;
-    this.promise = null;
+    this.activeRequests = new Map();
+    this.pendingPromises = [];
 
     this.worker = new TimelineWorker(numBootstrapSamples, this);
   }
@@ -141,19 +145,20 @@ export class BatchingTimelineUpdater implements ResultReceiver {
       );
     }
 
-    this.activeRequests -= r.results.length;
-
-    if (this.activeRequests === 0) {
-      if (this.resolveJobsPromiseWithNumberOfJobs && r.requestStart) {
-        this.resolveJobsPromiseWithNumberOfJobs(this.requestsAtStart);
-        this.resolveJobsPromiseWithNumberOfJobs = null;
-        completeRequestAndHandlePromise(
-          r.requestStart,
-          this.db,
-          'generate-timeline'
-        );
-      }
+    const req = this.activeRequests.get(r.requestId);
+    if (!req) {
+      log.error('Received results for unknown request', r);
+      return;
     }
+
+    this.activeRequests.delete(r.requestId);
+    req.resolveWithNumberOfJobs(r.results.length);
+
+    completeRequestAndHandlePromise(
+      r.requestStart,
+      this.db,
+      'generate-timeline'
+    );
   }
 
   public addValues(
@@ -230,24 +235,51 @@ export class BatchingTimelineUpdater implements ResultReceiver {
       return Promise.resolve(0);
     }
 
-    this.activeRequests += jobs.length;
-    this.requestsAtStart = this.activeRequests;
+    const requestId = this.nextRequestId;
+    this.nextRequestId += 1;
 
     const request: ComputeRequest = {
       jobs,
-      requestStart
+      requestStart,
+      requestId
     };
 
     this.worker.sendRequest(request);
 
-    this.promise = new Promise((resolve) => {
-      this.resolveJobsPromiseWithNumberOfJobs = resolve;
+    let resolveWithNumberOfJobs;
+    const promise: Promise<number> = new Promise((resolve) => {
+      resolveWithNumberOfJobs = resolve;
     });
 
-    return this.promise;
+    assert(
+      this.activeRequests.has(requestId) === false,
+      'Request id already exists'
+    );
+
+    this.activeRequests.set(requestId, {
+      request,
+      resolveWithNumberOfJobs
+    });
+
+    this.pendingPromises.push(promise);
+
+    return promise;
   }
 
-  public getQuiescencePromise(): Promise<number> | null {
-    return this.promise;
+  public async awaitQuiescence(): Promise<number[]> {
+    if (this.pendingPromises.length === 0) {
+      return [];
+    }
+
+    const results: number[] = [];
+
+    while (this.pendingPromises.length > 0) {
+      const currentlyPending = this.pendingPromises;
+      this.pendingPromises = [];
+      const result = await Promise.all(currentlyPending);
+      results.push(...result);
+    }
+
+    return results;
   }
 }

@@ -33,7 +33,8 @@ parentPort?.on('message', (message) => {
 
   const result: ComputeResults = {
     results,
-    requestStart: request.requestStart
+    requestStart: request.requestStart,
+    requestId: request.requestId
   };
   parentPort?.postMessage(result);
 });

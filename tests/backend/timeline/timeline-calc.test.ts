@@ -17,7 +17,8 @@ describe('TimelineWorker', () => {
         dataForCriterion: [1, 2, 3]
       }
     ],
-    requestStart: 0
+    requestStart: 0,
+    requestId: 0
   };
 
   it('should succeed to execute a basic interaction', async () => {
@@ -155,7 +156,7 @@ describe('BatchingTimelineUpdater', () => {
 
   it('should await quiescence without any requests', async () => {
     const updater = new BatchingTimelineUpdater(db, 0);
-    await updater.getQuiescencePromise();
+    await updater.awaitQuiescence();
     await updater.shutdown();
 
     expect(recordTimeline).not.toHaveBeenCalled();
@@ -178,7 +179,7 @@ describe('BatchingTimelineUpdater', () => {
     updater.addValues(1, 1, 1, [1, 2, 3]);
     await updater.submitUpdateJobs();
 
-    await updater.getQuiescencePromise();
+    await updater.awaitQuiescence();
     await updater.shutdown();
     expect(recordTimeline).toHaveBeenCalledTimes(1);
   });
@@ -189,9 +190,9 @@ describe('BatchingTimelineUpdater', () => {
     updater.addValues(1, 1, 1, [1, 2, 3]);
     updater.submitUpdateJobs();
 
-    await updater.getQuiescencePromise();
-    await updater.getQuiescencePromise();
-    await updater.getQuiescencePromise();
+    await updater.awaitQuiescence();
+    await updater.awaitQuiescence();
+    await updater.awaitQuiescence();
     await updater.shutdown();
     expect(recordTimeline).toHaveBeenCalledTimes(1);
   });

@@ -1318,7 +1318,7 @@ export abstract class Database {
   }
 
   public async awaitQuiescentTimelineUpdater(): Promise<void> {
-    await this.timelineUpdater?.getQuiescencePromise();
+    await this.timelineUpdater?.awaitQuiescence();
   }
 
   public async getBranchNames(
