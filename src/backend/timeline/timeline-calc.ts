@@ -9,12 +9,16 @@ import {
 import { log } from '../logging.js';
 import type { ValuesPossiblyMissing } from '../../shared/api.js';
 
-export interface ComputeRequest {
+export interface ComputeJob {
   runId: number;
   trialId: number;
   criterion: number;
   dataForCriterion: number[];
-  requestStart?: number;
+}
+
+export interface ComputeRequest {
+  jobs: ComputeJob[];
+  requestStart: number;
 }
 
 export interface ComputeResult {
@@ -22,11 +26,15 @@ export interface ComputeResult {
   trialId: number;
   criterion: number;
   stats: SummaryStatistics;
+}
+
+export interface ComputeResults {
+  results: ComputeResult[];
   requestStart: number;
 }
 
 export interface ResultReceiver {
-  receiveResult(result: ComputeResult): Promise<void>;
+  receiveResults(result: ComputeResults): Promise<void>;
 }
 
 /**
@@ -61,8 +69,8 @@ export class TimelineWorker {
     this.updater = updater;
   }
 
-  public sendRequest(request: ComputeRequest): void {
-    this.worker.postMessage(request);
+  public sendRequest(requests: ComputeRequest): void {
+    this.worker.postMessage(requests);
   }
 
   protected async processResponse(message: any): Promise<void> {
@@ -74,8 +82,8 @@ export class TimelineWorker {
       return;
     }
 
-    const result = <ComputeResult>message;
-    this.updater.receiveResult(result);
+    const results = <ComputeResults>message;
+    this.updater.receiveResults(results);
   }
 
   public async shutdown(): Promise<void> {
@@ -99,20 +107,20 @@ export class TimelineWorker {
 export class BatchingTimelineUpdater implements ResultReceiver {
   private readonly db: Database;
   private readonly worker: TimelineWorker;
-  private readonly requests: Map<string, ComputeRequest>;
+  private readonly requests: Map<string, ComputeJob>;
 
   private activeRequests: number;
 
   private requestsAtStart: number;
   private promise: Promise<number> | null;
-  private resolve: ((value: number) => void) | null;
+  private resolveJobsPromiseWithNumberOfJobs: ((value: number) => void) | null;
 
   constructor(db: Database, numBootstrapSamples: number) {
     this.db = db;
     this.activeRequests = 0;
 
     this.requests = new Map();
-    this.resolve = null;
+    this.resolveJobsPromiseWithNumberOfJobs = null;
     this.requestsAtStart = 0;
     this.promise = null;
 
@@ -123,22 +131,24 @@ export class BatchingTimelineUpdater implements ResultReceiver {
     return this.worker.shutdown();
   }
 
-  public async receiveResult(result: ComputeResult): Promise<void> {
-    await this.db.recordTimeline(
-      result.runId,
-      result.trialId,
-      result.criterion,
-      result.stats
-    );
+  public async receiveResults(r: ComputeResults): Promise<void> {
+    for (const result of r.results) {
+      await this.db.recordTimeline(
+        result.runId,
+        result.trialId,
+        result.criterion,
+        result.stats
+      );
+    }
 
-    this.activeRequests -= 1;
+    this.activeRequests -= r.results.length;
 
     if (this.activeRequests === 0) {
-      if (this.resolve && result.requestStart) {
-        this.resolve(this.requestsAtStart);
-        this.resolve = null;
+      if (this.resolveJobsPromiseWithNumberOfJobs && r.requestStart) {
+        this.resolveJobsPromiseWithNumberOfJobs(this.requestsAtStart);
+        this.resolveJobsPromiseWithNumberOfJobs = null;
         completeRequestAndHandlePromise(
-          result.requestStart,
+          r.requestStart,
           this.db,
           'generate-timeline'
         );
@@ -161,7 +171,7 @@ export class BatchingTimelineUpdater implements ResultReceiver {
         return;
       }
 
-      const req: ComputeRequest = {
+      const req: ComputeJob = {
         runId,
         trialId,
         criterion: criterionId,
@@ -186,14 +196,14 @@ export class BatchingTimelineUpdater implements ResultReceiver {
   public submitUpdateJobs(): Promise<number> {
     const requestStart = startRequest();
 
-    const requests = this.getUpdateJobsForBenchmarking();
+    const requests = this.consumeUpdateJobsForBenchmarking();
     return this.processUpdateJobs(requests, requestStart);
   }
 
   /**
    * This method is only used for benchmarking purposes.
    */
-  public getUpdateJobsForBenchmarking(): ComputeRequest[] {
+  public consumeUpdateJobsForBenchmarking(): ComputeJob[] {
     const requests = Array.from(this.requests.values());
     this.requests.clear();
     return requests;
@@ -203,31 +213,37 @@ export class BatchingTimelineUpdater implements ResultReceiver {
    * This method is only used for benchmarking purposes.
    */
   public async processUpdateJobsForBenchmarking(
-    jobs: ComputeRequest[],
+    jobs: ComputeJob[],
     requestStart: number
   ): Promise<number> {
     return this.processUpdateJobs(jobs, requestStart);
   }
 
+  /**
+   * @returns promise with the number of jobs processed
+   */
   private processUpdateJobs(
-    jobs: ComputeRequest[],
+    jobs: ComputeJob[],
     requestStart: number
   ): Promise<number> {
+    if (jobs.length === 0) {
+      return Promise.resolve(0);
+    }
+
     this.activeRequests += jobs.length;
     this.requestsAtStart = this.activeRequests;
 
-    for (const r of jobs) {
-      r.requestStart = requestStart;
-      this.worker.sendRequest(r);
-    }
+    const request: ComputeRequest = {
+      jobs,
+      requestStart
+    };
+
+    this.worker.sendRequest(request);
 
     this.promise = new Promise((resolve) => {
-      this.resolve = resolve;
+      this.resolveJobsPromiseWithNumberOfJobs = resolve;
     });
 
-    if (this.activeRequests === 0 && this.resolve) {
-      this.resolve(0);
-    }
     return this.promise;
   }
 

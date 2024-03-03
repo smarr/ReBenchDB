@@ -1,13 +1,13 @@
 import { convertToCurrentApi } from '../backend/common/api-v1.js';
 import {
   BatchingTimelineUpdater,
-  ComputeRequest
+  ComputeJob
 } from '../backend/timeline/timeline-calc.js';
 import { RebenchDbBenchmark } from './rebenchdb-benchmark.js';
 
 export default class ComputeTimeline extends RebenchDbBenchmark {
   private updater: BatchingTimelineUpdater | null = null;
-  private jobs: ComputeRequest[] | null = null;
+  private jobs: ComputeJob[] | null = null;
 
   public async oneTimeSetup(problemSize: string): Promise<void> {
     this.enableTimeline = true;
@@ -49,7 +49,7 @@ export default class ComputeTimeline extends RebenchDbBenchmark {
     await this.db.recordAllData(this.testData, true);
 
     this.updater = this.db.getTimelineUpdater();
-    this.jobs = <ComputeRequest[]>this.updater?.getUpdateJobsForBenchmarking();
+    this.jobs = this.updater!.consumeUpdateJobsForBenchmarking();
   }
 
   public async benchmark(): Promise<any> {
@@ -75,7 +75,7 @@ export default class ComputeTimeline extends RebenchDbBenchmark {
 
     return {
       timelineEntries: result?.rows[0],
-      numJobs: numJobs
+      numJobs
     };
   }
 
