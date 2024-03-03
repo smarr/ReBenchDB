@@ -20,7 +20,6 @@ import { robustPath, TotalCriterion } from '../util.js';
 import { assert } from '../logging.js';
 import { simplifyCmdline } from '../../shared/util.js';
 import type { SummaryStatistics } from '../../shared/stats.js';
-import { BatchingTimelineUpdater } from '../timeline/timeline-calc.js';
 import type {
   Baseline,
   Criterion,
@@ -37,6 +36,7 @@ import type {
 } from './types.js';
 import { TimedCacheValidity } from './timed-cache-validity.js';
 import { HasProfile } from './has-profile.js';
+import type { BatchingTimelineUpdater } from '../timeline/timeline-calc.js';
 
 export type AvailableMeasurements = {
   [runId: number]: {
@@ -99,7 +99,7 @@ export abstract class Database {
   private readonly criteria: Map<string, Criterion>;
   private readonly projects: Map<string, Project>;
 
-  private readonly timelineUpdater: BatchingTimelineUpdater | null;
+  protected readonly timelineUpdater: BatchingTimelineUpdater | null;
 
   private readonly queries = {
     fetchProjectByName: 'SELECT * FROM Project WHERE name = $1',
@@ -107,14 +107,13 @@ export abstract class Database {
   };
 
   private static readonly batchN = 50;
-  private static readonly batchInsertSize = 5;
+  public static readonly batchInsertSize = 5;
 
   protected statsValid: TimedCacheValidity;
 
   constructor(
     config: PoolConfig,
-    numBootstrapSamples = 1000,
-    timelineEnabled = false,
+    timelineUpdater: BatchingTimelineUpdater | null = null,
     cacheInvalidationDelay = 0
   ) {
     assert(config !== undefined);
@@ -136,13 +135,9 @@ export abstract class Database {
        )}
        ON CONFLICT DO NOTHING`;
 
-    if (timelineEnabled) {
-      this.timelineUpdater = new BatchingTimelineUpdater(
-        this,
-        numBootstrapSamples
-      );
-    } else {
-      this.timelineUpdater = null;
+    this.timelineUpdater = timelineUpdater;
+    if (timelineUpdater) {
+      timelineUpdater.setDatabase(this);
     }
   }
 

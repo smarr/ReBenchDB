@@ -1,17 +1,22 @@
 import pg, { PoolConfig, QueryConfig, QueryResult, QueryResultRow } from 'pg';
 
 import { Database } from './db.js';
+import { BatchingTimelineUpdater } from '../timeline/timeline-calc.js';
 
 export class DatabaseWithPool extends Database {
   private pool: pg.Pool;
 
   constructor(
     config: PoolConfig,
-    numReplicates = 1000,
+    numBootstrapSamples = 1000,
     timelineEnabled = false,
     cacheInvalidationDelay = 0
   ) {
-    super(config, numReplicates, timelineEnabled, cacheInvalidationDelay);
+    super(
+      config,
+      timelineEnabled ? new BatchingTimelineUpdater(numBootstrapSamples) : null,
+      cacheInvalidationDelay
+    );
     this.pool = new pg.Pool(config);
   }
 

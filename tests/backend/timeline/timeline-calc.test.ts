@@ -1,9 +1,9 @@
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import {
-  BatchingTimelineUpdater,
   ComputeRequest,
   ComputeResults,
-  TimelineWorker
+  TimelineWorker,
+  createBatchTimelineUpdater
 } from '../../../src/backend/timeline/timeline-calc.js';
 import type { Database } from '../../../src/backend/db/db.js';
 
@@ -90,7 +90,7 @@ describe('BatchingTimelineUpdater', () => {
 
   describe('addValues()', () => {
     it('should not record missing values to for the timeline', async () => {
-      const updater = new BatchingTimelineUpdater(db, 0);
+      const updater = createBatchTimelineUpdater(db, 0);
 
       updater.addValues(1, 1, 1, [1, null, 2, null, 3]);
 
@@ -103,7 +103,7 @@ describe('BatchingTimelineUpdater', () => {
     });
 
     it('should not add job without values (empty array)', async () => {
-      const updater = new BatchingTimelineUpdater(db, 0);
+      const updater = createBatchTimelineUpdater(db, 0);
 
       updater.addValues(1, 1, 1, []);
 
@@ -115,7 +115,7 @@ describe('BatchingTimelineUpdater', () => {
     });
 
     it('should not add job without values (array with nulls)', async () => {
-      const updater = new BatchingTimelineUpdater(db, 0);
+      const updater = createBatchTimelineUpdater(db, 0);
 
       updater.addValues(1, 1, 1, [null, null]);
 
@@ -127,7 +127,7 @@ describe('BatchingTimelineUpdater', () => {
     });
 
     it('should combine values with the same ids', async () => {
-      const updater = new BatchingTimelineUpdater(db, 0);
+      const updater = createBatchTimelineUpdater(db, 0);
       updater.addValues(1, 1, 1, [1, 2]);
       updater.addValues(1, 1, 1, [3, 4]);
       await updater.shutdown();
@@ -138,7 +138,7 @@ describe('BatchingTimelineUpdater', () => {
     });
 
     it('should not combine values with different ids', async () => {
-      const updater = new BatchingTimelineUpdater(db, 0);
+      const updater = createBatchTimelineUpdater(db, 0);
       updater.addValues(1, 1, 1, [1, 2]);
       updater.addValues(1, 1, 2, [3, 4]);
       updater.addValues(1, 2, 1, [5, 6]);
@@ -155,7 +155,7 @@ describe('BatchingTimelineUpdater', () => {
   });
 
   it('should await quiescence without any requests', async () => {
-    const updater = new BatchingTimelineUpdater(db, 0);
+    const updater = createBatchTimelineUpdater(db, 0);
     await updater.awaitQuiescence();
     await updater.shutdown();
 
@@ -163,7 +163,7 @@ describe('BatchingTimelineUpdater', () => {
   });
 
   it('should have stored results in db when job promise resolved', async () => {
-    const updater = new BatchingTimelineUpdater(db, 0);
+    const updater = createBatchTimelineUpdater(db, 0);
 
     updater.addValues(1, 1, 1, [1, 2, 3]);
     const numJobsProcessed = await updater.submitUpdateJobs();
@@ -174,7 +174,7 @@ describe('BatchingTimelineUpdater', () => {
   });
 
   it('should be possible to await quiescence after a request', async () => {
-    const updater = new BatchingTimelineUpdater(db, 0);
+    const updater = createBatchTimelineUpdater(db, 0);
 
     updater.addValues(1, 1, 1, [1, 2, 3]);
     await updater.submitUpdateJobs();
@@ -185,7 +185,7 @@ describe('BatchingTimelineUpdater', () => {
   });
 
   it('should be possible to await quiescence multiple times', async () => {
-    const updater = new BatchingTimelineUpdater(db, 0);
+    const updater = createBatchTimelineUpdater(db, 0);
 
     updater.addValues(1, 1, 1, [1, 2, 3]);
     updater.submitUpdateJobs();

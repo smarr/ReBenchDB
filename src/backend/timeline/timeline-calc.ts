@@ -107,12 +107,22 @@ export class TimelineWorker {
   }
 }
 
+export function createBatchTimelineUpdater(
+  db: Database,
+  numBootstrapSamples: number
+): BatchingTimelineUpdater {
+  const result = new BatchingTimelineUpdater(numBootstrapSamples);
+  result.setDatabase(db);
+  return result;
+}
+
 /**
  * This class is responsible for batching up requests to the timeline worker
  * and managing the promises for the requests.
  */
 export class BatchingTimelineUpdater implements ResultReceiver {
-  private readonly db: Database;
+  private db: Database | null;
+
   private readonly worker: TimelineWorker;
   private readonly requests: Map<string, ComputeJob>;
   private readonly activeRequests: Map<number, ActiveRequest>;
@@ -120,8 +130,8 @@ export class BatchingTimelineUpdater implements ResultReceiver {
   private nextRequestId: number;
   private pendingPromises: Promise<number>[];
 
-  constructor(db: Database, numBootstrapSamples: number) {
-    this.db = db;
+  constructor(numBootstrapSamples: number) {
+    this.db = null;
     this.nextRequestId = 0;
 
     this.requests = new Map();
@@ -131,11 +141,20 @@ export class BatchingTimelineUpdater implements ResultReceiver {
     this.worker = new TimelineWorker(numBootstrapSamples, this);
   }
 
+  public setDatabase(db: Database): void {
+    this.db = db;
+  }
+
   public async shutdown(): Promise<void> {
     return this.worker.shutdown();
   }
 
   public async receiveResults(r: ComputeResults): Promise<void> {
+    if (!this.db) {
+      log.error('Database not set');
+      return;
+    }
+
     for (const result of r.results) {
       await this.db.recordTimeline(
         result.runId,
