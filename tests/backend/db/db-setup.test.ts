@@ -270,7 +270,7 @@ describe('Recording a ReBench execution from payload files', () => {
         text: 'SELECT SUM(cardinality(values)) FROM Measurement'
       });
 
-      const expectedTimelineRowCount = 73;
+      const expectedTimelineRowCount = 317;
       const numberRowsAdded = 460;
       const expectedNumberValues = 460003;
 
