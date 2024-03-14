@@ -64,7 +64,7 @@ const benchId = {
 
 const environments: Environment[] = [
   {
-    id: 1,
+    envid: 1,
     hostname: 'MyHost',
     ostype: 'Linux',
     memory: 123456,

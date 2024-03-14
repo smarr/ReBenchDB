@@ -133,7 +133,7 @@ describe('Format Functions for Numerical Values', () => {
   describe('formatEnvironment - for display to user', () => {
     const envs: Environment[] = [
       {
-        id: 1,
+        envid: 1,
         hostname: 'host',
         ostype: 'Linux',
         memory: 453454333,

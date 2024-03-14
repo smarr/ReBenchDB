@@ -63,7 +63,7 @@ const measurementDataTableJoins = `
           JOIN Trial ON trialId = Trial.id
           JOIN Experiment ON expId = Experiment.id
           JOIN Source ON source.id = sourceId
-          JOIN Criterion ON criterion = criterion.id
+          JOIN Criterion USING (critId)
           JOIN Run ON runId = run.id`;
 
 function filterCommitMessage(msg) {
@@ -113,7 +113,7 @@ export abstract class Database {
     this.statsValid = new TimedCacheValidity(cacheInvalidationDelay);
 
     this.queries.insertMeasurementBatchedN = `INSERT INTO Measurement
-         (runId, trialId, invocation, iteration, criterion, value)
+         (runId, trialId, invocation, iteration, critId, value)
        VALUES ${this.generateBatchInsert(Database.batchN, 6)}
        ON CONFLICT DO NOTHING`;
 
@@ -338,7 +338,7 @@ export abstract class Database {
             JOIN Experiment exp    ON exp.projectId = p.id
             JOIN Trial t           ON t.expId = exp.id
             JOIN Source src        ON t.sourceId = src.id
-            JOIN Environment env   ON t.envId = env.id
+            JOIN Environment env   USING (envId)
             JOIN Timeline tl       ON tl.trialId = t.id
             JOIN Run r             ON tl.runId = r.id
             WHERE p.id = $1
@@ -443,7 +443,7 @@ export abstract class Database {
     exp: Experiment
   ): Promise<Trial> {
     const e = data.env;
-    const cacheKey = `${e.userName}-${env.id}-${data.startTime}-${exp.id}`;
+    const cacheKey = `${e.userName}-${env.envid}-${data.startTime}-${exp.id}`;
 
     if (this.trials.has(cacheKey)) {
       return <Trial>this.trials.get(cacheKey);
@@ -458,7 +458,7 @@ export abstract class Database {
         text: `SELECT * FROM Trial
                   WHERE username = $1 AND envId = $2 AND
                         startTime = $3 AND expId = $4`,
-        values: [e.userName, env.id, data.startTime, exp.id]
+        values: [e.userName, env.envid, data.startTime, exp.id]
       },
       {
         name: 'insertTrial',
@@ -470,7 +470,7 @@ export abstract class Database {
           data.startTime,
           exp.id,
           e.userName,
-          env.id,
+          env.envid,
           source.id,
           e.denoise
         ]
@@ -749,7 +749,7 @@ export abstract class Database {
             FROM
               ${measurementDataTableJoins}
             WHERE (commitId = $2 OR commitid = $3) AND Experiment.projectId = $4
-              ORDER BY runId, expId, trialId, criterion, invocation, iteration`,
+              ORDER BY runId, expId, trialId, critId, invocation, iteration`,
       values: [minDistinctLength, commitHash1, commitHash2, projectId]
     });
     return result.rows;
@@ -768,7 +768,7 @@ export abstract class Database {
              FROM Source src
                 JOIN Trial t         ON t.sourceId = src.id
                 JOIN Experiment exp  ON exp.id = t.expId
-                JOIN Environment env ON t.envId = env.id
+                JOIN Environment env USING (envId)
              WHERE (commitId = $1 OR commitid = $2) AND exp.projectId = $3`,
       values: [commitHash1, commitHash2, projectId]
     });
@@ -787,7 +787,7 @@ export abstract class Database {
               WHERE
                 Experiment.id = $2
               ORDER BY
-                runId, trialId, cmdline, invocation, iteration, criterion`,
+                runId, trialId, cmdline, invocation, iteration, critId`,
       values: [6, expId]
     });
     return result.rows;
@@ -865,32 +865,32 @@ export abstract class Database {
     const results = await this.query({
       name: 'fetchAvailableMeasurements',
       text: `SELECT
-              runId, criterion, invocation as inv, max(iteration) as ite
+              runId, critId, invocation as inv, max(iteration) as ite
             FROM Measurement
             WHERE trialId = $1
-            GROUP BY runId, criterion, invocation
-            ORDER BY runId, inv, ite, criterion`,
+            GROUP BY runId, critId, invocation
+            ORDER BY runId, inv, ite, critId`,
       values: [trialId]
     });
 
     const measurements = {};
     for (const r of results.rows) {
-      // runid, criterion, inv, ite
+      // runid, critId, inv, ite
       if (!(r.runid in measurements)) {
         measurements[r.runid] = {};
       }
 
       const run = measurements[r.runid];
 
-      if (!(r.criterion in run)) {
-        run[r.criterion] = {};
+      if (!(r.critid in run)) {
+        run[r.critid] = {};
       }
 
-      const crit = run[r.criterion];
+      const crit = run[r.critid];
 
       assert(
         !(r.inv in crit),
-        `${r.runid}, ${r.criterion}, ${r.inv} in ${JSON.stringify(crit)}`
+        `${r.runid}, ${r.critid}, ${r.inv} in ${JSON.stringify(crit)}`
       );
       crit[r.inv] = r.ite;
     }
@@ -976,14 +976,19 @@ export abstract class Database {
         // batched inserts are much faster
         // so let's do this
         const criterion = <Criterion>criteria.get(m.c);
-        const values = [run.id, trial.id, d.in, d.it, criterion.id, m.v];
+        const values = [run.id, trial.id, d.in, d.it, criterion.critid, m.v];
         if (this.alreadyRecorded(availableMs, values)) {
           // then,just skip this one.
           continue;
         }
 
         if (this.timelineUpdater && criterion.name === TotalCriterion) {
-          this.timelineUpdater.addValue(run.id, trial.id, criterion.id, m.v);
+          this.timelineUpdater.addValue(
+            run.id,
+            trial.id,
+            criterion.critid,
+            m.v
+          );
         }
         batchedMs += 1;
         batchedValues = batchedValues.concat(values);
@@ -1106,7 +1111,7 @@ export abstract class Database {
     const q = {
       name: 'insertMeasurement10',
       text: `INSERT INTO Measurement
-          (runId, trialId, invocation, iteration, criterion, value)
+          (runId, trialId, invocation, iteration, critId, value)
         VALUES
           ($1, $2, $3, $4, $5, $6),
           ($7, $8, $9, $10, $11, $12),
@@ -1142,7 +1147,7 @@ export abstract class Database {
     const q = {
       name: 'insertMeasurement',
       text: `INSERT INTO Measurement
-          (runId, trialId, invocation, iteration, criterion, value)
+          (runId, trialId, invocation, iteration, critId, value)
         VALUES ($1, $2, $3, $4, $5, $6)
         ON CONFLICT DO NOTHING`,
       // [runId, trialId, invocation, iteration, critId, value];
@@ -1155,18 +1160,18 @@ export abstract class Database {
   public async recordTimeline(
     runId: number,
     trialId: number,
-    criterion: number,
+    critId: number,
     stats: SummaryStatistics
   ): Promise<number> {
     const q = {
       name: 'insertTimelineStats',
       text: `INSERT INTO timeline
-              (runid, trialid, criterion,
+              (runid, trialid, critid,
                minval, maxval, sdval, mean, median,
                numsamples, bci95low, bci95up)
              VALUES
               ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-             ON CONFLICT (runid, trialid, criterion) DO UPDATE
+             ON CONFLICT (runid, trialid, critid) DO UPDATE
              SET
                minval = EXCLUDED.minval,
                maxval = EXCLUDED.maxval,
@@ -1179,7 +1184,7 @@ export abstract class Database {
       values: [
         runId,
         trialId,
-        criterion,
+        critId,
         stats.min,
         stats.max,
         stats.standardDeviation,
@@ -1325,7 +1330,7 @@ export abstract class Database {
                 JOIN Experiment exp    ON exp.projectId = p.id
                 JOIN Trial t           ON t.expId = exp.id
                 JOIN Source src        ON t.sourceId = src.id
-                JOIN Environment env   ON t.envId = env.id
+                JOIN Environment env   USING (envId)
                 JOIN Timeline tl       ON tl.trialId = t.id
                 JOIN Run r             ON tl.runId = r.id
                 JOIN LatestExperiment le ON exp.id = le.expId
@@ -1506,7 +1511,7 @@ export abstract class Database {
         JOIN Experiment e  ON tr.expId = e.id
         JOIN Project    p  ON p.id = e.projectId
         JOIN Run        r  ON r.id = ti.runId
-        JOIN Criterion  c  ON ti.criterion = c.id
+        JOIN Criterion  c  USING (critId)
       WHERE
         s.branchOrTag = p.baseBranch AND
         p.id = $1   AND
@@ -1538,7 +1543,7 @@ export abstract class Database {
         JOIN Experiment e  ON tr.expId = e.id
         JOIN Project    p  ON p.id = e.projectId
         JOIN Run        r  ON r.id = ti.runId
-        JOIN Criterion  c  ON ti.criterion = c.id
+        JOIN Criterion  c  USING (critId)
       WHERE
         s.branchOrTag IN ($3, $4) AND
         p.name    = $5   AND

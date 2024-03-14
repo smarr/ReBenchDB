@@ -28,13 +28,13 @@ export interface Benchmark {
 }
 
 export interface SoftwareVersionInfo {
-  id: number;
+  softId: number;
   name: string;
   version: string;
 }
 
 export interface Environment {
-  id: number;
+  envid: number;
   hostname: string;
   ostype: string;
   memory: number;
@@ -50,7 +50,7 @@ export interface Unit {
 }
 
 export interface Criterion {
-  id: number;
+  critid: number;
   name: string;
   unit: string;
 }

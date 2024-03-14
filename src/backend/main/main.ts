@@ -75,7 +75,7 @@ export async function getLast100Measurements(
                       JOIN Trial t ON  m.trialId = t.id
                       JOIN Experiment e ON t.expId = e.id
                       JOIN Run r ON m.runId = r.id
-                      JOIN Criterion c ON m.criterion = c.id
+                      JOIN Criterion c USING (critId)
                     WHERE projectId = $1 AND
                       c.name = '${TotalCriterion}'
                     ORDER BY t.startTime, m.invocation, m.iteration

@@ -75,7 +75,7 @@ export function formatEnvironment(
   envId: number,
   environments: Environment[]
 ): string | undefined {
-  const env = environments.find((e) => e.id === envId);
+  const env = environments.find((e) => e.envid === envId);
   if (env === undefined) {
     return undefined;
   }

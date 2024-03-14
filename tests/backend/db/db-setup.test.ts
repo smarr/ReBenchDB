@@ -121,7 +121,7 @@ describe('Recording a ReBench execution data fragments', () => {
     const result = await db.recordTrial(basicTestData, env, exp);
     expect(e.userName).toEqual(result.username);
     expect(e.manualRun).toEqual(result.manualrun);
-    expect(env.id).toEqual(result.envid);
+    expect(env.envid).toEqual(result.envid);
   });
 
   it('should accept trial denoise info', async () => {
@@ -146,7 +146,7 @@ describe('Recording a ReBench execution data fragments', () => {
     const result = await db.recordTrial(testData, env, exp);
     expect(e.userName).toEqual(result.username);
     expect(e.manualRun).toEqual(result.manualrun);
-    expect(env.id).toEqual(result.envid);
+    expect(env.envid).toEqual(result.envid);
     expect(e.denoise.scaling_governor).toEqual('performance');
     expect(e.denoise).toEqual(result.denoise);
   });
@@ -165,8 +165,8 @@ describe('Recording a ReBench execution data fragments', () => {
     const criterion = await db.recordCriterion(c);
     expect(c.c).toEqual(criterion.name);
     expect(c.u).toEqual(criterion.unit);
-    expect(typeof criterion.id).toEqual('number');
-    expect(criterion.id).toBeGreaterThanOrEqual(0);
+    expect(typeof criterion.critid).toEqual('number');
+    expect(criterion.critid).toBeGreaterThanOrEqual(0);
   });
 });
 

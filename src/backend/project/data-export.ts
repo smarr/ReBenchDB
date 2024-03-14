@@ -110,7 +110,7 @@ export async function getDataOverview(
         FROM experiment exp
         JOIN Trial t         ON exp.id = t.expId
         JOIN Source src      ON t.sourceId = src.id
-        JOIN Environment env ON env.id = t.envId
+        JOIN Environment env USING (envId)
 
         --JOIN Measurement m   ON m.trialId = t.id
         JOIN Timeline tl     ON tl.trialId = t.id

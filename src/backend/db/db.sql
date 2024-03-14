@@ -1,7 +1,7 @@
 -- A specific software version, possibly used by multiple environments
 -- or versions of environments.
 CREATE TABLE SoftwareVersionInfo (
-  id serial primary key,
+  softId serial primary key,
   name varchar,
   version varchar,
   unique (name, version)
@@ -10,7 +10,7 @@ CREATE TABLE SoftwareVersionInfo (
 -- Identifies the specific state of an environment, including
 -- the relevant software versions.
 CREATE TABLE Environment (
-  id serial primary key,
+  envId serial primary key,
   hostname varchar unique,
   osType varchar,
   -- total number of bytes of memory provided by the system
@@ -26,7 +26,7 @@ CREATE TABLE Environment (
 -- This can be anything, from total time over memory consumption
 -- to other things or parts worth measuring.
 CREATE TABLE Criterion (
-  id serial primary key,
+  critId serial primary key,
   name varchar,
   unit varchar,
 
@@ -112,7 +112,7 @@ CREATE TABLE Trial (
   unique (username, envId, expId, startTime),
 
   foreign key (expId) references Experiment (id),
-  foreign key (envId) references Environment (id),
+  foreign key (envId) references Environment (envId),
   foreign key (sourceId) references Source (id)
 );
 
@@ -122,8 +122,8 @@ CREATE TABLE SoftwareUse (
   softId smallint,
   primary key (envId, softId),
 
-  foreign key (envId) references Environment (id),
-  foreign key (softId) references SoftwareVersionInfo (id)
+  foreign key (envId) references Environment (envId),
+  foreign key (softId) references SoftwareVersionInfo (softId)
 );
 
 -- A concrete execution of a benchmark by a specific executor.
@@ -152,16 +152,16 @@ CREATE TABLE Run (
 CREATE TABLE Measurement (
   runId smallint,
   trialId smallint,
-  criterion smallint,
+  critId smallint,
   invocation smallint,
   iteration smallint,
 
   value float4 NOT NULL,
 
-  primary key (iteration, invocation, runId, trialId, criterion),
+  primary key (iteration, invocation, runId, trialId, critId),
   foreign key (trialId) references Trial (id),
   foreign key (runId) references Run (id),
-  foreign key (criterion) references Criterion (id)
+  foreign key (critId) references Criterion (critId)
 );
 
 CREATE TABLE ProfileData (
@@ -181,7 +181,7 @@ CREATE TABLE ProfileData (
 CREATE TABLE Timeline (
   runId smallint,
   trialId smallint,
-  criterion smallint,
+  critId smallint,
 
   numSamples int,
 
@@ -195,8 +195,8 @@ CREATE TABLE Timeline (
   bci95low float4,
   bci95up  float4,
 
-  primary key (runId, trialId, criterion),
+  primary key (runId, trialId, critId),
   foreign key (trialId) references Trial (id),
   foreign key (runId) references Run (id),
-  foreign key (criterion) references Criterion (id)
+  foreign key (critId) references Criterion (critId)
 );
