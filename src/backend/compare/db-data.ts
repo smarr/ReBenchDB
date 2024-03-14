@@ -33,8 +33,6 @@ export function collateMeasurements(
 
   let lastInvocation = 0;
   let lastTrialId = -1;
-  let lastMeasurements: Measurements | null = null;
-  let lastValues: number[] = [];
 
   // the data here needs to be sorted by
   // runId, expId, trialId, criterion, invocation, iteration

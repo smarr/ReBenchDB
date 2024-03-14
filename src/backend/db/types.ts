@@ -1,5 +1,5 @@
-import { BenchmarkId } from '../../shared/api.js';
-import { SummaryStatistics } from '../../shared/stats.js';
+import type { BenchmarkId, ValuesPossiblyMissing } from '../../shared/api.js';
+import type { SummaryStatistics } from '../../shared/stats.js';
 
 export interface DatabaseConfig {
   user: string;
@@ -160,11 +160,10 @@ export interface MeasurementData {
   inputsize: string | null;
   extraargs: string | null;
   invocation: number;
-  iteration: number;
   warmup: number | null;
   criterion: string;
   unit: string;
-  value: number;
+  values: ValuesPossiblyMissing;
   envid: number;
 }
 
@@ -197,7 +196,7 @@ export interface Measurements {
    * Indexed first by invocation, than by iteration.
    * Example to get the value of 3 invocation and 5 iteration: `values[3][5]`.
    */
-  values: number[][];
+  values: ValuesPossiblyMissing[];
 
   envId: number;
   runId: number;

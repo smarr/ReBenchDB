@@ -260,13 +260,12 @@ describe('collateMeasurements()', () => {
         inputsize,
         extraargs: null,
 
-        iteration: 1,
         invocation: 1,
         warmup: null,
 
         criterion: 'total',
         unit: 'ms',
-        value: 1,
+        values: [1],
 
         envid: 1
       };
@@ -332,13 +331,12 @@ describe('collateMeasurements()', () => {
         inputsize,
         extraargs: null,
 
-        iteration: 1,
         invocation: 1,
         warmup: null,
 
         criterion: 'total',
         unit: 'ms',
-        value: 1,
+        values: [1],
 
         envid: 1
       };
@@ -405,13 +403,12 @@ describe('collateMeasurements()', () => {
         inputsize,
         extraargs: null,
 
-        iteration: 1,
         invocation: 1,
         warmup: null,
 
         criterion: 'total',
         unit: 'ms',
-        value: 1,
+        values: [1],
 
         envid: 1
       };
