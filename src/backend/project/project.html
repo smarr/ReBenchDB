@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <title>ReBench: {%= it.name %}</title>
-  <meta id="project-id" value="{%= it.id %}">
+  <meta id="project-id" value="{%= it.projectid %}">
   <meta id="project-showchanges" value="{%= it.showchanges%}">
   <meta id="project-allresults" value="{%= it.allresults%}">
   {%- include('header.html') %}
@@ -26,18 +26,18 @@
         <h5>Changes</h5>
         <div class="container min-padding"><div class="row">
           <div class="col-sm min-padding scroll-list">
-            <div class="list-group baseline" id="p{%= it.id %}-baseline"
+            <div class="list-group baseline" id="p{%= it.projectid %}-baseline"
               data-project-slug="{%= it.slug %}"></div>
           </div>
           <div class="col-sm min-padding scroll-list">
-            <div class="list-group change" id="p{%= it.id %}-change"></div>
+            <div class="list-group change" id="p{%= it.projectid %}-change"></div>
           </div>
         </div></div>
 
-        <a class="btn btn-primary" id="p{%= it.id %}-compare">Compare</a>
+        <a class="btn btn-primary" id="p{%= it.projectid %}-compare">Compare</a>
         {% } %}
         {% if (it.allresults) { %}
-        <div id="p{%= it.id %}-results" class="timeline-single"></div>
+        <div id="p{%= it.projectid %}-results" class="timeline-single"></div>
         {% } %}
         <div class="project-card-content"></div>
         <a href="/{%= it.slug %}/timeline">Timeline</a>

@@ -36,7 +36,7 @@ CREATE TABLE Criterion (
 -- Groups all the data that belongs together.
 -- ReBenchDB is meant to keep data for multiple experiments.
 CREATE TABLE Project (
-  id serial primary key,
+  projectId serial primary key,
   name varchar unique,
   slug varchar unique,
   description text,
@@ -80,7 +80,7 @@ CREATE TABLE Experiment (
 
   unique (projectId, name),
 
-  foreign key (projectId) references Project (id)
+  foreign key (projectId) references Project (projectId)
 );
 
 -- Is part of an experiment, and consists of measurements.

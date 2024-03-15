@@ -56,7 +56,7 @@ export interface Criterion {
 }
 
 export interface Project {
-  id: number;
+  projectid: number;
   name: string;
   slug: string;
   description: string;

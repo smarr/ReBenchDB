@@ -9,7 +9,7 @@ initJestMatchers();
 describe('renderProjectDataPage', () => {
   it('should render the page', () => {
     const project: Project = {
-      id: 1,
+      projectid: 1,
       name: 'Test Project',
       slug: 'test-project',
       description: 'desc',

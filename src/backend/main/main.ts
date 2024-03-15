@@ -160,14 +160,14 @@ export async function getChanges(
 ): Promise<{ changes: any[] }> {
   const result = await db.query({
     name: 'fetchAllChangesByProjectId',
-    text: ` SELECT commitId, branchOrTag, projectId, repoURL, commitMessage,
+    text: ` SELECT commitId, branchOrTag, p.projectId, repoURL, commitMessage,
                 max(startTime) as experimentTime
             FROM experiment
             JOIN Trial ON expId = experiment.id
             JOIN Source ON sourceId = source.id
-            JOIN Project ON projectId = project.id
-            WHERE project.id = $1
-            GROUP BY commitId, branchOrTag, projectId, repoURL, commitMessage
+            JOIN Project p USING (projectId)
+            WHERE p.projectId = $1
+            GROUP BY commitId, branchOrTag, p.projectId, repoURL, commitMessage
             ORDER BY max(startTime) DESC`,
     values: [projectId]
   });

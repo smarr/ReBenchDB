@@ -81,7 +81,7 @@ describe('Test with basic test data loaded', () => {
     const projects = await db.getAllProjects();
     expect(projects).toHaveLength(1);
     expect(projects[0].name).toEqual('Small Example Project');
-    expect(projects[0].id).toEqual(1);
+    expect(projects[0].projectid).toEqual(1);
   });
 
   it('Should get results', async () => {

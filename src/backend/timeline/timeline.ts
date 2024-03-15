@@ -51,7 +51,10 @@ export async function renderTimeline(
   if (project) {
     ctx.body = timelineTpl({
       project,
-      benchmarks: await getLatestBenchmarksForTimelineView(project.id, db)
+      benchmarks: await getLatestBenchmarksForTimelineView(
+        project.projectid,
+        db
+      )
     });
     ctx.type = 'html';
   } else {

@@ -25,7 +25,7 @@
 
   <div id="projects">
     {% for (const p of it.projects) { %}
-    <div class="card project-data" data-id="{%= p.id %}" data-showchanges="{%= p.showchanges %}" data-allresults="{%= p.allresults %}">
+    <div class="card project-data" data-id="{%= p.projectid %}" data-showchanges="{%= p.showchanges %}" data-allresults="{%= p.allresults %}">
       <h5 class="card-header" id="{%= p.slug %}"><a
         href="/{%= p.slug %}/data">{%= p.name %}</a></h5>
       <div class="card-body">
@@ -33,18 +33,18 @@
         <h5>Changes</h5>
         <div class="container min-padding"><div class="row">
           <div class="col-sm min-padding scroll-list">
-            <div class="list-group baseline" id="p{%= p.id %}-baseline"
+            <div class="list-group baseline" id="p{%= p.projectid %}-baseline"
               data-project-slug="{%= p.slug %}"></div>
           </div>
           <div class="col-sm min-padding scroll-list">
-            <div class="list-group change" id="p{%= p.id %}-change"></div>
+            <div class="list-group change" id="p{%= p.projectid %}-change"></div>
           </div>
         </div></div>
 
-        <a class="btn btn-primary" id="p{%= p.id %}-compare">Compare</a>
+        <a class="btn btn-primary" id="p{%= p.projectid %}-compare">Compare</a>
         {% }
            if (p.allresults) { %}
-        <div id="p{%= p.id %}-results" class="timeline-single"></div>
+        <div id="p{%= p.projectid %}-results" class="timeline-single"></div>
         {% } %}
         <a href="/{%= p.slug %}/timeline">Timeline</a>
       </div>

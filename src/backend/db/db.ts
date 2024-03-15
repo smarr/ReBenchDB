@@ -210,13 +210,13 @@ export abstract class Database {
     const result = await this.query({
       name: 'fetchRevisionsInProjectByCommitIds',
       text: `SELECT DISTINCT
-          p.id as projectId,
+          p.projectId,
           e.name,
           s.id as sourceId,
           s.commitid, s.repoUrl, s.branchOrTag,
           s.commitMessage, s.authorName
         FROM Project p
-          JOIN Experiment e ON e.projectId = p.id
+          JOIN Experiment e USING (projectId)
           JOIN Trial t ON e.id = t.expId
           JOIN Source s ON t.sourceId = s.id
         WHERE lower(p.slug) = lower($1)
@@ -335,13 +335,13 @@ export abstract class Database {
               r.suite as suiteName,
               r.executor as execName
             FROM Project p
-            JOIN Experiment exp    ON exp.projectId = p.id
+            JOIN Experiment exp    USING (projectId)
             JOIN Trial t           ON t.expId = exp.id
             JOIN Source src        ON t.sourceId = src.id
             JOIN Environment env   USING (envId)
             JOIN Timeline tl       ON tl.trialId = t.id
             JOIN Run r             ON tl.runId = r.id
-            WHERE p.id = $1
+            WHERE p.projectId = $1
           ORDER BY suiteName, execName, benchmark, hostname`,
       values: [projectId]
     });
@@ -519,7 +519,7 @@ export abstract class Database {
     const q = {
       name: 'fetchProjectByExpId',
       text: `SELECT p.* FROM Project p
-              JOIN Experiment e ON e.projectId = p.id
+              JOIN Experiment e USING (projectId)
               WHERE e.id = $1`,
       values: [expId]
     };
@@ -551,7 +551,7 @@ export abstract class Database {
   public async getProject(projectId: number): Promise<Project | undefined> {
     const result = await this.query({
       name: 'fetchProjectById',
-      text: 'SELECT * FROM Project WHERE id = $1',
+      text: 'SELECT * FROM Project WHERE projectId = $1',
       values: [projectId]
     });
 
@@ -585,7 +585,7 @@ export abstract class Database {
               FROM Source s
                 JOIN Trial t ON s.id = t.sourceId
                 JOIN Experiment e ON e.id = t.expId
-                JOIN Project p ON p.id = e.projectId
+                JOIN Project p USING (projectId)
               WHERE p.name = $1 AND
                 s.branchOrTag = p.baseBranch AND
                 s.commitId <> $2 AND
@@ -613,7 +613,7 @@ export abstract class Database {
               FROM Source s
                 JOIN Trial t       ON t.sourceId = s.id
                 JOIN Experiment e  ON e.id = t.expId
-                JOIN Project p     ON p.id = e.projectId
+                JOIN Project p     USING (projectId)
               WHERE p.name = $1 AND s.id = $2
               LIMIT 1`,
       values: [projectSlug, sourceId]
@@ -636,7 +636,7 @@ export abstract class Database {
               FROM Source s
                 JOIN Trial t ON s.id = t.sourceId
                 JOIN Experiment e ON e.id = t.expId
-                JOIN Project p ON p.id = e.projectId
+                JOIN Project p USING (projectId)
               WHERE p.name = $1 AND e.name = $2`,
       values: [projectName, experimentName]
     });
@@ -663,13 +663,13 @@ export abstract class Database {
       {
         name: 'fetchExperimentByProjectIdAndName',
         text: 'SELECT * FROM Experiment WHERE projectId = $1 AND name = $2',
-        values: [project.id, data.experimentName]
+        values: [project.projectid, data.experimentName]
       },
       {
         name: 'insertExperiment',
         text: `INSERT INTO Experiment (name, projectId, description)
                   VALUES ($1, $2, $3) RETURNING *`,
-        values: [data.experimentName, project.id, data.experimentDesc]
+        values: [data.experimentName, project.projectid, data.experimentDesc]
       }
     );
   }
@@ -686,7 +686,7 @@ export abstract class Database {
     const result = await this.query({
       name: 'fetchExperimentByProjectNameExpName',
       text: `SELECT e.* FROM Experiment e
-              JOIN Project p ON p.id = e.projectId
+              JOIN Project p USING (projectId)
               WHERE p.name = $1 AND e.name = $2`,
       values: [projectName, experimentName]
     });
@@ -712,12 +712,12 @@ export abstract class Database {
       text: `SELECT
                   exp.name as expName,
                   exp.description as expDesc,
-                  p.id as pId,
+                  p.projectId,
                   p.name as pName,
                   p.description as pDesc
                 FROM
                   Experiment exp
-                JOIN Project p ON exp.projectId = p.id
+                JOIN Project p USING (projectId)
 
                 WHERE exp.id = $1 AND
                   lower(p.slug) = lower($2)`,
@@ -731,7 +731,7 @@ export abstract class Database {
       project: result.rows[0].pname,
       expName: result.rows[0].expname,
       expDesc: result.rows[0].expDesc,
-      projectId: result.rows[0].pid,
+      projectId: result.rows[0].projectid,
       projectDesc: result.rows[0].pdesc
     };
   }
@@ -1232,7 +1232,7 @@ export abstract class Database {
              FROM Source s
                JOIN Trial      tr ON tr.sourceId = s.id
                JOIN Experiment e  ON tr.expId = e.id
-               JOIN Project    p  ON p.id = e.projectId
+               JOIN Project    p  USING (projectId)
              WHERE
                p.name = $1 AND
                (s.commitid = $2 OR s.commitid = $3)`,
@@ -1307,10 +1307,10 @@ export abstract class Database {
       text: `WITH LatestExperiment AS (
                 SELECT exp.id as expId, max(t.startTime) as newest
                 FROM Project p
-                  JOIN Experiment exp    ON exp.projectId = p.id
+                  JOIN Experiment exp    USING (projectId)
                   JOIN Trial t           ON t.expId = exp.id
                   JOIN Source src        ON t.sourceId = src.id
-                WHERE p.id = $1 AND
+                WHERE p.projectId = $1 AND
                   p.baseBranch = src.branchOrTag
                 GROUP BY exp.id
                 ORDER BY newest DESC
@@ -1327,7 +1327,7 @@ export abstract class Database {
                 r.inputSize,
                 r.extraArgs
               FROM Project p
-                JOIN Experiment exp    ON exp.projectId = p.id
+                JOIN Experiment exp    USING (projectId)
                 JOIN Trial t           ON t.expId = exp.id
                 JOIN Source src        ON t.sourceId = src.id
                 JOIN Environment env   USING (envId)
@@ -1335,7 +1335,7 @@ export abstract class Database {
                 JOIN Run r             ON tl.runId = r.id
                 JOIN LatestExperiment le ON exp.id = le.expId
               WHERE
-                p.id = $1 AND
+                p.projectId = $1 AND
                 p.baseBranch = src.branchOrTag
               ORDER BY suiteName, execName, benchmark, cmdline;`,
       values: [projectId]
@@ -1509,12 +1509,12 @@ export abstract class Database {
         JOIN Trial      tr ON tr.id = ti.trialId
         JOIN Source     s  ON tr.sourceId = s.id
         JOIN Experiment e  ON tr.expId = e.id
-        JOIN Project    p  ON p.id = e.projectId
+        JOIN Project    p  USING (projectId)
         JOIN Run        r  ON r.id = ti.runId
         JOIN Criterion  c  USING (critId)
       WHERE
         s.branchOrTag = p.baseBranch AND
-        p.id = $1   AND
+        p.projectId = $1   AND
         r.id = $2   AND
         c.name   = '${TotalCriterion}'
       ORDER BY tr.startTime ASC;
@@ -1541,7 +1541,7 @@ export abstract class Database {
         JOIN Trial      tr ON tr.id = ti.trialId
         JOIN Source     s  ON tr.sourceId = s.id
         JOIN Experiment e  ON tr.expId = e.id
-        JOIN Project    p  ON p.id = e.projectId
+        JOIN Project    p  USING (projectId)
         JOIN Run        r  ON r.id = ti.runId
         JOIN Criterion  c  USING (critId)
       WHERE
