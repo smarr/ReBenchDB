@@ -763,7 +763,7 @@ export abstract class Database {
     const result = await this.query({
       name: 'fetchEnvForComparison',
       text: `SELECT
-                env.id as id, env.hostname, env.ostype, env.memory,
+                env.envid, env.hostname, env.ostype, env.memory,
                 env.cpu, env.clockspeed, note
              FROM Source src
                 JOIN Trial t         ON t.sourceId = src.id
