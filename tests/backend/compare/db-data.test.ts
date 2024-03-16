@@ -297,7 +297,7 @@ describe('collateMeasurements()', () => {
     });
   });
 
-  describe('Needs to combine data from different trials but same runId', () => {
+  describe('needs to combine data from different trials but same runId', () => {
     function createMeasure(
       runid: number,
       trialid: number,
@@ -368,7 +368,7 @@ describe('collateMeasurements()', () => {
     );
   });
 
-  describe('Needs to combine data from different expIds but same runId', () => {
+  describe('needs to combine data from different expIds but same runId', () => {
     function createMeasure(
       expid: number,
       runid: number,

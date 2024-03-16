@@ -117,7 +117,7 @@ export const siteConfig = {
     process.env.GITHUB_PK || 'rebenchdb.2020-08-11.private-key.pem',
 
   canShowWarmup: (data: ValuesPossiblyMissing[]): boolean => {
-    return data.some((ms) => ms.length >= 5);
+    return data.some((ms) => ms != null && ms.length >= 5);
   },
   inlinePlotCriterion: 'total'
 };
