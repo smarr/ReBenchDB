@@ -80,7 +80,7 @@ export interface Source {
 }
 
 export interface Experiment {
-  id: number;
+  expid: number;
 
   name: string;
   projectid: number;

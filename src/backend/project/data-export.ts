@@ -92,7 +92,7 @@ export async function getDataOverview(
     name: 'fetchDataOverview',
     text: `
         SELECT
-          exp.id as expId, exp.name, exp.description,
+          exp.expId, exp.name, exp.description,
           min(t.startTime) as minStartTime,
           max(t.endTime) as maxEndTime,
           ARRAY_TO_STRING(ARRAY_AGG(DISTINCT t.username), ', ') as users,
@@ -108,7 +108,7 @@ export async function getDataOverview(
           SUM(tl.numSamples) as measurements,
           count(DISTINCT tl.runId) as runs
         FROM experiment exp
-        JOIN Trial t         ON exp.id = t.expId
+        JOIN Trial t         USING (expId)
         JOIN Source src      USING (sourceId)
         JOIN Environment env USING (envId)
 
@@ -117,7 +117,7 @@ export async function getDataOverview(
 
         WHERE exp.projectId = $1
 
-        GROUP BY exp.name, exp.description, exp.id
+        GROUP BY exp.name, exp.description, exp.expId
         ORDER BY minStartTime DESC;`,
     values: [projectId]
   });

@@ -71,7 +71,7 @@ CREATE TABLE Source (
 -- To identify experiments, we use a name.
 -- Optionally, a more elaborated description can be provided for documentation.
 CREATE TABLE Experiment (
-  id serial primary key,
+  expId serial primary key,
 
   name varchar NOT NULL,
   projectId smallint,
@@ -111,7 +111,7 @@ CREATE TABLE Trial (
   -- functionally dependent on startTime in the intended scenarios.
   unique (username, envId, expId, startTime),
 
-  foreign key (expId) references Experiment (id),
+  foreign key (expId) references Experiment (expId),
   foreign key (envId) references Environment (envId),
   foreign key (sourceId) references Source (sourceId)
 );

@@ -61,7 +61,7 @@ const measurementDataColumns = `
 const measurementDataTableJoins = `
         Measurement
           JOIN Trial ON trialId = Trial.id
-          JOIN Experiment ON expId = Experiment.id
+          JOIN Experiment USING (expId)
           JOIN Source    USING (sourceId)
           JOIN Criterion USING (critId)
           JOIN Run ON runId = run.id`;
@@ -217,7 +217,7 @@ export abstract class Database {
           s.commitMessage, s.authorName
         FROM Project p
           JOIN Experiment e USING (projectId)
-          JOIN Trial t ON e.id = t.expId
+          JOIN Trial t      USING (expId)
           JOIN Source s     USING (sourceId)
         WHERE lower(p.slug) = lower($1)
           AND s.commitid = $2
@@ -336,7 +336,7 @@ export abstract class Database {
               r.executor as execName
             FROM Project p
             JOIN Experiment exp    USING (projectId)
-            JOIN Trial t           ON t.expId = exp.id
+            JOIN Trial t           USING (expId)
             JOIN Source src        USING (sourceId)
             JOIN Environment env   USING (envId)
             JOIN Timeline tl       ON tl.trialId = t.id
@@ -443,7 +443,8 @@ export abstract class Database {
     exp: Experiment
   ): Promise<Trial> {
     const e = data.env;
-    const cacheKey = `${e.userName}-${env.envid}-${data.startTime}-${exp.id}`;
+    // eslint-disable-next-line max-len
+    const cacheKey = `${e.userName}-${env.envid}-${data.startTime}-${exp.expid}`;
 
     if (this.trials.has(cacheKey)) {
       return <Trial>this.trials.get(cacheKey);
@@ -458,7 +459,7 @@ export abstract class Database {
         text: `SELECT * FROM Trial
                   WHERE username = $1 AND envId = $2 AND
                         startTime = $3 AND expId = $4`,
-        values: [e.userName, env.envid, data.startTime, exp.id]
+        values: [e.userName, env.envid, data.startTime, exp.expid]
       },
       {
         name: 'insertTrial',
@@ -468,7 +469,7 @@ export abstract class Database {
         values: [
           e.manualRun,
           data.startTime,
-          exp.id,
+          exp.expid,
           e.userName,
           env.envid,
           source.sourceid,
@@ -584,13 +585,13 @@ export abstract class Database {
       text: `SELECT DISTINCT s.*, min(t.startTime) as firstStart
               FROM Source s
                 JOIN Trial t      USING (sourceId)
-                JOIN Experiment e ON e.id = t.expId
+                JOIN Experiment e USING (expId)
                 JOIN Project p    USING (projectId)
               WHERE p.name = $1 AND
                 s.branchOrTag = p.baseBranch AND
                 s.commitId <> $2 AND
                 p.baseBranch IS NOT NULL
-              GROUP BY e.id, s.sourceId
+              GROUP BY e.expId, s.sourceId
               ORDER BY firstStart DESC
               LIMIT 1`,
       values: [projectName, currentCommitId]
@@ -612,7 +613,7 @@ export abstract class Database {
       text: `SELECT DISTINCT s.*
               FROM Source s
                 JOIN Trial t       USING (sourceId)
-                JOIN Experiment e  ON e.id = t.expId
+                JOIN Experiment e  USING (expId)
                 JOIN Project p     USING (projectId)
               WHERE p.name = $1 AND s.id = $2
               LIMIT 1`,
@@ -634,9 +635,9 @@ export abstract class Database {
       name: 'fetchSourceByProjectNameExpName',
       text: `SELECT DISTINCT s.*
               FROM Source s
-                JOIN Trial t   USING (sourceId)
-                JOIN Experiment e ON e.id = t.expId
-                JOIN Project p USING (projectId)
+                JOIN Trial t      USING (sourceId)
+                JOIN Experiment e USING (expId)
+                JOIN Project p    USING (projectId)
               WHERE p.name = $1 AND e.name = $2`,
       values: [projectName, experimentName]
     });
@@ -767,7 +768,7 @@ export abstract class Database {
                 env.cpu, env.clockspeed, note
              FROM Source src
                 JOIN Trial t         USING (sourceId)
-                JOIN Experiment exp  ON exp.id = t.expId
+                JOIN Experiment exp  USING (expId)
                 JOIN Environment env USING (envId)
              WHERE (commitId = $1 OR commitid = $2) AND exp.projectId = $3`,
       values: [commitHash1, commitHash2, projectId]
@@ -824,7 +825,7 @@ export abstract class Database {
       throw new Error(`Could not record completion without endTime`);
     }
 
-    await this.recordExperimentCompletion(exp.id, data.endTime);
+    await this.recordExperimentCompletion(exp.expid, data.endTime);
     return exp;
   }
 
@@ -1231,7 +1232,7 @@ export abstract class Database {
       text: `SELECT DISTINCT branchOrTag, s.commitId
              FROM Source s
                JOIN Trial      tr USING (sourceId)
-               JOIN Experiment e  ON tr.expId = e.id
+               JOIN Experiment e  USING (expId)
                JOIN Project    p  USING (projectId)
              WHERE
                p.name = $1 AND
@@ -1284,8 +1285,8 @@ export abstract class Database {
                 commitId, runId
               FROM ProfileData pd
                 JOIN Trial ON pd.trialId = Trial.id
-                JOIN Experiment e ON trial.expId = e.id
-                JOIN Source USING (sourceId)
+                JOIN Experiment e USING (expId)
+                JOIN Source       USING (sourceId)
                 JOIN Run ON runId = run.id
               WHERE
                 (commitId = $1 OR commitId = $2)
@@ -1305,14 +1306,14 @@ export abstract class Database {
     const q = {
       name: 'fetchLatestBenchmarksForProject',
       text: `WITH LatestExperiment AS (
-                SELECT exp.id as expId, max(t.startTime) as newest
+                SELECT exp.expId, max(t.startTime) as newest
                 FROM Project p
                   JOIN Experiment exp    USING (projectId)
-                  JOIN Trial t           ON t.expId = exp.id
+                  JOIN Trial t           USING (expId)
                   JOIN Source src        USING (sourceId)
                 WHERE p.projectId = $1 AND
                   p.baseBranch = src.branchOrTag
-                GROUP BY exp.id
+                GROUP BY exp.expId
                 ORDER BY newest DESC
                 LIMIT 1
               )
@@ -1328,12 +1329,12 @@ export abstract class Database {
                 r.extraArgs
               FROM Project p
                 JOIN Experiment exp    USING (projectId)
-                JOIN Trial t           ON t.expId = exp.id
+                JOIN Trial t           USING (expId)
                 JOIN Source src        USING (sourceId)
                 JOIN Environment env   USING (envId)
                 JOIN Timeline tl       ON tl.trialId = t.id
                 JOIN Run r             ON tl.runId = r.id
-                JOIN LatestExperiment le ON exp.id = le.expId
+                JOIN LatestExperiment le USING (expId)
               WHERE
                 p.projectId = $1 AND
                 p.baseBranch = src.branchOrTag
@@ -1508,7 +1509,7 @@ export abstract class Database {
       FROM Timeline ti
         JOIN Trial      tr ON tr.id = ti.trialId
         JOIN Source     s  USING (sourceId)
-        JOIN Experiment e  ON tr.expId = e.id
+        JOIN Experiment e  USING (expId)
         JOIN Project    p  USING (projectId)
         JOIN Run        r  ON r.id = ti.runId
         JOIN Criterion  c  USING (critId)
@@ -1540,7 +1541,7 @@ export abstract class Database {
       FROM Timeline ti
         JOIN Trial      tr ON tr.id = ti.trialId
         JOIN Source     s  USING (sourceId)
-        JOIN Experiment e  ON tr.expId = e.id
+        JOIN Experiment e  USING (expId)
         JOIN Project    p  USING (projectId)
         JOIN Run        r  ON r.id = ti.runId
         JOIN Criterion  c  USING (critId)

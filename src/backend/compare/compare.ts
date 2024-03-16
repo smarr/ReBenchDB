@@ -100,7 +100,7 @@ async function getMeasurements(
               Measurement
               JOIN Trial ON trialId = Trial.id
               JOIN Source USING (sourceId)
-              JOIN Experiment ON Trial.expId = Experiment.id
+              JOIN Experiment USING (expId)
               JOIN Criterion ON criterion = criterion.id
               JOIN Run ON runId = run.id
               JOIN Project ON Project.id = Experiment.projectId

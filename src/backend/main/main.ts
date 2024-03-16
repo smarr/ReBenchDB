@@ -73,7 +73,7 @@ export async function getLast100Measurements(
                     )
                     FROM Measurement m
                       JOIN Trial t ON  m.trialId = t.id
-                      JOIN Experiment e ON t.expId = e.id
+                      JOIN Experiment e USING (expId)
                       JOIN Run r ON m.runId = r.id
                       JOIN Criterion c USING (critId)
                     WHERE projectId = $1 AND
@@ -163,8 +163,8 @@ export async function getChanges(
     text: ` SELECT commitId, branchOrTag, p.projectId, repoURL, commitMessage,
                 max(startTime) as experimentTime
             FROM experiment
-            JOIN Trial ON expId = experiment.id
-            JOIN Source USING (sourceId)
+            JOIN Trial     USING (expId)
+            JOIN Source    USING (sourceId)
             JOIN Project p USING (projectId)
             WHERE p.projectId = $1
             GROUP BY commitId, branchOrTag, p.projectId, repoURL, commitMessage

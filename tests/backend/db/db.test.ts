@@ -60,15 +60,15 @@ describe('Record Trial', () => {
   it('but, recording the same for another experiment, should', async () => {
     basicTestData.experimentName += ' 2';
     const exp2 = await db.recordExperiment(basicTestData);
-    expect(exp2.id).not.toEqual(exp.id);
+    expect(exp2.expid).not.toEqual(exp.expid);
 
     const result = await db.recordTrial(basicTestData, env, exp2);
-    expect(result.expid).toEqual(exp2.id);
+    expect(result.expid).toEqual(exp2.expid);
 
     const tResult = await db.query({ text: 'SELECT * FROM Trial' });
     expect(tResult.rowCount).toEqual(2);
-    expect(tResult.rows[0].expid).toEqual(exp.id);
-    expect(tResult.rows[1].expid).toEqual(exp2.id);
+    expect(tResult.rows[0].expid).toEqual(exp.expid);
+    expect(tResult.rows[1].expid).toEqual(exp2.expid);
   });
 });
 
