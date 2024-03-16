@@ -164,7 +164,7 @@ export async function getChanges(
                 max(startTime) as experimentTime
             FROM experiment
             JOIN Trial ON expId = experiment.id
-            JOIN Source ON sourceId = source.id
+            JOIN Source USING (sourceId)
             JOIN Project p USING (projectId)
             WHERE p.projectId = $1
             GROUP BY commitId, branchOrTag, p.projectId, repoURL, commitMessage

@@ -109,7 +109,7 @@ export async function getDataOverview(
           count(DISTINCT tl.runId) as runs
         FROM experiment exp
         JOIN Trial t         ON exp.id = t.expId
-        JOIN Source src      ON t.sourceId = src.id
+        JOIN Source src      USING (sourceId)
         JOIN Environment env USING (envId)
 
         --JOIN Measurement m   ON m.trialId = t.id

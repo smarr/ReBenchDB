@@ -62,7 +62,7 @@ const measurementDataTableJoins = `
         Measurement
           JOIN Trial ON trialId = Trial.id
           JOIN Experiment ON expId = Experiment.id
-          JOIN Source ON source.id = sourceId
+          JOIN Source    USING (sourceId)
           JOIN Criterion USING (critId)
           JOIN Run ON runId = run.id`;
 
@@ -212,13 +212,13 @@ export abstract class Database {
       text: `SELECT DISTINCT
           p.projectId,
           e.name,
-          s.id as sourceId,
+          s.sourceId,
           s.commitid, s.repoUrl, s.branchOrTag,
           s.commitMessage, s.authorName
         FROM Project p
           JOIN Experiment e USING (projectId)
           JOIN Trial t ON e.id = t.expId
-          JOIN Source s ON t.sourceId = s.id
+          JOIN Source s     USING (sourceId)
         WHERE lower(p.slug) = lower($1)
           AND s.commitid = $2
           OR s.commitid = $3`,
@@ -337,7 +337,7 @@ export abstract class Database {
             FROM Project p
             JOIN Experiment exp    USING (projectId)
             JOIN Trial t           ON t.expId = exp.id
-            JOIN Source src        ON t.sourceId = src.id
+            JOIN Source src        USING (sourceId)
             JOIN Environment env   USING (envId)
             JOIN Timeline tl       ON tl.trialId = t.id
             JOIN Run r             ON tl.runId = r.id
@@ -471,7 +471,7 @@ export abstract class Database {
           exp.id,
           e.userName,
           env.envid,
-          source.id,
+          source.sourceid,
           e.denoise
         ]
       }
@@ -583,14 +583,14 @@ export abstract class Database {
       name: 'fetchBaselineCommit',
       text: `SELECT DISTINCT s.*, min(t.startTime) as firstStart
               FROM Source s
-                JOIN Trial t ON s.id = t.sourceId
+                JOIN Trial t      USING (sourceId)
                 JOIN Experiment e ON e.id = t.expId
-                JOIN Project p USING (projectId)
+                JOIN Project p    USING (projectId)
               WHERE p.name = $1 AND
                 s.branchOrTag = p.baseBranch AND
                 s.commitId <> $2 AND
                 p.baseBranch IS NOT NULL
-              GROUP BY e.id, s.id
+              GROUP BY e.id, s.sourceId
               ORDER BY firstStart DESC
               LIMIT 1`,
       values: [projectName, currentCommitId]
@@ -611,7 +611,7 @@ export abstract class Database {
       name: 'get-source-by-slug-id',
       text: `SELECT DISTINCT s.*
               FROM Source s
-                JOIN Trial t       ON t.sourceId = s.id
+                JOIN Trial t       USING (sourceId)
                 JOIN Experiment e  ON e.id = t.expId
                 JOIN Project p     USING (projectId)
               WHERE p.name = $1 AND s.id = $2
@@ -634,7 +634,7 @@ export abstract class Database {
       name: 'fetchSourceByProjectNameExpName',
       text: `SELECT DISTINCT s.*
               FROM Source s
-                JOIN Trial t ON s.id = t.sourceId
+                JOIN Trial t   USING (sourceId)
                 JOIN Experiment e ON e.id = t.expId
                 JOIN Project p USING (projectId)
               WHERE p.name = $1 AND e.name = $2`,
@@ -766,7 +766,7 @@ export abstract class Database {
                 env.envid, env.hostname, env.ostype, env.memory,
                 env.cpu, env.clockspeed, note
              FROM Source src
-                JOIN Trial t         ON t.sourceId = src.id
+                JOIN Trial t         USING (sourceId)
                 JOIN Experiment exp  ON exp.id = t.expId
                 JOIN Environment env USING (envId)
              WHERE (commitId = $1 OR commitid = $2) AND exp.projectId = $3`,
@@ -1230,7 +1230,7 @@ export abstract class Database {
       name: 'fetchBranchNamesForChange',
       text: `SELECT DISTINCT branchOrTag, s.commitId
              FROM Source s
-               JOIN Trial      tr ON tr.sourceId = s.id
+               JOIN Trial      tr USING (sourceId)
                JOIN Experiment e  ON tr.expId = e.id
                JOIN Project    p  USING (projectId)
              WHERE
@@ -1285,7 +1285,7 @@ export abstract class Database {
               FROM ProfileData pd
                 JOIN Trial ON pd.trialId = Trial.id
                 JOIN Experiment e ON trial.expId = e.id
-                JOIN Source ON source.id = sourceId
+                JOIN Source USING (sourceId)
                 JOIN Run ON runId = run.id
               WHERE
                 (commitId = $1 OR commitId = $2)
@@ -1309,7 +1309,7 @@ export abstract class Database {
                 FROM Project p
                   JOIN Experiment exp    USING (projectId)
                   JOIN Trial t           ON t.expId = exp.id
-                  JOIN Source src        ON t.sourceId = src.id
+                  JOIN Source src        USING (sourceId)
                 WHERE p.projectId = $1 AND
                   p.baseBranch = src.branchOrTag
                 GROUP BY exp.id
@@ -1329,7 +1329,7 @@ export abstract class Database {
               FROM Project p
                 JOIN Experiment exp    USING (projectId)
                 JOIN Trial t           ON t.expId = exp.id
-                JOIN Source src        ON t.sourceId = src.id
+                JOIN Source src        USING (sourceId)
                 JOIN Environment env   USING (envId)
                 JOIN Timeline tl       ON tl.trialId = t.id
                 JOIN Run r             ON tl.runId = r.id
@@ -1503,11 +1503,11 @@ export abstract class Database {
       SELECT
         extract(epoch from tr.startTime at time zone 'UTC')::int as startTime,
         s.branchOrTag as branch,
-        s.id as sourceId,
+        s.sourceId,
         ti.median, ti.bci95low, ti.bci95up
       FROM Timeline ti
         JOIN Trial      tr ON tr.id = ti.trialId
-        JOIN Source     s  ON tr.sourceId = s.id
+        JOIN Source     s  USING (sourceId)
         JOIN Experiment e  ON tr.expId = e.id
         JOIN Project    p  USING (projectId)
         JOIN Run        r  ON r.id = ti.runId
@@ -1535,11 +1535,11 @@ export abstract class Database {
       SELECT
         extract(epoch from tr.startTime at time zone 'UTC')::int as startTime,
         s.branchOrTag as branch, s.commitid IN ($1, $2) as isCurrent,
-        s.id as sourceId,
+        s.sourceId,
         ti.median, ti.bci95low, ti.bci95up
       FROM Timeline ti
         JOIN Trial      tr ON tr.id = ti.trialId
-        JOIN Source     s  ON tr.sourceId = s.id
+        JOIN Source     s  USING (sourceId)
         JOIN Experiment e  ON tr.expId = e.id
         JOIN Project    p  USING (projectId)
         JOIN Run        r  ON r.id = ti.runId

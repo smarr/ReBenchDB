@@ -55,7 +55,7 @@ CREATE TABLE Project (
 -- Identifies the specific state of the source, the code, on which
 -- an experiment and its measurements are based.
 CREATE TABLE Source (
-  id serial primary key,
+  sourceId serial primary key,
   repoURL varchar,
   branchOrTag varchar,
   commitId varchar unique,
@@ -113,7 +113,7 @@ CREATE TABLE Trial (
 
   foreign key (expId) references Experiment (id),
   foreign key (envId) references Environment (envId),
-  foreign key (sourceId) references Source (id)
+  foreign key (sourceId) references Source (sourceId)
 );
 
 -- Documents the software versions used by a specific environment.

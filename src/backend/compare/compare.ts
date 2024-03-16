@@ -45,7 +45,7 @@ async function getProfile(
             invocation, numIterations, warmup, value as profile
           FROM ProfileData
             JOIN Trial ON trialId = Trial.id
-            JOIN Source ON source.id = trial.sourceId
+            JOIN Source USING (sourceId)
             JOIN Run ON runId = run.id
           WHERE runId = $1 AND source.commitId = $2`,
     values: [runId, commitId]
@@ -99,7 +99,7 @@ async function getMeasurements(
             FROM
               Measurement
               JOIN Trial ON trialId = Trial.id
-              JOIN Source ON source.id = trial.sourceId
+              JOIN Source USING (sourceId)
               JOIN Experiment ON Trial.expId = Experiment.id
               JOIN Criterion ON criterion = criterion.id
               JOIN Run ON runId = run.id
