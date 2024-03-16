@@ -22,3 +22,12 @@ export function reportConnectionRefused(e: any): void {
     );
   }
 }
+
+export function reportDatabaseInUse(e: any): void {
+  log.error(e.message);
+  log.error(e.detail);
+}
+
+export function reportOtherErrors(e: any): void {
+  log.error('benchmark failed unexpectedly', e);
+}

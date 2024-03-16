@@ -19,7 +19,11 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-import { reportConnectionRefused } from '../shared/errors.js';
+import {
+  reportConnectionRefused,
+  reportDatabaseInUse,
+  reportOtherErrors
+} from '../shared/errors.js';
 import type { Benchmark } from './benchmark.js';
 
 class IncorrectResultError extends Error {
@@ -95,7 +99,7 @@ class Run {
     process.stdout.write(`Total Runtime: ${this.total}us\n`);
   }
 
-  public async runBenchmark() {
+  public async runBenchmark(): Promise<boolean> {
     process.stdout.write(`Starting ${this.name} benchmark ...\n`);
 
     const benchmark: Benchmark = new this.benchmarkSuite.default();
@@ -106,13 +110,26 @@ class Run {
     } catch (e: any) {
       if (e.code == 'ECONNREFUSED') {
         reportConnectionRefused(e);
+        return false;
       }
+      if (e.code === '55006') {
+        reportDatabaseInUse(e);
+        return false;
+      }
+      if (e instanceof IncorrectResultError) {
+        process.stdout.write('Benchmark failed with incorrect result\n');
+        return false;
+      }
+
+      reportOtherErrors(e);
+      return false;
     } finally {
       await benchmark.oneTimeTeardown();
     }
 
     this.reportBenchmark();
     process.stdout.write('\n');
+    return true;
   }
 }
 
@@ -162,8 +179,12 @@ if (process.argv.length < 3) {
 const run = await processArguments(process.argv);
 
 try {
-  await run.runBenchmark();
-  run.printTotal();
+  if (await run.runBenchmark()) {
+    run.printTotal();
+    process.exit(0);
+  } else {
+    process.exit(1);
+  }
 } catch (e: any) {
   console.error(e.message);
   process.exit(1);

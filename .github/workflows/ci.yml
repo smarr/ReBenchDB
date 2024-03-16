@@ -68,7 +68,7 @@ jobs:
 
       - name: Upload image difference, if there are any
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Image Differences of charts.test.ts
           path: |
