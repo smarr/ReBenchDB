@@ -46,6 +46,7 @@
 
 
 <div class="container-fluid"><div class="row flex-xl-nowrap">
+  {% if (it.benchmarks) { %}
   <nav class="compare">
   {% for (const b of it.benchmarks) {
        for (const e of b.exec) { %}
@@ -75,5 +76,14 @@
   {% } } %}
   </main>
   </div></div> <!-- closing class="row flex-nowrap" and class="container-fluid" -->
+  {% } else { %}
+  <main role="main">
+  <div class="jumbotron">
+    <h1 class="display-4">No Data Available</h1>
+    <p class="lead">There are no benchmarks available for this project.</p>
+  </div>
+  </div>
+  </main>
+  {% } %}
 </body>
 </html>
