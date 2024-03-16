@@ -1,6 +1,4 @@
 import { describe, expect, it } from '@jest/globals';
-import { readFileSync } from 'node:fs';
-import { robustPath } from '../../../src/backend/util.js';
 import { collateMeasurements } from '../../../src/backend/compare/db-data.js';
 import {
   ResultsByBenchmark,
@@ -11,24 +9,17 @@ import type {
   MeasurementData,
   ProcessedResult
 } from '../../../src/backend/db/types.js';
+import {
+  loadCompareViewJsSomPayload,
+  loadCompareViewTSomPayload
+} from '../../payload.js';
 
-const dataJsSOM = JSON.parse(
-  readFileSync(
-    robustPath(`../tests/data/compare-view-data-jssom.json`)
-  ).toString()
-);
-
-const dataTSOM = JSON.parse(
-  readFileSync(
-    robustPath(`../tests/data/compare-view-data-trufflesom.json`)
-  ).toString()
-);
+const dataJsSOM = loadCompareViewJsSomPayload();
+const dataTSOM = loadCompareViewTSomPayload();
 
 describe('collateMeasurements()', () => {
   describe('with data from JsSOM', () => {
-    const result: ResultsByExeSuiteBenchmark = collateMeasurements(
-      dataJsSOM.results
-    );
+    const result: ResultsByExeSuiteBenchmark = collateMeasurements(dataJsSOM);
 
     it('should have 1 exe', () => {
       expect(result.size).toBe(1);
@@ -103,9 +94,7 @@ describe('collateMeasurements()', () => {
   });
 
   describe('with data from TruffleSOM', () => {
-    const result: ResultsByExeSuiteBenchmark = collateMeasurements(
-      dataTSOM.results
-    );
+    const result: ResultsByExeSuiteBenchmark = collateMeasurements(dataTSOM);
 
     it('should have 7 executors', () => {
       expect(result.size).toBe(7);

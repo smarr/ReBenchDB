@@ -1,10 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { readFileSync, mkdirSync, existsSync } from 'node:fs';
+import { mkdirSync, existsSync } from 'node:fs';
 
 import { robustPath } from '../../../src/backend/util.js';
 import type {
-  MeasurementData,
   Measurements,
   ProcessedResult,
   RevisionComparison,
@@ -43,6 +42,10 @@ import {
   isRequestedToUpdateExpectedData,
   isSupportingSvgTests
 } from '../../helpers.js';
+import {
+  loadCompareViewJsSomPayload,
+  loadCompareViewTSomPayload
+} from '../../payload.js';
 
 initJestMatchers();
 
@@ -363,25 +366,14 @@ describe('countVariantsAndDropMissing()', () => {
   });
 });
 
-const dataJsSOM: { results: MeasurementData[] } = JSON.parse(
-  readFileSync(
-    robustPath(`../tests/data/compare-view-data-jssom.json`)
-  ).toString()
-);
-
-const dataTSOM: { results: MeasurementData[] } = JSON.parse(
-  readFileSync(
-    robustPath(`../tests/data/compare-view-data-trufflesom.json`)
-  ).toString()
-);
+const dataJsSOM = loadCompareViewJsSomPayload();
+const dataTSOM = loadCompareViewTSomPayload();
 
 describe('calculateChangeStatsForBenchmark()', () => {
   describe('with data from JsSOM', () => {
     const perCriteria = new Map<string, ComparisonStatsWithUnit>();
 
-    const result: ResultsByExeSuiteBenchmark = collateMeasurements(
-      dataJsSOM.results
-    );
+    const result: ResultsByExeSuiteBenchmark = collateMeasurements(dataJsSOM);
     const som = <ResultsBySuiteBenchmark>result.get('som');
     const macro = <ResultsByBenchmark>som.get('macro');
     const nbody = <ProcessedResult>macro.benchmarks.get('NBody');
@@ -441,12 +433,8 @@ describe('calculateChangeStatsForBenchmark()', () => {
   });
 });
 
-const resultJsSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
-  dataJsSOM.results
-);
-const resultTSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
-  dataTSOM.results
-);
+const resultJsSOM: ResultsByExeSuiteBenchmark = collateMeasurements(dataJsSOM);
+const resultTSOM: ResultsByExeSuiteBenchmark = collateMeasurements(dataTSOM);
 
 const outputFolder = isRequestedToUpdateExpectedData()
   ? robustPath('../tests/data/expected-results/stats-data-prep')
@@ -549,12 +537,10 @@ describe('calculateAllChangeStatisticsAndInlinePlots()', () => {
 });
 
 describe('getChangeDataBySuiteAndExe()', () => {
-  const resultJsSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
-    dataJsSOM.results
-  );
-  const resultTSOM: ResultsByExeSuiteBenchmark = collateMeasurements(
-    dataTSOM.results
-  );
+  const resultJsSOM: ResultsByExeSuiteBenchmark =
+    collateMeasurements(dataJsSOM);
+  const resultTSOM: ResultsByExeSuiteBenchmark = collateMeasurements(dataTSOM);
+
   let jsResults: {
     numRunConfigs: number;
     comparisonData: ByExeSuiteComparison;
@@ -725,7 +711,7 @@ describe('prepareCompareView()', () => {
     it('should execute without exception', async () => {
       mkdirSync(`${outputFolder}/jssom`, { recursive: true });
       result = await prepareCompareView(
-        dataJsSOM.results,
+        dataJsSOM,
         [],
         null,
         'jssom',
@@ -781,7 +767,7 @@ describe('prepareCompareView()', () => {
     it('should execute without exception', async () => {
       mkdirSync(`${outputFolder}/tsom`, { recursive: true });
       result = await prepareCompareView(
-        dataTSOM.results,
+        dataTSOM,
         [],
         null,
         'tsom',
