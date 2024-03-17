@@ -139,7 +139,7 @@ describe('getLast100Measurements', () => {
 
   let db: TestDatabase;
   beforeAll(async () => {
-    db = await createAndInitializeDB('main_basic', 25, true, false);
+    db = await createAndInitializeDB('main_main', 25, true, false);
   });
 
   afterAll(async () => {
