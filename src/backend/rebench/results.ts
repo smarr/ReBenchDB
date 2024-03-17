@@ -50,7 +50,7 @@ export async function acceptResultData(
       .then(([recMs, recPs]) =>
         log.info(
           // eslint-disable-next-line max-len
-          `/rebenchdb/results: stored ${recMs} measurements, ${recPs} profiles`
+          `/rebenchdb/results: stored ${recMs} sets of measurements, ${recPs} profiles`
         )
       )
       .catch((e) => {
