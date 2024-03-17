@@ -79,3 +79,26 @@ jobs:
       - name: Lint and Formatting
         run: |
           npm run verify
+
+      - name: Install ReBench
+        run: |
+          git clone --depth 1 --branch rebenchdb https://github.com/smarr/rebench.git
+          pushd rebench
+          pip install .
+          popd
+
+      - name: Run ReBench Integration Tests
+        run: |
+          DEV=true npm run start &
+          sleep 5
+
+          pushd tests/rebench-integration
+          rebench --experiment IntegrationTest rebench.conf
+          EXPID=$(curl -s http://localhost:33333/rebenchdb/dash/2/data-overview | jq '.data[0].expid')
+
+          # Trigger data generation
+          curl -s http://localhost:33333/ReBenchDB-integration-test/data/$EXPID > /dev/null
+          sleep 10 # give the server some time to generate the json.gz file
+          curl -sL http://localhost:33333/ReBenchDB-integration-test/data/$EXPID -o actual.json.gz
+          gzip -k -d actual.json.gz
+          node check-data.js
