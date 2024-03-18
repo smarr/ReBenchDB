@@ -5,8 +5,8 @@ const data = JSON.parse(readFileSync('actual.json', 'utf-8'));
 let allCorrect = true;
 
 function assert(values, criterion, step) {
-  for (let i = 1; i < values.length + 1; i += 1) {
-    const val = values[i - 1];
+  for (let i = 1; i < values.length; i += 1) {
+    const val = values[i];
     if (i % step === 0) {
       console.assert(
         val === i,
@@ -15,22 +15,26 @@ function assert(values, criterion, step) {
       allCorrect = allCorrect && val === i;
     } else {
       console.assert(
-        val === null,
+        val == null,
         `${criterion} at ${i}: Expected null, got ${val}`
       );
-      allCorrect = allCorrect && val === null;
+      allCorrect = allCorrect && val == null;
     }
   }
 }
 
+const byCriterion = { mem: [], compile: [], total: [] };
+
 for (const e of data) {
-  if (e.criterion === 'mem') {
-    assert(e.values, e.criterion, 3);
-  } else if (e.criterion === 'compile') {
-    assert(e.values, e.criterion, 7);
-  } else if (e.criterion === 'total') {
-    assert(e.values, e.criterion, 1);
-  }
+  byCriterion[e.criterion][e.iteration] = e.value;
+}
+
+for (const [c, step] of [
+  ['mem', 3],
+  ['compile', 7],
+  ['total', 1]
+]) {
+  assert(byCriterion[c], c, step);
 }
 
 if (allCorrect) {
