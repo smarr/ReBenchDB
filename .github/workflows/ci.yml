@@ -35,7 +35,7 @@ jobs:
           - 5432:5432
         # Make sure the postgres container is has a exp-data directory
         volumes:
-          - ${{ github.workspace }}:/home/runner/work/ReBenchDB/ReBenchDB/resources/exp-data/
+          - ${{ github.workspace }}:/postgres-export
 
     steps:
       - name: Checkout ReBench
@@ -92,7 +92,7 @@ jobs:
 
       - name: Run ReBench Integration Tests
         run: |
-          DEV=true npm run start &
+          NODE_DATA_EXPORT_PATH=${{ github.workspace }} RDB_DATA_EXPORT_PATH=/postgres-export DEV=true npm run start &
           sleep 5
 
           pushd tests/rebench-integration

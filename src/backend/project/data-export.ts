@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { completeRequest, startRequest } from '../perf-tracker.js';
-import { robustPath, siteConfig, storeJsonGzip } from '../util.js';
+import { dbConfig, siteConfig, storeJsonGzip } from '../util.js';
 import { log } from '../logging.js';
 import { Database } from '../db/db.js';
 import { ParameterizedContext } from 'koa';
@@ -27,10 +27,9 @@ export async function getExpData(
   }
 
   const expFilePrefix = `${data.project}-${expId}`;
-  const expFileName = `exp-data/${expFilePrefix}.${format}.gz`;
-  const expDataFile = robustPath(`../resources/${expFileName}`);
+  const expFileName = `${expFilePrefix}.${format}.gz`;
 
-  if (existsSync(expDataFile)) {
+  if (existsSync(`${siteConfig.dataExportPath}/${expFileName}`)) {
     data.preparingData = false;
     data.downloadUrl = `${siteConfig.staticUrl}/${expFileName}`;
   } else {
@@ -48,7 +47,10 @@ export async function getExpData(
       const resultP =
         format === 'json'
           ? db.getExperimentMeasurements(expId)
-          : db.storeExperimentMeasurements(expId, expDataFile);
+          : db.storeExperimentMeasurements(
+              expId,
+              `${dbConfig.dataExportPath}/${expFileName}`
+            );
 
       expDataPreparation.set(expRequestId, {
         inProgress: true
@@ -57,7 +59,10 @@ export async function getExpData(
       resultP
         .then(async (data: any[]) => {
           if (format === 'json') {
-            await storeJsonGzip(data, expDataFile);
+            await storeJsonGzip(
+              data,
+              `${siteConfig.dataExportPath}/${expFileName}`
+            );
           }
           expDataPreparation.set(expRequestId, {
             inProgress: false
