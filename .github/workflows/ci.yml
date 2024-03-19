@@ -94,7 +94,8 @@ jobs:
 
           pushd tests/rebench-integration
           rebench --experiment IntegrationTest rebench.conf
-          EXPID=$(curl -s http://localhost:33333/rebenchdb/dash/2/data-overview | jq '.data[0].expid')
+          PROJID=$(curl -s http://localhost:33333/ReBenchDB-integration-test/data | grep project-id | grep -o -E '[0-9]+')
+          EXPID=$(curl -s http://localhost:33333/rebenchdb/dash/$PROJID/data-overview | jq '.data[0].expid')
 
           # Trigger data generation
           curl -s http://localhost:33333/ReBenchDB-integration-test/data/$EXPID > /dev/null
