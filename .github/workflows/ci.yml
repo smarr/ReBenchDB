@@ -30,12 +30,10 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+          -v ${{ github.workspace }}:/postgres-export:rw
         ports:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
-        # Make sure the postgres container is has a exp-data directory
-        volumes:
-          - ${{ github.workspace }}:/postgres-export
 
     steps:
       - name: Checkout ReBench
@@ -92,15 +90,18 @@ jobs:
 
       - name: Run ReBench Integration Tests
         run: |
+          # make workspace writable for postgres container
+          chmod a+wx ${{ github.workspace }}
+
+          # start ReBenchDB server
           NODE_DATA_EXPORT_PATH=${{ github.workspace }} RDB_DATA_EXPORT_PATH=/postgres-export DEV=true npm run start &
           sleep 5
 
+          # run integration tests
           pushd tests/rebench-integration
           rebench --experiment IntegrationTest rebench.conf
 
-          ls -lah /home/runner/work/ReBenchDB/ReBenchDB/dist/src/backend/../../../src/../resources/exp-data/
           sleep 1
-
           PROJID=$(curl -s http://localhost:33333/ReBenchDB-integration-test/data | grep project-id | grep -o -E '[0-9]+')
           EXPID=$(curl -s http://localhost:33333/rebenchdb/dash/$PROJID/data-overview | jq '.data[0].expid')
 
@@ -109,6 +110,10 @@ jobs:
           curl -s http://localhost:33333/ReBenchDB-integration-test/data/$EXPID.csv.gz > /dev/null
 
           sleep 10 # give the server some time to generate the files
+          # reposses the files to be able to read them
+          sudo chown $(whoami):$(id -g -n) ${{ github.workspace }}/*.gz
+
+          # fetch the generated files via node and check them
           curl -sL http://localhost:33333/ReBenchDB-integration-test/data/$EXPID.json.gz -o actual.json.gz
           curl -sL http://localhost:33333/ReBenchDB-integration-test/data/$EXPID.csv.gz -o actual.csv.gz
           gzip -k -d actual.json.gz
