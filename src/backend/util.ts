@@ -1,4 +1,4 @@
-import { dirname } from 'path';
+import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 import { promisify } from 'node:util';
@@ -28,10 +28,10 @@ const __dirname = getDirname(import.meta.url);
  */
 export const robustPath = __dirname.includes('dist/')
   ? function (path) {
-      return `${__dirname}/../../../src/${path}`;
+      return resolve(`${__dirname}/../../../src/${path}`);
     }
   : function (path) {
-      return `${__dirname}/../${path}`;
+      return resolve(`${__dirname}/../${path}`);
     };
 
 /**
