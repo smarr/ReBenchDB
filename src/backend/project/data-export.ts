@@ -10,7 +10,8 @@ const expDataPreparation = new Map();
 export async function getExpData(
   projectSlug: string,
   expId: number,
-  db: Database
+  db: Database,
+  format: 'json' | 'csv'
 ): Promise<any> {
   const result = await db.getExperimentDetails(expId, projectSlug);
 
@@ -25,17 +26,18 @@ export async function getExpData(
     data = result;
   }
 
-  const expDataId = `${data.project}-${expId}`;
-  const expFileName = `exp-data/${expDataId}.json.gz`;
+  const expFilePrefix = `${data.project}-${expId}`;
+  const expFileName = `exp-data/${expFilePrefix}.${format}.gz`;
   const expDataFile = robustPath(`../resources/${expFileName}`);
 
   if (existsSync(expDataFile)) {
     data.preparingData = false;
     data.downloadUrl = `${siteConfig.staticUrl}/${expFileName}`;
   } else {
+    const expRequestId = `${expFilePrefix}-${format}`;
     data.currentTime = new Date().toISOString();
 
-    const prevPrepDetails = expDataPreparation.get(expDataId);
+    const prevPrepDetails = expDataPreparation.get(expRequestId);
 
     // no previous attempt to prepare data
     if (!prevPrepDetails) {
@@ -43,22 +45,27 @@ export async function getExpData(
 
       data.preparingData = true;
 
-      const resultP = db.getExperimentMeasurements(expId);
+      const resultP =
+        format === 'json'
+          ? db.getExperimentMeasurements(expId)
+          : db.storeExperimentMeasurements(expId, expDataFile);
 
-      expDataPreparation.set(expDataId, {
+      expDataPreparation.set(expRequestId, {
         inProgress: true
       });
 
       resultP
         .then(async (data: any[]) => {
-          await storeJsonGzip(data, expDataFile);
-          expDataPreparation.set(expDataId, {
+          if (format === 'json') {
+            await storeJsonGzip(data, expDataFile);
+          }
+          expDataPreparation.set(expRequestId, {
             inProgress: false
           });
         })
         .catch(async (error) => {
           log.error('Data preparation failed', error);
-          expDataPreparation.set(expDataId, {
+          expDataPreparation.set(expRequestId, {
             error,
             inProgress: false
           });

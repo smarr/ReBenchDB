@@ -32,6 +32,10 @@ export async function serveStaticResource(
     ctx.type = 'application/json';
     ctx.set('Content-Encoding', 'gzip');
     path = robustPath(`../resources/${filename}`);
+  } else if (filename.endsWith('.csv.gz')) {
+    ctx.type = 'text/csv';
+    ctx.set('Content-Encoding', 'gzip');
+    path = robustPath(`../resources/${filename}`);
   } else {
     throw new Error(`Unsupported file type. Filename: ${filename}`);
   }

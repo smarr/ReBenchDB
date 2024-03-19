@@ -33,6 +33,9 @@ jobs:
         ports:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
+        # Make sure the postgres container is has a exp-data directory
+        volumes:
+          - ${{ github.workspace }}:/home/runner/work/ReBenchDB/ReBenchDB/resources/exp-data/
 
     steps:
       - name: Checkout ReBench
@@ -94,12 +97,20 @@ jobs:
 
           pushd tests/rebench-integration
           rebench --experiment IntegrationTest rebench.conf
+
+          ls -lah /home/runner/work/ReBenchDB/ReBenchDB/dist/src/backend/../../../src/../resources/exp-data/
+          sleep 1
+
           PROJID=$(curl -s http://localhost:33333/ReBenchDB-integration-test/data | grep project-id | grep -o -E '[0-9]+')
           EXPID=$(curl -s http://localhost:33333/rebenchdb/dash/$PROJID/data-overview | jq '.data[0].expid')
 
           # Trigger data generation
-          curl -s http://localhost:33333/ReBenchDB-integration-test/data/$EXPID > /dev/null
-          sleep 10 # give the server some time to generate the json.gz file
-          curl -sL http://localhost:33333/ReBenchDB-integration-test/data/$EXPID -o actual.json.gz
+          curl -s http://localhost:33333/ReBenchDB-integration-test/data/$EXPID.json.gz > /dev/null
+          curl -s http://localhost:33333/ReBenchDB-integration-test/data/$EXPID.csv.gz > /dev/null
+
+          sleep 10 # give the server some time to generate the files
+          curl -sL http://localhost:33333/ReBenchDB-integration-test/data/$EXPID.json.gz -o actual.json.gz
+          curl -sL http://localhost:33333/ReBenchDB-integration-test/data/$EXPID.csv.gz -o actual.csv.gz
           gzip -k -d actual.json.gz
+          gzip -k -d actual.csv.gz
           node check-data.js
