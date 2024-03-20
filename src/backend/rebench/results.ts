@@ -13,6 +13,8 @@ import {
 
 const validateFn: ValidateFunction = DEBUG ? createValidator() : <any>undefined;
 
+const rebenchdbApiVersion = '2.0.0';
+
 function validateSchema(data: BenchmarkData, ctx: ParameterizedContext) {
   const result = validateFn(data);
   if (!result) {
@@ -28,10 +30,26 @@ ${validateFn.errors}`;
 export async function reportResultApiVersion(
   ctx: ParameterizedContext
 ): Promise<void> {
-  ctx.set('X-ReBenchDB-Result-API-Version', '2.0.0');
+  ctx.set('X-ReBenchDB-Result-API-Version', rebenchdbApiVersion);
   ctx.set('Allow', 'PUT');
   ctx.status = 200;
   ctx.body = '';
+}
+
+function isUsingV2Api(data: BenchmarkData): boolean {
+  if (data.data.length === 0) {
+    return true; // no data, no problem
+  }
+
+  const firstRun = data.data[0];
+  if (!firstRun.d || firstRun.d.length === 0) {
+    return true; // no data, no problem
+  }
+
+  const firstDataPoint = firstRun.d[0];
+
+  // the old API had an 'it' field, for the iteration number
+  return !Object.hasOwn(firstDataPoint, 'it');
 }
 
 export async function acceptResultData(
@@ -51,6 +69,13 @@ export async function acceptResultData(
     ctx.body = `Request misses a startTime setting,
                 which is needed to store results correctly.`;
     ctx.status = 400;
+    return;
+  }
+
+  if (!isUsingV2Api(data)) {
+    log.info(`/rebenchdb/results: Request with old API version`);
+    ctx.body = `Only API version ${rebenchdbApiVersion} is supported.`;
+    ctx.status = 400; // Bad Request
     return;
   }
 
