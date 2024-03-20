@@ -26,6 +26,7 @@ import type {
   Environment,
   Experiment,
   MeasurementData,
+  MeasurementDataOld,
   Metadata,
   Project,
   RevisionComparison,
@@ -791,17 +792,24 @@ export abstract class Database {
 
   public async getExperimentMeasurements(
     expId: number
-  ): Promise<MeasurementData[]> {
+  ): Promise<MeasurementDataOld[]> {
     const result = await this.query({
       name: 'fetchExpMeasurements',
-      text: `SELECT
-                ${measurementDataColumns}
+      text: `WITH results AS (
+              SELECT
+                ${measurementDataColumns.replace(
+                  'values',
+                  `unnest(values) as value,
+                   generate_series(1, array_length(values, 1)) as iteration`
+                )}
               FROM
                 ${measurementDataTableJoins}
               WHERE
                 Experiment.id = $2
               ORDER BY
-                runId, trialId, cmdline, invocation, criterion`,
+                runId, trialId, cmdline, invocation, iteration, criterion
+            )
+            SELECT * FROM results WHERE value is NOT NULL`,
       values: [6, expId]
     });
     return result.rows;
@@ -814,14 +822,21 @@ export abstract class Database {
     // Postgres doesn't support parameters for COPY
     // so, just doing string substitution here
     const query = `COPY (
-      SELECT
-        ${measurementDataColumns.replace('$1', '6')}
-      FROM
-        ${measurementDataTableJoins}
-      WHERE
-        Experiment.id = ${expId}
-      ORDER BY
-        runId, trialId, cmdline, invocation, iteration, criterion
+      WITH results AS (
+        SELECT
+          ${measurementDataColumns.replace('$1', '6').replace(
+            'values',
+            `unnest(values) as value,
+            generate_series(1, array_length(values, 1)) as iteration`
+          )}
+        FROM
+          ${measurementDataTableJoins}
+        WHERE
+          Experiment.id = ${expId}
+        ORDER BY
+          runId, trialId, cmdline, invocation, iteration, criterion
+      )
+      SELECT * FROM results WHERE value is NOT NULL
     ) TO PROGRAM 'gzip -9 > ${outputFile}'
       WITH (FORMAT csv, HEADER true)`;
     const result = await this.query({

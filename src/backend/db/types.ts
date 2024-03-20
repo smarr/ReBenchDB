@@ -146,7 +146,7 @@ export interface Baseline extends Source {
 }
 
 /** As returned from database queries */
-export interface MeasurementData {
+interface BasicMeasurementData {
   expid: number;
   runid: number;
   trialid: number;
@@ -163,8 +163,17 @@ export interface MeasurementData {
   warmup: number | null;
   criterion: string;
   unit: string;
-  values: ValuesPossiblyMissing;
   envid: number;
+}
+
+export interface MeasurementData extends BasicMeasurementData {
+  values: ValuesPossiblyMissing;
+}
+
+/** Was used previously, but is also still used for the raw data export. */
+export interface MeasurementDataOld extends BasicMeasurementData {
+  iteration: number;
+  value: number;
 }
 
 export interface AvailableProfile extends BenchmarkId {

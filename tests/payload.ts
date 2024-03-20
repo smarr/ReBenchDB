@@ -3,7 +3,10 @@ import { convertToCurrentApi } from '../src/backend/common/api-v1.js';
 import { robustPath } from '../src/backend/util.js';
 
 import type { BenchmarkData } from '../src/shared/api.js';
-import type { MeasurementData } from '../src/backend/db/types.js';
+import type {
+  MeasurementData,
+  MeasurementDataOld
+} from '../src/backend/db/types.js';
 import { assert } from '../src/backend/logging.js';
 
 export function loadLargePayload(): BenchmarkData {
@@ -18,28 +21,6 @@ export function loadLargePayloadApiV1(): any {
   return JSON.parse(
     readFileSync(robustPath('../tests/data/large-payload.json')).toString()
   );
-}
-
-export interface MeasurementDataOld {
-  expid: number;
-  runid: number;
-  trialid: number;
-  commitid: string;
-  bench: string;
-  exe: string;
-  suite: string;
-  cmdline: string;
-  varvalue: string | null;
-  cores: string | null;
-  inputsize: string | null;
-  extraargs: string | null;
-  invocation: number;
-  iteration: number;
-  warmup: number | null;
-  criterion: string;
-  unit: string;
-  value: number;
-  envid: number;
 }
 
 function convertMeasurementDataToCurrentApi(
