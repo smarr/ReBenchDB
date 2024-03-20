@@ -2,7 +2,7 @@ import { ParameterizedContext } from 'koa';
 import { readFileSync } from 'node:fs';
 
 import { log } from '../logging.js';
-import { robustPath, robustSrcPath } from '../util.js';
+import { robustPath, robustSrcPath, siteConfig } from '../util.js';
 
 export async function serveStaticResource(
   ctx: ParameterizedContext
@@ -31,7 +31,11 @@ export async function serveStaticResource(
   } else if (filename.endsWith('.json.gz')) {
     ctx.type = 'application/json';
     ctx.set('Content-Encoding', 'gzip');
-    path = robustPath(`../resources/${filename}`);
+    path = `${siteConfig.dataExportPath}/${filename}`;
+  } else if (filename.endsWith('.csv.gz')) {
+    ctx.type = 'text/csv';
+    ctx.set('Content-Encoding', 'gzip');
+    path = `${siteConfig.dataExportPath}/${filename}`;
   } else {
     throw new Error(`Unsupported file type. Filename: ${filename}`);
   }

@@ -37,7 +37,7 @@ describe('Test with basic test data loaded', () => {
   // switch suites to use a template database
 
   beforeAll(async () => {
-    db = await createAndInitializeDB('main_basic', 25, true, false);
+    db = await createAndInitializeDB('main_with_data', 25, true, false);
 
     const data = readFileSync(
       robustPath('../tests/data/small-payload.json')

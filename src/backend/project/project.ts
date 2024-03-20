@@ -106,11 +106,16 @@ export async function renderDataExport(
   db: Database
 ): Promise<void> {
   const start = startRequest();
+  const format = ctx.params.expIdAndExtension.endsWith('.json.gz')
+    ? 'json'
+    : 'csv';
+  const expId = ctx.params.expIdAndExtension.replace(`.${format}.gz`, '');
 
   const data = await getExpData(
     ctx.params.projectSlug,
-    Number(ctx.params.expId),
-    db
+    Number(expId),
+    db,
+    format
   );
 
   if (data.preparingData) {

@@ -793,6 +793,29 @@ export abstract class Database {
     return result.rows;
   }
 
+  public async storeExperimentMeasurements(
+    expId: number,
+    outputFile: string
+  ): Promise<any[]> {
+    // Postgres doesn't support parameters for COPY
+    // so, just doing string substitution here
+    const query = `COPY (
+      SELECT
+        ${measurementDataColumns.replace('$1', '6')}
+      FROM
+        ${measurementDataTableJoins}
+      WHERE
+        Experiment.id = ${expId}
+      ORDER BY
+        runId, trialId, cmdline, invocation, iteration, criterion
+    ) TO PROGRAM 'gzip -9 > ${outputFile}'
+      WITH (FORMAT csv, HEADER true)`;
+    const result = await this.query({
+      text: query
+    });
+    return result.rows;
+  }
+
   public async recordExperimentCompletion(
     expId: number,
     endTime: string

@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { completeRequest, startRequest } from '../perf-tracker.js';
-import { robustPath, siteConfig, storeJsonGzip } from '../util.js';
+import { dbConfig, siteConfig, storeJsonGzip } from '../util.js';
 import { log } from '../logging.js';
 import { Database } from '../db/db.js';
 import { ParameterizedContext } from 'koa';
@@ -10,7 +10,8 @@ const expDataPreparation = new Map();
 export async function getExpData(
   projectSlug: string,
   expId: number,
-  db: Database
+  db: Database,
+  format: 'json' | 'csv'
 ): Promise<any> {
   const result = await db.getExperimentDetails(expId, projectSlug);
 
@@ -25,17 +26,17 @@ export async function getExpData(
     data = result;
   }
 
-  const expDataId = `${data.project}-${expId}`;
-  const expFileName = `exp-data/${expDataId}.json.gz`;
-  const expDataFile = robustPath(`../resources/${expFileName}`);
+  const expFilePrefix = `${data.project}-${expId}`;
+  const expFileName = `${expFilePrefix}.${format}.gz`;
 
-  if (existsSync(expDataFile)) {
+  if (existsSync(`${siteConfig.dataExportPath}/${expFileName}`)) {
     data.preparingData = false;
     data.downloadUrl = `${siteConfig.staticUrl}/${expFileName}`;
   } else {
+    const expRequestId = `${expFilePrefix}-${format}`;
     data.currentTime = new Date().toISOString();
 
-    const prevPrepDetails = expDataPreparation.get(expDataId);
+    const prevPrepDetails = expDataPreparation.get(expRequestId);
 
     // no previous attempt to prepare data
     if (!prevPrepDetails) {
@@ -43,22 +44,33 @@ export async function getExpData(
 
       data.preparingData = true;
 
-      const resultP = db.getExperimentMeasurements(expId);
+      const resultP =
+        format === 'json'
+          ? db.getExperimentMeasurements(expId)
+          : db.storeExperimentMeasurements(
+              expId,
+              `${dbConfig.dataExportPath}/${expFileName}`
+            );
 
-      expDataPreparation.set(expDataId, {
+      expDataPreparation.set(expRequestId, {
         inProgress: true
       });
 
       resultP
         .then(async (data: any[]) => {
-          await storeJsonGzip(data, expDataFile);
-          expDataPreparation.set(expDataId, {
+          if (format === 'json') {
+            await storeJsonGzip(
+              data,
+              `${siteConfig.dataExportPath}/${expFileName}`
+            );
+          }
+          expDataPreparation.set(expRequestId, {
             inProgress: false
           });
         })
         .catch(async (error) => {
           log.error('Data preparation failed', error);
-          expDataPreparation.set(expDataId, {
+          expDataPreparation.set(expRequestId, {
             error,
             inProgress: false
           });

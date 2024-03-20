@@ -1,4 +1,4 @@
-import { dirname } from 'path';
+import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 import { promisify } from 'node:util';
@@ -28,10 +28,10 @@ const __dirname = getDirname(import.meta.url);
  */
 export const robustPath = __dirname.includes('dist/')
   ? function (path) {
-      return `${__dirname}/../../../src/${path}`;
+      return resolve(`${__dirname}/../../../src/${path}`);
     }
   : function (path) {
-      return `${__dirname}/../${path}`;
+      return resolve(`${__dirname}/../${path}`);
     };
 
 /**
@@ -49,11 +49,31 @@ const port: number = process.env.RDB_PORT
   ? parseInt(process.env.RDB_PORT)
   : 5432;
 
+const _rebench_dev = 'https://rebench.dev';
+const reportsUrl = process.env.REPORTS_URL || '/static/reports';
+const staticUrl = process.env.STATIC_URL || '/static';
+const publicUrl = process.env.PUBLIC_URL || _rebench_dev;
+
+// configuration for data export is a little more involved,
+// because the database might run elsewhere, but may produce
+// data files, which we need to be able to serve, at least in the dev mode.
+const dbDataExportPath =
+  process.env.RDB_DATA_EXPORT_PATH || robustPath('../resources/exp-data');
+
+// I assume that Node has access to files produced by itself and PostgreSQL.
+const nodeDataExportPath =
+  process.env.NODE_DATA_EXPORT_PATH || dbDataExportPath;
+
+const dataExportUrlBase = process.env.DATA_URL_BASE || `${staticUrl}/exp-data`;
+
 export const dbConfig = {
   user: process.env.RDB_USER || '',
   password: process.env.RDB_PASS || '',
   host: process.env.RDB_HOST || 'localhost',
   database: process.env.RDB_DB || 'rdb_smde2',
+
+  /** The path where PostgreSQL writes data files to. */
+  dataExportPath: dbDataExportPath,
   port
 };
 
@@ -62,8 +82,6 @@ export const refreshSecret =
 
 /** How long to still hold on to the cache after it became invalid. In ms. */
 export const cacheInvalidationDelay = 1000 * 60 * 5; /* 5 minutes */
-
-const _rebench_dev = 'https://rebench.dev';
 
 export function isReBenchDotDev(): boolean {
   return siteConfig.publicUrl === _rebench_dev;
@@ -83,9 +101,16 @@ export const statsConfig = {
 
 export const siteConfig = {
   port: process.env.PORT || 33333,
-  reportsUrl: process.env.REPORTS_URL || '/static/reports',
-  staticUrl: process.env.STATIC_URL || '/static',
-  publicUrl: process.env.PUBLIC_URL || _rebench_dev,
+  reportsUrl,
+  staticUrl,
+  publicUrl,
+  dataExportUrlBase,
+
+  /**
+   * The path where Node.js writes data files to,
+   * and Postgres generated files are accessible.
+   */
+  dataExportPath: nodeDataExportPath,
   appId: parseInt(process.env.GITHUB_APP_ID || '') || 76497,
   githubPrivateKey:
     process.env.GITHUB_PK || 'rebenchdb.2020-08-11.private-key.pem',

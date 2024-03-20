@@ -93,7 +93,7 @@ router.get('/:projectSlug/source/:sourceId', async (ctx) =>
 );
 router.get('/:projectSlug/timeline', async (ctx) => renderTimeline(ctx, db));
 router.get('/:projectSlug/data', async (ctx) => renderProjectDataPage(ctx, db));
-router.get('/:projectSlug/data/:expId', async (ctx) => {
+router.get('/:projectSlug/data/:expIdAndExtension', async (ctx) => {
   if (
     ctx.header['X-Purpose'] === 'preview' ||
     ctx.header['Purpose'] === 'prefetch' ||

@@ -30,6 +30,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+          -v ${{ github.workspace }}:/postgres-export:rw
         ports:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
@@ -79,3 +80,42 @@ jobs:
       - name: Lint and Formatting
         run: |
           npm run verify
+
+      - name: Install ReBench
+        run: |
+          git clone --depth 1 --branch rebenchdb https://github.com/smarr/rebench.git
+          pushd rebench
+          pip install .
+          popd
+
+      - name: Run ReBench Integration Tests
+        run: |
+          # make workspace writable for postgres container
+          chmod a+wx ${{ github.workspace }}
+
+          # start ReBenchDB server
+          NODE_DATA_EXPORT_PATH=${{ github.workspace }} RDB_DATA_EXPORT_PATH=/postgres-export DEV=true npm run start &
+          sleep 5
+
+          # run integration tests
+          pushd tests/rebench-integration
+          rebench --experiment IntegrationTest rebench.conf
+
+          sleep 1
+          PROJID=$(curl -s http://localhost:33333/ReBenchDB-integration-test/data | grep project-id | grep -o -E '[0-9]+')
+          EXPID=$(curl -s http://localhost:33333/rebenchdb/dash/$PROJID/data-overview | jq '.data[0].expid')
+
+          # Trigger data generation
+          curl -s http://localhost:33333/ReBenchDB-integration-test/data/$EXPID.json.gz > /dev/null
+          curl -s http://localhost:33333/ReBenchDB-integration-test/data/$EXPID.csv.gz > /dev/null
+
+          sleep 10 # give the server some time to generate the files
+          # reposses the files to be able to read them
+          sudo chown $(whoami):$(id -g -n) ${{ github.workspace }}/*.gz
+
+          # fetch the generated files via node and check them
+          curl -sL http://localhost:33333/ReBenchDB-integration-test/data/$EXPID.json.gz -o actual.json.gz
+          curl -sL http://localhost:33333/ReBenchDB-integration-test/data/$EXPID.csv.gz -o actual.csv.gz
+          gzip -k -d actual.json.gz
+          gzip -k -d actual.csv.gz
+          node check-data.js
