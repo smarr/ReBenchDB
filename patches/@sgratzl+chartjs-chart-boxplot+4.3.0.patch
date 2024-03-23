@@ -1,0 +1,22 @@
+diff --git a/node_modules/@sgratzl/chartjs-chart-boxplot/build/index.js b/node_modules/@sgratzl/chartjs-chart-boxplot/build/index.js
+index 29e5b08..203670f 100644
+--- a/node_modules/@sgratzl/chartjs-chart-boxplot/build/index.js
++++ b/node_modules/@sgratzl/chartjs-chart-boxplot/build/index.js
+@@ -71,7 +71,7 @@ function determineStatsOptions(options) {
+     };
+ }
+ function boxplotStats(arr, options) {
+-    const vs = window.Float64Array != null && !(arr instanceof Float32Array || arr instanceof Float64Array)
++    const vs = typeof Float64Array !== 'undefined' && !(arr instanceof Float32Array || arr instanceof Float64Array)
+         ? Float64Array.from(arr)
+         : arr;
+     const r = boxplot(vs, determineStatsOptions(options));
+@@ -104,7 +104,7 @@ function violinStats(arr, options) {
+     if (arr.length === 0) {
+         return undefined;
+     }
+-    const vs = window.Float64Array != null && !(arr instanceof Float32Array || arr instanceof Float64Array)
++    const vs = typeof Float64Array !== 'undefined' && !(arr instanceof Float32Array || arr instanceof Float64Array)
+         ? Float64Array.from(arr)
+         : arr;
+     const stats = boxplot(vs, determineStatsOptions(options));
