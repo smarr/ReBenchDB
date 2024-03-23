@@ -15,15 +15,15 @@ RUN apt-get update && apt-get install -y \
     libfontconfig1-dev \
     libpq-dev
 
-# Copy only package.json to enable caching
-COPY ./package.json ./package-lock.json /project/
+# Copy only package*.json, which are likely unchanged, allowing caching
+COPY package.json package-lock.json /project/
 
 # Set the working dir to the project & install and compile all dependency
 WORKDIR /project/
 
 RUN SKIP_COMPILE=true npm ci --ignore-scripts=false --foreground-scripts
 
-# all of the project files will be copyed to a new dir called project
-COPY . /project
+# copy all files, which likely have changed, and prevent caching
+COPY . /project/
 
 RUN npm run compile
