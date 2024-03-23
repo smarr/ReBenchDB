@@ -1,5 +1,4 @@
 import { describe, expect, it } from '@jest/globals';
-import { readFileSync } from 'fs';
 import { prepareTemplate } from '../../../src/backend/templates.js';
 import * as dataFormatters from '../../../src/shared/data-format.js';
 import * as viewHelpers from '../../../src/shared/helpers.js';
@@ -27,20 +26,15 @@ import {
 import type { Environment } from '../../../src/backend/db/types.js';
 import { collateMeasurements } from '../../../src/backend/compare/db-data.js';
 import { initJestMatchers } from '../../helpers.js';
+import {
+  loadCompareViewJsSomPayload,
+  loadCompareViewTSomPayload
+} from '../../payload.js';
 
 initJestMatchers();
 
-const dataJsSOM = JSON.parse(
-  readFileSync(
-    robustPath(`../tests/data/compare-view-data-jssom.json`)
-  ).toString()
-);
-
-const dataTruffleSOM = JSON.parse(
-  readFileSync(
-    robustPath(`../tests/data/compare-view-data-trufflesom.json`)
-  ).toString()
-);
+const dataJsSOM = loadCompareViewJsSomPayload();
+const dataTruffleSOM = loadCompareViewTSomPayload();
 
 const criteria = {
   total: { name: 'total', unit: 'ms' },
@@ -353,8 +347,8 @@ describe('Compare View Parts', () => {
   });
 
   describe('Compare View Navigation', () => {
-    const collatedJ = collateMeasurements(dataJsSOM.results);
-    const collatedT = collateMeasurements(dataTruffleSOM.results);
+    const collatedJ = collateMeasurements(dataJsSOM);
+    const collatedT = collateMeasurements(dataTruffleSOM);
     const resultJ = getNavigation(collatedJ);
     const resultT = getNavigation(collatedT);
 
@@ -477,8 +471,8 @@ describe('Compare View Parts', () => {
 });
 
 describe('Compare View Statistics', () => {
-  const resultsJ = collateMeasurements(dataJsSOM.results);
-  const resultsT = collateMeasurements(dataTruffleSOM.results);
+  const resultsJ = collateMeasurements(dataJsSOM);
+  const resultsT = collateMeasurements(dataTruffleSOM);
   let statsJ: StatsSummary;
   let statsT: StatsSummary;
 

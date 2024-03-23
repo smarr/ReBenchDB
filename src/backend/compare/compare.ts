@@ -1,7 +1,10 @@
 import { ParameterizedContext } from 'koa';
 
 import { Database } from '../db/db.js';
-import { completeRequest, startRequest } from '../perf-tracker.js';
+import {
+  completeRequestAndHandlePromise,
+  startRequest
+} from '../perf-tracker.js';
 import type {
   ProfileRow,
   WarmupDataForTrial,
@@ -10,7 +13,7 @@ import type {
 import { respondProjectNotFound } from '../common/standard-responses.js';
 import { refreshSecret } from '../util.js';
 import { deleteReport, renderCompare } from './report.js';
-import { TimelineRequest } from '../../shared/api.js';
+import type { TimelineRequest } from '../../shared/api.js';
 
 export async function getProfileAsJson(
   ctx: ParameterizedContext,
@@ -28,7 +31,7 @@ export async function getProfileAsJson(
     ctx.body = {};
   }
   ctx.type = 'application/json';
-  completeRequest(start, db, 'get-profiles');
+  completeRequestAndHandlePromise(start, db, 'get-profiles');
 }
 
 async function getProfile(
@@ -78,7 +81,7 @@ export async function getMeasurementsAsJson(
   );
 
   ctx.type = 'application/json';
-  completeRequest(start, db, 'get-measurements');
+  completeRequestAndHandlePromise(start, db, 'get-measurements');
 }
 
 async function getMeasurements(
@@ -210,7 +213,7 @@ export async function renderComparePage(
     ctx.set('Cache-Control', 'no-cache');
   }
 
-  completeRequest(start, db, 'change');
+  completeRequestAndHandlePromise(start, db, 'change');
 }
 
 export async function deleteCachedReport(

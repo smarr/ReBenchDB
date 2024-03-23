@@ -8,8 +8,11 @@ import {
   robustPath
 } from '../util.js';
 import { prepareTemplate } from '../templates.js';
-import { completeRequest, startRequest } from '../perf-tracker.js';
-import { AllResults } from '../../shared/api.js';
+import {
+  completeRequestAndHandlePromise,
+  startRequest
+} from '../perf-tracker.js';
+import type { AllResults } from '../../shared/api.js';
 import { Database } from '../db/db.js';
 import { TimedCacheValidity } from '../db/timed-cache-validity.js';
 
@@ -36,7 +39,7 @@ export async function getLast100MeasurementsAsJson(
   ctx.body = await getLast100Measurements(Number(ctx.params.projectId), db);
   ctx.type = 'application/json';
 
-  completeRequest(start, db, 'get-results');
+  completeRequestAndHandlePromise(start, db, 'get-results');
 }
 
 const resultsCache: AllResults[][] = [];
@@ -61,24 +64,37 @@ export async function getLast100Measurements(
 
   const q: QueryConfig = {
     name: 'all-results',
-    text: ` WITH Results AS (
+    text: ` WITH OrderedMeasurement AS (
               SELECT
-                    value, benchmark,
-                    rank() OVER (
-                      PARTITION BY benchmark
-                      ORDER BY
-                        t.startTime DESC,
-                        m.invocation DESC,
-                        m.iteration DESC
-                    )
-                    FROM Measurement m
-                      JOIN Trial t ON  m.trialId = t.id
-                      JOIN Experiment e ON t.expId = e.id
-                      JOIN Run r ON m.runId = r.id
-                      JOIN Criterion c ON m.criterion = c.id
-                    WHERE projectId = $1 AND
-                      c.name = '${TotalCriterion}'
-                    ORDER BY t.startTime, m.invocation, m.iteration
+                  runId, trialId, criterion, invocation, values
+                FROM Measurement m
+                  JOIN Trial t ON  m.trialId = t.id
+                  JOIN Experiment e ON t.expId = e.id
+                  JOIN Criterion c ON m.criterion = c.id
+                WHERE e.projectId = $1 AND
+                  c.name = '${TotalCriterion}'
+                ORDER BY m.runId, m.trialId, m.criterion, m.invocation ASC
+            ),
+            ExplodedValueMeasurement AS (
+              SELECT m.runId, m.trialId, m.criterion,
+                     m.invocation, a.value, a.iteration
+              FROM OrderedMeasurement as m
+                LEFT JOIN LATERAL unnest(m.values)
+                  WITH ORDINALITY AS a(value, iteration) ON true
+            ),
+            Results AS (
+              SELECT t.startTime, m.iteration, value, benchmark,
+                  rank() OVER (
+                    PARTITION BY benchmark
+                    ORDER BY
+                      t.startTime DESC,
+                      m.invocation DESC,
+                      m.iteration DESC
+                  )
+                  FROM ExplodedValueMeasurement m
+                    JOIN Trial t ON m.trialId = t.id
+                    JOIN Run r   ON m.runId = r.id
+                  ORDER BY t.startTime, m.invocation, m.iteration
             ),
             LastHundred AS (
               SELECT rank, value, benchmark
@@ -87,8 +103,8 @@ export async function getLast100Measurements(
               ORDER BY benchmark, rank DESC
             )
             SELECT array_agg(value) as values, benchmark
-            FROM LastHundred
-            GROUP BY benchmark;`,
+              FROM LastHundred
+              GROUP BY benchmark`,
     values: [projectId]
   };
   const result = await db.query(q);

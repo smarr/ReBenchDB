@@ -1,3 +1,4 @@
+import { convertToCurrentApi } from '../backend/common/api-v1.js';
 import { RebenchDbBenchmark } from './rebenchdb-benchmark.js';
 
 export default class StoreResults extends RebenchDbBenchmark {
@@ -32,6 +33,7 @@ export default class StoreResults extends RebenchDbBenchmark {
     } else {
       throw new Error('Unsupported problem size given: ' + problemSize);
     }
+    (<any>this).testData = convertToCurrentApi(this.testData);
   }
 
   public async benchmark(): Promise<any> {
@@ -45,13 +47,13 @@ export default class StoreResults extends RebenchDbBenchmark {
     const [recMs, recPs] = result;
 
     if (this.problemSize === 'full') {
-      return recMs === 459928 && recPs === 0;
+      return recMs === 460 && recPs === 0;
     } else if (this.problemSize === 'large') {
-      return recMs === 75987 && recPs === 0;
+      return recMs === 76 && recPs === 0;
     } else if (this.problemSize === 'medium') {
-      return recMs === 5197 && recPs === 0;
+      return recMs === 26 && recPs === 0;
     } else if (this.problemSize === 'small') {
-      return recMs === 179 && recPs === 0;
+      return recMs === 12 && recPs === 0;
     } else {
       throw new Error('Unsupported problem size given: ' + this.problemSize);
     }

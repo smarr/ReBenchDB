@@ -43,6 +43,7 @@ import { collateMeasurements } from './db-data.js';
 import { HasProfile } from '../db/has-profile.js';
 import { assert } from '../../backend/logging.js';
 import { getBenchmarkArgumentsAsNamePart } from '../../shared/helpers.js';
+import type { ValuesPossiblyMissing } from '../../shared/api.js';
 
 export function compareStringOrNull(
   a: string | null,
@@ -456,17 +457,23 @@ export async function calculateChangeStatsForBenchmark(
   };
 }
 
+export function flattenedAndSortedValues(
+  values: ValuesPossiblyMissing[]
+): number[] {
+  const flattenedAndFiltered = <number[]>(
+    values.flat().filter((v) => v !== null)
+  );
+  flattenedAndFiltered.sort((a, b) => a - b);
+  return flattenedAndFiltered;
+}
+
 export function getMsFlattenedAndSorted(
   base: Measurements,
   change: Measurements
 ): { sortedBase: number[]; sortedChange: number[] } {
   // TODO: need to consider warmup setting there, before flattening
-  const sortedBase = base.values.flat();
-  sortedBase.sort((a, b) => a - b);
-
-  // TODO: need to consider warmup setting there, before flattening
-  const sortedChange = change.values.flat();
-  sortedChange.sort((a, b) => a - b);
+  const sortedBase = flattenedAndSortedValues(base.values);
+  const sortedChange = flattenedAndSortedValues(change.values);
   return { sortedBase, sortedChange };
 }
 
@@ -844,8 +851,9 @@ export async function calculateAcrossExesStatsForBenchmark(
         result.measurements[i + changeOffset] &&
         result.measurements[i + changeOffset].criterion.name === criterion
       ) {
-        const sorted = result.measurements[i + changeOffset].values.flat();
-        sorted.sort((a, b) => a - b);
+        const sorted = flattenedAndSortedValues(
+          result.measurements[i + changeOffset].values
+        );
         values.push(sorted);
       } else {
         values.push([0]);

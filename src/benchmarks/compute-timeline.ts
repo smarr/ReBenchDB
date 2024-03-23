@@ -1,12 +1,13 @@
+import { convertToCurrentApi } from '../backend/common/api-v1.js';
 import {
   BatchingTimelineUpdater,
-  ComputeRequest
+  ComputeJob
 } from '../backend/timeline/timeline-calc.js';
 import { RebenchDbBenchmark } from './rebenchdb-benchmark.js';
 
 export default class ComputeTimeline extends RebenchDbBenchmark {
   private updater: BatchingTimelineUpdater | null = null;
-  private jobs: ComputeRequest[] | null = null;
+  private jobs: ComputeJob[] | null = null;
 
   public async oneTimeSetup(problemSize: string): Promise<void> {
     this.enableTimeline = true;
@@ -37,6 +38,7 @@ export default class ComputeTimeline extends RebenchDbBenchmark {
     } else {
       throw new Error('Unsupported problem size given: ' + problemSize);
     }
+    (<any>this).testData = convertToCurrentApi(this.testData);
 
     this.testData.experimentName = 'Benchmark 1';
     this.testData.source.commitId = 'commit-1';
@@ -47,7 +49,7 @@ export default class ComputeTimeline extends RebenchDbBenchmark {
     await this.db.recordAllData(this.testData, true);
 
     this.updater = this.db.getTimelineUpdater();
-    this.jobs = <ComputeRequest[]>this.updater?.getUpdateJobs();
+    this.jobs = this.updater!.consumeUpdateJobsForBenchmarking();
   }
 
   public async benchmark(): Promise<any> {
@@ -60,7 +62,10 @@ export default class ComputeTimeline extends RebenchDbBenchmark {
 
     // the processStart being 1 is just here for a consistent start time
     // that's not zero
-    const numJobs = await this.updater.processUpdateJobs(this.jobs, 1);
+    const numJobs = await this.updater.processUpdateJobsForBenchmarking(
+      this.jobs,
+      1
+    );
 
     const result = await this.db.query({
       text: `SELECT count(*) FROM Timeline`
@@ -70,7 +75,7 @@ export default class ComputeTimeline extends RebenchDbBenchmark {
 
     return {
       timelineEntries: result?.rows[0],
-      numJobs: numJobs
+      numJobs
     };
   }
 

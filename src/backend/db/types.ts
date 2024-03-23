@@ -1,5 +1,5 @@
-import { BenchmarkId } from '../../shared/api.js';
-import { SummaryStatistics } from '../../shared/stats.js';
+import type { BenchmarkId, ValuesPossiblyMissing } from '../../shared/api.js';
+import type { SummaryStatistics } from '../../shared/stats.js';
 
 export interface DatabaseConfig {
   user: string;
@@ -31,6 +31,13 @@ export interface SoftwareVersionInfo {
   id: number;
   name: string;
   version: string;
+}
+
+export interface Metadata {
+  env: Environment;
+  exp: Experiment;
+  trial: Trial;
+  criteria: Map<number, Criterion>;
 }
 
 export interface Environment {
@@ -131,7 +138,7 @@ export interface Measurement {
   invocation: number;
   iteration: number;
 
-  value: number;
+  value: number[];
 }
 
 export interface Baseline extends Source {
@@ -139,7 +146,7 @@ export interface Baseline extends Source {
 }
 
 /** As returned from database queries */
-export interface MeasurementData {
+interface BasicMeasurementData {
   expid: number;
   runid: number;
   trialid: number;
@@ -153,12 +160,20 @@ export interface MeasurementData {
   inputsize: string | null;
   extraargs: string | null;
   invocation: number;
-  iteration: number;
   warmup: number | null;
   criterion: string;
   unit: string;
-  value: number;
   envid: number;
+}
+
+export interface MeasurementData extends BasicMeasurementData {
+  values: ValuesPossiblyMissing;
+}
+
+/** Was used previously, but is also still used for the raw data export. */
+export interface MeasurementDataOld extends BasicMeasurementData {
+  iteration: number;
+  value: number;
 }
 
 export interface AvailableProfile extends BenchmarkId {
@@ -190,7 +205,7 @@ export interface Measurements {
    * Indexed first by invocation, than by iteration.
    * Example to get the value of 3 invocation and 5 iteration: `values[3][5]`.
    */
-  values: number[][];
+  values: ValuesPossiblyMissing[];
 
   envId: number;
   runId: number;

@@ -49,7 +49,10 @@ import {
 } from './backend/compare/compare.js';
 import { getAvailableDataAsJson } from './backend/project/data-export.js';
 import { submitTimelineUpdateJobs } from './backend/admin/operations.js';
-import { acceptResultData } from './backend/rebench/results.js';
+import {
+  acceptResultData,
+  reportResultApiVersion
+} from './backend/rebench/results.js';
 import { setTimeout } from 'node:timers/promises';
 import { reportConnectionRefused } from './shared/errors.js';
 
@@ -168,6 +171,9 @@ if (DEV) {
   );
 }
 
+// curl -X OPTIONS http://localhost:33333/rebenchdb/results -i
+router.options('/rebenchdb/results', reportResultApiVersion);
+
 // curl -X PUT -H "Content-Type: application/json" -d '{"foo":"bar","baz":3}'
 //  http://localhost:33333/rebenchdb/results
 // DEBUG: koaBody({includeUnparsed: true})
@@ -210,7 +216,7 @@ async function tryToConnect(n: number): Promise<boolean> {
     process.exit(1);
   }
 
-  initPerfTracker();
+  await initPerfTracker(db);
 
   log.info(`Starting server on http://localhost:${siteConfig.port}`);
   app.listen(siteConfig.port);

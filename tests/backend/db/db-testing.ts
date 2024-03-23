@@ -13,6 +13,8 @@ import type { DatabaseConfig } from '../../../src/backend/db/types.js';
 import { Database } from '../../../src/backend/db/db.js';
 // eslint-disable-next-line max-len
 import { DatabaseWithPool } from '../../../src/backend/db/database-with-pool.js';
+// eslint-disable-next-line max-len
+import { BatchingTimelineUpdater } from '../../../src/backend/timeline/timeline-calc.js';
 
 export class TestDatabase extends Database {
   private readonly connectionPool: Pool;
@@ -28,7 +30,10 @@ export class TestDatabase extends Database {
     timelineEnabled: boolean,
     useTransactions: boolean
   ) {
-    super(config, numBootstrapSamples, timelineEnabled);
+    super(
+      config,
+      timelineEnabled ? new BatchingTimelineUpdater(numBootstrapSamples) : null
+    );
     this.connectionPool = new pg.Pool(config);
     this.usesTransactions = useTransactions;
     this.client = null;

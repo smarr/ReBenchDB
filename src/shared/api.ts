@@ -47,22 +47,19 @@ export interface Run {
   runId: RunId;
 }
 
-export interface Measure {
-  /** Criterion id. */
-  c: number;
-
-  /** Value */
-  v: number;
-}
+export type ValuesPossiblyMissing = (number | null)[];
+export type CriterionWithoutData = null;
 
 export interface DataPoint {
   /** Invocation */
   in: number;
 
-  /** Iteration */
-  it: number;
-
-  m: Measure[];
+  /**
+   * An array of criteria with values order by iteration.
+   * - some iterations may not yield data (ValuesPossiblyMissing)
+   * - some criteria may not have data (CriterionWithoutData)
+   */
+  m: (ValuesPossiblyMissing | CriterionWithoutData)[];
 }
 
 export interface ProfileElement {

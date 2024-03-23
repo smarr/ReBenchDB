@@ -1,16 +1,30 @@
 import { Database } from '../db/db.js';
-import { SummaryStatistics } from '../../shared/stats.js';
+import type { SummaryStatistics } from '../../shared/stats.js';
 import { robustSrcPath } from '../util.js';
 import { Worker } from 'node:worker_threads';
-import { completeRequest, startRequest } from '../perf-tracker.js';
-import { log } from '../logging.js';
+import {
+  completeRequestAndHandlePromise,
+  startRequest
+} from '../perf-tracker.js';
+import { log, assert } from '../logging.js';
+import type { ValuesPossiblyMissing } from '../../shared/api.js';
 
-export interface ComputeRequest {
+export interface ComputeJob {
   runId: number;
   trialId: number;
   criterion: number;
   dataForCriterion: number[];
-  requestStart?: number;
+}
+
+export interface ComputeRequest {
+  jobs: ComputeJob[];
+  requestStart: number;
+  requestId: number;
+}
+
+export interface ActiveRequest {
+  request: ComputeRequest;
+  resolveWithNumberOfJobs: (value: number) => void;
 }
 
 export interface ComputeResult {
@@ -18,32 +32,30 @@ export interface ComputeResult {
   trialId: number;
   criterion: number;
   stats: SummaryStatistics;
-  requestStart: number;
 }
 
-export class BatchingTimelineUpdater {
-  private readonly db: Database;
+export interface ComputeResults {
+  results: ComputeResult[];
+  requestStart: number;
+  requestId: number;
+}
+
+export interface ResultReceiver {
+  receiveResults(result: ComputeResults): Promise<void>;
+}
+
+/**
+ * This class is responsible for managing the web worker that calculates
+ * summary statistics for the timeline.
+ * It provides the interface for the interaction.
+ */
+export class TimelineWorker {
   private readonly worker: Worker;
-  private readonly requests: Map<string, ComputeRequest>;
-
-  private activeRequests: number;
-
-  private requestsAtStart: number;
-  private promise: Promise<number> | null;
-  private resolve: ((value: number) => void) | null;
-
   private shutdownResolve: ((value: void) => void) | null;
+  private shutdownPromise: Promise<void> | null;
+  private updater: ResultReceiver;
 
-  constructor(db: Database, numBootstrapSamples: number) {
-    this.db = db;
-    this.activeRequests = 0;
-    this.shutdownResolve = null;
-
-    this.requests = new Map();
-    this.resolve = null;
-    this.requestsAtStart = 0;
-    this.promise = null;
-
+  constructor(numBootstrapSamples: number, updater: ResultReceiver) {
     this.worker = new Worker(
       robustSrcPath('backend/timeline/timeline-calc-worker.js'),
       {
@@ -58,14 +70,14 @@ export class BatchingTimelineUpdater {
     this.worker.on('exit', (exitCode) => {
       log.info(`Timeline worker exited with code: ${exitCode}`);
     });
+
+    this.shutdownResolve = null;
+    this.shutdownPromise = null;
+    this.updater = updater;
   }
 
-  public shutdown(): Promise<void> {
-    const promise: Promise<void> = new Promise((resolve) => {
-      this.shutdownResolve = resolve;
-    });
-    this.worker.postMessage('exit');
-    return promise;
+  public sendRequest(requests: ComputeRequest): void {
+    this.worker.postMessage(requests);
   }
 
   protected async processResponse(message: any): Promise<void> {
@@ -77,88 +89,216 @@ export class BatchingTimelineUpdater {
       return;
     }
 
-    const result = <ComputeResult>message;
-    await this.db.recordTimeline(
-      result.runId,
-      result.trialId,
-      result.criterion,
-      result.stats
-    );
-
-    this.activeRequests -= 1;
-
-    if (this.activeRequests === 0) {
-      if (this.resolve && message.requestStart) {
-        this.resolve(this.requestsAtStart);
-        this.resolve = null;
-        completeRequest(
-          <number>message.requestStart,
-          this.db,
-          'generate-timeline'
-        )
-          .then((val) => val)
-          .catch((e) => e);
-      }
-    }
+    const results = <ComputeResults>message;
+    this.updater.receiveResults(results);
   }
 
-  public addValue(
+  public async shutdown(): Promise<void> {
+    if (this.shutdownPromise) {
+      return this.shutdownPromise;
+    }
+
+    this.shutdownPromise = new Promise((resolve) => {
+      this.shutdownResolve = resolve;
+    });
+
+    this.worker.postMessage('exit');
+    return this.shutdownPromise;
+  }
+}
+
+export function createBatchTimelineUpdater(
+  db: Database,
+  numBootstrapSamples: number
+): BatchingTimelineUpdater {
+  const result = new BatchingTimelineUpdater(numBootstrapSamples);
+  result.setDatabase(db);
+  return result;
+}
+
+/**
+ * This class is responsible for batching up requests to the timeline worker
+ * and managing the promises for the requests.
+ */
+export class BatchingTimelineUpdater implements ResultReceiver {
+  private db: Database | null;
+
+  private readonly worker: TimelineWorker;
+  private readonly requests: Map<string, ComputeJob>;
+  private readonly activeRequests: Map<number, ActiveRequest>;
+
+  private nextRequestId: number;
+  private pendingPromises: Promise<number>[];
+
+  constructor(numBootstrapSamples: number) {
+    this.db = null;
+    this.nextRequestId = 0;
+
+    this.requests = new Map();
+    this.activeRequests = new Map();
+    this.pendingPromises = [];
+
+    this.worker = new TimelineWorker(numBootstrapSamples, this);
+  }
+
+  public setDatabase(db: Database): void {
+    this.db = db;
+  }
+
+  public async shutdown(): Promise<void> {
+    return this.worker.shutdown();
+  }
+
+  public async receiveResults(r: ComputeResults): Promise<void> {
+    if (!this.db) {
+      log.error('Database not set');
+      return;
+    }
+
+    for (const result of r.results) {
+      await this.db.recordTimeline(
+        result.runId,
+        result.trialId,
+        result.criterion,
+        result.stats
+      );
+    }
+
+    const req = this.activeRequests.get(r.requestId);
+    if (!req) {
+      log.error('Received results for unknown request', r);
+      return;
+    }
+
+    this.activeRequests.delete(r.requestId);
+    req.resolveWithNumberOfJobs(r.results.length);
+
+    completeRequestAndHandlePromise(
+      r.requestStart,
+      this.db,
+      'generate-timeline'
+    );
+  }
+
+  public addValues(
     runId: number,
     trialId: number,
     criterionId: number,
-    value: number
+    values: ValuesPossiblyMissing
   ): void {
     const id = `${trialId}-${runId}-${criterionId}`;
     if (!this.requests.has(id)) {
-      const req: ComputeRequest = {
+      const withoutMissing: number[] = <number[]>(
+        values.filter((v) => v !== null)
+      );
+      if (withoutMissing.length === 0) {
+        return;
+      }
+
+      const req: ComputeJob = {
         runId,
         trialId,
         criterion: criterionId,
-        dataForCriterion: [value]
+        dataForCriterion: withoutMissing
       };
 
       this.requests.set(id, req);
     } else {
-      this.requests.get(id)?.dataForCriterion.push(value);
+      const withoutMissing = this.requests.get(id)!.dataForCriterion;
+      for (const v of values) {
+        if (v !== null) {
+          withoutMissing.push(v);
+        }
+      }
     }
   }
 
-  public getUpdateJobs(): ComputeRequest[] {
+  /**
+   * Trigger processing of timeline jobs.
+   * Typically triggered once all data from the client was recorded.
+   */
+  public submitUpdateJobs(): Promise<number> {
+    const requestStart = startRequest();
+
+    const requests = this.consumeUpdateJobsForBenchmarking();
+    return this.processUpdateJobs(requests, requestStart);
+  }
+
+  /**
+   * This method is only used for benchmarking purposes.
+   */
+  public consumeUpdateJobsForBenchmarking(): ComputeJob[] {
     const requests = Array.from(this.requests.values());
     this.requests.clear();
     return requests;
   }
 
-  public submitUpdateJobs(): Promise<number> {
-    const requestStart = startRequest();
-
-    const requests = this.getUpdateJobs();
-    return this.processUpdateJobs(requests, requestStart);
-  }
-
-  public processUpdateJobs(
-    jobs: ComputeRequest[],
+  /**
+   * This method is only used for benchmarking purposes.
+   */
+  public async processUpdateJobsForBenchmarking(
+    jobs: ComputeJob[],
     requestStart: number
   ): Promise<number> {
-    this.activeRequests += jobs.length;
-    this.requestsAtStart = this.activeRequests;
-
-    for (const r of jobs) {
-      r.requestStart = requestStart;
-      this.worker.postMessage(r);
-    }
-
-    this.promise = new Promise((resolve) => {
-      this.resolve = resolve;
-    });
-
-    if (this.activeRequests === 0 && this.resolve) {
-      this.resolve(0);
-    }
-    return this.promise;
+    return this.processUpdateJobs(jobs, requestStart);
   }
 
-  public getQuiescencePromise(): Promise<number> | null {
-    return this.promise;
+  /**
+   * @returns promise with the number of jobs processed
+   */
+  private processUpdateJobs(
+    jobs: ComputeJob[],
+    requestStart: number
+  ): Promise<number> {
+    if (jobs.length === 0) {
+      return Promise.resolve(0);
+    }
+
+    const requestId = this.nextRequestId;
+    this.nextRequestId += 1;
+
+    const request: ComputeRequest = {
+      jobs,
+      requestStart,
+      requestId
+    };
+
+    this.worker.sendRequest(request);
+
+    let resolveWithNumberOfJobs;
+    const promise: Promise<number> = new Promise((resolve) => {
+      resolveWithNumberOfJobs = resolve;
+    });
+
+    assert(
+      this.activeRequests.has(requestId) === false,
+      'Request id already exists'
+    );
+
+    this.activeRequests.set(requestId, {
+      request,
+      resolveWithNumberOfJobs
+    });
+
+    this.pendingPromises.push(promise);
+
+    return promise;
+  }
+
+  public async awaitQuiescence(): Promise<number[]> {
+    if (this.pendingPromises.length === 0) {
+      return [];
+    }
+
+    const results: number[] = [];
+
+    while (this.pendingPromises.length > 0) {
+      const currentlyPending = this.pendingPromises;
+      this.pendingPromises = [];
+      const result = await Promise.all(currentlyPending);
+      results.push(...result);
+    }
+
+    return results;
   }
 }

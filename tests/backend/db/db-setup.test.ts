@@ -4,15 +4,17 @@ import {
   beforeAll,
   afterAll,
   afterEach,
-  it
+  it,
+  jest
 } from '@jest/globals';
+import { readFileSync } from 'fs';
+
 import type {
   BenchmarkData,
   Criterion,
   DataPoint
 } from '../../../src/shared/api.js';
 import { loadScheme } from '../../../src/backend/db/db.js';
-import { readFileSync } from 'fs';
 import {
   TestDatabase,
   createAndInitializeDB,
@@ -20,8 +22,7 @@ import {
   closeMainDb
 } from './db-testing.js';
 import { robustPath } from '../../../src/backend/util.js';
-
-import { jest } from '@jest/globals';
+import { loadLargePayload } from '../../payload.js';
 
 const numTxStatements = 3;
 
@@ -185,9 +186,7 @@ describe('Recording a ReBench execution from payload files', () => {
     smallTestData = JSON.parse(
       readFileSync(robustPath('../tests/data/small-payload.json')).toString()
     );
-    largeTestData = JSON.parse(
-      readFileSync(robustPath('../tests/data/large-payload.json')).toString()
-    );
+    largeTestData = loadLargePayload();
     profileTestData = JSON.parse(
       readFileSync(robustPath('../tests/data/profile-payload.json')).toString()
     );
@@ -199,7 +198,6 @@ describe('Recording a ReBench execution from payload files', () => {
 
   it(`should accept all data (small-payload),
       and have the measurements persisted`, async () => {
-    await db.recordMetaDataAndRuns(smallTestData);
     const [recMs, recPs] = await db.recordAllData(smallTestData);
 
     const measurements = await db.query({ text: 'SELECT * from Measurement' });
@@ -210,6 +208,14 @@ describe('Recording a ReBench execution from payload files', () => {
 
     const timeline = await db.query({ text: 'SELECT * from Timeline' });
     expect(timeline.rowCount).toEqual(1);
+
+    // tests to see if small payload has separated each invocation
+    // into an array of length 1
+    const expectedValues = [[383.821], [432.783], [482.53]];
+    for (const elm in expectedValues) {
+      expect(measurements.rows[elm].values.length).toEqual(1);
+      expect(measurements.rows[elm].values).toEqual(expectedValues[elm]);
+    }
   });
 
   it('data recording should be idempotent (small-payload)', async () => {
@@ -226,7 +232,6 @@ describe('Recording a ReBench execution from payload files', () => {
     expect([1, 2]).toContain(exps.rowCount);
 
     // Do recordData a second time
-    await db.recordMetaDataAndRuns(smallTestData);
     const [recMs, recPs] = await db.recordAllData(smallTestData);
 
     // don't need to wait for db.awaitQuiescentTimelineUpdater()
@@ -251,7 +256,6 @@ describe('Recording a ReBench execution from payload files', () => {
     `should accept all data (large-payload),
       and have the measurements persisted`,
     async () => {
-      await db.recordMetaDataAndRuns(largeTestData);
       const [recMs, recPs] = await db.recordAllData(largeTestData);
 
       const measurements = await db.query({
@@ -260,18 +264,36 @@ describe('Recording a ReBench execution from payload files', () => {
 
       await db.awaitQuiescentTimelineUpdater();
 
-      expect(recMs).toEqual(459928);
+      // sql to find total number of values that exist in the table
+      // includes null values though
+      const totalNumberOfValuesQuery = await db.query({
+        text: 'SELECT SUM(cardinality(values)) FROM Measurement'
+      });
+
+      const expectedTimelineRowCount = 317;
+      const numberRowsAdded = 460;
+      const expectedNumberValues = 460003;
+
+      expect(recMs).toEqual(numberRowsAdded);
       expect(recPs).toEqual(0);
-      expect(parseInt(measurements.rows[0].cnt)).toEqual(459928 + 3);
+
+      // adding the number of rows from the small payload since
+      // tests may run after another
+      expect([numberRowsAdded, numberRowsAdded + 3]).toContain(
+        parseInt(measurements.rows[0].cnt)
+      );
+
       const timeline = await db.query({ text: 'SELECT * from Timeline' });
-      expect(timeline.rowCount).toEqual(317);
+      expect(timeline.rowCount).toEqual(expectedTimelineRowCount);
+      expect(parseInt(totalNumberOfValuesQuery.rows[0].sum)).toEqual(
+        expectedNumberValues
+      );
     },
     timeoutForLargeDataTest
   );
 
   it('should not fail if some data is already in database', async () => {
     // make sure everything is in the database
-    await db.recordMetaDataAndRuns(smallTestData);
     await db.recordAllData(smallTestData);
 
     // obtain the bits, this should match what `recordData` does above
@@ -296,7 +318,6 @@ describe('Recording a ReBench execution from payload files', () => {
   });
 
   it('should be possible to store profiles', async () => {
-    await db.recordMetaDataAndRuns(profileTestData);
     const [recMs, recPs] = await db.recordAllData(profileTestData);
 
     const profiles = await db.query({ text: `SELECT * from ProfileData` });

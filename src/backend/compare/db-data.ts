@@ -31,10 +31,8 @@ export function collateMeasurements(
   const runSettings = new Map<string, RunSettings>();
   const criteria = new Map<string, CriterionData>();
 
-  let lastInvocation = 0;
   let lastTrialId = -1;
   let lastMeasurements: Measurements | null = null;
-  let lastValues: number[] = [];
 
   // the data here needs to be sorted by
   // runId, expId, trialId, criterion, invocation, iteration
@@ -83,7 +81,7 @@ export function collateMeasurements(
 
     if (
       lastMeasurements === null ||
-      !isSameInvocation(row, lastMeasurements, lastInvocation, lastTrialId)
+      !isSameTrial(row, lastMeasurements, lastTrialId)
     ) {
       const benchResult = findOrConstructProcessedResult(forSuiteByBench, row);
 
@@ -95,21 +93,18 @@ export function collateMeasurements(
         forSuiteByBench
       );
 
-      // We don't store the invocation number anymore
-      // I think this is fine, we don't really need it.
-      // We just need to distinguish iterations, but their ordering
-      // doesn't have any particular meaning.
-      // If we should need it for statistical analysis of inter-invocation
-      // effects, we may need to re-introduce it.
-      lastValues = [];
-      m.values.push(lastValues);
-      lastInvocation = row.invocation;
       lastMeasurements = m;
       lastTrialId = row.trialid;
     }
 
-    // adjusted to be zero-based
-    lastValues[row.iteration - 1] = row.value;
+    // We don't store the invocation number anymore, since we combine
+    // data from different experiments and trials.
+    // I think this is fine, we don't really need it.
+    // We just need to distinguish iterations, but their ordering
+    // doesn't have any particular meaning.
+    // If we should need it for statistical analysis of inter-invocation
+    // effects, we may need to re-introduce it.
+    lastMeasurements.values.push(row.values);
   }
 
   return sortResultsAlphabetically(byExeSuiteBench);
@@ -217,15 +212,6 @@ function isSameMeasurements(row: MeasurementData, m: Measurements) {
   );
 }
 
-function isSameInvocation(
-  row: MeasurementData,
-  m: Measurements,
-  invocation: number,
-  trialId: number
-) {
-  return (
-    invocation == row.invocation &&
-    trialId == row.trialid &&
-    isSameMeasurements(row, m)
-  );
+function isSameTrial(row: MeasurementData, m: Measurements, trialId: number) {
+  return trialId == row.trialid && isSameMeasurements(row, m);
 }

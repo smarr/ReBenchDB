@@ -6,7 +6,10 @@ import {
   respondProjectIdNotFound,
   respondProjectNotFound
 } from '../common/standard-responses.js';
-import { completeRequest, startRequest } from '../perf-tracker.js';
+import {
+  completeRequestAndHandlePromise,
+  startRequest
+} from '../perf-tracker.js';
 import { getExpData } from './data-export.js';
 import { Database } from '../db/db.js';
 import { robustPath } from '../../backend/util.js';
@@ -126,5 +129,5 @@ export async function renderDataExport(
     ctx.redirect(data.downloadUrl);
   }
 
-  completeRequest(start, db, 'get-exp-data');
+  completeRequestAndHandlePromise(start, db, 'get-exp-data');
 }

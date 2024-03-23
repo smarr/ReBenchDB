@@ -1,5 +1,4 @@
 import { describe, expect, it } from '@jest/globals';
-import { readFileSync } from 'node:fs';
 
 import {
   getDataNormalizedToBaselineMedian,
@@ -20,6 +19,10 @@ import {
   initJestMatchers,
   isRequestedToUpdateExpectedData
 } from '../../helpers.js';
+import {
+  loadCompareViewJsSomPayload,
+  loadCompareViewTSomPayload
+} from '../../payload.js';
 
 initJestMatchers();
 
@@ -31,20 +34,12 @@ function getResultPath(fileName: string): string {
   return robustPath(`../tests/data/expected-results/charts/${fileName}`);
 }
 
-const dataJsSOM = JSON.parse(
-  readFileSync(
-    robustPath(`../tests/data/compare-view-data-jssom.json`)
-  ).toString()
-);
+const dataJsSOM = loadCompareViewJsSomPayload();
 
-const dataTruffleSOM = JSON.parse(
-  readFileSync(
-    robustPath(`../tests/data/compare-view-data-trufflesom.json`)
-  ).toString()
-);
+const dataTruffleSOM = loadCompareViewTSomPayload();
 
-const resultsJsSOM = collateMeasurements(dataJsSOM.results);
-const resultsTSOM = collateMeasurements(dataTruffleSOM.results);
+const resultsJsSOM = collateMeasurements(dataJsSOM);
+const resultsTSOM = collateMeasurements(dataTruffleSOM);
 
 describe('renderOverviewPlots()', () => {
   let jsSomStats: {

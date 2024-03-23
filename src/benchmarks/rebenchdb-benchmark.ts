@@ -1,5 +1,3 @@
-import { readFileSync } from 'fs';
-import { getDirname } from '../backend/util.js';
 import { BenchmarkData } from '../shared/api.js';
 import {
   closeMainDb,
@@ -7,8 +5,8 @@ import {
   TestDatabase
 } from '../../tests/backend/db/db-testing.js';
 import { Benchmark } from './benchmark.js';
+import { loadLargePayloadApiV1 } from '../../tests/payload.js';
 
-const __dirname = getDirname(import.meta.url);
 export class RebenchDbBenchmark extends Benchmark {
   protected readonly testData: BenchmarkData;
   protected db: TestDatabase | null;
@@ -21,11 +19,7 @@ export class RebenchDbBenchmark extends Benchmark {
     this.problemSize = '';
     this.enableTimeline = false;
 
-    this.testData = JSON.parse(
-      readFileSync(
-        `${__dirname}/../../../tests/data/large-payload.json`
-      ).toString()
-    );
+    this.testData = loadLargePayloadApiV1();
   }
 
   public async oneTimeSetup(problemSize: string): Promise<void> {

@@ -154,11 +154,10 @@ CREATE TABLE Measurement (
   trialId smallint,
   criterion smallint,
   invocation smallint,
-  iteration smallint,
 
-  value float4 NOT NULL,
+  values float4[] NOT NULL,
 
-  primary key (iteration, invocation, runId, trialId, criterion),
+  primary key (invocation, runId, trialId, criterion),
   foreign key (trialId) references Trial (id),
   foreign key (runId) references Run (id),
   foreign key (criterion) references Criterion (id)
@@ -200,3 +199,27 @@ CREATE TABLE Timeline (
   foreign key (runId) references Run (id),
   foreign key (criterion) references Criterion (id)
 );
+
+-- Used by ReBenchDB's perf-tracker, for self-performance tracking
+CREATE PROCEDURE recordAdditionalMeasurement(
+  aRunId smallint,
+  aTrialId smallint,
+  aCriterionId smallint,
+  aValue float4)
+LANGUAGE plpgsql
+AS $$
+  BEGIN
+    UPDATE Measurement m
+      SET values = array_append(values, aValue)
+      WHERE
+        m.runId = aRunId AND
+        m.trialId = aTrialId AND
+        m.criterion = aCriterionId AND
+        m.invocation = 1;
+
+    IF NOT FOUND THEN
+      INSERT INTO Measurement (runId, trialId, criterion, invocation, values)
+      VALUES (aRunId, aTrialId, aCriterionId, 1, ARRAY[aValue]);
+    END IF;
+  END;
+$$;

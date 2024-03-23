@@ -5,6 +5,7 @@ import { promisify } from 'node:util';
 import { gzip as gzipCallback } from 'node:zlib';
 import { readFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
+import type { ValuesPossiblyMissing } from '../shared/api.js';
 
 const gzip = promisify(gzipCallback);
 
@@ -70,7 +71,7 @@ export const dbConfig = {
   user: process.env.RDB_USER || '',
   password: process.env.RDB_PASS || '',
   host: process.env.RDB_HOST || 'localhost',
-  database: process.env.RDB_DB || 'rdb_smde2',
+  database: process.env.RDB_DB || 'rdb_smde3',
 
   /** The path where PostgreSQL writes data files to. */
   dataExportPath: dbDataExportPath,
@@ -115,8 +116,8 @@ export const siteConfig = {
   githubPrivateKey:
     process.env.GITHUB_PK || 'rebenchdb.2020-08-11.private-key.pem',
 
-  canShowWarmup: (data: number[][]): boolean => {
-    return data.some((ms) => ms.length >= 5);
+  canShowWarmup: (data: ValuesPossiblyMissing[]): boolean => {
+    return data.some((ms) => ms != null && ms.length >= 5);
   },
   inlinePlotCriterion: 'total'
 };
