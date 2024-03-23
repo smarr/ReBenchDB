@@ -1,5 +1,6 @@
 import { writeFileSync } from 'fs';
 import { joinImages } from 'join-images';
+import ChartJsAnnotations from 'chartjs-plugin-annotation';
 
 import {
   ChartJSNodeCanvas,
@@ -176,13 +177,11 @@ export interface CanvasSettings {
 }
 
 export function createCanvas(settings: CanvasSettings): ChartJSNodeCanvas {
-  const plugins: any[] = ['chartjs-plugin-annotation'];
-
   const canvasOptions: ChartJSNodeCanvasOptions = {
     width: settings.width,
     height: settings.height,
     backgroundColour: siteAesthetics.backgroundColor,
-    plugins: { modern: plugins },
+    plugins: { modern: [ChartJsAnnotations] },
     chartCallback: (ChartJS) => {
       ChartJS.defaults.font.family = 'Roboto';
 
