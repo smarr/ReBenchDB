@@ -55,7 +55,6 @@ import {
 } from './backend/rebench/results.js';
 import { setTimeout } from 'node:timers/promises';
 import { reportConnectionRefused } from './shared/errors.js';
-import { initChartJS } from './backend/compare/charts.js';
 
 log.info('Starting ReBenchDB Version ' + rebenchVersion);
 
@@ -218,7 +217,6 @@ async function tryToConnect(n: number): Promise<boolean> {
   }
 
   await initPerfTracker(db);
-  initChartJS();
 
   log.info(`Starting server on http://localhost:${siteConfig.port}`);
   app.listen(siteConfig.port);

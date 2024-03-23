@@ -25,9 +25,11 @@ const marginTopWithTitle = 34;
 const marginBottom = 28;
 const perEntryHeight = 34;
 
-export function initChartJS(): void {
+/** Register all standard plugins. This is for convenience. */
+function initChartJS(): void {
   Chart.register(...registerables);
 }
+initChartJS();
 
 function calculatePlotHeight(title: string | null, data: ChangeData): number {
   const result = marginBottom + data.labels.length * perEntryHeight;
