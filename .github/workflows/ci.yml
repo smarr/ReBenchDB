@@ -83,7 +83,7 @@ jobs:
 
       - name: Install ReBench
         run: |
-          git clone --depth 1 --branch rebenchdb https://github.com/smarr/rebench.git
+          git clone --depth 1 https://github.com/smarr/rebench.git
           pushd rebench
           pip install .
           popd
