@@ -16,6 +16,7 @@ import {
 import { medianUnsorted } from '../../shared/stats.js';
 import { robustPath } from '../util.js';
 import { siteAesthetics } from '../../shared/aesthetics.js';
+import type { ChartConfiguration } from 'chart.js';
 
 const fullyTransparent = 'rgba(0, 0, 0, 0)';
 
@@ -239,7 +240,7 @@ async function renderDataOnCanvas(
   const plotTypeConst =
     plotType === 'boxplot' ? ('boxplot' as const) : ('violin' as const);
 
-  const configuration = {
+  const configuration: ChartConfiguration = {
     type: plotTypeConst,
     data: {
       labels: data.labels,
@@ -251,7 +252,7 @@ async function renderDataOnCanvas(
       plugins: {
         legend: { display: false },
         annotation: getFivePercentLineAnnotations()
-      },
+      } as any,
       scales: {
         x: {
           suggestedMin: 0,
@@ -280,11 +281,11 @@ async function renderDataOnCanvas(
   };
 
   if (!showYAxisLabels) {
-    (<any>configuration.options.scales.y).ticks = { display: false };
+    (<any>configuration.options!.scales!.y).ticks = { display: false };
   }
 
   if (title) {
-    (<any>configuration.options.plugins).title = {
+    (<any>configuration.options!.plugins).title = {
       text: title,
       display: true
     };
