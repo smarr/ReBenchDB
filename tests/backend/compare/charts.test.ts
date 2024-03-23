@@ -9,7 +9,6 @@ import {
 import { robustPath } from '../../../src/backend/util.js';
 import {
   createCanvas,
-  initChartJS,
   renderInlinePlot,
   renderOverviewPlots
 } from '../../../src/backend/compare/charts.js';
@@ -26,7 +25,6 @@ import {
 } from '../../payload.js';
 
 initJestMatchers();
-initChartJS();
 
 const outputFolder = isRequestedToUpdateExpectedData()
   ? robustPath('../tests/data/expected-results/charts')
