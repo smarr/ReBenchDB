@@ -46,8 +46,10 @@ import {
   loadCompareViewJsSomPayload,
   loadCompareViewTSomPayload
 } from '../../payload.js';
+import { initChartJS } from '../../../src/backend/compare/charts.js';
 
 initJestMatchers();
+initChartJS();
 
 describe('compareStringOrNull()', () => {
   it('should compare null and null', () => {

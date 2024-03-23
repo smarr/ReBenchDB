@@ -16,7 +16,7 @@ import {
 import { medianUnsorted } from '../../shared/stats.js';
 import { robustPath } from '../util.js';
 import { siteAesthetics } from '../../shared/aesthetics.js';
-import type { ChartConfiguration } from 'chart.js';
+import { Chart, ChartConfiguration, registerables } from 'chart.js';
 
 const fullyTransparent = 'rgba(0, 0, 0, 0)';
 
@@ -24,6 +24,10 @@ const marginTop = 12;
 const marginTopWithTitle = 34;
 const marginBottom = 28;
 const perEntryHeight = 34;
+
+export function initChartJS(): void {
+  Chart.register(...registerables);
+}
 
 function calculatePlotHeight(title: string | null, data: ChangeData): number {
   const result = marginBottom + data.labels.length * perEntryHeight;
@@ -257,11 +261,12 @@ async function renderDataOnCanvas(
         x: {
           suggestedMin: 0,
           suggestedMax: 2,
+          border: { display: false },
           grid: {
             drawOnChartArea: false,
             drawTicks: true,
             tickLength,
-            drawBorder: false,
+            display: true,
             tickColor: '#000'
           },
           ticks: {
@@ -271,21 +276,19 @@ async function renderDataOnCanvas(
           }
         },
         y: {
-          grid: {
-            display: false,
-            drawBorder: false
-          }
+          border: { display: false },
+          grid: { display: false }
         }
       }
     }
   };
 
   if (!showYAxisLabels) {
-    (<any>configuration.options!.scales!.y).ticks = { display: false };
+    configuration.options!.scales!.y!.ticks = { display: false };
   }
 
   if (title) {
-    (<any>configuration.options!.plugins).title = {
+    configuration.options!.plugins!.title = {
       text: title,
       display: true
     };
