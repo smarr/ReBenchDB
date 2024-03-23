@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
 
 # Copy only package*.json, which are likely unchanged, allowing caching
 COPY package.json package-lock.json /project/
+COPY patches /project/patches
 
 # Set the working dir to the project & install and compile all dependency
 WORKDIR /project/
