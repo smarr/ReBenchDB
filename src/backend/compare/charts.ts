@@ -5,7 +5,7 @@ import ChartJsAnnotations from 'chartjs-plugin-annotation';
 import {
   ChartJSNodeCanvas,
   ChartJSNodeCanvasOptions
-} from 'chartjs-node-canvas';
+} from '../../vendored/chartjs-node-canvas/src/index.js';
 import { ByGroupChangeData, ChangeData } from './prep-data.js';
 import {
   ViolinController,
