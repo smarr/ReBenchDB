@@ -12,32 +12,34 @@
   "dependencies": {
     "@octokit/auth-app": "4.0.13",
     "@octokit/rest": "19.0.13",
-    "chart.js": "4.4.2",
     "@sgratzl/chartjs-chart-boxplot": "4.3.0",
     "canvas": "2.11.2",
+    "chart.js": "4.4.2",
     "chartjs-plugin-annotation": "3.0.1",
-    "sharp": "0.33.3",
-    "join-images": "1.1.5",
     "decimal.js": "10.4.3",
     "ejs": "3.1.9",
+    "join-images": "1.1.5",
     "koa": "2.15.2",
     "koa-body": "6.0.1",
     "koa-router": "12.0.1",
     "pg": "8.11.3",
     "promisify-child-process": "4.1.2",
+    "sharp": "0.33.3",
     "tslog": "4.9.2",
     "uplot": "1.6.30"
   },
   "overrides": {
-    "join-images": { "sharp": "$sharp" }
+    "join-images": {
+      "sharp": "$sharp"
+    }
   },
   "engines": {
     "node": ">=21.0.0"
   },
   "devDependencies": {
     "@octokit/types": "9.2.3",
-    "@types/jquery": "3.5.29",
     "@types/ejs": "3.1.5",
+    "@types/jquery": "3.5.29",
     "@types/koa": "2.15.0",
     "@types/koa-router": "7.4.8",
     "@types/pg": "8.11.4",
