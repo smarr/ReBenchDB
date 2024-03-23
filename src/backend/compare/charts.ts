@@ -1,10 +1,11 @@
 import { writeFileSync } from 'fs';
 import { joinImages } from 'join-images';
+import ChartJsAnnotations from 'chartjs-plugin-annotation';
 
 import {
   ChartJSNodeCanvas,
   ChartJSNodeCanvasOptions
-} from 'chartjs-node-canvas';
+} from '../../vendored/chartjs-node-canvas/src/index.js';
 import { ByGroupChangeData, ChangeData } from './prep-data.js';
 import {
   ViolinController,
@@ -15,6 +16,7 @@ import {
 import { medianUnsorted } from '../../shared/stats.js';
 import { robustPath } from '../util.js';
 import { siteAesthetics } from '../../shared/aesthetics.js';
+import { Chart, ChartConfiguration, registerables } from 'chart.js';
 
 const fullyTransparent = 'rgba(0, 0, 0, 0)';
 
@@ -22,6 +24,10 @@ const marginTop = 12;
 const marginTopWithTitle = 34;
 const marginBottom = 28;
 const perEntryHeight = 34;
+
+export function initChartJS(): void {
+  Chart.register(...registerables);
+}
 
 function calculatePlotHeight(title: string | null, data: ChangeData): number {
   const result = marginBottom + data.labels.length * perEntryHeight;
@@ -176,13 +182,11 @@ export interface CanvasSettings {
 }
 
 export function createCanvas(settings: CanvasSettings): ChartJSNodeCanvas {
-  const plugins: any[] = ['chartjs-plugin-annotation'];
-
   const canvasOptions: ChartJSNodeCanvasOptions = {
     width: settings.width,
     height: settings.height,
     backgroundColour: siteAesthetics.backgroundColor,
-    plugins: { modern: plugins },
+    plugins: { modern: [ChartJsAnnotations] },
     chartCallback: (ChartJS) => {
       ChartJS.defaults.font.family = 'Roboto';
 
@@ -240,7 +244,7 @@ async function renderDataOnCanvas(
   const plotTypeConst =
     plotType === 'boxplot' ? ('boxplot' as const) : ('violin' as const);
 
-  const configuration = {
+  const configuration: ChartConfiguration = {
     type: plotTypeConst,
     data: {
       labels: data.labels,
@@ -252,16 +256,17 @@ async function renderDataOnCanvas(
       plugins: {
         legend: { display: false },
         annotation: getFivePercentLineAnnotations()
-      },
+      } as any,
       scales: {
         x: {
           suggestedMin: 0,
           suggestedMax: 2,
+          border: { display: false },
           grid: {
             drawOnChartArea: false,
             drawTicks: true,
             tickLength,
-            drawBorder: false,
+            display: true,
             tickColor: '#000'
           },
           ticks: {
@@ -271,21 +276,19 @@ async function renderDataOnCanvas(
           }
         },
         y: {
-          grid: {
-            display: false,
-            drawBorder: false
-          }
+          border: { display: false },
+          grid: { display: false }
         }
       }
     }
   };
 
   if (!showYAxisLabels) {
-    (<any>configuration.options.scales.y).ticks = { display: false };
+    configuration.options!.scales!.y!.ticks = { display: false };
   }
 
   if (title) {
-    (<any>configuration.options.plugins).title = {
+    configuration.options!.plugins!.title = {
       text: title,
       display: true
     };

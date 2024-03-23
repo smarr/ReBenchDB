@@ -1,5 +1,6 @@
 import { mkdirSync } from 'node:fs';
-import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
+// eslint-disable-next-line max-len
+import { ChartJSNodeCanvas } from '../../vendored/chartjs-node-canvas/src/index.js';
 
 import {
   ComparisonStatistics,
