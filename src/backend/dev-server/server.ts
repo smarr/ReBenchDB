@@ -11,7 +11,6 @@ export async function serveStaticResource(
   log.debug(`serve ${filename}`);
   let path: string;
 
-  // TODO: robustPath?
   if (filename.endsWith('.css')) {
     ctx.type = 'css';
     path = robustPath(`../resources/${filename}`);

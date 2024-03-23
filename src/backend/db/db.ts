@@ -1236,8 +1236,6 @@ export abstract class Database {
     return (await this.query(q)).rowCount || 0;
   }
 
-  // TODO: not used any longer, is this correct??
-
   public async recordMeasurementBatchedN(values: any[]): Promise<number> {
     assert(values.length === Database.batchInsertSize * Database.batchN);
     const q = {
