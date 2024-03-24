@@ -1,4 +1,10 @@
-import type { AllResults, PlotData, TimelineResponse } from '../shared/api.js';
+import type {
+  AllResults,
+  CriterionWithoutData,
+  PlotData,
+  TimelineResponse,
+  ValuesPossiblyMissing
+} from '../shared/api.js';
 import type { Source } from '../backend/db/types.js';
 import { filterCommitMessage } from './render.js';
 import uPlot from '/static/uPlot.esm.min.js';
@@ -411,7 +417,7 @@ export function renderComparisonTimelinePlot(
 /**
  * Replace `0` with `null` to hide the point in the plot.
  */
-function replaceZeroByNull(data: number[]): number[] {
+function replaceZeroByNull(data: ValuesPossiblyMissing): ValuesPossiblyMissing {
   for (let i = 0; i < data.length; i += 1) {
     if (data[i] === 0) {
       (<any[]>data)[i] = null;
@@ -423,7 +429,7 @@ function replaceZeroByNull(data: number[]): number[] {
 
 function addSeries(
   critData: WarmupDataPerCriterion,
-  data: number[][],
+  data: (ValuesPossiblyMissing | CriterionWithoutData)[],
   series: any[],
   commitId: string,
   colors: readonly string[],
@@ -435,7 +441,14 @@ function addSeries(
         'Do not yet know how to handle multiple.'
     );
   }
-  data.push(replaceZeroByNull(critData.values[0]));
+
+  const values = critData.values[0];
+
+  if (values === null) {
+    return 0;
+  }
+
+  data.push(replaceZeroByNull(values));
 
   const style = styleMap[critData.criterion];
 
@@ -454,7 +467,7 @@ function addSeries(
     cfg.points.fill = colors[style.colorIdx];
   }
 
-  return critData.values[0].length;
+  return values.length;
 }
 
 function collectUnitsAndCriteria(data: WarmupDataForTrial[]): {
