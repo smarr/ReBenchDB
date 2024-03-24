@@ -84,7 +84,10 @@ export async function getMeasurementsAsJson(
   completeRequestAndHandlePromise(start, db, 'get-measurements');
 }
 
-async function getMeasurements(
+/**
+ * Only exported for testing, meant to be private.
+ */
+export async function getMeasurements(
   projectSlug: string,
   runId: number,
   baseCommitId: string,
