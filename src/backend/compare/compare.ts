@@ -84,7 +84,10 @@ export async function getMeasurementsAsJson(
   completeRequestAndHandlePromise(start, db, 'get-measurements');
 }
 
-async function getMeasurements(
+/**
+ * Only exported for testing, meant to be private.
+ */
+export async function getMeasurements(
   projectSlug: string,
   runId: number,
   baseCommitId: string,
@@ -95,10 +98,10 @@ async function getMeasurements(
     name: 'fetchMeasurementsByProjectIdRunIdCommitId',
     text: `SELECT
               trialId, source.commitId as commitId,
-              invocation, iteration, warmup,
+              invocation, warmup,
               criterion.name as criterion,
               criterion.unit as unit,
-              value
+              values
             FROM
               Measurement
               JOIN Trial ON trialId = Trial.id
@@ -110,7 +113,7 @@ async function getMeasurements(
             WHERE Project.slug = $1
               AND runId = $2
               AND (source.commitId = $3 OR source.commitId = $4)
-            ORDER BY trialId, criterion, invocation, iteration;`,
+            ORDER BY trialId, criterion, invocation;`,
     values: [projectSlug, runId, baseCommitId, changeCommitId]
   };
   const result = await db.query(q);
@@ -151,7 +154,7 @@ async function getMeasurements(
         critObject.values[r.invocation - 1] = [];
       }
 
-      critObject.values[r.invocation - 1][r.iteration - 1] = r.value;
+      critObject.values[r.invocation - 1] = r.values;
     }
   }
 

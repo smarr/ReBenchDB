@@ -1,4 +1,9 @@
-import type { BenchmarkId, ProfileElement } from './api.js';
+import type {
+  BenchmarkId,
+  CriterionWithoutData,
+  ProfileElement,
+  ValuesPossiblyMissing
+} from './api.js';
 import type {
   CriterionData,
   Environment,
@@ -247,7 +252,7 @@ export type CompareView = CompareViewWithoutData | CompareViewWithData;
 export interface WarmupDataPerCriterion {
   criterion: string;
   unit: string;
-  values: number[][];
+  values: (ValuesPossiblyMissing | CriterionWithoutData)[];
 }
 
 export interface WarmupDataForTrial {

@@ -15,6 +15,7 @@ import { Database } from '../../../src/backend/db/db.js';
 import { DatabaseWithPool } from '../../../src/backend/db/database-with-pool.js';
 // eslint-disable-next-line max-len
 import { BatchingTimelineUpdater } from '../../../src/backend/timeline/timeline-calc.js';
+import { reportConnectionRefused } from '../../../src/shared/errors.js';
 
 export class TestDatabase extends Database {
   private readonly connectionPool: Pool;
@@ -134,14 +135,23 @@ export async function createAndInitializeDB(
   timelineEnabled = false,
   useTransactions = true
 ): Promise<TestDatabase> {
-  const testDb = await createDB(
-    testSuite,
-    numBootstrapSamples,
-    timelineEnabled,
-    useTransactions
-  );
-  await testDb.prepareForTesting();
-  return testDb;
+  try {
+    const testDb = await createDB(
+      testSuite,
+      numBootstrapSamples,
+      timelineEnabled,
+      useTransactions
+    );
+    await testDb.prepareForTesting();
+    return testDb;
+  } catch (e: any) {
+    if (e.code == 'ECONNREFUSED') {
+      reportConnectionRefused(e);
+      throw new Error('Database connection refused');
+    }
+
+    throw e;
+  }
 }
 
 export async function createDB(

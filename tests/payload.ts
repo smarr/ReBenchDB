@@ -9,6 +9,12 @@ import type {
 } from '../src/backend/db/types.js';
 import { assert } from '../src/backend/logging.js';
 
+export function loadSmallPayload(): BenchmarkData {
+  return JSON.parse(
+    readFileSync(robustPath('../tests/data/small-payload.json')).toString()
+  );
+}
+
 export function loadLargePayload(): BenchmarkData {
   const testData = JSON.parse(
     readFileSync(robustPath('../tests/data/large-payload.json')).toString()

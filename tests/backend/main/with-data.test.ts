@@ -1,5 +1,4 @@
 import { describe, expect, beforeAll, afterAll, it, jest } from '@jest/globals';
-import { readFileSync } from 'fs';
 
 import {
   TestDatabase,
@@ -7,7 +6,6 @@ import {
   closeMainDb
 } from '../db/db-testing.js';
 
-import type { BenchmarkData } from '../../../src/shared/api.js';
 import { robustPath } from '../../../src/backend/util.js';
 import {
   getChanges,
@@ -20,6 +18,7 @@ import { prepareTemplate } from '../../../src/backend/templates.js';
 import { initJestMatchers } from '../../helpers.js';
 // eslint-disable-next-line max-len
 import { getLatestBenchmarksForTimelineView } from '../../../src/backend/timeline/timeline.js';
+import { loadSmallPayload } from '../../payload.js';
 
 initJestMatchers();
 
@@ -39,10 +38,7 @@ describe('Test with basic test data loaded', () => {
   beforeAll(async () => {
     db = await createAndInitializeDB('main_with_data', 25, true, false);
 
-    const data = readFileSync(
-      robustPath('../tests/data/small-payload.json')
-    ).toString();
-    const basicTestData: BenchmarkData = JSON.parse(data);
+    const basicTestData = loadSmallPayload();
     projectName = basicTestData.projectName;
 
     await db.recordAllData(basicTestData);

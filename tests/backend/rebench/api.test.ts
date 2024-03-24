@@ -5,7 +5,11 @@ import { ValidateFunction } from 'ajv';
 import { createValidator } from '../../../src/backend/rebench/api-validator.js';
 import { robustPath } from '../../../src/backend/util.js';
 import { assert, log } from '../../../src/backend/logging.js';
-import { loadLargePayload, loadLargePayloadApiV1 } from '../../payload.js';
+import {
+  loadLargePayload,
+  loadLargePayloadApiV1,
+  loadSmallPayload
+} from '../../payload.js';
 import type { BenchmarkData } from '../../../src/shared/api.js';
 import type { DataPointV1 } from '../../../src/backend/common/api-v1.js';
 
@@ -17,9 +21,7 @@ describe('Ensure Test Payloads conform to API', () => {
   });
 
   it('should validate small-payload.json', () => {
-    const testData = JSON.parse(
-      readFileSync(robustPath('../tests/data/small-payload.json')).toString()
-    );
+    const testData = loadSmallPayload();
 
     const result = validateFn(testData);
     if (!result) {
