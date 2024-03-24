@@ -34,7 +34,7 @@ export async function getExpData(
 
   if (existsSync(`${siteConfig.dataExportPath}/${expFileName}`)) {
     data.preparingData = false;
-    data.downloadUrl = `${siteConfig.staticUrl}/${expFileName}`;
+    data.downloadUrl = `${siteConfig.dataExportUrlBase}/${expFileName}`;
   } else {
     const expRequestId = `${expFilePrefix}-${format}`;
     data.currentTime = new Date().toISOString();
