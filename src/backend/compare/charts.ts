@@ -117,9 +117,9 @@ function toDataSetWithBaseChangeBackground(data: ChangeData): any[] {
 }
 
 function toDataSetWithExeColors(data: ChangeData, exeColors: string[]): any[] {
-  if (data.labels.length < 2) {
+  if (data.labels.length < 1) {
     throw new Error(
-      'Expect at least two data series, but only got ' + data.labels.length
+      'Expect at least one data series, but only got ' + data.labels.length
     );
   }
 

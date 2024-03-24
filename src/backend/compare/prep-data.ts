@@ -887,7 +887,7 @@ export async function calculateAcrossExesStatsForBenchmark(
       row.exeStats[j].criteria[criterion] = stats[j];
     }
 
-    if (criterion === siteConfig.inlinePlotCriterion) {
+    if (criterion === siteConfig.inlinePlotCriterion && exesArr.length >= 1) {
       lastPlotId += 1;
       row.inlinePlot = await createExeInlinePlot(
         exesArr,
