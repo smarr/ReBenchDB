@@ -22,7 +22,7 @@ import {
   closeMainDb
 } from './db-testing.js';
 import { robustPath } from '../../../src/backend/util.js';
-import { loadLargePayload } from '../../payload.js';
+import { loadLargePayload, loadSmallPayload } from '../../payload.js';
 
 const numTxStatements = 3;
 
@@ -71,9 +71,7 @@ describe('Recording a ReBench execution data fragments', () => {
   beforeAll(async () => {
     db = await createAndInitializeDB('db_setup');
 
-    basicTestData = JSON.parse(
-      readFileSync(robustPath('../tests/data/small-payload.json')).toString()
-    );
+    basicTestData = loadSmallPayload();
   });
 
   afterAll(async () => {
@@ -126,9 +124,7 @@ describe('Recording a ReBench execution data fragments', () => {
   });
 
   it('should accept trial denoise info', async () => {
-    const testData: BenchmarkData = JSON.parse(
-      readFileSync(robustPath('../tests/data/small-payload.json')).toString()
-    );
+    const testData = loadSmallPayload();
 
     const e = testData.env;
 
@@ -183,9 +179,7 @@ describe('Recording a ReBench execution from payload files', () => {
     // to access the database from R
     db = await createAndInitializeDB('db_setup_timeline', 25, true, false);
 
-    smallTestData = JSON.parse(
-      readFileSync(robustPath('../tests/data/small-payload.json')).toString()
-    );
+    smallTestData = loadSmallPayload();
     largeTestData = loadLargePayload();
     profileTestData = JSON.parse(
       readFileSync(robustPath('../tests/data/profile-payload.json')).toString()

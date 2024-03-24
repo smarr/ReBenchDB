@@ -7,7 +7,6 @@ import {
   it,
   jest
 } from '@jest/globals';
-import { readFileSync } from 'node:fs';
 import { PoolConfig, QueryConfig, QueryResult, QueryResultRow } from 'pg';
 
 import {
@@ -21,7 +20,6 @@ import {
   TimelineRequest
 } from '../../../src/shared/api.js';
 
-import { robustPath } from '../../../src/backend/util.js';
 import {
   Experiment,
   Environment,
@@ -30,6 +28,7 @@ import {
   Criterion
 } from '../../../src/backend/db/types.js';
 import { Database } from '../../../src/backend/db/db.js';
+import { loadSmallPayload } from '../../payload.js';
 
 describe('Record Trial', () => {
   let db: TestDatabase;
@@ -39,10 +38,7 @@ describe('Record Trial', () => {
 
   beforeAll(async () => {
     db = await createAndInitializeDB('db_record_trial', 0, false, false);
-    const data = readFileSync(
-      robustPath('../tests/data/small-payload.json')
-    ).toString();
-    basicTestData = JSON.parse(data);
+    basicTestData = loadSmallPayload();
 
     env = await db.recordEnvironment(basicTestData.env);
     exp = await db.recordExperiment(basicTestData);
@@ -109,10 +105,7 @@ describe('Timeline-plot Queries', () => {
   beforeAll(async () => {
     db = await createAndInitializeDB('db_ts_basic', 25, true, false);
 
-    const data = readFileSync(
-      robustPath('../tests/data/small-payload.json')
-    ).toString();
-    const basicTestData: BenchmarkData = JSON.parse(data);
+    const basicTestData = loadSmallPayload();
     projectName = basicTestData.projectName;
 
     baseBranch = basicTestData.source.branchOrTag = 'base-branch';
