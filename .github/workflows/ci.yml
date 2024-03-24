@@ -94,7 +94,7 @@ jobs:
           chmod a+wx ${{ github.workspace }}
 
           # start ReBenchDB server
-          NODE_DATA_EXPORT_PATH=${{ github.workspace }} RDB_DATA_EXPORT_PATH=/postgres-export DEV=true npm run start &
+          NODE_DATA_EXPORT_PATH=${{ github.workspace }} RDB_DATA_EXPORT_PATH=/postgres-export DATA_URL_BASE=/static DEV=true npm run start &
           sleep 5
 
           # run integration tests
