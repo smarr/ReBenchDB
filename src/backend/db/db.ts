@@ -837,7 +837,7 @@ export abstract class Database {
           runId, trialId, cmdline, invocation, iteration, criterion
       )
       SELECT * FROM results WHERE value is NOT NULL
-    ) TO PROGRAM 'gzip -9 > ${outputFile}'
+    ) TO PROGRAM 'gzip -9 > ${outputFile} && chmod go+r ${outputFile}'
       WITH (FORMAT csv, HEADER true)`;
     const result = await this.query({
       text: query
