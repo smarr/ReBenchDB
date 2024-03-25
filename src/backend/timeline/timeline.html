@@ -15,6 +15,9 @@
     <h1 class="display-4">ReBench: Timeline {%= it.project.name %}</h1>
     {% if (it.project.description) { %}
     <h2 class="display-5">{%= it.project.description %}</h2>
+    {% }
+       if (it.project.basebranch) { %}
+    <p>Timeline is based on data for the <code>{%= it.project.basebranch %}</code> branch.</p>
     {% } %}
   </div>
   <div class="refresh">
@@ -80,7 +83,11 @@
   <main role="main">
   <div class="jumbotron">
     <h1 class="display-4">No Data Available</h1>
-    <p class="lead">There are no benchmarks available for this project.</p>
+    {% if (it.project.basebranch) { %}
+      <p class="lead">There are no benchmarks available for this project.</p>
+    {% } else { %}
+      <p class="lead">The branch to show on the timeline has not been configured. Please ask the ReBenchDB administrator to set the branch for the timeline view.</p>
+    {% } %}
   </div>
   </div>
   </main>
