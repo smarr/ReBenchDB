@@ -717,6 +717,7 @@ export abstract class Database {
     projectSlug: string
   ): Promise<{
     project: string;
+    projectSlug: string;
     expName: string;
     expDesc: string;
     projectId: number;
@@ -729,7 +730,8 @@ export abstract class Database {
                   exp.description as expDesc,
                   p.id as pId,
                   p.name as pName,
-                  p.description as pDesc
+                  p.description as pDesc,
+                  p.slug as pSlug
                 FROM
                   Experiment exp
                 JOIN Project p ON exp.projectId = p.id
@@ -744,6 +746,7 @@ export abstract class Database {
 
     return {
       project: result.rows[0].pname,
+      projectSlug: result.rows[0].pslug,
       expName: result.rows[0].expname,
       expDesc: result.rows[0].expDesc,
       projectId: result.rows[0].pid,
