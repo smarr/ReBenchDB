@@ -22,6 +22,7 @@ export async function getExpData(
   if (!result) {
     data = {
       project: '',
+      projectSlug,
       generationFailed: true,
       stdout: 'Experiment was not found'
     };
@@ -29,7 +30,7 @@ export async function getExpData(
     data = result;
   }
 
-  const expFilePrefix = `${data.project}-${expId}`;
+  const expFilePrefix = `${data.projectSlug}-${expId}`;
   const expFileName = `${expFilePrefix}.${format}.gz`;
 
   if (existsSync(`${siteConfig.dataExportPath}/${expFileName}`)) {
