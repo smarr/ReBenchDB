@@ -15,6 +15,8 @@ import {
 import type { AllResults } from '../../shared/api.js';
 import { Database } from '../db/db.js';
 import { TimedCacheValidity } from '../db/timed-cache-validity.js';
+import { getNumberOrError } from '../request-check.js';
+import { log } from '../logging.js';
 
 const mainTpl = prepareTemplate(robustPath('backend/main/index.html'), false);
 
@@ -34,11 +36,16 @@ export async function getLast100MeasurementsAsJson(
   ctx: ParameterizedContext,
   db: Database
 ): Promise<void> {
-  const start = startRequest();
-
-  ctx.body = await getLast100Measurements(Number(ctx.params.projectId), db);
   ctx.type = 'application/json';
 
+  const projectId = getNumberOrError(ctx, 'projectId');
+  if (projectId === null) {
+    log.error((ctx.body as any).error);
+    return;
+  }
+
+  const start = startRequest();
+  ctx.body = await getLast100Measurements(projectId, db);
   completeRequestAndHandlePromise(start, db, 'get-results');
 }
 
@@ -166,8 +173,15 @@ export async function getChangesAsJson(
   ctx: ParameterizedContext,
   db: Database
 ): Promise<void> {
-  ctx.body = await getChanges(Number(ctx.params.projectId), db);
   ctx.type = 'application/json';
+
+  const projectId = getNumberOrError(ctx, 'projectId');
+  if (projectId === null) {
+    log.error((ctx.body as any).error);
+    return;
+  }
+
+  ctx.body = await getChanges(projectId, db);
 }
 
 export async function getChanges(
