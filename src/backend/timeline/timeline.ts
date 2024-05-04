@@ -7,6 +7,8 @@ import { prepareTemplate } from '../templates.js';
 import { TimelineSuite } from '../../shared/api.js';
 import { Database } from '../db/db.js';
 import { robustPath } from '../util.js';
+import { getNumberOrError } from '../request-check.js';
+import { log } from '../logging.js';
 
 const timelineTpl = prepareTemplate(
   robustPath('backend/timeline/timeline.html'),
@@ -17,14 +19,24 @@ export async function getTimelineAsJson(
   ctx: ParameterizedContext,
   db: Database
 ): Promise<void> {
-  ctx.body = await db.getTimelineForRun(
-    Number(ctx.params.projectId),
-    Number(ctx.params.runId)
-  );
+  ctx.type = 'application/json';
+
+  const projectId = getNumberOrError(ctx, 'projectId');
+  if (projectId === null) {
+    log.error((ctx.body as any).error);
+    return;
+  }
+
+  const runId = getNumberOrError(ctx, 'runId');
+  if (runId === null) {
+    log.error((ctx.body as any).error);
+    return;
+  }
+
+  ctx.body = await db.getTimelineForRun(projectId, runId);
   if (ctx.body === null) {
     ctx.status = 500;
   }
-  ctx.type = 'application/json';
 }
 
 /**

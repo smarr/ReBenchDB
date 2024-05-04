@@ -14,23 +14,28 @@ import { respondProjectNotFound } from '../common/standard-responses.js';
 import { refreshSecret } from '../util.js';
 import { deleteReport, renderCompare } from './report.js';
 import type { TimelineRequest } from '../../shared/api.js';
+import { getNumberOrError } from '../request-check.js';
+import { log } from '../logging.js';
 
 export async function getProfileAsJson(
   ctx: ParameterizedContext,
   db: Database
 ): Promise<void> {
+  ctx.type = 'application/json';
+
+  const runId = getNumberOrError(ctx, 'runId');
+  if (runId === null) {
+    log.error((ctx.body as any).error);
+    return;
+  }
+
   const start = startRequest();
 
-  ctx.body = await getProfile(
-    Number(ctx.params.runId),
-    ctx.params.commitId,
-    db
-  );
+  ctx.body = await getProfile(runId, ctx.params.commitId, db);
   if (ctx.body === undefined) {
     ctx.status = 404;
     ctx.body = {};
   }
-  ctx.type = 'application/json';
   completeRequestAndHandlePromise(start, db, 'get-profiles');
 }
 
@@ -70,17 +75,24 @@ export async function getMeasurementsAsJson(
   ctx: ParameterizedContext,
   db: Database
 ): Promise<void> {
+  ctx.type = 'application/json';
+
+  const runId = getNumberOrError(ctx, 'runId');
+  if (runId === null) {
+    log.error((ctx.body as any).error);
+    return;
+  }
+
   const start = startRequest();
 
   ctx.body = await getMeasurements(
     ctx.params.projectSlug,
-    Number(ctx.params.runId),
+    runId,
     ctx.params.baseId,
     ctx.params.changeId,
     db
   );
 
-  ctx.type = 'application/json';
   completeRequestAndHandlePromise(start, db, 'get-measurements');
 }
 

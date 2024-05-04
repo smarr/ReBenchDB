@@ -53,7 +53,7 @@ export function asHumanMem(val: number, digits = 0): string {
  * As frequency value rounded to an appropriate unit.
  */
 export function asHumanHz(val: number, digits = 0): string {
-  if (isNaN(val)) {
+  if (isNaN(val) || typeof val !== 'number') {
     return '';
   }
 

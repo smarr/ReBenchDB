@@ -7,6 +7,7 @@ import { dbConfig, siteConfig, storeJsonGzip } from '../util.js';
 import { log } from '../logging.js';
 import { Database } from '../db/db.js';
 import { ParameterizedContext } from 'koa';
+import { getNumberOrError } from '../request-check.js';
 
 const expDataPreparation = new Map();
 
@@ -98,8 +99,15 @@ export async function getAvailableDataAsJson(
   ctx: ParameterizedContext,
   db: Database
 ): Promise<void> {
-  ctx.body = await getDataOverview(Number(ctx.params.projectId), db);
   ctx.type = 'application/json';
+
+  const projectId = getNumberOrError(ctx, 'projectId');
+  if (projectId === null) {
+    log.error((ctx.body as any).error);
+    return;
+  }
+
+  ctx.body = await getDataOverview(projectId, db);
 }
 
 export async function getDataOverview(
