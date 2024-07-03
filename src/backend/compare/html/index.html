@@ -104,7 +104,7 @@
 
 {% if (it.notInBoth) { %}
 <h3>Changes in Benchmark Set</h3>
-<table class="table table-sm">
+<table class="table table-sm" id="benchmarkTable">
 <thead>
 <tr>
   <th scope="col">Commit</th>
@@ -117,9 +117,9 @@
   <th scope="col">Extra Arguments</th>
 </tr>
 </thead>
-<tbody>
+<tbody id="benchmarkTableBody">
 {% for (const m of it.stats.acrossVersions.missing) { %}
-  <tr>
+  <tr class="benchmark-row">
     <td>{%= m.commitId.substring(0, 6) %}</td>
     <td>{%= m.e %}</td>
     <td>{%= m.s %}</td>
@@ -132,6 +132,7 @@
 {% } %}
 </tbody>
 </table>
+<p class="collapsible">Show More</p>
 {% } %}
 
 {%- include('compare-versions.html', {...it.stats, config: it.config}) %}
