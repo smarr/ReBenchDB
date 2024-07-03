@@ -542,3 +542,7 @@ td.warmup-plot {
   z-index: 100;
   min-width: 250px;
 }
+
+.hidden {
+  display: none;
+}

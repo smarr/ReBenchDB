@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <title>ReBenchDB for {%= it.project %}: Comparing {%= it.baselineHash6 %} with {%= it.changeHash6 %}</title>
   <meta id="baseHash" value="{%= it.baselineHash %}">
@@ -10,141 +11,167 @@
 
   <script src="/static/compare.js" type="module"></script>
 </head>
+
 <body class="compare timeline-multi">
-<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
-  <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
-    <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
-  </symbol>
-</svg>
+  <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+    <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+      <path
+        d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
+    </symbol>
+  </svg>
 
-<header>
-<div class="jumbotron compare">
-  <h2>ReBenchDB for {%= it.project %}</h2>
-  {% if (it.revisionFound) { %}
-  <h3>Comparing <a href="{%= it.base.repourl%}/compare/{%= it.baselineHash%}...{%= it.changeHash%}">{%= it.baselineHash6%} with {%= it.changeHash6%}</a></h3>
-  {% } else { %}
-  <h3>Comparing {%= it.baselineHash6%} with {%= it.changeHash6%}</h3>
-  {% } %}
-</div>
+  <header>
+    <div class="jumbotron compare">
+      <h2>ReBenchDB for {%= it.project %}</h2>
+      {% if (it.revisionFound) { %}
+      <h3>Comparing <a href="{%= it.base.repourl%}/compare/{%= it.baselineHash%}...{%= it.changeHash%}">{%=
+          it.baselineHash6%} with {%= it.changeHash6%}</a></h3>
+      {% } else { %}
+      <h3>Comparing {%= it.baselineHash6%} with {%= it.changeHash6 %}</h3>
+      {% } %}
+    </div>
 
-{%- include('refresh-menu.html', it) %}
-</header>
+    {%- include('refresh-menu.html', it) %}
+  </header>
 
-<div class="collapse card-columns" id="filters">
-  <div>
-    <button type="button" class="btn btn-secondary" id="filter-all">All</button>
-    <button type="button" class="btn btn-secondary" id="filter-none">None</button>
+  <div class="collapse card-columns" id="filters">
+    <div>
+      <button type="button" class="btn btn-secondary" id="filter-all">All</button>
+      <button type="button" class="btn btn-secondary" id="filter-none">None</button>
+    </div>
+    <div id="filter-groups"></div>
   </div>
-  <div id="filter-groups"></div>
-</div>
 
 
-{% if (!it.revisionFound) { %}
-<div class="alert alert-warning compare" role="alert">
-  {% if (it.baselineHash === it.changeHash) { %}
-  <h4 class="alert-heading">Cannot Compare Revision with Itself</h4>
+  {% if (!it.revisionFound) { %}
+  <div class="alert alert-warning compare" role="alert">
+    {% if (it.baselineHash === it.changeHash) { %}
+    <h4 class="alert-heading">Cannot Compare Revision with Itself</h4>
 
-  <p>The requested comparison was for:</p>
-  <ul>
-    <li>{%= it.baselineHash %}</li>
-    <li>{%= it.changeHash %}</li>
-  </ul>
-  {% } else { %}
-  <h4 class="alert-heading">Revisions Not Found</h4>
+    <p>The requested comparison was for:</p>
+    <ul>
+      <li>{%= it.baselineHash %}</li>
+      <li>{%= it.changeHash %}</li>
+    </ul>
+    {% } else { %}
+    <h4 class="alert-heading">Revisions Not Found</h4>
 
-  <p>The project {%= it.project %} does not seem to have data for at least one of the requested revisions.</p>
-  <ul>
-    <li>{%= it.baselineHash %}</li>
-    <li>{%= it.changeHash %}</li>
-  </ul>
+    <p>The project {%= it.project %} does not seem to have data for at least one of the requested revisions.</p>
+    <ul>
+      <li>{%= it.baselineHash %}</li>
+      <li>{%= it.changeHash %}</li>
+    </ul>
+    {% } %}
+  </div>
   {% } %}
-</div>
-{% } %}
 
-{% if (it.revisionFound) { %}
-<div id="version-details" class="compare">
-  <h2>Version Details</h2>
-  <dl class="row">
-    <dt class="col-sm-2">Baseline</dt>
-    <dd class="col-sm-9">
-      <a href="{%= it.base.repourl%}/compare/{%= it.baselineHash%}"><span class="baseline-badge">{%= it.baselineHash6%}</span></a> {%= it.base.branchortag%}<br/>
-       {%= it.base.authorname%}
-      <pre>{%= it.base.commitmessage%}</pre>
+  {% if (it.revisionFound) { %}
+  <div id="version-details" class="compare">
+    <h2>Version Details</h2>
+    <dl class="row">
+      <dt class="col-sm-2">Baseline</dt>
+      <dd class="col-sm-9">
+        <a href="{%= it.base.repourl%}/compare/{%= it.baselineHash%}"><span class="baseline-badge">{%=
+            it.baselineHash6%}</span></a> {%= it.base.branchortag%}<br />
+        {%= it.base.authorname%}
+        <pre>{%= it.base.commitmessage%}</pre>
 
-      {%= it.base.name%}
-    </dd>
-    <dt class="col-sm-2">Change</dt>
-    <dd class="col-sm-9">
-      <a href="{%= it.base.repourl%}/compare/{%= it.changeHash%}"><span class="change-badge">{%= it.changeHash6%}</span></a> {%= it.change.branchortag%}<br/>
-       {%= it.change.authorname%}
-      <pre>{%= it.change.commitmessage%}</pre>
+        {%= it.base.name%}
+      </dd>
+      <dt class="col-sm-2">Change</dt>
+      <dd class="col-sm-9">
+        <a href="{%= it.base.repourl%}/compare/{%= it.changeHash%}"><span class="change-badge">{%=
+            it.changeHash6%}</span></a> {%= it.change.branchortag%}<br />
+        {%= it.change.authorname%}
+        <pre>{%= it.change.commitmessage%}</pre>
 
-      {%= it.change.name%}
-    </dd>
-    <dt class="col-sm-2">Significant Change</dt>
-      <dd class="col-sm-9"><div class="form-row">
-        <input type="range" class="col-6 custom-range" min="0" max="15" step="0.5" id="significance" style="padding-top: 1.75ex; padding-right: 1em;" value="5">
-        <input type="text" readonly class="col-4 form-control-plaintext" id="significance-val" value="5%">
-      </div></dd>
-  </dl>
-</div>
+        {%= it.change.name%}
+      </dd>
+      <dt class="col-sm-2">Significant Change</dt>
+      <dd class="col-sm-9">
+        <div class="form-row">
+          <input type="range" class="col-6 custom-range" min="0" max="15" step="0.5" id="significance"
+            style="padding-top: 1.75ex; padding-right: 1em;" value="5">
+          <input type="text" readonly class="col-4 form-control-plaintext" id="significance-val" value="5%">
+        </div>
+      </dd>
+    </dl>
+  </div>
 
 
-<div class="container-fluid"><div class="row flex-xl-nowrap">
+  <div class="container-fluid">
+    <div class="row flex-xl-nowrap">
 
-{%- include('navigation.html', it.navigation) %}
+      {%- include('navigation.html', it.navigation) %}
 
-<main class="col-8" role="main">
+      <main class="col-8" role="main">
 
-{%- include('stats-summary.html', {
+        {%- include('stats-summary.html', {
         ...it.stats.acrossVersions.summary,
         dataFormatters: it.dataFormatters,
         config: it.config
-    }) %}
+        }) %}
 
-{% if (it.notInBoth) { %}
-<h3>Changes in Benchmark Set</h3>
-<table class="table table-sm">
-<thead>
-<tr>
-  <th scope="col">Commit</th>
-  <th scope="col">Executor</th>
-  <th scope="col">Suite</th>
-  <th scope="col">Benchmark</th>
-  <th scope="col">Variable Values</th>
-  <th scope="col">Cores</th>
-  <th scope="col">Input Size</th>
-  <th scope="col">Extra Arguments</th>
-</tr>
-</thead>
-<tbody>
-{% for (const m of it.stats.acrossVersions.missing) { %}
-  <tr>
-    <td>{%= m.commitId.substring(0, 6) %}</td>
-    <td>{%= m.e %}</td>
-    <td>{%= m.s %}</td>
-    <td>{%= m.b %}</td>
-    <td>{%= m.v %}</td>
-    <td>{%= m.c %}</td>
-    <td>{%= m.i %}</td>
-    <td>{%= m.ea %}</td>
-  </tr>
-{% } %}
-</tbody>
-</table>
-{% } %}
+        {% if (it.notInBoth) { %}
+        <h3>Changes in Benchmark Set</h3>
+        <table class="table table-sm" id="benchmarkTable">
+          <thead>
+            <tr>
+              <th scope="col">Commit</th>
+              <th scope="col">Executor</th>
+              <th scope="col">Suite</th>
+              <th scope="col">Benchmark</th>
+              <th scope="col">Variable Values</th>
+              <th scope="col">Cores</th>
+              <th scope="col">Input Size</th>
+              <th scope="col">Extra Arguments</th>
+            </tr>
+          </thead>
+          <tbody id="benchmarkTableBody">
+            {% let counter = 0 %}
+            {% for (const m of it.stats.acrossVersions.missing) { %}
+            <tr class="benchmark-row" {% if (counter >= 3) { %}style="display: none;"{% } %}>
+              <td>{%= m.commitId.substring(0, 6) %}</td>
+              <td>{%= m.e %}</td>
+              <td>{%= m.s %}</td>
+              <td>{%= m.b %}</td>
+              <td>{%= m.v %}</td>
+              <td>{%= m.c %}</td>
+              <td>{%= m.i %}</td>
+              <td>{%= m.ea %}</td>
+            </tr>
+            {% counter++ %}
+            {% } %}
+          </tbody>
+        </table>
+        <a href="#" id="showMore" onclick="showAllResults(event)">Show More</a>
+        <br>
+        <br>
+      {% } %}
 
-{%- include('compare-versions.html', {...it.stats, config: it.config}) %}
+        {%- include('compare-versions.html', {...it.stats, config: it.config}) %}
 
-{% if (it.hasExeComparison) {
-%}{%- include('compare-exes.html', {...it.stats, config: it.config}) %}{%
-   }
-%}
+        {% if (it.hasExeComparison) {
+        %}{%- include('compare-exes.html', {...it.stats, config: it.config}) %}{%
+        }
+        %}
 
-</main>
-</div></div>
+      </main>
+    </div>
+  </div>
 
-{% } /* if (it.revisionFound) */ %}
+  {% } /* if (it.revisionFound) */ %}
+
+  <script>
+    function showAllResults(event) {
+      event.preventDefault();
+      document.querySelectorAll('#benchmarkTableBody .benchmark-row').forEach(row => {
+        row.style.display = 'table-row';
+      });
+      document.getElementById('showMore').style.display = 'none';
+    }
+  </script>
 
 </body>
+
 </html>

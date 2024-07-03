@@ -27,3 +27,7 @@ test.html
 /tests/data/expected-results/stats-data-prep/tsom/inline-[0-9][0-9].svg
 /tests/data/expected-results/stats-data-prep/tsom/inline-1[0-9][0-9].svg
 /tests/data/expected-results/stats-data-prep/tsom/inline-exe-*.svg
+
+start_program.sh
+
+run_rebench.sh
