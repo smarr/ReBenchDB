@@ -254,7 +254,7 @@ export async function deleteCachedReport(
         Change:   ${change}
         `;
     ctx.status = 303;
-    ctx.redirect(`/compare/${project}/${base}/${change}`);
+    ctx.redirect(`/${project}/compare/${base}..${change}`);
   } else {
     ctx.body = 'Incorrect authentication.';
     ctx.status = 403;
