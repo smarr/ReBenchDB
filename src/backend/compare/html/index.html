@@ -144,7 +144,7 @@
             {% } %}
           </tbody>
         </table>
-        <a href="#" id="showMore" onclick="showAllResults(event)">Show More</a>
+        <button class="showMore" id="showMore"">Show More</button>
         <br>
         <br>
       {% } %}
@@ -161,17 +161,6 @@
   </div>
 
   {% } /* if (it.revisionFound) */ %}
-
-  <script>
-    function showAllResults(event) {
-      event.preventDefault();
-      document.querySelectorAll('#benchmarkTableBody .benchmark-row').forEach(row => {
-        row.style.display = 'table-row';
-      });
-      document.getElementById('showMore').style.display = 'none';
-    }
-  </script>
-
 </body>
 
 </html>

@@ -237,11 +237,12 @@ $(() => {
   $('.btn-warmup').on('click', insertWarmupPlot);
   $('.btn-profile').on('click', insertProfiles);
   $('.btn-timeline').on('click', insertTimeline);
+  $('.showMore').on('click', showAllResults);
 
   const headlinesForTablesWithWarmupPlots = $('table:has(button.btn-warmup)')
     .prev()
     .prev();
-  headlinesForTablesWithWarmupPlots.append(
+  headlinesForTablesWithWarmupPlots.append( 
     `<button type="button" class="btn btn-sm btn-light btn-warmup"></button>`
   );
   const buttons = headlinesForTablesWithWarmupPlots.find('.btn-warmup');
@@ -258,3 +259,18 @@ $(() => {
 
   initializeFilters('.benchmark-details tbody th:nth-child(1)');
 });
+
+function showAllResults(event): void {
+  alert('test page');
+  event.preventDefault();
+  
+  const rows = document.querySelectorAll<HTMLTableRowElement>('#benchmarkTableBody .benchmark-row');
+  rows.forEach(row => {
+    row.style.display = 'table-row';
+  });
+
+  const showMoreButton = document.getElementById('showMore');
+  if (showMoreButton) {
+    showMoreButton.style.display = 'none';
+  }
+}
