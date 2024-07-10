@@ -128,9 +128,8 @@
             </tr>
           </thead>
           <tbody id="benchmarkTableBody">
-            {% let counter = 0 %}
             {% for (const m of it.stats.acrossVersions.missing) { %}
-            <tr class="benchmark-row" {% if (counter >= 3) { %}style="display: none;"{% } %}>
+            <tr class="benchmark-row">
               <td>{%= m.commitId.substring(0, 6) %}</td>
               <td>{%= m.e %}</td>
               <td>{%= m.s %}</td>
@@ -140,14 +139,12 @@
               <td>{%= m.i %}</td>
               <td>{%= m.ea %}</td>
             </tr>
-            {% counter++ %}
             {% } %}
           </tbody>
         </table>
-        <button class="showMore" id="showMore"">Show More</button>
-        <br>
-        <br>
-      {% } %}
+        <p class="collapsible">Show More</p>
+        
+        {% } %}
 
         {%- include('compare-versions.html', {...it.stats, config: it.config}) %}
 

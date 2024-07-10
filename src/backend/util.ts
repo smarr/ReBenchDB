@@ -127,5 +127,3 @@ export const TotalCriterion = 'total';
 export const rebenchVersion = JSON.parse(
   readFileSync(robustPath('../package.json'), 'utf-8')
 ).version;
-
-

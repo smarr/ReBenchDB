@@ -1,7 +1,7 @@
+import type { ProfileElement } from '../shared/api.js';
+import type { ProfileRow, WarmupDataForTrial } from '../shared/view-types.js';
 import { initializeFilters } from './filter.js';
 import { renderComparisonTimelinePlot, renderWarmupPlot } from './plots.js';
-import type { ProfileRow, WarmupDataForTrial } from '../shared/view-types.js';
-import type { ProfileElement } from '../shared/api.js';
 
 function determineAndDisplaySignificance() {
   const val = $('#significance').val();
@@ -239,10 +239,49 @@ $(() => {
   $('.btn-timeline').on('click', insertTimeline);
   $('.showMore').on('click', showAllResults);
 
+  $('.collapsible').click(function () {
+    $('.benchmark-row.hidden').toggleClass('hidden');
+
+    $(this).toggleClass('active');
+
+    const isActivated = $(this).hasClass('active');
+    $(this).text(isActivated ? 'Show Less' : 'Show More');
+
+    const table = document.getElementById('benchmarkTable');
+    const rows = table?.querySelectorAll('tr.benchmark-row');
+    const maxRows = 3;
+    let i = 0;
+    rows?.forEach((row) => {
+      const tableRow = row as HTMLTableRowElement;
+      if (isActivated || i < maxRows) {
+        tableRow.style.display = 'table-row';
+      } else {
+        tableRow.style.display = 'none';
+        window.scrollTo(0, 0);
+      }
+      i++;
+    });
+  });
+
+  const table = document.getElementById('benchmarkTable');
+  const rows = table?.querySelectorAll('tr.benchmark-row');
+  const maxRows = 3;
+  let i = 0;
+
+  rows?.forEach((row) => {
+    const tableRow = row as HTMLTableRowElement;
+    if (i < maxRows) {
+      tableRow.style.display = 'table-row';
+    } else {
+      tableRow.style.display = 'none';
+    }
+    i++;
+  });
+
   const headlinesForTablesWithWarmupPlots = $('table:has(button.btn-warmup)')
     .prev()
     .prev();
-  headlinesForTablesWithWarmupPlots.append( 
+  headlinesForTablesWithWarmupPlots.append(
     `<button type="button" class="btn btn-sm btn-light btn-warmup"></button>`
   );
   const buttons = headlinesForTablesWithWarmupPlots.find('.btn-warmup');
@@ -261,11 +300,12 @@ $(() => {
 });
 
 function showAllResults(event): void {
-  alert('test page');
   event.preventDefault();
-  
-  const rows = document.querySelectorAll<HTMLTableRowElement>('#benchmarkTableBody .benchmark-row');
-  rows.forEach(row => {
+
+  const rows = document.querySelectorAll<HTMLTableRowElement>(
+    '#benchmarkTableBody .benchmark-row'
+  );
+  rows.forEach((row) => {
     row.style.display = 'table-row';
   });
 
