@@ -237,45 +237,18 @@ $(() => {
   $('.btn-warmup').on('click', insertWarmupPlot);
   $('.btn-profile').on('click', insertProfiles);
   $('.btn-timeline').on('click', insertTimeline);
-  $('.showMore').on('click', showAllResults);
 
-  $('.collapsible').click(function () {
-    $('.benchmark-row.hidden').toggleClass('hidden');
+  $('.table-expander').on('click', function (event) {
+    event.preventDefault();
+
+    $('table#benchmark-set-change tbody').toggleClass('hide-most-rows');
 
     $(this).toggleClass('active');
 
     const isActivated = $(this).hasClass('active');
-    $(this).text(isActivated ? 'Show Less' : 'Show More');
-
-    const table = document.getElementById('benchmarkTable');
-    const rows = table?.querySelectorAll('tr.benchmark-row');
-    const maxRows = 3;
-    let i = 0;
-    rows?.forEach((row) => {
-      const tableRow = row as HTMLTableRowElement;
-      if (isActivated || i < maxRows) {
-        tableRow.style.display = 'table-row';
-      } else {
-        tableRow.style.display = 'none';
-        window.scrollTo(0, 0);
-      }
-      i++;
-    });
-  });
-
-  const table = document.getElementById('benchmarkTable');
-  const rows = table?.querySelectorAll('tr.benchmark-row');
-  const maxRows = 3;
-  let i = 0;
-
-  rows?.forEach((row) => {
-    const tableRow = row as HTMLTableRowElement;
-    if (i < maxRows) {
-      tableRow.style.display = 'table-row';
-    } else {
-      tableRow.style.display = 'none';
-    }
-    i++;
+    $(this)
+      .find('a')
+      .text(isActivated ? 'show less' : 'show more');
   });
 
   const headlinesForTablesWithWarmupPlots = $('table:has(button.btn-warmup)')
@@ -298,19 +271,3 @@ $(() => {
 
   initializeFilters('.benchmark-details tbody th:nth-child(1)');
 });
-
-function showAllResults(event): void {
-  event.preventDefault();
-
-  const rows = document.querySelectorAll<HTMLTableRowElement>(
-    '#benchmarkTableBody .benchmark-row'
-  );
-  rows.forEach((row) => {
-    row.style.display = 'table-row';
-  });
-
-  const showMoreButton = document.getElementById('showMore');
-  if (showMoreButton) {
-    showMoreButton.style.display = 'none';
-  }
-}
