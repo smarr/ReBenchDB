@@ -1,5 +1,5 @@
 body {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -23,6 +23,87 @@ body.compare, body.timeline {
 
 .compare nav span, .timeline nav span {
   margin-left: -10px;
+}
+
+.project_container {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  grid-gap: 10px;
+}
+
+
+.links_card {
+  padding: 15px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+
+  margin-top: 1em;
+}
+
+.filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  background-color: #fff;
+  border-radius: 5px 5px 0 0;
+}
+
+.filter-header input {
+  flex-grow: 1;
+  margin-right: 10px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+.filter-header .settings-icon {
+  cursor: pointer;
+  font-size: 1.5em;
+  color: #888;
+}
+
+.filter-options {
+  padding: 10px;
+  background-color: #fff;
+  border-top: none;
+  border-bottom: 1px solid #ddd;
+  border-radius: 0 0 5px 5px;
+}
+
+.filter-options a {
+  display: block;
+  padding: 5px 0;
+  color: #007bff;
+  text-decoration: none;
+}
+
+.filter-options a:hover {
+  text-decoration: underline;
+}
+
+.branch-cards-container{
+  max-height: 500px;
+  overflow-y: scroll;
+}
+
+.scroll-list {
+  max-height: 400px;
+  min-height: 400px;
+  overflow-y: auto;
+  background-color: #fff;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+.selected-text{
+  font-weight: bold;
 }
 
 nav.compare {
@@ -163,6 +244,9 @@ nav.compare.show {
   border-radius: .25rem;
   color: #fff;
 }
+
+.changes_container{} 
+
 
 .stats-median, .stats-change, .stats-gc-change {
   display: inline-block;
@@ -583,4 +667,22 @@ td.warmup-plot {
 }
 .collapsible.active:after {
   content: ' ▲';
+}
+
+.link-container {
+  width: 100%;
+  text-align: center;
+}
+.link-container a {
+  display: block;
+  margin: 10px 0;
+}
+.main-content {
+  width: 100%;
+}
+.left-side, .right-side {
+  width: 15%;
+}
+.content-area {
+  width: 70%;
 }

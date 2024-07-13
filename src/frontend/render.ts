@@ -51,7 +51,7 @@ export function renderProjectDataOverview(
 ): void {
   const tBody = $('#data-overview');
   const pSlug = projectSlug;
-
+  
   let hasDesc = false;
 
   for (const row of data) {
@@ -87,11 +87,16 @@ export function renderProjectDataOverview(
 }
 
 export function renderChanges(projectId: string): void {
-  const changesP = fetch(`/rebenchdb/dash/${projectId}/changes`);
+  const changesP = getChangesDetails(projectId);
   changesP.then(
     async (changesDetailsResponse) =>
       await renderChangeDetails(changesDetailsResponse, projectId)
   );
+}  
+
+async function getChangesDetails(projectId: string) {
+  const changesDetailsResponse = await fetch(`/rebenchdb/dash/${projectId}/changes`);
+  return changesDetailsResponse;
 }
 
 async function renderChangeDetails(changesDetailsResponse, projectId: string) {
@@ -99,6 +104,8 @@ async function renderChangeDetails(changesDetailsResponse, projectId: string) {
 
   const p1baseline = $(`#p${projectId}-baseline`);
   const p1change = $(`#p${projectId}-change`);
+
+  console.log(details);
 
   for (const change of details.changes) {
     // strip out some metadata to be nicer to view.
@@ -124,6 +131,112 @@ async function renderChangeDetails(changesDetailsResponse, projectId: string) {
   $(`#p${projectId}-change a`).on('click', (event) =>
     setHref(event, projectId, false)
   );
+
+  renderFilterMenu(details, projectId);
+}
+
+
+function renderFilterMenu(details, projectId) {
+  // details.branchortag : string
+  // details.commitid : string
+  // details.commitmessage : string
+  // details.experimenttime : string
+  // details.projectid : string
+  // details.repourl : string
+
+  // Render all unique details.branchortag in the links_card
+  $(".links_card").each(function(index) {
+    const $card = $(this);
+    const branchortag = details.changes.map(change => change.branchortag);
+    const uniqueBranchOrTag = [...new Set(branchortag)];
+
+    // Function to render the list of branches or tags
+    const renderList = (filter = '') => {
+      // Clear existing list
+      $card.find('.branch-cards-container').remove();
+
+      // Create a container div
+      const container = $('<div class="branch-cards-container"></div>');
+
+      // Append filtered items to the container
+      uniqueBranchOrTag.filter(bot => bot.toLowerCase().includes(filter.toLowerCase())).forEach(bot => {
+        const $link = $(`<a class="list-group-item list-group-item-action list-min-padding"
+          data-toggle="list" data-hash="${bot}" href="">
+            ${bot}
+          </a>
+        `);
+
+        // Add click event listener to the link
+        $link.on('click', function(event) {
+          event.preventDefault();
+
+          // Remove 'active' class from all other links
+          $card.find('.list-group-item').removeClass('active');
+
+          // Toggle 'active' class on the clicked link
+          $(this).toggleClass('active');
+
+          console.log('clicked', bot);
+
+          // Update the corresponding changes list
+          if (index === 0) {
+            updateChangesList(bot, projectId, true);
+          } else {
+            updateChangesList(bot, projectId, false);
+          }
+        });
+
+        container.append($link);
+      });
+
+      // Append the container to the current links_card
+      $card.append(container);
+
+      console.log('renderList', filter);
+    };
+
+    // Initial render of the list
+    renderList();
+
+    // Event listener for search filter input scoped to this links_card
+    $card.find('.filter-header input').on('input', (event) => {
+      const filter = $(event.target).val();
+      renderList(filter);
+    });
+  });
+}
+
+function updateChangesList(branchOrTag, projectId, isBaseline) {
+  const selector = isBaseline ? `#p${projectId}-baseline` : `#p${projectId}-change`;
+  const target = $(selector);
+  target.empty();
+
+  const changesP = getChangesDetails(projectId);
+  changesP.then(async (changesDetailsResponse) => {
+    const details = await changesDetailsResponse.json();
+
+    for (const change of details.changes) {
+      if (change.branchortag === branchOrTag) {
+        const msg = filterCommitMessage(change.commitmessage);
+        const date = formatDateWithTime(change.experimenttime);
+
+        const option = `<a class="list-group-item list-group-item-action
+          list-min-padding"
+          data-toggle="list" data-hash="${change.commitid}" href="">
+            <div class="exp-date" title="Experiment Start Date">${date}</div>
+            ${change.commitid.substring(0, 6)} ${change.branchortag}<br>
+            <div class="change-msg">${msg}</div>
+          </a>`;
+
+        target.append(option);
+      }
+    }
+
+    // set a event for each list group item which calls setHref
+    target.find('a').on('click', (event) =>
+      setHref(event, projectId, isBaseline)
+    );
+  });
 }
 
 function setHref(event, projectId, isBaseline) {

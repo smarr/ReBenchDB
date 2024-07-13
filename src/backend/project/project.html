@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <title>ReBench: {%= it.name %}</title>
   <meta id="project-id" value="{%= it.id %}">
@@ -8,6 +9,7 @@
   {%- include('header.html') %}
   <script src="/static/project.js" type="module"></script>
 </head>
+
 <body>
 
   <div class="jumbotron">
@@ -18,31 +20,59 @@
   </div>
 
   <div id="project">
-    <div class="card">
-      <h5 class="card-header" id="{%= it.slug %}"><a
-        href="/{%= it.slug %}/data">{%= it.name %}</a></h5>
-      <div class="card-body">
-        {% if (it.showchanges) { %}
-        <h5>Changes</h5>
-        <div class="container min-padding"><div class="row">
-          <div class="col-sm min-padding scroll-list">
-            <div class="list-group baseline" id="p{%= it.id %}-baseline"
-              data-project-slug="{%= it.slug %}"></div>
+    <div class="project_container">
+      <div class="links_card">
+        <div class="filter-header">
+          <input type="text" id="branchSearch" placeholder="Search branches/tags...">
+          <span class="settings-icon">&#9881;</span>
+        </div>
+        <div class="filter-options">
+          <a href="#" class="filter-option selected-text">Most Used</a>
+          <a href="#" class="filter-option">Alphabetical</a>
+        </div>
+        <div class="list-group">
+        </div>
+      </div>
+      <div class="card">
+        <h5 class="card-header" id="{%= it.slug %}"><a href="/{%= it.slug %}/data">{%= it.name %}</a></h5>
+        <div class="card-body">
+          {% if (it.showchanges) { %}
+          <h5>Changes</h5>
+          <div class="container min-padding">
+            <div class="row">
+              <div class="col-sm min-padding scroll-list">
+                <div class="list-group baseline" id="p{%= it.id %}-baseline" data-project-slug="{%= it.slug %}"></div>
+              </div>
+              <div class="col-sm min-padding scroll-list">
+                <div class="list-group change" id="p{%= it.id %}-change"></div>
+              </div>
+            </div>
           </div>
-          <div class="col-sm min-padding scroll-list">
-            <div class="list-group change" id="p{%= it.id %}-change"></div>
+          <a class="btn btn-primary" id="p{%= it.id %}-compare">Compare</a>
+          {% } %}
+          {% if (it.allresults) { %}
+          <div id="p{%= it.id %}-results" class="timeline-single"></div>
+          {% } %}
+          <div class="project-card-content"></div>
+          <a href="/{%= it.slug %}/timeline">Timeline</a>
+        </div>
+      </div>
+      <div class="project_container">
+        <div class="links_card">
+          <div class="filter-header">
+            <input type="text" id="branchSearch" placeholder="Search branches/tags...">
+            <span class="settings-icon">&#9881;</span>
           </div>
-        </div></div>
-
-        <a class="btn btn-primary" id="p{%= it.id %}-compare">Compare</a>
-        {% } %}
-        {% if (it.allresults) { %}
-        <div id="p{%= it.id %}-results" class="timeline-single"></div>
-        {% } %}
-        <div class="project-card-content"></div>
-        <a href="/{%= it.slug %}/timeline">Timeline</a>
+          <div class="filter-options">
+            <a href="#" class="filter-option selected-text">Most Used</a>
+            <a href="#" class="filter-option">Alphabetical</a>
+          </div>
+          <div class="list-group">
+          </div>
+        </div>
       </div>
     </div>
-  </div>
+
 </body>
+
 </html>
