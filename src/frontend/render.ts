@@ -6,17 +6,17 @@ export function filterCommitMessage(msg: string): string {
   return result;
 }
 
-function shortCommitId(commitId) {
+function shortCommitId(commitId: string) {
   return commitId.substring(0, 6);
 }
 
-function shortenCommitIds(commitIds) {
+function shortenCommitIds(commitIds: string) {
   const ids = commitIds.split(' ');
   const shortIds = ids.map(shortCommitId);
   return shortIds.join(' ');
 }
 
-function formatDateWithTime(dateStr) {
+function formatDateWithTime(dateStr: string | number | Date) {
   const date = new Date(dateStr);
   const month = new String(date.getMonth() + 1).padStart(2, '0');
   const day = new String(date.getDate()).padStart(2, '0');
@@ -31,7 +31,7 @@ export function expandMessage(event: any): void {
   event.preventDefault();
 }
 
-function formatCommitMessages(messages) {
+function formatCommitMessages(messages: string) {
   messages = filterCommitMessage(messages);
   const newLineIdx = messages.indexOf('\n');
   if (newLineIdx > -1) {
@@ -99,7 +99,7 @@ async function getChangesDetails(projectId: string) {
   return changesDetailsResponse;
 }
 
-async function renderChangeDetails(changesDetailsResponse, projectId: string) {
+async function renderChangeDetails(changesDetailsResponse: Response, projectId: string) {
   const details = await changesDetailsResponse.json();
 
   const p1baseline = $(`#p${projectId}-baseline`);
@@ -132,11 +132,62 @@ async function renderChangeDetails(changesDetailsResponse, projectId: string) {
     setHref(event, projectId, false)
   );
 
-  renderFilterMenu(details, projectId);
+  const baselineFilterMenu = $('.links_card').first();
+  const changeFilterMenu = $('.links_card').last();
+
+  const baselineTable = $('.row').children().first();
+  const changeTable = $('.row').children().last();
+  
+  generateFilterMenu(details, projectId, baselineTable, baselineFilterMenu);
+  generateFilterMenu(details, projectId, changeTable, changeFilterMenu);
+}
+
+/**
+ * @param tableId the table to which the filter menu should be added
+ */
+function generateFilterMenu(details, projectId, tableId, filterMenuContainer) {
+  const filterMenu = `
+    <div class="filter-header">
+      <input type="text" id="branchSearch" placeholder="Search branches/tags...">
+      <span class="settings-icon">&#9881;</span>
+    </div>
+    <div class="filter-options">
+      <a href="#" class="filter-option selected-text">Most Used</a>
+      <a href="#" class="filter-option">Alphabetical</a>
+    </div>
+  `;
+  filterMenuContainer.append(filterMenu);
+
+
+
+  filterMenuContainer.find(".filter-option").on('click', function(event) {
+    event.preventDefault();
+
+    filterMenuContainer.find(".filter-option").removeClass('selected-text');
+
+    $(this).toggleClass('selected-text');
+
+    const selectedOption = $(this).text();
+    console.log('selectedOption', selectedOption);
+  });
+
+  // Event listener for search filter input
+  $('#branchSearch').on('input', (event) => {
+    const filter = $(event.target).val();
+    console.log('filter', filter);
+  });
+
+  // Event listener for settings icon
+  $('.settings-icon').on('click', function(event) {
+    console.log('settings clicked');
+  });
+
+  console.log('generateFilterMenu');
+  populateFilterMenu(details, projectId, tableId, filterMenuContainer);
 }
 
 
-function renderFilterMenu(details, projectId) {
+function populateFilterMenu(details, projectId, tableId, filterMenuContainer) {
   // details.branchortag : string
   // details.commitid : string
   // details.commitmessage : string
@@ -145,7 +196,7 @@ function renderFilterMenu(details, projectId) {
   // details.repourl : string
 
   // Render all unique details.branchortag in the links_card
-  $(".links_card").each(function(index) {
+  filterMenuContainer.each(function(index) {
     const $card = $(this);
     const branchortag = details.changes.map(change => change.branchortag);
     const uniqueBranchOrTag = [...new Set(branchortag)];
@@ -179,11 +230,7 @@ function renderFilterMenu(details, projectId) {
           console.log('clicked', bot);
 
           // Update the corresponding changes list
-          if (index === 0) {
-            updateChangesList(bot, projectId, true);
-          } else {
-            updateChangesList(bot, projectId, false);
-          }
+          updateChangesList(bot, projectId, tableId);
         });
 
         container.append($link);
@@ -206,9 +253,8 @@ function renderFilterMenu(details, projectId) {
   });
 }
 
-function updateChangesList(branchOrTag, projectId, isBaseline) {
-  const selector = isBaseline ? `#p${projectId}-baseline` : `#p${projectId}-change`;
-  const target = $(selector);
+function updateChangesList(branchOrTag, projectId, tableId) {
+  const target = tableId;
   target.empty();
 
   const changesP = getChangesDetails(projectId);
@@ -220,8 +266,7 @@ function updateChangesList(branchOrTag, projectId, isBaseline) {
         const msg = filterCommitMessage(change.commitmessage);
         const date = formatDateWithTime(change.experimenttime);
 
-        const option = `<a class="list-group-item list-group-item-action
-          list-min-padding"
+        const option = `<a class="list-group-item list-group-item-action list-min-padding"
           data-toggle="list" data-hash="${change.commitid}" href="">
             <div class="exp-date" title="Experiment Start Date">${date}</div>
             ${change.commitid.substring(0, 6)} ${change.branchortag}<br>
@@ -234,28 +279,26 @@ function updateChangesList(branchOrTag, projectId, isBaseline) {
 
     // set a event for each list group item which calls setHref
     target.find('a').on('click', (event) =>
-      setHref(event, projectId, isBaseline)
+      setHref(event, projectId, tableId)
     );
   });
 }
 
-function setHref(event, projectId, isBaseline) {
+function setHref(event, projectId, tableId) {
   // every time a commit is clicked, check to see if both left and right
   // commit are defined. set link if that is true
-  const baseJQ = $(`#p${projectId}-baseline`);
-  const projectSlug = baseJQ.data('project-slug');
+  const projectSlug = tableId.data('project-slug');
 
   const clicked = $(event.currentTarget).data('hash');
   let baseline;
   let change;
 
-  if (isBaseline) {
+  if (tableId.attr('id').endsWith('-baseline')) {
     baseline = clicked;
     change = $(`#p${projectId}-change`).find('.active').data('hash');
-  }
-  if (!isBaseline) {
+  } else {
     change = clicked;
-    baseline = baseJQ.find('.active').data('hash');
+    baseline = $(`#p${projectId}-baseline`).find('.active').data('hash');
   }
   if (baseline === undefined || change === undefined) {
     return;
