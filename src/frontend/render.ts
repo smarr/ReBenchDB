@@ -142,6 +142,85 @@ async function renderChangeDetails(changesDetailsResponse: Response, projectId: 
   generateFilterMenu(details, projectId, changeTable, changeFilterMenu);
 }
 
+function sortTableByUsed(details, filterMenuContainer, projectId, tableId){
+  const branchesTable = filterMenuContainer.find('.branch-cards-container');
+  const branchortag = details.changes.map(change => change.branchortag);
+  const uniqueBranchOrTag = [...new Set(branchortag)];
+
+  // Sort the uniqueBranchOrTag by the number of times it appears in the list
+  uniqueBranchOrTag.sort((a, b) => {
+    const aCount = branchortag.filter(bot => bot === a).length;
+    const bCount = branchortag.filter(bot => bot === b).length;
+    return bCount - aCount;
+  });
+
+  updateTable(uniqueBranchOrTag, branchesTable, projectId, tableId);
+}
+
+function sortTableAlphabetically(details, filterMenuContainer, projectId, tableId){
+  const branchesTable = filterMenuContainer.find('.branch-cards-container');
+  const branchortag = details.changes.map(change => change.branchortag);
+  const uniqueBranchOrTag = [...new Set(branchortag)];
+
+  // Sort the uniqueBranchOrTag alphabetically
+  uniqueBranchOrTag.sort((a, b) => {
+    return a.localeCompare(b);
+  });
+
+  updateTable(uniqueBranchOrTag, branchesTable, projectId, tableId);
+}
+
+function updateTable(details, filterMenuContainer, projectId, tableId){
+  
+  // Function to render the list of branches or tags
+  const renderList = (filter = '') => {
+    // Clear existing list
+    filterMenuContainer.empty();
+
+    // Create a container div
+    const container = $('<div class="branch-cards-container"></div>');
+
+    // Append filtered items to the container
+    details.filter(bot => bot.toLowerCase().includes(filter.toLowerCase())).forEach(bot => {
+      const $link = $(`<a class="list-group-item list-group-item-action list-min-padding"
+        data-toggle="list" data-hash="${bot}" href="">
+          ${bot}
+        </a>
+      `);
+
+      // Add click event listener to the link
+      $link.on('click', function(event) {
+        event.preventDefault();
+
+        // Remove 'active' class from all other links
+        filterMenuContainer.find('.list-group-item').removeClass('active');
+
+        // Toggle 'active' class on the clicked link
+        $(this).toggleClass('active');
+
+        console.log('clicked', bot);
+
+        // Update the corresponding changes list
+        updateChangesList(bot, projectId, tableId);
+      });
+
+      container.append($link);
+    });
+
+    // Append the container to the current links_card
+    filterMenuContainer.append(container);
+  };
+
+  // Initial render of the list
+  renderList();
+
+  // Event listener for search filter input scoped to this links_card
+  filterMenuContainer.find('.filter-header input').on('input', (event) => {
+    const filter = $(event.target).val();
+    renderList(filter);
+  });
+}
+
 /**
  * @param tableId the table to which the filter menu should be added
  */
@@ -158,33 +237,50 @@ function generateFilterMenu(details, projectId, tableId, filterMenuContainer) {
   `;
   filterMenuContainer.append(filterMenu);
 
-
-
-  filterMenuContainer.find(".filter-option").on('click', function(event) {
+  filterMenuContainer.find(".filter-option").on("click", function (event) {
     event.preventDefault();
 
-    filterMenuContainer.find(".filter-option").removeClass('selected-text');
+    filterMenuContainer.find(".filter-option").removeClass("selected-text");
 
-    $(this).toggleClass('selected-text');
+    $(this).toggleClass("selected-text");
 
     const selectedOption = $(this).text();
-    console.log('selectedOption', selectedOption);
+    console.log("selectedOption", selectedOption);
+
+    switch (selectedOption) {
+      case "Most Used": {
+        sortTableByUsed(details, filterMenuContainer, projectId, tableId);
+        break;
+      }
+      case "Alphabetical": {
+        sortTableAlphabetically(
+          details,
+          filterMenuContainer,
+          projectId,
+          tableId
+        );
+        break;
+      }
+      default:
+        console.log("default");
+    }
   });
 
   // Event listener for search filter input
-  $('#branchSearch').on('input', (event) => {
+  $("#branchSearch").on("input", (event) => {
     const filter = $(event.target).val();
-    console.log('filter', filter);
+    console.log("filter", filter);
   });
 
   // Event listener for settings icon
-  $('.settings-icon').on('click', function(event) {
-    console.log('settings clicked');
+  $(".settings-icon").on("click", function (event) {
+    console.log("settings clicked");
   });
 
-  console.log('generateFilterMenu');
+  console.log("generateFilterMenu");
   populateFilterMenu(details, projectId, tableId, filterMenuContainer);
 }
+
 
 
 function populateFilterMenu(details, projectId, tableId, filterMenuContainer) {
