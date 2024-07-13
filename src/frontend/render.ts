@@ -87,11 +87,18 @@ export function renderProjectDataOverview(
 }
 
 export function renderChanges(projectId: string): void {
-  const changesP = fetch(`/rebenchdb/dash/${projectId}/changes`);
+  const changesP = getChangesDetails(projectId);
   changesP.then(
     async (changesDetailsResponse) =>
       await renderChangeDetails(changesDetailsResponse, projectId)
   );
+}
+
+async function getChangesDetails(projectId: string) {
+  const changesDetailsResponse = await fetch(
+    `/rebenchdb/dash/${projectId}/changes`
+  );
+  return changesDetailsResponse;
 }
 
 async function renderChangeDetails(changesDetailsResponse, projectId: string) {
@@ -124,6 +131,146 @@ async function renderChangeDetails(changesDetailsResponse, projectId: string) {
   $(`#p${projectId}-change a`).on('click', (event) =>
     setHref(event, projectId, false)
   );
+
+  renderFilterMenu(details, projectId);
+}
+
+function renderFilterMenu(details, projectId) {
+  // details.branchortag : string
+  // details.commitid : string
+  // details.commitmessage : string
+  // details.experimenttime : string
+  // details.projectid : number
+  // details.repourl : string
+
+  $('.branch-filter-sidebar').each(function (index) {
+    const $card = $(this);
+    const branchortag: string[] = details.changes.map(
+      (change) => change.branchortag
+    );
+    const uniqueBranchOrTag = [...new Set(branchortag)];
+
+    function renderList(filter = '') {
+      $card.find('.branch-cards-container').remove();
+
+      const container = $('<div class="branch-cards-container"></div>');
+
+      uniqueBranchOrTag
+        .filter((bot) => bot.toLowerCase().includes(filter.toLowerCase()))
+        .forEach((bot) => {
+          const $link = $(`<a
+              class="list-group-item list-group-item-action list-min-padding"
+              data-toggle="list" data-hash="${bot}" href>
+            ${bot}
+          </a>
+        `);
+
+          $link.on('click', function (event) {
+            event.preventDefault();
+
+            $card.find('.list-group-item').removeClass('active');
+            $(this).toggleClass('active');
+
+            if (index === 0) {
+              updateChangesList(bot, projectId, true);
+            } else {
+              updateChangesList(bot, projectId, false);
+            }
+          });
+
+          container.append($link);
+        });
+
+      $card.append(container);
+    }
+
+    renderList();
+
+    $card.find('.filter-header input').on('input', (event) => {
+      const filter = <string>$(event.target).val();
+      renderList(filter);
+    });
+
+    $card.find('.filter-options .filter-option').on('click', function (event) {
+      event.preventDefault();
+
+      $card.find('.filter-option').removeClass('selected-text');
+
+      $(this).toggleClass('selected-text');
+
+      const filter = $(this).text();
+      switch (filter) {
+        case 'Most Used':
+          uniqueBranchOrTag.sort((a, b) => {
+            return (
+              branchortag.filter((x) => x === b).length -
+              branchortag.filter((x) => x === a).length
+            );
+          });
+          break;
+        case 'Alphabetical':
+          uniqueBranchOrTag.sort((a, b) => a.localeCompare(b));
+          break;
+        case 'Most Recent':
+          uniqueBranchOrTag.sort((a, b) => {
+            const dateA = details.changes.find(
+              (x) => x.branchortag === a
+            ).experimenttime;
+            const dateB = details.changes.find(
+              (x) => x.branchortag === b
+            ).experimenttime;
+            return new Date(dateB).getTime() - new Date(dateA).getTime();
+          });
+          break;
+        default:
+          break;
+      }
+
+      renderList();
+    });
+  });
+
+  $('.left .filter-options .filter-option:contains("Most Used")').trigger(
+    'click'
+  );
+  $('.right .filter-options .filter-option:contains("Most Recent")').trigger(
+    'click'
+  );
+}
+
+function updateChangesList(branchOrTag, projectId, isBaseline) {
+  const selector = isBaseline
+    ? `#p${projectId}-baseline`
+    : `#p${projectId}-change`;
+  const target = $(selector);
+  target.empty();
+
+  const changesP = getChangesDetails(projectId);
+  changesP.then(async (changesDetailsResponse) => {
+    const details = await changesDetailsResponse.json();
+
+    for (const change of details.changes) {
+      if (change.branchortag === branchOrTag) {
+        const msg = filterCommitMessage(change.commitmessage);
+        const date = formatDateWithTime(change.experimenttime);
+
+        const option = `<a class="list-group-item list-group-item-action
+          list-min-padding"
+          data-toggle="list" data-hash="${change.commitid}" href="">
+            <div class="exp-date" title="Experiment Start Date">${date}</div>
+            ${change.commitid.substring(0, 6)} ${change.branchortag}<br>
+            <div class="change-msg">${msg}</div>
+          </a>`;
+
+        target.append(option);
+      }
+    }
+
+    // set a event for each list group item which calls setHref
+    target
+      .find('a')
+      .on('click', (event) => setHref(event, projectId, isBaseline));
+  });
 }
 
 function setHref(event, projectId, isBaseline) {
