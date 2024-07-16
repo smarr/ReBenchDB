@@ -278,6 +278,19 @@ $(() => {
     i++;
   });
 
+  $('.table-expander').on('click', function (event) {
+    event.preventDefault();
+
+    $('table#benchmark-set-change tbody').toggleClass('hide-most-rows');
+
+    $(this).toggleClass('active');
+
+    const isActivated = $(this).hasClass('active');
+    $(this)
+      .find('a')
+      .text(isActivated ? 'show less' : 'show more');
+  });
+
   const headlinesForTablesWithWarmupPlots = $('table:has(button.btn-warmup)')
     .prev()
     .prev();
