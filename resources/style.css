@@ -542,3 +542,20 @@ td.warmup-plot {
   z-index: 100;
   min-width: 250px;
 }
+
+/* Make "Changes in Benchmark Set" Table Expandable */
+.table-expander td {
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+}
+.table-expander a:after {
+  content: ' ▼';
+}
+.table-expander.active a:after {
+  content: ' ▲';
+}
+
+table#benchmark-set-change tbody.hide-most-rows tr.benchmark-row:nth-child(n+4) {
+  display: none;
+}
