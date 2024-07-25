@@ -44,7 +44,7 @@ body.compare, body.timeline {
 }
 
 @media (max-width: 800px) {
-  .branch-filter-sidebar {
+  .branch-sidebar {
     /* hidden */
     display: none;
   }
@@ -72,11 +72,11 @@ body.compare, body.timeline {
   outline: none;
 }
 
-.branch-filter-sidebar.left {
+.branch-sidebar.left {
   text-align: right;
 }
 
-.branch-filter-sidebar {
+.branch-sidebar {
   border: 1px solid #ddd;
   border-radius: 8px;
   background-color: #fff;
@@ -92,7 +92,7 @@ body.compare, body.timeline {
   padding: 0.5em;
 }
 
-.filter-options {
+.sort-options {
   background-color: #f9f9f9;
   border-radius: 4px;
   margin-bottom: 1em;
@@ -101,7 +101,7 @@ body.compare, body.timeline {
   padding: 0.5em;
 }
 
-.filter-options a {
+.sort-options a {
   display: block;
   color: #007bff;
   text-decoration: none;
@@ -110,30 +110,30 @@ body.compare, body.timeline {
   transition: background-color 0.3s, color 0.3s;
 }
 
-.filter-options a:hover,
-.filter-options a.selected-text {
+.sort-options a:hover,
+.sort-options a.selected-text {
   background-color: #007bff;
   color: white;
 }
 
-.branch-cards-container {
+.branch-list {
   max-height: 800px;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
-.branch-cards-container .list-group-item {
+.branch-list .list-group-item {
   cursor: pointer;
   padding: 2px 7px;
   border: none;
   color: #444444;
 }
 
-.branch-cards-container .list-group-item:hover {
+.branch-list .list-group-item:hover {
   background-color: #f1f1f1;
 }
 
-.branch-cards-container .list-group-item.active {
+.branch-list .list-group-item.active {
   background-color: #007bff;
   color: white;
 }
