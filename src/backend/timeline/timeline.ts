@@ -6,7 +6,7 @@ import {
 import { prepareTemplate } from '../templates.js';
 import { TimelineSuite } from '../../shared/api.js';
 import { Database } from '../db/db.js';
-import { robustPath } from '../util.js';
+import { rebenchVersion, robustPath } from '../util.js';
 import { getNumberOrError } from '../request-check.js';
 import { log } from '../logging.js';
 
@@ -62,6 +62,7 @@ export async function renderTimeline(
 
   if (project) {
     ctx.body = timelineTpl({
+      rebenchVersion,
       project,
       benchmarks: await getLatestBenchmarksForTimelineView(project.id, db)
     });

@@ -5,7 +5,7 @@
   <meta id="project-id" value="{%= it.id %}">
   <meta id="project-showchanges" value="{%= it.showchanges%}">
   <meta id="project-allresults" value="{%= it.allresults%}">
-  {%- include('header.html') %}
+  {%- include('header.html', { rebenchVersion: it.rebenchVersion }) %}
   <script src="/static/project.js" type="module"></script>
 </head>
 <body class="project-body">

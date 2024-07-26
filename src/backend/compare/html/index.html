@@ -6,7 +6,7 @@
   <meta id="changeHash" value="{%= it.changeHash %}">
   <meta id="project-slug" value="{%= it.project %}">
 
-  {%- include('header.html') %}
+  {%- include('header.html', { rebenchVersion: it.rebenchVersion }) %}
 
   <script src="/static/compare.js" type="module"></script>
 </head>
