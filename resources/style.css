@@ -57,7 +57,7 @@ body.compare, body.timeline {
 }
 
 
-#branch-search {
+.branch-search {
   width: 100%;
   max-width: 100%;
   padding: 8px;
@@ -67,7 +67,7 @@ body.compare, body.timeline {
   transition: border-color 0.3s ease;
 }
 
-#branch-search:focus {
+.branch-search:focus {
   border-color: #007bff;
   outline: none;
 }
