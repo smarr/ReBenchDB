@@ -8,7 +8,7 @@
   {%- include('header.html') %}
   <script src="/static/project.js" type="module"></script>
 </head>
-<body>
+<body class="project-body">
 
   <div class="jumbotron">
     <h1 class="display-4">{%= it.name %}</h1>
@@ -18,6 +18,17 @@
   </div>
 
   <div id="project">
+    <div class="branch-sidebar left">
+      <div class="filter-header">
+        <input type="text" class="branch-search" placeholder="Search branches/tags...">
+      </div>
+      <div class="sort-options">
+        <a href class="sort-option selected-text">Most Used</a>
+        <a href class="sort-option">Alphabetical</a>
+        <a href class="sort-option">Most Recent</a>
+      </div>
+      <div class="branch-list list-group"></div>
+    </div>
     <div class="card">
       <h5 class="card-header" id="{%= it.slug %}"><a
         href="/{%= it.slug %}/data">{%= it.name %}</a></h5>
@@ -42,6 +53,17 @@
         <div class="project-card-content"></div>
         <a href="/{%= it.slug %}/timeline">Timeline</a>
       </div>
+    </div>
+    <div class="branch-sidebar right">
+      <div class="filter-header">
+        <input type="text" class="branch-search" placeholder="Search branches/tags...">
+      </div>
+      <div class="sort-options">
+        <a href class="sort-option selected-text">Most Used</a>
+        <a href class="sort-option">Alphabetical</a>
+        <a href class="sort-option">Most Recent</a>
+      </div>
+      <div class="branch-list list-group"></div>
     </div>
   </div>
 </body>

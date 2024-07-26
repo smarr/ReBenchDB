@@ -277,3 +277,17 @@ export interface ProfileRow {
   warmup: number;
   profile: string | ProfileElement[];
 }
+
+/** Row returned by the /rebenchdb/dash/:projectId/changes end point. */
+export interface ChangesRow {
+  commitid: string;
+  branchortag: string;
+  projectid: number;
+  repourl: string;
+  commitmessage: string;
+  experimenttime: string;
+}
+
+export interface ChangesResponse {
+  changes: ChangesRow[];
+}

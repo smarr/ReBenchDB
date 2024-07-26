@@ -13,6 +13,7 @@ import {
   startRequest
 } from '../perf-tracker.js';
 import type { AllResults } from '../../shared/api.js';
+import type { ChangesResponse } from '../../shared/view-types.js';
 import { Database } from '../db/db.js';
 import { TimedCacheValidity } from '../db/timed-cache-validity.js';
 import { getNumberOrError } from '../request-check.js';
@@ -187,7 +188,7 @@ export async function getChangesAsJson(
 export async function getChanges(
   projectId: number,
   db: Database
-): Promise<{ changes: any[] }> {
+): Promise<ChangesResponse> {
   const result = await db.query({
     name: 'fetchAllChangesByProjectId',
     text: ` SELECT commitId, branchOrTag, projectId, repoURL, commitMessage,
