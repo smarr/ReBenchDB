@@ -24,7 +24,7 @@ describe('renderProjectDataPage', () => {
       robustPath('backend/project/project-data.html'),
       true
     );
-    const html = tpl({ project });
+    const html = tpl({ project, rebenchVersion: 'testVersion' });
     expect(html).toEqualHtmlFragment('project/project-data');
   });
 });
@@ -36,7 +36,8 @@ describe('renderDataExport', () => {
       expName: 'Test Experiment',
       preparingData: true,
       currentTime: 'Some Date',
-      generationFailed: true
+      generationFailed: true,
+      rebenchVersion: 'testVersion'
     };
     const tpl = prepareTemplate(
       robustPath('backend/project/get-exp-data.html'),

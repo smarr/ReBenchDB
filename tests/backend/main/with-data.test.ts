@@ -212,7 +212,11 @@ describe('Test with basic test data loaded', () => {
     it('Should render the main page', async () => {
       const projects = await db.getAllProjects();
       const tpl = prepareTemplate(robustPath('backend/main/index.html'), true);
-      const html = tpl({ projects, isReBenchDotDev: false });
+      const html = tpl({
+        projects,
+        isReBenchDotDev: false,
+        rebenchVersion: 'testVersion'
+      });
       expect(html).toEqualHtmlFragment('main/index');
     });
   });
@@ -226,7 +230,7 @@ describe('Test with basic test data loaded', () => {
         robustPath('backend/timeline/timeline.html'),
         true
       );
-      const html = tpl({ project, benchmarks });
+      const html = tpl({ project, benchmarks, rebenchVersion: 'testVersion' });
       expect(html).toEqualHtmlFragment('timeline/index');
     });
   });
