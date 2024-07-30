@@ -757,7 +757,12 @@ describe('prepareCompareView()', () => {
 
     it('should render to the expected html', () => {
       const r = <CompareViewWithData>result;
-      const html = compareTpl({ ...r, dataFormatters, viewHelpers });
+      const html = compareTpl({
+        ...r,
+        dataFormatters,
+        viewHelpers,
+        rebenchVersion: 'testVersion'
+      });
       expect(html).toEqualHtmlFragment('stats-data-prep/compare-view-jssom');
     });
   });
@@ -822,7 +827,12 @@ describe('prepareCompareView()', () => {
 
     it('should render to the expected html', () => {
       const r = <CompareViewWithData>result;
-      const html = compareTpl({ ...r, dataFormatters, viewHelpers });
+      const html = compareTpl({
+        ...r,
+        dataFormatters,
+        viewHelpers,
+        rebenchVersion: 'testVersion'
+      });
       expect(html).toEqualHtmlFragment('stats-data-prep/compare-view-tsom');
     });
 

@@ -206,6 +206,8 @@ export interface CompareViewBasics {
 
   baselineHash6: string;
   changeHash6: string;
+
+  rebenchVersion: string;
 }
 
 export interface CompareViewWithoutData extends CompareViewBasics {

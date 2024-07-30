@@ -8,7 +8,7 @@ import {
   completeRequestAndHandlePromise,
   startRequest
 } from '../perf-tracker.js';
-import { robustPath } from '../util.js';
+import { rebenchVersion, robustPath } from '../util.js';
 import type { CompareGenView, CompareView } from '../../shared/view-types.js';
 import { prepareCompareView } from './prep-data.js';
 import * as dataFormatters from '../../shared/data-format.js';
@@ -78,7 +78,8 @@ export async function renderCompare(
 
     generatingReport: false,
     generationFailed: false,
-    revisionFound: false
+    revisionFound: false,
+    rebenchVersion
   };
 
   const revDetails = await db.revisionsExistInProject(
@@ -214,6 +215,7 @@ export async function getCompareViewData(
 
   if (!revDetails.dataFound || !revDetails.base) {
     return {
+      rebenchVersion,
       revisionFound: false,
       project: projectSlug,
       baselineHash: base,

@@ -37,7 +37,7 @@ import {
   renderOverviewPlot,
   renderOverviewPlots
 } from './charts.js';
-import { siteConfig } from '../util.js';
+import { rebenchVersion, siteConfig } from '../util.js';
 import { siteAesthetics } from '../../shared/aesthetics.js';
 
 import { collateMeasurements } from './db-data.js';
@@ -1086,6 +1086,7 @@ export async function prepareCompareView(
   );
 
   const data: CompareViewWithData = {
+    rebenchVersion,
     revisionFound: true,
     project: projectSlug,
     baselineHash: revDetails.baseCommitId,

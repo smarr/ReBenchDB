@@ -12,7 +12,7 @@ import {
 } from '../perf-tracker.js';
 import { getExpData } from './data-export.js';
 import { Database } from '../db/db.js';
-import { robustPath } from '../../backend/util.js';
+import { rebenchVersion, robustPath } from '../../backend/util.js';
 
 const projectHtml = prepareTemplate(robustPath('backend/project/project.html'));
 
@@ -22,7 +22,7 @@ export async function renderProjectPage(
 ): Promise<void> {
   const project = await db.getProjectBySlug(ctx.params.projectSlug);
   if (project) {
-    ctx.body = projectHtml(project);
+    ctx.body = projectHtml({ ...project, rebenchVersion });
     ctx.type = 'html';
   } else {
     respondProjectNotFound(ctx, ctx.params.projectSlug);
@@ -77,7 +77,7 @@ export async function renderProjectDataPage(
 ): Promise<void> {
   const project = await db.getProjectBySlug(ctx.params.projectSlug);
   if (project) {
-    ctx.body = projectDataTpl({ project });
+    ctx.body = projectDataTpl({ project, rebenchVersion });
     ctx.type = 'html';
   } else {
     respondProjectNotFound(ctx, ctx.params.projectSlug);
@@ -122,7 +122,7 @@ export async function renderDataExport(
   );
 
   if (data.preparingData) {
-    ctx.body = expDataTpl(data);
+    ctx.body = expDataTpl({ ...data, rebenchVersion });
     ctx.type = 'html';
     ctx.set('Cache-Control', 'no-cache');
   } else {

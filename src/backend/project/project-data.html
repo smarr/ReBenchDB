@@ -4,7 +4,7 @@
   <meta id="project-id" value="{%= it.project.id %}">
   <meta id="project-slug" value="{%= it.project.slug %}">
   <title>ReBench: {%= it.project.name %}</title>
-  {%- include('header.html') %}
+  {%- include('header.html', { rebenchVersion: it.rebenchVersion }) %}
   <script src="/static/project-data.js" type="module"></script>
 </head>
 <body>

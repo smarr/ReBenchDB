@@ -27,6 +27,7 @@ export async function renderMainPage(
 ): Promise<void> {
   const projects = await db.getAllProjects();
   ctx.body = mainTpl({
+    rebenchVersion,
     projects,
     isReBenchDotDev: isReBenchDotDev()
   });

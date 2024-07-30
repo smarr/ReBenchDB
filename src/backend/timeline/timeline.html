@@ -4,7 +4,7 @@
   <meta id="project-id" value="{%= it.project.id %}">
   <meta id="project-slug" value="{%= it.project.slug %}">
   <title>ReBench: Timeline {%= it.project.name %}</title>
-  {%- include('header.html') %}
+  {%- include('header.html', { rebenchVersion: it.rebenchVersion }) %}
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.appear/0.4.1/jquery.appear.min.js" integrity="sha256-19/eyBKQKb8IPrt7321hbLkI1+xyM8d/DpzjyiEKnCE=" crossorigin="anonymous"></script>
   <script src="/static/timeline.js" type="module"></script>
 </head>
