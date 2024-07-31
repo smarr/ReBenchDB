@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
   <title>ReBenchDB for {%= it.project %}: Comparing {%= it.baselineHash6 %} with {%= it.changeHash6 %}</title>
-
+  <script src="/static/theme.js" type="module"></script>
   {%- include('header.html', { rebenchVersion: it.rebenchVersion }) %}
 
   {% if (it.generatingReport) { %}
   <meta http-equiv="refresh" content="5" />
   {% } %}
+
 </head>
 <body class="compare timeline-multi">
 
