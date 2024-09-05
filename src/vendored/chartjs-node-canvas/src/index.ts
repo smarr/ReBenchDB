@@ -111,6 +111,10 @@ export class ChartJSNodeCanvas {
       }
       const canvas = chart.canvas as Canvas;
       canvas.toDataURL(mimeType, (error: Error | null, png: string) => {
+        chart.platform.releaseContext(chart.ctx);
+        (<any>chart).canvas = null;
+        (<any>chart).ctx = null;
+
         chart.destroy();
         if (error) {
           return reject(error);
@@ -137,6 +141,10 @@ export class ChartJSNodeCanvas {
     }
     const canvas = chart.canvas as Canvas;
     const dataUrl = canvas.toDataURL(mimeType);
+    chart.platform.releaseContext(chart.ctx);
+    (<any>chart).canvas = null;
+    (<any>chart).ctx = null;
+
     chart.destroy();
     return dataUrl;
   }
@@ -164,6 +172,10 @@ export class ChartJSNodeCanvas {
       }
       const canvas = chart.canvas as Canvas;
       canvas.toBuffer((error: Error | null, buffer: Buffer) => {
+        chart.platform.releaseContext(chart.ctx);
+        (<any>chart).canvas = null;
+        (<any>chart).ctx = null;
+
         chart.destroy();
         if (error) {
           return reject(error);
@@ -196,6 +208,11 @@ export class ChartJSNodeCanvas {
     }
     const canvas = chart.canvas as Canvas;
     const buffer = canvas.toBuffer(mimeType);
+
+    chart.platform.releaseContext(chart.ctx);
+    (<any>chart).canvas = null;
+    (<any>chart).ctx = null;
+
     chart.destroy();
     return buffer;
   }
@@ -220,7 +237,12 @@ export class ChartJSNodeCanvas {
       throw new Error('Canvas is null');
     }
     const canvas = chart.canvas as Canvas;
-    setImmediate(() => chart.destroy());
+    setImmediate(() => {
+      chart.platform.releaseContext(chart.ctx);
+      (<any>chart).canvas = null;
+      (<any>chart).ctx = null;
+      chart.destroy();
+    });
     switch (mimeType) {
       case 'image/png':
         return canvas.createPNGStream();
