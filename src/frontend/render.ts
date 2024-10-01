@@ -4,7 +4,7 @@ import { renderResultsPlots } from './plots.js';
 
 export function filterCommitMessage(msg: string): string {
   const result = msg.replace(/Signed-off-by:.*?\n/g, '');
-  return result;
+  return result.trim();
 }
 
 function shortCommitId(commitId) {
@@ -33,16 +33,16 @@ export function expandMessage(event: any): void {
 }
 
 function formatCommitMessages(messages) {
-  messages = filterCommitMessage(messages);
-  const newLineIdx = messages.indexOf('\n');
+  const filteredMsg = filterCommitMessage(messages);
+  const newLineIdx = filteredMsg.indexOf('\n');
   if (newLineIdx > -1) {
-    const firstLine = messages.substring(0, newLineIdx);
+    const firstLine = filteredMsg.substring(0, newLineIdx);
     return (
-      `${firstLine} <a href="#" onclick="expandMessage(event)"` +
-      ` data-fulltext="${messages.replace('"', '\x22')}">&hellip;</a>`
+      `${firstLine} <a href="#"` +
+      ` data-fulltext="${filteredMsg.replace('"', '\x22')}">&hellip;</a>`
     );
   } else {
-    return messages;
+    return filteredMsg;
   }
 }
 
@@ -80,6 +80,7 @@ export function renderProjectDataOverview(
           <a rel="nofollow" href="/${pSlug}/data/${row.expid}.csv.gz">CSV</a>
         </td>
       </tr>`);
+    tBody.find('a').on('click', expandMessage);
   }
 
   if (!hasDesc) {
@@ -108,7 +109,7 @@ function addChangesToList(
 
     const option = `<a class="list-group-item list-group-item-action
       list-min-padding"
-      data-toggle="list" data-hash="${change.commitid}" href="">
+      data-bs-toggle="list" data-hash="${change.commitid}" href="">
         <div class="exp-date" title="Experiment Start Date">${date}</div>
         ${change.commitid.substring(0, 6)} ${change.branchortag}<br>
         <div class="change-msg">${msg}</div>
@@ -266,7 +267,7 @@ function renderBranchList(
   for (const b of branches) {
     const $link = $(`<a
           class="list-group-item list-group-item-action list-min-padding"
-          data-toggle="list" data-branch="${b}" href>${b}</a>`);
+          data-bs-toggle="list" data-branch="${b}" href>${b}</a>`);
     $branchList.append($link);
   }
 

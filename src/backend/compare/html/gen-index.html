@@ -12,14 +12,14 @@
 <body class="compare timeline-multi">
 
 <header>
-<div class="jumbotron compare">
+<div class="p-4 mb-4 bg-light rounded-2"><div class="container-fluid py-5 compare">
   <h2>ReBenchDB for {%= it.project %}</h2>
-  {% if (it.revisionFound) { %}
+{% if (it.revisionFound) { %}
   <h3>Comparing <a href="{%= it.base.repourl%}/compare/{%= it.baselineHash%}...{%= it.changeHash%}">{%= it.baselineHash6%} with {%= it.changeHash6%}</a></h3>
-  {% } else { %}
+{% } else { %}
   <h3>Comparing {%= it.baselineHash6%} with {%= it.changeHash6%}</h3>
-  {% } %}
-</div>
+{% } %}
+</div></div>
 </header>
 
 {% if (it.revisionFound) { %}
