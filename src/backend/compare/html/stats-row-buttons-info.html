@@ -3,17 +3,17 @@ const d = it.details;
 const b = it.benchId;
 const f = it.dataFormatters;
 %}<button type="button" class="btn btn-sm btn-cmdline btn-popover"
-  data-content="<code>{%= d.cmdline %}</code>"></button>
+  data-bs-content="<code>{%= d.cmdline %}</code>"></button>
 {%
    if (it.environments) {
 %}<button type="button" class="btn btn-sm btn-environment btn-popover"
-    data-content="{%= f.formatEnvironment(d.envId, it.environments) %}"></button>
+    data-bs-content="{%= f.formatEnvironment(d.envId, it.environments) %}"></button>
 {% }
 
    if (d.hasWarmup) {
 %}<button type="button" class="btn btn-sm btn-light btn-warmup" data-content="{%= d.runId %}"></button>
 {%
-   } 
+   }
 
    if (d.profiles) {
 %}<button type="button" class="btn btn-sm btn-profile" data-content="{%= d.runId %}"></button>

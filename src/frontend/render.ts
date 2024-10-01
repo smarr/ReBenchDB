@@ -108,7 +108,7 @@ function addChangesToList(
 
     const option = `<a class="list-group-item list-group-item-action
       list-min-padding"
-      data-toggle="list" data-hash="${change.commitid}" href="">
+      data-bs-toggle="list" data-hash="${change.commitid}" href="">
         <div class="exp-date" title="Experiment Start Date">${date}</div>
         ${change.commitid.substring(0, 6)} ${change.branchortag}<br>
         <div class="change-msg">${msg}</div>
@@ -266,7 +266,7 @@ function renderBranchList(
   for (const b of branches) {
     const $link = $(`<a
           class="list-group-item list-group-item-action list-min-padding"
-          data-toggle="list" data-branch="${b}" href>${b}</a>`);
+          data-bs-toggle="list" data-branch="${b}" href>${b}</a>`);
     $branchList.append($link);
   }
 

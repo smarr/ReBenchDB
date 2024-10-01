@@ -79,7 +79,7 @@ function createEntry(e: string | ProfileElement, profId, counter) {
 
   if (hasTrace) {
     // eslint-disable-next-line max-len
-    entryHtml += `<a href="#${profId}-item-${counter.cnt}" data-toggle="collapse">`;
+    entryHtml += `<a href="#${profId}-item-${counter.cnt}" data-bs-toggle="collapse">`;
   } else {
     entryHtml += `<span>`;
   }
