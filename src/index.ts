@@ -162,9 +162,9 @@ router.post(
 );
 
 if (DEV) {
-  router.get(`${siteConfig.staticUrl}/:filename*`, serveStaticResource);
-  router.get(`/shared/:filename*`, serveStaticSharedResource);
-  router.get(`/src/frontend/:filename*`, serveViewJs);
+  router.get(`${siteConfig.staticUrl}/*filename`, serveStaticResource);
+  router.get(`/shared/*filename`, serveStaticSharedResource);
+  router.get(`/src/frontend/*filename`, serveViewJs);
   router.get(
     `${siteConfig.reportsUrl}/:change/figure-html/:filename`,
     serveReport
