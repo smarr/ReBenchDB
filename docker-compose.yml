@@ -21,7 +21,7 @@ services:
       - '33333:33333'
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     environment:
       POSTGRES_USER: docker
       POSTGRES_PASSWORD: docker

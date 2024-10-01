@@ -17,6 +17,7 @@ import { medianUnsorted } from '../../shared/stats.js';
 import { robustPath } from '../util.js';
 import { siteAesthetics } from '../../shared/aesthetics.js';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
+import { registerFont } from 'canvas';
 
 const fullyTransparent = 'rgba(0, 0, 0, 0)';
 
@@ -28,6 +29,14 @@ const perEntryHeight = 34;
 /** Register all standard plugins. This is for convenience. */
 function initChartJS(): void {
   Chart.register(...registerables);
+  registerFont(robustPath('../dist/roboto-hinted/Roboto-Regular.ttf'), {
+    family: 'Roboto',
+    weight: '400'
+  });
+  registerFont(robustPath('../dist/roboto-hinted/Roboto-Bold.ttf'), {
+    family: 'Roboto',
+    weight: '700'
+  });
 }
 initChartJS();
 
@@ -220,15 +229,6 @@ export function createCanvas(settings: CanvasSettings): ChartJSNodeCanvas {
   }
 
   const canvas = new ChartJSNodeCanvas(canvasOptions);
-
-  canvas.registerFont(robustPath('../dist/roboto-hinted/Roboto-Regular.ttf'), {
-    family: 'Roboto',
-    weight: '400'
-  });
-  canvas.registerFont(robustPath('../dist/roboto-hinted/Roboto-Bold.ttf'), {
-    family: 'Roboto',
-    weight: '700'
-  });
   return canvas;
 }
 
