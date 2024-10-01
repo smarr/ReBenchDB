@@ -220,7 +220,7 @@ function renderSidebar(
     switch (selectedOrder) {
       case 'Most Used': {
         branches.sort(
-          (a, b) => branchDetails.get(a)!.count - branchDetails.get(b)!.count
+          (a, b) => branchDetails.get(b)!.count - branchDetails.get(a)!.count
         );
         break;
       }
