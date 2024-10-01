@@ -289,7 +289,7 @@ describe('countVariantsAndDropMissing()', () => {
     expect(data.length).toBe(2);
     expect(result.missing.size).toEqual(1);
 
-    const stats: CompareStatsRow = result.missing.values().next().value;
+    const stats = result.missing.values().next().value as CompareStatsRow;
     expect(stats.missing).toHaveLength(1);
     if (stats.missing === undefined) throw new Error('missing is undefined');
 
@@ -311,7 +311,7 @@ describe('countVariantsAndDropMissing()', () => {
     expect(result.missing).toBeDefined();
     expect(result.missing.size).toEqual(1);
 
-    const stats: CompareStatsRow = result.missing.values().next().value;
+    const stats = result.missing.values().next().value as CompareStatsRow;
     expect(stats.missing).toHaveLength(1);
     if (stats.missing === undefined) throw new Error('missing is undefined');
 
