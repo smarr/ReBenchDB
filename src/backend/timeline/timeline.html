@@ -11,7 +11,7 @@
 <body class="timeline-multi timeline">
 
 <header>
-  <div class="p-4 mb-4 bg-light rounded-2"><div class="container-fluid py-5">
+  <div class="p-4 mb-4 bg-secondary-subtle rounded-2"><div class="container-fluid py-5">
     <h1 class="display-4">ReBench: Timeline {%= it.project.name %}</h1>
     {% if (it.project.description) { %}
     <h2 class="display-5">{%= it.project.description %}</h2>
@@ -81,7 +81,7 @@
   </div></div> <!-- closing class="row flex-nowrap" and class="container-fluid" -->
   {% } else { %}
   <main role="main">
-  <div class="p-4 mb-4 bg-light rounded-2"><div class="container-fluid py-5">
+  <div class="p-4 mb-4 bg-secondary-subtle rounded-2"><div class="container-fluid py-5">
     <h1 class="display-4">No Data Available</h1>
     {% if (it.project.basebranch) { %}
       <p class="lead">There are no benchmarks available for this project.</p>
