@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script src="/static/theme.js" type="module"></script>
   <title>ReBenchDB for {%= it.project %}: Comparing {%= it.baselineHash6 %} with {%= it.changeHash6 %}</title>
 
   {%- include('header.html', { rebenchVersion: it.rebenchVersion }) %}
@@ -20,6 +21,7 @@
   <h3>Comparing {%= it.baselineHash6%} with {%= it.changeHash6%}</h3>
 {% } %}
 </div></div>
+{%- include('common-menu.html', it) %}
 </header>
 
 {% if (it.revisionFound) { %}

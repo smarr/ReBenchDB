@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script src="/static/theme.js" type="module"></script>
   <title>ReBench: {%= it.name %}</title>
   <meta id="project-id" value="{%= it.id %}">
   <meta id="project-showchanges" value="{%= it.showchanges%}">
@@ -10,12 +11,15 @@
 </head>
 <body class="project-body">
 
+<header>
   <div class="p-4 mb-4 bg-secondary-subtle rounded-2"><div class="container-fluid py-5">
     <h1 class="display-4">{%= it.name %}</h1>
     {% if (it.description) { %}
     <h2 class="display-5">{%= it.description%}</h2>
     {% } %}
   </div></div>
+  {%- include('common-menu.html', it) %}
+</header>
 
   <div id="project">
     <div class="branch-sidebar left">

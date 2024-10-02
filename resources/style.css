@@ -318,22 +318,22 @@ table.benchmark-details > tbody > tr > th:nth-child(1) {
   max-width: 100%;
 }
 
-.refresh {
+.menu {
   position: absolute;
   right: 0;
   top: 0;
   padding: 1ex
 }
 
-.refresh button {
+.menu button {
   margin-right: 1ex
 }
 
-.refresh form {
+.menu form {
   display:inline-block;
 }
 
-.refresh input[name=password] {
+.menu input[name=password] {
   display: none;
 }
 
@@ -689,4 +689,12 @@ table#benchmark-set-change tbody.hide-most-rows tr.benchmark-row:nth-child(n+4) 
 }
 .content-area {
     width: 70%;
+}
+
+svg.theme-icon {
+  display: none;
+}
+
+svg.theme-icon.active {
+  display: inline-block;
 }

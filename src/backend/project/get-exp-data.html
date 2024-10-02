@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script src="/static/theme.js" type="module"></script>
   <title>ReBenchDB {%= it.project %}: Preparing Data For Download</title>
 
   {%- include('header.html', { rebenchVersion: it.rebenchVersion }) %}
@@ -9,10 +10,13 @@
 </head>
 <body class="compare">
 
+<header>
 <div class="p-4 mb-4 bg-secondary-subtle rounded-2"><div class="container-fluid py-5">
   <h2>ReBenchDB for {%= it.project %}</h2>
   <h3>Preparing Data for download of {%= it.expName %}</h3>
 </div></div>
+{%- include('common-menu.html', it) %}
+</header>
 
 {% if (it.preparingData) { %}
 <div class="alert alert-secondary" role="alert">
