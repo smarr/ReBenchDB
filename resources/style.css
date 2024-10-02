@@ -373,6 +373,7 @@ td.warmup-plot {
   content: "";
   background-repeat: no-repeat;
   background-size: 16px;
+  background-color: var(--bs-light);
 }
 
 .btn-warmup {
@@ -697,4 +698,12 @@ svg.theme-icon {
 
 svg.theme-icon.active {
   display: inline-block;
+}
+
+.fast {
+  background-color: rgba(var(--bs-success-rgb), .3) !important;
+}
+
+.slow {
+  background-color: rgba(var(--bs-danger-rgb), .3) !important;
 }
