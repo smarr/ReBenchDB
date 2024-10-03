@@ -80,7 +80,7 @@ export function renderProjectDataOverview(
           <a rel="nofollow" href="/${pSlug}/data/${row.expid}.csv.gz">CSV</a>
         </td>
       </tr>`);
-    tBody.find('a').on('click', expandMessage);
+    tBody.find('a[href="#"]').on('click', expandMessage);
   }
 
   if (!hasDesc) {

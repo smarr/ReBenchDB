@@ -46,6 +46,7 @@ function renderResultsPlot(values: number[], targetElem: HTMLElement | null) {
   }
 
   const series = [{}, seriesConfig(null, 'Run time', baselineColor, 2)];
+  ensureThemeColors();
 
   const options = {
     width: 750,
@@ -54,8 +55,11 @@ function renderResultsPlot(values: number[], targetElem: HTMLElement | null) {
     scales: { x: { time: false }, y: {} },
     series,
     axes: [
-      {},
       {
+        ...themedAxis
+      },
+      {
+        ...themedAxis,
         values: (_, vals) => vals.map((v) => v + 'ms'),
         size: computeAxisLabelSpace
       }
@@ -118,6 +122,31 @@ const baselineLight = baselineColors[lightColorIdx];
 
 const changeColor = changeColors[totalColorIdx];
 const changeLight = changeColors[lightColorIdx];
+
+const themeColors = {
+  textColor: '',
+  gridColor: '',
+  tickColor: ''
+};
+
+let themedAxis = {};
+
+function ensureThemeColors() {
+  if (themeColors.textColor !== '') {
+    return;
+  }
+
+  const style = getComputedStyle(document.body);
+  themeColors.textColor = style.getPropertyValue('--bs-body-color');
+  themeColors.gridColor = style.getPropertyValue('--bs-border-color');
+  themeColors.tickColor = style.getPropertyValue('--bs-border-color');
+
+  themedAxis = {
+    stroke: themeColors.textColor,
+    grid: { stroke: themeColors.gridColor },
+    ticks: { stroke: themeColors.tickColor }
+  };
+}
 
 function computeAxisLabelSpace(self, axisTickLabels, axisIdx, cycleNum) {
   const axis = self.axes[axisIdx];
@@ -304,6 +333,8 @@ export function renderTimelinePlot(
   jqInsert: any,
   projectSlug: string
 ): any {
+  ensureThemeColors();
+
   const series = [
     {},
     seriesConfig(null, 'BCI 95th, low', baselineLight, 1),
@@ -329,8 +360,11 @@ export function renderTimelinePlot(
       { series: [2, 3], fill: baselineLight, dir: 1 }
     ],
     axes: [
-      {},
       {
+        ...themedAxis
+      },
+      {
+        ...themedAxis,
         values: (_, vals) => vals.map((v) => v + 'ms'),
         size: computeAxisLabelSpace
       }
@@ -384,6 +418,7 @@ export function renderComparisonTimelinePlot(
     series.push(seriesConfig('', '', changeColor, 1, true, changeLight));
   }
 
+  ensureThemeColors();
   const options = {
     width: 576,
     height: 240,
@@ -398,8 +433,11 @@ export function renderComparisonTimelinePlot(
       { series: [5, 6], fill: changeLight, dir: 1 }
     ],
     axes: [
-      {},
       {
+        ...themedAxis
+      },
+      {
+        ...themedAxis,
         values: (_, vals) => vals.map((v) => v + 'ms'),
         size: computeAxisLabelSpace
       }
@@ -565,6 +603,7 @@ export function renderWarmupPlot(
   changeCommitId: string,
   targetElement: JQuery<HTMLElement>
 ): uPlot {
+  ensureThemeColors();
   const series = [{}];
   const iterationNums: number[] = [];
   const data = [iterationNums];
@@ -592,10 +631,11 @@ export function renderWarmupPlot(
     }
   }
 
-  const axes = [{}];
+  const axes = [{ ...themedAxis }];
 
   for (const unit of units) {
     const axis: any = {
+      ...themedAxis,
       scale: unit,
       values: (_, vals) => vals.map((v) => v + unit),
       size: computeAxisLabelSpace

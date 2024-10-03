@@ -4,7 +4,7 @@ import type { ProfileRow, WarmupDataForTrial } from '../shared/view-types.js';
 import type { ProfileElement } from '../shared/api.js';
 
 function determineAndDisplaySignificance() {
-  const val = $('#significance').val();
+  const val = parseFloat($('#significance').val() as string);
   displaySignificance(val);
 }
 
@@ -15,12 +15,13 @@ function displaySignificance(sig) {
     const parent = $(e).parent();
     const target =
       parent.find('.stats-change.stats-total').length > 1 ? $(e) : parent;
+
     if (change < -sig) {
-      target.css('background-color', '#e4ffc7');
+      target.addClass('fast');
     } else if (change > sig) {
-      target.css('background-color', '#ffcccc');
+      target.addClass('slow');
     } else {
-      target.css('background-color', '');
+      target.removeClass('fast').removeClass('slow');
     }
   });
 }
