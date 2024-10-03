@@ -707,3 +707,7 @@ svg.theme-icon.active {
 .slow {
   background-color: rgba(var(--bs-danger-rgb), .3) !important;
 }
+
+[data-bs-theme="dark"] .compare img {
+  filter: invert(0.8) contrast(1.2);
+}
