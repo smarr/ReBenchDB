@@ -63,7 +63,7 @@ async function getProfile(
   for (const row of result.rows) {
     try {
       row.profile = JSON.parse(row.profile);
-    } catch (e) {
+    } catch (_e) {
       /* let's just leave it as a string */
     }
     data.push(row);
@@ -152,11 +152,7 @@ export async function getMeasurements(
 
     if (lastCriterion === null || lastCriterion !== r.criterion) {
       lastCriterion = r.criterion;
-      critObject = {
-        criterion: r.criterion,
-        unit: r.unit,
-        values: []
-      };
+      critObject = { criterion: r.criterion, unit: r.unit, values: [] };
       currentTrial?.data.push(critObject);
     }
 
