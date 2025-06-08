@@ -110,17 +110,17 @@ export class ChartJSNodeCanvas {
         return reject(new Error('Canvas is null'));
       }
       const canvas = chart.canvas as Canvas;
-      canvas.toDataURL(mimeType, (error: Error | null, png: string) => {
+      try {
+        const png = canvas.toDataURL(mimeType, 1);
         chart.platform.releaseContext(chart.ctx);
         (<any>chart).canvas = null;
         (<any>chart).ctx = null;
 
         chart.destroy();
-        if (error) {
-          return reject(error);
-        }
         return resolve(png);
-      });
+      } catch (error) {
+        return reject(error);
+      }
     });
   }
 
