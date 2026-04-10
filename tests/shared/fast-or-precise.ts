@@ -2,7 +2,7 @@
  * A little script to compare the results of the fast and precise confidence
  * interval calculations.
  */
-import Decimal from 'decimal.js';
+import { Decimal } from 'decimal.js';
 import {
   confidenceSliceIndicesFast,
   confidenceSliceIndicesPrecise
