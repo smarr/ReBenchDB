@@ -46,6 +46,7 @@
     "@types/pg": "8.20.0",
     "@types/pixelmatch": "5.2.6",
     "@types/pngjs": "6.0.5",
+    "@typescript/native-preview": "7.0.0-dev.20260421.2",
     "ajv": "8.18.0",
     "eslint": "10.2.1",
     "eslint-config-prettier": "10.1.8",
@@ -60,7 +61,6 @@
     "source-map-support": "0.5.21",
     "terser": "5.46.1",
     "ts-jest": "29.4.9",
-    "typescript": "6.0.3",
     "typescript-eslint": "8.59.0",
     "typescript-json-schema": "0.67.1"
   },
@@ -109,7 +109,7 @@
     "precompile": "npm run prep-folders && npm run compile-uplot",
     "prep-folders": "mkdir -p tmp/interm tmp/knit resources/reports resources/exp-data",
     "compile-uplot": "terser --module --ecma 2018 --compress --mangle -o ./resources/uPlot.esm.min.js -- node_modules/uplot/dist/uPlot.esm.js",
-    "compile": "tsc",
+    "compile": "tsgo",
     "postcompile": "npm run prep-static && npm run download-font",
     "prep-static": "cp dist/src/frontend/*.js dist/src/shared/*.js ./resources/",
     "download-font": "if ! [ -f dist/roboto-hinted/Roboto-Black.ttf ]; then node dist/src/download.js https://github.com/googlefonts/roboto/releases/download/v2.136/roboto-hinted.zip tmp/roboto-hinted.zip && unzip -o -d dist tmp/roboto-hinted.zip; fi",
@@ -119,7 +119,7 @@
     "verify": "npm run lint",
     "lint": "eslint . --ext .ts,.tsx",
     "update": "git pull && npm install . && pm2 restart 0",
-    "watch": "tsc -w",
+    "watch": "tsgo -w",
     "pretest": "(cd tests/data; bzip2 -d -f -k large-payload.json.bz2; mkdir -p actual-results/charts; mkdir -p actual-results/stats-data-prep; mkdir -p actual-results/compare-view)",
     "test": "node --no-warnings --experimental-vm-modules ./node_modules/jest/bin/jest.js",
     "update-expected-results": "UPDATE_EXPECTED_DATA=true npm test"
