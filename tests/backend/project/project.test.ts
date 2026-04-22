@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 import { initJestMatchers } from '../../helpers.js';
 import { Project } from '../../../src/backend/db/types.js';
 import { prepareTemplate } from '../../../src/backend/templates.js';
-import { robustPath } from '../../../src/backend/util';
+import { robustPath } from '../../../src/backend/util.js';
 
 initJestMatchers();
 

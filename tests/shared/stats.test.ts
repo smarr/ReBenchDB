@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import Decimal from 'decimal.js';
+import { Decimal } from 'decimal.js';
 import {
   BasicSummaryStatistics,
   basicSum,
@@ -23,7 +23,7 @@ import {
   ComparisonStatsWithUnit,
   isSorted,
   calculateChangeStatisticsForFirstAsBaseline
-} from '../../src/shared/stats';
+} from '../../src/shared/stats.js';
 
 describe('basicSum()', () => {
   it('should produce the expected value', () => {

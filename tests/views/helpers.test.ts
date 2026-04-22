@@ -4,7 +4,7 @@ import {
   PerIterationOutput,
   sortTotalToFront,
   withoutStart
-} from '../../src/shared/helpers';
+} from '../../src/shared/helpers.js';
 
 describe('Helper functions for the views', () => {
   describe('commonStringStart()', () => {
