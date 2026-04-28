@@ -44,7 +44,9 @@ export async function initPerfTracker(db: Database): Promise<void> {
 
   const benchmarkNames = Object.keys(descriptions);
   const initializationData = constructInitialization(benchmarkNames);
-  const { metadata, runs } = await db.recordMetaDataAndRuns(initializationData);
+  const { metadata, runs } = await db.withSystemContext(() =>
+    db.recordMetaDataAndRuns(initializationData)
+  );
 
   const criterion = [...metadata.criteria.values()][0];
 
@@ -141,11 +143,15 @@ export async function _completeRequest(
 
   const details = trialDetails[request];
 
-  return db.recordAdditionalMeasurementValue(
-    details.run,
-    details.trial,
-    details.criterionId,
-    time
+  // Fire-and-forget from the caller's perspective, so it must not depend on
+  // the request's own (possibly already-closed) RLS transaction/connection.
+  return db.withSystemContext(() =>
+    db.recordAdditionalMeasurementValue(
+      details.run,
+      details.trial,
+      details.criterionId,
+      time
+    )
   );
 }
 

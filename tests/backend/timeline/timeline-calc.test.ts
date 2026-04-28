@@ -82,7 +82,8 @@ describe('TimelineWorker', () => {
 
 describe('BatchingTimelineUpdater', () => {
   const recordTimeline = jest.fn();
-  const db = <Database>(<any>{ recordTimeline });
+  const withSystemContext = jest.fn((fn: () => Promise<any>) => fn());
+  const db = <Database>(<any>{ recordTimeline, withSystemContext });
 
   beforeEach(() => {
     recordTimeline.mockClear();

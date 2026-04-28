@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script src="/static/theme.js" type="module"></script>
+  <script src="/static/login.js" type="module"></script>
+  <title>ReBench – Sign In</title>
+  {%- include('header.html', { rebenchVersion: it.rebenchVersion }) %}
+</head>
+<body>
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5">
+      <h2 class="text-center mb-4">ReBench</h2>
+
+      <ul class="nav nav-tabs" id="authTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="login-tab" data-bs-toggle="tab"
+            data-bs-target="#login-pane" type="button" role="tab">Sign In</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="register-tab" data-bs-toggle="tab"
+            data-bs-target="#register-pane" type="button" role="tab">Register</button>
+        </li>
+      </ul>
+
+      <div class="tab-content border border-top-0 rounded-bottom p-4 bg-body">
+        <!-- Login tab -->
+        <div class="tab-pane fade show active" id="login-pane" role="tabpanel">
+          <div id="login-error" class="alert alert-danger d-none" role="alert"></div>
+          <form id="login-form" novalidate>
+            <div class="mb-3">
+              <label for="login-username" class="form-label">Username</label>
+              <input type="text" class="form-control" id="login-username"
+                required autocomplete="username">
+            </div>
+            <div class="mb-3">
+              <label for="login-password" class="form-label">Password</label>
+              <input type="password" class="form-control" id="login-password"
+                required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Sign In</button>
+          </form>
+        </div>
+
+        <!-- Register tab -->
+        <div class="tab-pane fade" id="register-pane" role="tabpanel">
+          <div id="register-error" class="alert alert-danger d-none" role="alert"></div>
+          <div id="register-success" class="alert alert-success d-none" role="alert"></div>
+          <form id="register-form" novalidate>
+            <div class="mb-3">
+              <label for="reg-username" class="form-label">Username</label>
+              <input type="text" class="form-control" id="reg-username"
+                required autocomplete="username">
+            </div>
+            <div class="mb-3">
+              <label for="reg-email" class="form-label">Email</label>
+              <input type="email" class="form-control" id="reg-email"
+                required autocomplete="email">
+            </div>
+            <div class="mb-3">
+              <label for="reg-password" class="form-label">Password</label>
+              <input type="password" class="form-control" id="reg-password"
+                required autocomplete="new-password" minlength="8">
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Register</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -159,6 +159,25 @@ export abstract class Database {
     queryConfig: QueryConfig<any[]>
   ): Promise<pg.QueryResult<R>>;
 
+  /**
+   * Run `fn` inside a transaction with RLS enforced for the given user.
+   * Temporarily sets ROLE to `rdb_app` (non-superuser) and
+   * `app.currentUserId` so PostgreSQL RLS policies fire.
+   * Pass `userId = null` to run without a user context (RLS bypass via NULL
+   * check in policies — use only for internal/background operations).
+   */
+  public abstract withUserContext<T>(
+    userId: number | null,
+    fn: () => Promise<T>
+  ): Promise<T>;
+
+  /**
+   * Run `fn` with the pool's superuser privileges, deliberately bypassing
+   * RLS. Reserved for the few legitimate cases that must run before/outside
+   * any per-user context (auth bootstrap, M2M ingestion, project creation).
+   */
+  public abstract withSystemContext<T>(fn: () => Promise<T>): Promise<T>;
+
   public clearCache(): void {
     this.runs.clear();
     this.sources.clear();
@@ -180,10 +199,12 @@ export abstract class Database {
   }
 
   public async initializeDatabase(): Promise<void> {
-    if (await this.needsTables()) {
-      const schema = loadScheme();
-      await this.query({ text: schema });
-    }
+    await this.withSystemContext(async () => {
+      if (await this.needsTables()) {
+        const schema = loadScheme();
+        await this.query({ text: schema });
+      }
+    });
   }
 
   public async close(): Promise<void> {
@@ -1102,7 +1123,9 @@ export abstract class Database {
       this.timelineUpdater &&
       !suppressTimelineGeneration
     ) {
-      this.timelineUpdater.submitUpdateJobs();
+      // Detached background job that outlives this call's connection, so
+      // it needs its own independent context.
+      this.withSystemContext(() => this.timelineUpdater!.submitUpdateJobs());
     }
 
     return [recordedMeasurements, recordedProfiles];

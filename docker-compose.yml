@@ -14,6 +14,7 @@ services:
       RDB_DB: rebenchdb
       RDB_PORT: 5432
       REFRESH_SECRET: refresh
+      JWT_SECRET: dev-secret-change-in-production
       DEV: true
     depends_on:
       - postgres
