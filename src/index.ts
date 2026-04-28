@@ -49,6 +49,8 @@ import {
   acceptResultData,
   reportResultApiVersion
 } from './backend/rebench/results.js';
+import { requireAuth } from './backend/auth/auth-middleware.js';
+import { login, register } from './backend/auth/auth-routes.js';
 import { setTimeout } from 'node:timers/promises';
 import { reportConnectionRefused } from './shared/errors.js';
 
@@ -64,7 +66,7 @@ export const db = new DatabaseWithPool(
   cacheInvalidationDelay
 );
 
-router.get('/', async (ctx) => {
+router.get('/', requireAuth, async (ctx) => {
   return renderMainPage(ctx, db);
 });
 
@@ -86,13 +88,22 @@ Disallow: /rebenchdb*
   ctx.type = 'text';
 });
 
-router.get('/:projectSlug', async (ctx) => renderProjectPage(ctx, db));
-router.get('/:projectSlug/source/:sourceId', async (ctx) =>
+router.post('/auth/register', koaBody(), async (ctx) => register(ctx, db));
+router.post('/auth/login', koaBody(), async (ctx) => login(ctx, db));
+
+router.get('/:projectSlug', requireAuth, async (ctx) =>
+  renderProjectPage(ctx, db)
+);
+router.get('/:projectSlug/source/:sourceId', requireAuth, async (ctx) =>
   getSourceAsJson(ctx, db)
 );
-router.get('/:projectSlug/timeline', async (ctx) => renderTimeline(ctx, db));
-router.get('/:projectSlug/data', async (ctx) => renderProjectDataPage(ctx, db));
-router.get('/:projectSlug/data/:expIdAndExtension', async (ctx) => {
+router.get('/:projectSlug/timeline', requireAuth, async (ctx) =>
+  renderTimeline(ctx, db)
+);
+router.get('/:projectSlug/data', requireAuth, async (ctx) =>
+  renderProjectDataPage(ctx, db)
+);
+router.get('/:projectSlug/data/:expIdAndExtension', requireAuth, async (ctx) => {
   if (
     ctx.header['X-Purpose'] === 'preview' ||
     ctx.header['Purpose'] === 'prefetch' ||
@@ -104,42 +115,50 @@ router.get('/:projectSlug/data/:expIdAndExtension', async (ctx) => {
   }
   return renderDataExport(ctx, db);
 });
-router.get('/:projectSlug/compare/:baseline..:change', async (ctx) =>
+router.get('/:projectSlug/compare/:baseline..:change', requireAuth, async (ctx) =>
   renderComparePage(ctx, db)
 );
 
 // todo: rename this to say that this endpoint gets the last 100 measurements
 //       for the project
-router.get('/rebenchdb/dash/:projectId/results', async (ctx) =>
+router.get('/rebenchdb/dash/:projectId/results', requireAuth, async (ctx) =>
   getLast100MeasurementsAsJson(ctx, db)
 );
-router.get('/rebenchdb/dash/:projectId/timeline/:runId', async (ctx) =>
+router.get('/rebenchdb/dash/:projectId/timeline/:runId', requireAuth, async (ctx) =>
   getTimelineAsJson(ctx, db)
 );
 router.get(
   '/rebenchdb/dash/:projectSlug/profiles/:runId/:commitId',
+  requireAuth,
   async (ctx) => getProfileAsJson(ctx, db)
 );
 router.get(
   '/rebenchdb/dash/:projectSlug/measurements/:runId/:baseId/:changeId',
+  requireAuth,
   async (ctx) => getMeasurementsAsJson(ctx, db)
 );
-router.get('/rebenchdb/stats', async (ctx) => getSiteStatsAsJson(ctx, db));
-router.get('/rebenchdb/dash/:projectId/changes', async (ctx) =>
+router.get('/rebenchdb/stats', requireAuth, async (ctx) =>
+  getSiteStatsAsJson(ctx, db)
+);
+router.get('/rebenchdb/dash/:projectId/changes', requireAuth, async (ctx) =>
   getChangesAsJson(ctx, db)
 );
-router.get('/rebenchdb/dash/:projectId/data-overview', async (ctx) =>
+router.get('/rebenchdb/dash/:projectId/data-overview', requireAuth, async (ctx) =>
   getAvailableDataAsJson(ctx, db)
 );
-router.post('/rebenchdb/dash/:projectName/timelines', koaBody(), async (ctx) =>
-  getTimelineDataAsJson(ctx, db)
+router.post(
+  '/rebenchdb/dash/:projectName/timelines',
+  requireAuth,
+  koaBody(),
+  async (ctx) => getTimelineDataAsJson(ctx, db)
 );
 
-router.get('/admin/perform-timeline-update', async (ctx) =>
+router.get('/admin/perform-timeline-update', requireAuth, async (ctx) =>
   submitTimelineUpdateJobs(ctx, db)
 );
 router.post(
   '/admin/refresh/:project/:baseline/:change',
+  requireAuth,
   koaBody({ urlencoded: true }),
   deleteCachedReport
 );
