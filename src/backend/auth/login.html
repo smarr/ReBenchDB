@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script src="/static/theme.js" type="module"></script>
+  <title>ReBench – Sign In</title>
+  {%- include('header.html', { rebenchVersion: it.rebenchVersion }) %}
+</head>
+<body>
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5">
+      <h2 class="text-center mb-4">ReBench</h2>
+
+      <ul class="nav nav-tabs" id="authTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="login-tab" data-bs-toggle="tab"
+            data-bs-target="#login-pane" type="button" role="tab">Sign In</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="register-tab" data-bs-toggle="tab"
+            data-bs-target="#register-pane" type="button" role="tab">Register</button>
+        </li>
+      </ul>
+
+      <div class="tab-content border border-top-0 rounded-bottom p-4 bg-body">
+        <!-- Login tab -->
+        <div class="tab-pane fade show active" id="login-pane" role="tabpanel">
+          <div id="login-error" class="alert alert-danger d-none" role="alert"></div>
+          <form id="login-form" novalidate>
+            <div class="mb-3">
+              <label for="login-username" class="form-label">Username</label>
+              <input type="text" class="form-control" id="login-username"
+                required autocomplete="username">
+            </div>
+            <div class="mb-3">
+              <label for="login-password" class="form-label">Password</label>
+              <input type="password" class="form-control" id="login-password"
+                required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Sign In</button>
+          </form>
+        </div>
+
+        <!-- Register tab -->
+        <div class="tab-pane fade" id="register-pane" role="tabpanel">
+          <div id="register-error" class="alert alert-danger d-none" role="alert"></div>
+          <div id="register-success" class="alert alert-success d-none" role="alert"></div>
+          <form id="register-form" novalidate>
+            <div class="mb-3">
+              <label for="reg-username" class="form-label">Username</label>
+              <input type="text" class="form-control" id="reg-username"
+                required autocomplete="username">
+            </div>
+            <div class="mb-3">
+              <label for="reg-email" class="form-label">Email</label>
+              <input type="email" class="form-control" id="reg-email"
+                required autocomplete="email">
+            </div>
+            <div class="mb-3">
+              <label for="reg-password" class="form-label">Password</label>
+              <input type="password" class="form-control" id="reg-password"
+                required autocomplete="new-password" minlength="8">
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Register</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function setSessionCookie(token) {
+    document.cookie = 'rdb_session=' + encodeURIComponent(token) +
+      '; path=/; samesite=strict; max-age=86400';
+  }
+
+  function showError(id, message) {
+    const el = document.getElementById(id);
+    el.textContent = message;
+    el.classList.remove('d-none');
+  }
+
+  function hideError(id) {
+    document.getElementById(id).classList.add('d-none');
+  }
+
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError('login-error');
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+    try {
+      const res = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      let data;
+      try { data = await res.json(); } catch { data = {}; }
+      if (!res.ok) {
+        showError('login-error', data.error || `Server error (${res.status})`);
+        return;
+      }
+      setSessionCookie(data.token);
+      const params = new URLSearchParams(window.location.search);
+      window.location.href = params.get('next') || '/';
+    } catch {
+      showError('login-error', 'Network error. Please try again.');
+    }
+  });
+
+  document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError('register-error');
+    document.getElementById('register-success').classList.add('d-none');
+    const username = document.getElementById('reg-username').value;
+    const email = document.getElementById('reg-email').value;
+    const password = document.getElementById('reg-password').value;
+    try {
+      const res = await fetch('/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showError('register-error', data.error || 'Registration failed');
+        return;
+      }
+      const successEl = document.getElementById('register-success');
+      successEl.textContent = 'Account created! You can now sign in.';
+      successEl.classList.remove('d-none');
+      document.getElementById('login-tab').click();
+      document.getElementById('login-username').value = username;
+    } catch {
+      showError('register-error', 'Network error. Please try again.');
+    }
+  });
+</script>
+</body>
+</html>
