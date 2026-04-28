@@ -3,6 +3,10 @@ import { ValidateFunction } from 'ajv';
 
 import { BenchmarkData } from '../../shared/api.js';
 import { Database } from '../db/db.js';
+import {
+  getUserByApiToken,
+  getUserRoleForProjectByName
+} from '../admin/admin-db.js';
 import { createValidator } from './api-validator.js';
 import { DEBUG } from '../util.js';
 import { log } from '../logging.js';
@@ -76,6 +80,31 @@ export async function acceptResultData(
     log.info(`/rebenchdb/results: Request with old API version`);
     ctx.body = `Only API version ${rebenchdbApiVersion} is supported.`;
     ctx.status = 400; // Bad Request
+    return;
+  }
+
+  const token = typeof data.token === 'string' ? data.token.trim() : null;
+
+  if (token === null) {
+    ctx.body =
+      // eslint-disable-next-line max-len
+      'Authorization required, dd a token field to the rebenchdb section in conf-file';
+    ctx.status = 401;
+    return;
+  }
+
+  const user = await getUserByApiToken(db, token);
+  if (user === null) {
+    ctx.body = 'Invalid API token.';
+    ctx.status = 401;
+    return;
+  }
+
+  const role = await getUserRoleForProjectByName(db, user.id, data.projectName);
+  if (role !== 'edit' && role !== 'owner') {
+    // eslint-disable-next-line max-len
+    ctx.body = `User does not have write permission on project "${data.projectName}".`;
+    ctx.status = 403;
     return;
   }
 

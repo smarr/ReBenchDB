@@ -85,19 +85,25 @@ export class TestDatabase extends Database {
     }
   }
 
+  public async withUserContext<T>(
+    userId: number | null,
+    fn: () => Promise<T>
+  ): Promise<T> {
+    await this.query({ text: 'SET LOCAL ROLE rdb_app' });
+    if (userId !== null) {
+      await this.query({
+        text: `SET LOCAL app.currentUserId = '${userId}'`
+      });
+    }
+    return fn();
+  }
+
   public async rollback(): Promise<void> {
     this.clearCache();
 
     if (this.usesTransactions) {
       await this.query({ text: 'ROLLBACK TO SAVEPOINT freshDB' });
     }
-  }
-
-  private async release(): Promise<void> {
-    const mainDB = getMainDB();
-    await mainDB.query({
-      text: `DROP DATABASE IF EXISTS ${this.dbConfig.database}`
-    });
   }
 
   public async close(): Promise<void> {
@@ -126,6 +132,13 @@ export class TestDatabase extends Database {
         await this.release();
       }
     }
+  }
+
+  private async release(): Promise<void> {
+    const mainDB = getMainDB();
+    await mainDB.query({
+      text: `DROP DATABASE IF EXISTS ${this.dbConfig.database}`
+    });
   }
 }
 

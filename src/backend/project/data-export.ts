@@ -107,7 +107,9 @@ export async function getAvailableDataAsJson(
     return;
   }
 
-  ctx.body = await getDataOverview(projectId, db);
+  ctx.body = await db.withUserContext(ctx.state.userId, () =>
+    getDataOverview(projectId, db)
+  );
 }
 
 export async function getDataOverview(

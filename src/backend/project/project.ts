@@ -18,7 +18,9 @@ export async function renderProjectPage(
   ctx: ParameterizedContext,
   db: Database
 ): Promise<void> {
-  const project = await db.getProjectBySlug(ctx.params.projectSlug);
+  const project = await db.withUserContext(ctx.state.userId, () =>
+    db.getProjectBySlug(ctx.params.projectSlug)
+  );
   if (project) {
     ctx.body = projectHtml({ ...project, rebenchVersion });
     ctx.type = 'html';
@@ -31,9 +33,8 @@ export async function getSourceAsJson(
   ctx: ParameterizedContext,
   db: Database
 ): Promise<void> {
-  const result = await db.getSourceById(
-    ctx.params.projectSlug,
-    ctx.params.sourceId
+  const result = await db.withUserContext(ctx.state.userId, () =>
+    db.getSourceById(ctx.params.projectSlug, ctx.params.sourceId)
   );
 
   if (result !== null) {
@@ -57,7 +58,9 @@ export async function renderProjectDataPage(
   ctx: ParameterizedContext,
   db: Database
 ): Promise<void> {
-  const project = await db.getProjectBySlug(ctx.params.projectSlug);
+  const project = await db.withUserContext(ctx.state.userId, () =>
+    db.getProjectBySlug(ctx.params.projectSlug)
+  );
   if (project) {
     ctx.body = projectDataTpl({ project, rebenchVersion });
     ctx.type = 'html';
@@ -81,11 +84,8 @@ export async function renderDataExport(
     : 'csv';
   const expId = ctx.params.expIdAndExtension.replace(`.${format}.gz`, '');
 
-  const data = await getExpData(
-    ctx.params.projectSlug,
-    Number(expId),
-    db,
-    format
+  const data = await db.withUserContext(ctx.state.userId, () =>
+    getExpData(ctx.params.projectSlug, Number(expId), db, format)
   );
 
   if (data.preparingData) {
