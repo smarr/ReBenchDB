@@ -85,6 +85,19 @@ export class TestDatabase extends Database {
     }
   }
 
+  public async withUserContext<T>(
+    userId: number | null,
+    fn: () => Promise<T>
+  ): Promise<T> {
+    await this.query({ text: 'SET LOCAL ROLE rdb_app' });
+    if (userId !== null) {
+      await this.query({
+        text: `SET LOCAL app.current_user_id = '${userId}'`
+      });
+    }
+    return fn();
+  }
+
   public async rollback(): Promise<void> {
     this.clearCache();
 
