@@ -282,6 +282,13 @@ describe('createValueBatchForInsertion()', () => {
     ): Promise<QueryResult<R>> {
       return <any>null;
     }
+
+    public async withUserContext<T>(
+      _userId: number | null,
+      fn: () => Promise<T>
+    ): Promise<T> {
+      return fn();
+    }
   }
 
   const run1 = { id: 1 } as Run;
