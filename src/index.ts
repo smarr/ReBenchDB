@@ -50,7 +50,7 @@ import {
   reportResultApiVersion
 } from './backend/rebench/results.js';
 import { requireAuth } from './backend/auth/auth-middleware.js';
-import { login, register } from './backend/auth/auth-routes.js';
+import { login, register, renderLoginPage } from './backend/auth/auth-routes.js';
 import { setTimeout } from 'node:timers/promises';
 import { reportConnectionRefused } from './shared/errors.js';
 
@@ -88,6 +88,11 @@ Disallow: /rebenchdb*
   ctx.type = 'text';
 });
 
+router.get('/auth/login', (ctx) => renderLoginPage(ctx));
+router.get('/auth/logout', (ctx) => {
+  ctx.cookies.set('rdb_session', '', { maxAge: 0, path: '/' });
+  ctx.redirect('/auth/login');
+});
 router.post('/auth/register', koaBody(), async (ctx) => register(ctx, db));
 router.post('/auth/login', koaBody(), async (ctx) => login(ctx, db));
 
