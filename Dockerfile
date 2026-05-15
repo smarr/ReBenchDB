@@ -1,4 +1,4 @@
-FROM node:25-bookworm
+FROM node:26-trixie
 # this allows the setup to ignore all of the ubuntu OS setup
 # thats not needed for this docker image (Time Zone for example)
 ARG DEBIAN_FRONTEND=noninteractive
@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y apt-utils bash sudo
 ENV TZ=UTC
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Node.js, PostgreSQL, headers for R packages
+# Node.js, PostgreSQL
 RUN apt-get update && apt-get install -y \
     build-essential unzip \
     libfontconfig1-dev \
