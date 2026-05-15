@@ -150,8 +150,8 @@ CREATE TABLE Run (
 
 -- One value for one specific criterion.
 CREATE TABLE Measurement (
-  runId smallint,
-  trialId smallint,
+  runId int,
+  trialId int,
   criterion smallint,
   invocation smallint,
 
@@ -164,8 +164,8 @@ CREATE TABLE Measurement (
 );
 
 CREATE TABLE ProfileData (
-  runId smallint,
-  trialId smallint,
+  runId int,
+  trialId int,
   invocation smallint,
   numIterations smallint,
 
@@ -178,8 +178,8 @@ CREATE TABLE ProfileData (
 
 -- Summary Statistics for comparing over time
 CREATE TABLE Timeline (
-  runId smallint,
-  trialId smallint,
+  runId int,
+  trialId int,
   criterion smallint,
 
   numSamples int,
@@ -202,8 +202,8 @@ CREATE TABLE Timeline (
 
 -- Used by ReBenchDB's perf-tracker, for self-performance tracking
 CREATE PROCEDURE recordAdditionalMeasurement(
-  aRunId smallint,
-  aTrialId smallint,
+  aRunId int,
+  aTrialId int,
   aCriterionId smallint,
   aValue float4)
 LANGUAGE plpgsql
