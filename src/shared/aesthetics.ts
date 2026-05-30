@@ -23,6 +23,8 @@ const allTangoShadesPerColor = allTangoColorsAsString
 
 // colors are from the Extended Tango Palette
 // https://emilis.info/other/extended_tango/
+// https://web.archive.org/
+//      web/20250210055446/https://emilis.info/other/extended_tango/
 export const siteAesthetics = {
   changeColor: '#e9b96e',
   baseColor: '#729fcf',
@@ -84,7 +86,29 @@ export const siteAesthetics = {
 
     '#97c4f0',
     '#f57900',
-    '#e0c0e4'
+    '#e0c0e4',
+
+    // column 3
+    '#a40000',
+    '#204a87',
+    '#c4a000',
+
+    '#5c3566',
+    '#4e9a06',
+    '#ce5c00',
+
+    '#8f5902',
+    // column 2
+    '#600000',
+    '#0a3050',
+
+    '#725000',
+    '#371740',
+    '#2a5703',
+
+    '#8c3700',
+    '#555753',
+    '#503000'
   ],
   lighten(color: string): string {
     const colorWithoutHash = color[0] === '#' ? color.slice(1) : color;
@@ -102,7 +126,7 @@ export const siteAesthetics = {
     const colors = new Map<string, string>();
     let i = 0;
     for (const exe of executors) {
-      colors.set(exe, this.exeColors[i]);
+      colors.set(exe, this.exeColors[i % this.exeColors.length]);
       i++;
     }
     return colors;

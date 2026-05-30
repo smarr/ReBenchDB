@@ -19,3 +19,27 @@ describe('lighten()', () => {
     expect(siteAesthetics.lighten('#ffcccc')).toEqual('#ffcccc');
   });
 });
+
+describe('getColorsForExecutors()', () => {
+  it('should assign colors to executors', () => {
+    const executors = new Set(['exe1', 'exe2', 'exe3', 'exe4']);
+    const colors = siteAesthetics.getColorsForExecutors(executors);
+    expect(colors.get('exe1')).toEqual(siteAesthetics.exeColors[0]);
+    expect(colors.get('exe2')).toEqual(siteAesthetics.exeColors[1]);
+    expect(colors.get('exe3')).toEqual(siteAesthetics.exeColors[2]);
+    expect(colors.get('exe4')).toEqual(siteAesthetics.exeColors[3]);
+  });
+
+  it('should get color even if there are more executors than colors', () => {
+    const executors: Set<string> = new Set();
+    for (let i = 0; i < siteAesthetics.exeColors.length + 2; i++) {
+      executors.add(`exe${i}`);
+    }
+    const colors = siteAesthetics.getColorsForExecutors(executors);
+    for (let i = 0; i < siteAesthetics.exeColors.length + 2; i++) {
+      expect(colors.get(`exe${i}`)).toEqual(
+        siteAesthetics.exeColors[i % siteAesthetics.exeColors.length]
+      );
+    }
+  });
+});
