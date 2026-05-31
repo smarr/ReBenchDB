@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script src="/static/theme.js" type="module"></script>
+  <title>ReBench – Admin</title>
+  {%- include('header.html', { rebenchVersion: it.rebenchVersion }) %}
+  <script src="/static/admin.js" type="module"></script>
+</head>
+<body>
+
+<header>
+  <div class="p-4 mb-4 bg-secondary-subtle rounded-2"><div class="container-fluid py-5">
+    <h1 class="display-4">Admin</h1>
+    <h2 class="display-5">Manage projects and user access.</h2>
+    <p class="lead">Signed in as <strong>{%= it.username %}</strong>.</p>
+  </div></div>
+  {%- include('common-menu.html', it) %}
+</header>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-5">
+      <div class="card mb-3">
+        <h5 class="card-header">My Projects</h5>
+        <div class="card-body">
+          <div id="admin-projects-error" class="alert alert-danger d-none" role="alert"></div>
+          <ul id="admin-projects-list" class="list-group mb-3"></ul>
+          <p id="admin-no-projects" class="text-muted d-none">
+            You don't have access to any projects yet. Create one below.
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h5 class="card-header">Create Project</h5>
+        <div class="card-body">
+          <div id="create-project-error" class="alert alert-danger d-none" role="alert"></div>
+          <form id="create-project-form" novalidate>
+            <div class="mb-3">
+              <label for="create-project-name" class="form-label">Name</label>
+              <input type="text" class="form-control" id="create-project-name"
+                required maxlength="100">
+            </div>
+            <div class="mb-3">
+              <label for="create-project-description" class="form-label">Description (optional)</label>
+              <textarea class="form-control" id="create-project-description" rows="2"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-7">
+      <div class="card" id="admin-members-card" style="display: none;">
+        <h5 class="card-header">
+          Members of <span id="admin-members-project-name"></span>
+        </h5>
+        <div class="card-body">
+          <div id="admin-members-error" class="alert alert-danger d-none" role="alert"></div>
+          <div id="admin-members-not-owner" class="alert alert-info d-none" role="alert">
+            You can view this project, but only an owner can manage its members.
+          </div>
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="admin-members-tbody"></tbody>
+          </table>
+
+          <div id="admin-add-member-section">
+            <h6>Add Member</h6>
+            <form id="add-member-form" class="row g-2 align-items-end" novalidate>
+              <div class="col-md-5">
+                <label for="add-member-username" class="form-label">Username</label>
+                <input type="text" class="form-control" id="add-member-username" required>
+              </div>
+              <div class="col-md-4">
+                <label for="add-member-role" class="form-label">Role</label>
+                <select class="form-select" id="add-member-role">
+                  <option value="view">view</option>
+                  <option value="edit">edit</option>
+                  <option value="owner">owner</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">Add</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div id="admin-members-placeholder" class="text-muted p-3">
+        Select a project on the left to manage its members.
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
