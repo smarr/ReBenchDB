@@ -106,13 +106,6 @@ export class TestDatabase extends Database {
     }
   }
 
-  private async release(): Promise<void> {
-    const mainDB = getMainDB();
-    await mainDB.query({
-      text: `DROP DATABASE IF EXISTS ${this.dbConfig.database}`
-    });
-  }
-
   public async close(): Promise<void> {
     await super.close();
 
@@ -139,6 +132,13 @@ export class TestDatabase extends Database {
         await this.release();
       }
     }
+  }
+
+  private async release(): Promise<void> {
+    const mainDB = getMainDB();
+    await mainDB.query({
+      text: `DROP DATABASE IF EXISTS ${this.dbConfig.database}`
+    });
   }
 }
 

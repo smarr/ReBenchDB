@@ -3,7 +3,10 @@ import { ValidateFunction } from 'ajv';
 
 import { BenchmarkData } from '../../shared/api.js';
 import { Database } from '../db/db.js';
-import { getUserByApiToken, getUserRoleForProjectByName } from '../admin/admin-db.js';
+import {
+  getUserByApiToken,
+  getUserRoleForProjectByName
+} from '../admin/admin-db.js';
 import { createValidator } from './api-validator.js';
 import { DEBUG } from '../util.js';
 import { log } from '../logging.js';
@@ -83,7 +86,9 @@ export async function acceptResultData(
   const token = typeof data.token === 'string' ? data.token.trim() : null;
 
   if (token === null) {
-    ctx.body = 'Authorization required. Add a token field to the rebenchdb section in rebench.conf.';
+    ctx.body =
+      // eslint-disable-next-line max-len
+      'Authorization required, dd a token field to the rebenchdb section in conf-file';
     ctx.status = 401;
     return;
   }
@@ -97,6 +102,7 @@ export async function acceptResultData(
 
   const role = await getUserRoleForProjectByName(db, user.id, data.projectName);
   if (role !== 'edit' && role !== 'owner') {
+    // eslint-disable-next-line max-len
     ctx.body = `User does not have write permission on project "${data.projectName}".`;
     ctx.status = 403;
     return;

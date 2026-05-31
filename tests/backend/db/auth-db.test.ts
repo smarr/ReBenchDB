@@ -1,22 +1,22 @@
 import {
-  describe,
-  expect,
-  beforeAll,
   afterAll,
   afterEach,
+  beforeAll,
+  describe,
+  expect,
   it
 } from '@jest/globals';
 
 import {
-  TestDatabase,
+  closeMainDb,
   createAndInitializeDB,
-  closeMainDb
+  TestDatabase
 } from './db-testing.js';
 
 import {
   createUser,
-  getUserByUsername,
-  getUserByEmail
+  getUserByEmail,
+  getUserByUsername
 } from '../../../src/backend/auth/auth-db.js';
 
 describe('appuser table operations', () => {
@@ -108,7 +108,10 @@ describe('ProjectMembership table operations', () => {
     return db.rollback();
   });
 
-  async function createTestProject(db: TestDatabase, name: string): Promise<number> {
+  async function createTestProject(
+    db: TestDatabase,
+    name: string
+  ): Promise<number> {
     const result = await db.query<{ id: number }>({
       text: `INSERT INTO Project (name, slug) VALUES ($1, $2) RETURNING id`,
       values: [name, name.toLowerCase().replace(/\s+/g, '-')]
@@ -117,7 +120,12 @@ describe('ProjectMembership table operations', () => {
   }
 
   it('should create a project membership with view role', async () => {
-    const user = await createUser(db, 'frank', 'frank@example.com', 'hash_frank');
+    const user = await createUser(
+      db,
+      'frank',
+      'frank@example.com',
+      'hash_frank'
+    );
     const projectId = await createTestProject(db, 'Test Project');
 
     await db.query({
@@ -137,8 +145,14 @@ describe('ProjectMembership table operations', () => {
     expect(result.rows[0].projectid).toEqual(projectId);
   });
 
+  // eslint-disable-next-line max-len
   it('should enforce the (userId, projectId) primary key constraint', async () => {
-    const user = await createUser(db, 'grace', 'grace@example.com', 'hash_grace');
+    const user = await createUser(
+      db,
+      'grace',
+      'grace@example.com',
+      'hash_grace'
+    );
     const projectId = await createTestProject(db, 'Another Project');
 
     await db.query({
@@ -156,8 +170,14 @@ describe('ProjectMembership table operations', () => {
     ).rejects.toThrow();
   });
 
+  // eslint-disable-next-line max-len
   it('should allow a user to have memberships in multiple projects', async () => {
-    const user = await createUser(db, 'henry', 'henry@example.com', 'hash_henry');
+    const user = await createUser(
+      db,
+      'henry',
+      'henry@example.com',
+      'hash_henry'
+    );
     const projectId1 = await createTestProject(db, 'Project Alpha');
     const projectId2 = await createTestProject(db, 'Project Beta');
 

@@ -43,6 +43,7 @@ async function createExperiment(
   name: string
 ): Promise<number> {
   const r = await db.query<{ id: number }>({
+    // eslint-disable-next-line max-len
     text: `INSERT INTO Experiment (name, projectId) VALUES ($1, $2) RETURNING id`,
     values: [name, projectId]
   });
@@ -81,8 +82,8 @@ async function createTrial(
 async function createRun(db: TestDatabase): Promise<number> {
   const r = await db.query<{ id: number }>({
     text: `INSERT INTO Run
-             (benchmark, suite, executor, cmdline, maxInvocationTime, minIterationTime)
-           VALUES ('bench', 'suite', 'exec', 'cmd', 1000, 10) RETURNING id`
+      (benchmark, suite, executor, cmdline, maxInvocationTime, minIterationTime)
+      VALUES ('bench', 'suite', 'exec', 'cmd', 1000, 10) RETURNING id`
   });
   return r.rows[0].id;
 }
@@ -104,6 +105,7 @@ async function insertMeasurement(
   invocation = 1
 ): Promise<void> {
   await db.query({
+    // eslint-disable-next-line max-len
     text: `INSERT INTO Measurement (runId, trialId, criterion, invocation, values)
            VALUES ($1, $2, $3, $4, '{1.0}')`,
     values: [runId, trialId, criterionId, invocation]
@@ -131,6 +133,7 @@ async function insertProfileData(
   trialId: number
 ): Promise<void> {
   await db.query({
+    // eslint-disable-next-line max-len
     text: `INSERT INTO ProfileData (runId, trialId, invocation, numIterations, value)
            VALUES ($1, $2, 1, 10, 'profile')`,
     values: [runId, trialId]
@@ -275,6 +278,7 @@ describe('RLS policy: Source table', () => {
   afterAll(async () => db.close());
   afterEach(async () => db.rollback());
 
+  // eslint-disable-next-line max-len
   it('should hide a source when no accessible trial references it', async () => {
     const user = await createUser(db, 'dave', 'dave@test.com', 'hash');
     const projectId = await createProject(db, 'Private Project');
@@ -290,6 +294,7 @@ describe('RLS policy: Source table', () => {
     expect(result.rows.map((r) => r.id)).not.toContain(sourceId);
   });
 
+  // eslint-disable-next-line max-len
   it('should show a source to a user who can access a referencing trial', async () => {
     const user = await createUser(db, 'dave', 'dave@test.com', 'hash');
     const projectId = await createProject(db, 'My Project');
@@ -355,6 +360,7 @@ describe('RLS policy: Measurement and Run tables', () => {
     expect(result.rows.map((r) => r.trialid)).toContain(trialId);
   });
 
+  // eslint-disable-next-line max-len
   it('should hide a run from a non-member with no accessible measurements', async () => {
     const user = await createUser(db, 'eve', 'eve@test.com', 'hash');
     const projectId = await createProject(db, 'Private Project');
@@ -367,6 +373,7 @@ describe('RLS policy: Measurement and Run tables', () => {
     expect(result.rows.map((r) => r.id)).not.toContain(runId);
   });
 
+  // eslint-disable-next-line max-len
   it('should show a run to a member whose measurements reference it', async () => {
     const user = await createUser(db, 'eve', 'eve@test.com', 'hash');
     const projectId = await createProject(db, 'My Project');
@@ -491,6 +498,7 @@ describe('RLS policy: cross-project isolation', () => {
   afterAll(async () => db.close());
   afterEach(async () => db.rollback());
 
+  // eslint-disable-next-line max-len
   it('should only expose data from projects the user is a member of', async () => {
     const user = await createUser(db, 'henry', 'henry@test.com', 'hash');
 

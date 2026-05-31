@@ -1,9 +1,9 @@
 import {
-  describe,
-  expect,
-  beforeAll,
   afterAll,
   afterEach,
+  beforeAll,
+  describe,
+  expect,
   it,
   jest
 } from '@jest/globals';
@@ -16,10 +16,10 @@ import type {
 } from '../../../src/shared/api.js';
 import { loadScheme } from '../../../src/backend/db/db.js';
 import {
-  TestDatabase,
+  closeMainDb,
   createAndInitializeDB,
   createDB,
-  closeMainDb
+  TestDatabase
 } from './db-testing.js';
 import { robustPath } from '../../../src/backend/util.js';
 import { loadLargePayload, loadSmallPayload } from '../../payload.js';

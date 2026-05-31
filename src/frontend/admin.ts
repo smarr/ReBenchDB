@@ -176,21 +176,21 @@ function renderMembersTable(projectId: number, members: Member[]): void {
     tbody.appendChild(tr);
   }
 
-  tbody.querySelectorAll<HTMLSelectElement>('.member-role-select').forEach(
-    (select) => {
+  tbody
+    .querySelectorAll<HTMLSelectElement>('.member-role-select')
+    .forEach((select) => {
       const userId = Number(select.dataset.userId);
       const originalRole = select.value as ProjectRole;
       select.addEventListener('change', () =>
         changeMemberRole(projectId, userId, select, originalRole)
       );
-    }
-  );
-  tbody.querySelectorAll<HTMLButtonElement>('.member-remove-btn').forEach(
-    (btn) => {
+    });
+  tbody
+    .querySelectorAll<HTMLButtonElement>('.member-remove-btn')
+    .forEach((btn) => {
       const userId = Number(btn.dataset.userId);
       btn.addEventListener('click', () => removeMember(projectId, userId));
-    }
-  );
+    });
 }
 
 async function changeMemberRole(
@@ -229,10 +229,7 @@ async function changeMemberRole(
   }
 }
 
-async function removeMember(
-  projectId: number,
-  userId: number
-): Promise<void> {
+async function removeMember(projectId: number, userId: number): Promise<void> {
   hideAlert('admin-members-error');
   if (!confirm('Remove this member from the project?')) return;
   try {
@@ -262,9 +259,7 @@ function wireCreateProject(): void {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideAlert('create-project-error');
-    const name = (
-      $id('create-project-name') as HTMLInputElement
-    ).value.trim();
+    const name = ($id('create-project-name') as HTMLInputElement).value.trim();
     const description = (
       $id('create-project-description') as HTMLTextAreaElement
     ).value.trim();
@@ -348,6 +343,7 @@ async function fetchApiTokenStatus(): Promise<void> {
       return;
     }
     if (data.hasToken) {
+      // eslint-disable-next-line max-len
       statusEl.innerHTML = `Token set &mdash; ends in <code>…${escapeHtml(data.suffix)}</code>`;
     } else {
       statusEl.textContent = 'No token set.';
@@ -362,6 +358,7 @@ function wireApiToken(): void {
   btn.addEventListener('click', async () => {
     if (
       !confirm(
+        // eslint-disable-next-line max-len
         'Generate a new API token? Any existing token will stop working immediately.'
       )
     )

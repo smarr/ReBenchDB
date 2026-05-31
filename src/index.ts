@@ -4,9 +4,9 @@ import Router from '@koa/router';
 
 import { initPerfTracker } from './backend/perf-tracker.js';
 import {
-  DEV,
   cacheInvalidationDelay,
   dbConfig,
+  DEV,
   rebenchVersion,
   siteConfig,
   statsConfig
@@ -61,7 +61,11 @@ import {
   reportResultApiVersion
 } from './backend/rebench/results.js';
 import { requireAuth } from './backend/auth/auth-middleware.js';
-import { login, register } from './backend/auth/auth-routes.js';
+import {
+  login,
+  register,
+  renderLoginPage
+} from './backend/auth/auth-routes.js';
 import { setTimeout } from 'node:timers/promises';
 import { reportConnectionRefused } from './shared/errors.js';
 
@@ -116,20 +120,26 @@ router.get('/:projectSlug/timeline', requireAuth, async (ctx) =>
 router.get('/:projectSlug/data', requireAuth, async (ctx) =>
   renderProjectDataPage(ctx, db)
 );
-router.get('/:projectSlug/data/:expIdAndExtension', requireAuth, async (ctx) => {
-  if (
-    ctx.header['X-Purpose'] === 'preview' ||
-    ctx.header['Purpose'] === 'prefetch' ||
-    ctx.header['X-Moz'] === 'prefetch'
-  ) {
-    ctx.set('Cache-Control', 'must-revalidate');
-    ctx.status = 425; // HTTP Code for 'Too Early'
-    return;
+router.get(
+  '/:projectSlug/data/:expIdAndExtension',
+  requireAuth,
+  async (ctx) => {
+    if (
+      ctx.header['X-Purpose'] === 'preview' ||
+      ctx.header['Purpose'] === 'prefetch' ||
+      ctx.header['X-Moz'] === 'prefetch'
+    ) {
+      ctx.set('Cache-Control', 'must-revalidate');
+      ctx.status = 425; // HTTP Code for 'Too Early'
+      return;
+    }
+    return renderDataExport(ctx, db);
   }
-  return renderDataExport(ctx, db);
-});
-router.get('/:projectSlug/compare/:baseline..:change', requireAuth, async (ctx) =>
-  renderComparePage(ctx, db)
+);
+router.get(
+  '/:projectSlug/compare/:baseline..:change',
+  requireAuth,
+  async (ctx) => renderComparePage(ctx, db)
 );
 
 // todo: rename this to say that this endpoint gets the last 100 measurements
@@ -137,8 +147,10 @@ router.get('/:projectSlug/compare/:baseline..:change', requireAuth, async (ctx) 
 router.get('/rebenchdb/dash/:projectId/results', requireAuth, async (ctx) =>
   getLast100MeasurementsAsJson(ctx, db)
 );
-router.get('/rebenchdb/dash/:projectId/timeline/:runId', requireAuth, async (ctx) =>
-  getTimelineAsJson(ctx, db)
+router.get(
+  '/rebenchdb/dash/:projectId/timeline/:runId',
+  requireAuth,
+  async (ctx) => getTimelineAsJson(ctx, db)
 );
 router.get(
   '/rebenchdb/dash/:projectSlug/profiles/:runId/:commitId',
@@ -156,8 +168,10 @@ router.get('/rebenchdb/stats', requireAuth, async (ctx) =>
 router.get('/rebenchdb/dash/:projectId/changes', requireAuth, async (ctx) =>
   getChangesAsJson(ctx, db)
 );
-router.get('/rebenchdb/dash/:projectId/data-overview', requireAuth, async (ctx) =>
-  getAvailableDataAsJson(ctx, db)
+router.get(
+  '/rebenchdb/dash/:projectId/data-overview',
+  requireAuth,
+  async (ctx) => getAvailableDataAsJson(ctx, db)
 );
 router.post(
   '/rebenchdb/dash/:projectName/timelines',
@@ -172,10 +186,8 @@ router.get('/admin/api/my-projects', requireAuth, async (ctx) =>
 router.post('/admin/api/projects', requireAuth, koaBody(), async (ctx) =>
   createProject(ctx, db)
 );
-router.get(
-  '/admin/api/projects/:projectId/members',
-  requireAuth,
-  async (ctx) => getMembers(ctx, db)
+router.get('/admin/api/projects/:projectId/members', requireAuth, async (ctx) =>
+  getMembers(ctx, db)
 );
 router.post(
   '/admin/api/projects/:projectId/members',

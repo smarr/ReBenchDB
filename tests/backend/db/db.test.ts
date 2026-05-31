@@ -1,18 +1,18 @@
 import {
-  describe,
-  expect,
+  afterAll,
   beforeAll,
   beforeEach,
-  afterAll,
+  describe,
+  expect,
   it,
   jest
 } from '@jest/globals';
 import { PoolConfig, QueryConfig, QueryResult, QueryResultRow } from 'pg';
 
 import {
-  TestDatabase,
+  closeMainDb,
   createAndInitializeDB,
-  closeMainDb
+  TestDatabase
 } from './db-testing.js';
 import {
   BenchmarkData,
@@ -21,11 +21,11 @@ import {
 } from '../../../src/shared/api.js';
 
 import {
-  Experiment,
+  Criterion,
   Environment,
+  Experiment,
   Run,
-  Trial,
-  Criterion
+  Trial
 } from '../../../src/backend/db/types.js';
 import { Database } from '../../../src/backend/db/db.js';
 import { loadSmallPayload } from '../../payload.js';
