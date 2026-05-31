@@ -39,10 +39,10 @@ describe('appuser table operations', () => {
 
     expect(user.username).toEqual('alice');
     expect(user.email).toEqual('alice@example.com');
-    expect(user.password_hash).toEqual('hash_abc');
+    expect(user.passwordHash).toEqual('hash_abc');
     expect(user.id).toBeGreaterThan(0);
-    expect(user.is_active).toEqual(true);
-    expect(user.created_at).toBeInstanceOf(Date);
+    expect(user.isActive).toEqual(true);
+    expect(user.createdAt).toBeInstanceOf(Date);
   });
 
   it('should return null when looking up a non-existent username', async () => {
@@ -63,7 +63,7 @@ describe('appuser table operations', () => {
     expect(user).not.toBeNull();
     expect(user!.username).toEqual('bob');
     expect(user!.email).toEqual('bob@example.com');
-    expect(user!.password_hash).toEqual('hash_bob');
+    expect(user!.passwordHash).toEqual('hash_bob');
   });
 
   it('should retrieve a user by email after creation', async () => {

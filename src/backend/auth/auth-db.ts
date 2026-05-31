@@ -4,9 +4,9 @@ export interface AppUser {
   id: number;
   username: string;
   email: string;
-  password_hash: string;
-  created_at: Date;
-  is_active: boolean;
+  passwordHash: string;
+  createdAt: Date;
+  isActive: boolean;
 }
 
 export async function getUserByUsername(
@@ -15,7 +15,7 @@ export async function getUserByUsername(
 ): Promise<AppUser | null> {
   const result = await db.query<AppUser>({
     name: 'getUserByUsername',
-    text: 'SELECT * FROM appuser WHERE username = $1',
+    text: 'SELECT * FROM AppUser WHERE username = $1',
     values: [username]
   });
   return result.rows[0] ?? null;
@@ -27,7 +27,7 @@ export async function getUserByEmail(
 ): Promise<AppUser | null> {
   const result = await db.query<AppUser>({
     name: 'getUserByEmail',
-    text: 'SELECT * FROM appuser WHERE email = $1',
+    text: 'SELECT * FROM AppUser WHERE email = $1',
     values: [email]
   });
   return result.rows[0] ?? null;
@@ -41,7 +41,7 @@ export async function createUser(
 ): Promise<AppUser> {
   const result = await db.query<AppUser>({
     name: 'createUser',
-    text: `INSERT INTO appuser (username, email, password_hash)
+    text: `INSERT INTO AppUser (username, email, "passwordHash")
            VALUES ($1, $2, $3)
            RETURNING *`,
     values: [username, email, passwordHash]

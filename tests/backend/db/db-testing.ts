@@ -92,7 +92,7 @@ export class TestDatabase extends Database {
     await this.query({ text: 'SET LOCAL ROLE rdb_app' });
     if (userId !== null) {
       await this.query({
-        text: `SET LOCAL app.current_user_id = '${userId}'`
+        text: `SET LOCAL app.currentUserId = '${userId}'`
       });
     }
     return fn();

@@ -16,28 +16,28 @@ BEGIN;
 -- ============================================================
 -- 1. ENUM type for membership roles
 -- ============================================================
-CREATE TYPE project_role AS ENUM ('view', 'edit', 'owner');
+CREATE TYPE projectRole AS ENUM ('view', 'edit', 'owner');
 
 -- ============================================================
 -- 2. Application user table (local auth, no SSO)
 -- ============================================================
-CREATE TABLE appuser (
+CREATE TABLE AppUser (
   id            SERIAL PRIMARY KEY,
   username      VARCHAR(100) NOT NULL UNIQUE,
   email         VARCHAR(255) NOT NULL UNIQUE,
-  password_hash VARCHAR(255) NOT NULL,  -- bcrypt hash, always 60 chars
-  api_token     VARCHAR(64) UNIQUE NULL,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  is_active     BOOLEAN NOT NULL DEFAULT true
+  "passwordHash" VARCHAR(255) NOT NULL,
+  "apiToken"     VARCHAR(64) UNIQUE NULL,
+  "createdAt"    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "isActive"     BOOLEAN NOT NULL DEFAULT true
 );
 
 -- ============================================================
 -- 3. Project membership (user <-> project with role)
 -- ============================================================
 CREATE TABLE ProjectMembership (
-  userId    INTEGER NOT NULL REFERENCES appuser(id) ON DELETE CASCADE,
+  userId    INTEGER NOT NULL REFERENCES AppUser(id) ON DELETE CASCADE,
   projectId INTEGER NOT NULL REFERENCES Project(id) ON DELETE CASCADE,
-  role      project_role NOT NULL DEFAULT 'view',
+  role      projectRole NOT NULL DEFAULT 'view',
   PRIMARY KEY (userId, projectId)
 );
 
@@ -86,14 +86,14 @@ ALTER TABLE ProfileData     FORCE ROW LEVEL SECURITY;
 CREATE OR REPLACE FUNCTION app_current_user_id() RETURNS INTEGER
   LANGUAGE sql STABLE SECURITY DEFINER AS
 $$
-  SELECT NULLIF(current_setting('app.current_user_id', true), '')::INTEGER;
+  SELECT NULLIF(current_setting('app.currentUserId', true), '')::INTEGER;
 $$;
 
 -- ============================================================
 -- 7. RLS policies
 --
 --    All user-facing routes are protected by requireAuth which
---    sets app.current_user_id via withUserContext.
+--    sets app.currentUserId via withUserContext.
 --    Machine-to-machine endpoints (PUT /rebenchdb/results) run
 --    as the pool superuser without SET ROLE, so they bypass
 --    RLS entirely and are unaffected by these policies.

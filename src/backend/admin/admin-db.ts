@@ -66,7 +66,7 @@ export async function listProjectMembers(
     name: 'admin_listProjectMembers',
     text: `SELECT u.id AS "userId", u.username, u.email, pm.role
              FROM ProjectMembership pm
-             JOIN appuser u ON u.id = pm.userId
+             JOIN AppUser u ON u.id = pm.userId
              WHERE pm.projectId = $1
              ORDER BY pm.role DESC, u.username ASC`,
     values: [projectId]
@@ -158,7 +158,7 @@ export async function generateApiTokenForUser(
   const token = randomBytes(32).toString('hex');
   await db.query({
     name: 'admin_generateApiTokenForUser',
-    text: `UPDATE appuser SET api_token = $2 WHERE id = $1`,
+    text: `UPDATE AppUser SET "apiToken" = $2 WHERE id = $1`,
     values: [userId, token]
   });
   return token;
@@ -168,12 +168,12 @@ export async function getApiTokenStatusForUser(
   db: Database,
   userId: number
 ): Promise<{ hasToken: boolean; suffix: string | null }> {
-  const result = await db.query<{ api_token: string | null }>({
+  const result = await db.query<{ apiToken: string | null }>({
     name: 'admin_getApiTokenStatusForUser',
-    text: `SELECT api_token FROM appuser WHERE id = $1`,
+    text: `SELECT "apiToken" FROM AppUser WHERE id = $1`,
     values: [userId]
   });
-  const token = result.rows[0]?.api_token ?? null;
+  const token = result.rows[0]?.apiToken ?? null;
   return {
     hasToken: token !== null,
     suffix: token ? token.slice(-8) : null
@@ -186,7 +186,7 @@ export async function getUserByApiToken(
 ): Promise<{ id: number } | null> {
   const result = await db.query<{ id: number }>({
     name: 'admin_getUserByApiToken',
-    text: `SELECT id FROM appuser WHERE api_token = $1 AND is_active = true`,
+    text: `SELECT id FROM AppUser WHERE "apiToken" = $1 AND "isActive" = true`,
     values: [token]
   });
   return result.rows[0] ?? null;

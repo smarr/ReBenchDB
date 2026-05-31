@@ -44,7 +44,7 @@ export class DatabaseWithPool extends Database {
       await client.query('BEGIN');
       await client.query('SET LOCAL ROLE rdb_app');
       if (userId !== null) {
-        await client.query(`SET LOCAL app.current_user_id = '${userId}'`);
+        await client.query(`SET LOCAL app.currentUserId = '${userId}'`);
       }
       const result = await userContextStorage.run({ client }, fn);
       await client.query('COMMIT');

@@ -163,7 +163,7 @@ export abstract class Database {
   /**
    * Run `fn` inside a transaction with RLS enforced for the given user.
    * Temporarily sets ROLE to `rdb_app` (non-superuser) and
-   * `app.current_user_id` so PostgreSQL RLS policies fire.
+   * `app.currentUserId` so PostgreSQL RLS policies fire.
    * Pass `userId = null` to run without a user context (RLS bypass via NULL
    * check in policies — use only for internal/background operations).
    */

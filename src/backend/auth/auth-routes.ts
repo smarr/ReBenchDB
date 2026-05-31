@@ -87,14 +87,14 @@ export async function login(
 
   const user = await getUserByUsername(db, username);
 
-  if (!user || !user.is_active) {
+  if (!user || !user.isActive) {
     ctx.status = 401;
     ctx.type = 'json';
     ctx.body = { error: 'Invalid credentials' };
     return;
   }
 
-  const valid = await bcrypt.compare(password, user.password_hash);
+  const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) {
     ctx.status = 401;
     ctx.type = 'json';
