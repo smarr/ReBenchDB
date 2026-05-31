@@ -124,6 +124,16 @@ export const siteConfig = {
 
 export const TotalCriterion = 'total';
 
+export const JWT_SECRET = process.env.JWT_SECRET || '';
+export const BCRYPT_ROUNDS = 12;
+
+if (!JWT_SECRET) {
+  console.warn(
+    '[auth] WARNING: JWT_SECRET environment variable is not set. ' +
+      'Authentication will not work correctly.'
+  );
+}
+
 export const rebenchVersion = JSON.parse(
   readFileSync(robustPath('../package.json'), 'utf-8')
 ).version;

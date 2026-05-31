@@ -1,14 +1,7 @@
 import { Next, ParameterizedContext } from 'koa';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || '';
-
-if (!JWT_SECRET) {
-  console.warn(
-    '[auth] WARNING: JWT_SECRET environment variable is not set. ' +
-      'Authentication will not work correctly.'
-  );
-}
+import { JWT_SECRET } from '../util.js';
 
 export interface AuthState {
   userId: number;
