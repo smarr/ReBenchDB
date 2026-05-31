@@ -267,7 +267,6 @@ ALTER TABLE ProfileData     FORCE ROW LEVEL SECURITY;
 
 -- ============================================================
 -- 6. Helper function to read the session-local user ID.
---    Returns NULL when not set (allows bypass during migration).
 --    SECURITY DEFINER so rdb_app can call current_setting.
 -- ============================================================
 CREATE OR REPLACE FUNCTION app_current_user_id() RETURNS INTEGER
