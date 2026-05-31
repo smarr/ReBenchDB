@@ -133,6 +133,7 @@ export interface BenchmarkData {
   startTime: string;
   endTime?: string | null;
   projectName: string;
+  token?: string;
 }
 
 export interface BenchmarkCompletion {
