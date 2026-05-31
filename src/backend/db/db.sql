@@ -213,6 +213,7 @@ CREATE TABLE appuser (
                          username      VARCHAR(100) NOT NULL UNIQUE,
                          email         VARCHAR(255) NOT NULL UNIQUE,
                          password_hash VARCHAR(255) NOT NULL,  -- bcrypt hash, always 60 chars
+                         api_token     VARCHAR(64) UNIQUE NULL,
                          created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
                          is_active     BOOLEAN NOT NULL DEFAULT true
 );

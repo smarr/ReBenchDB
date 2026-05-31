@@ -26,6 +26,7 @@ CREATE TABLE appuser (
   username      VARCHAR(100) NOT NULL UNIQUE,
   email         VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,  -- bcrypt hash, always 60 chars
+  api_token     VARCHAR(64) UNIQUE NULL,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   is_active     BOOLEAN NOT NULL DEFAULT true
 );
@@ -193,9 +194,16 @@ CREATE POLICY profiledata_access ON ProfileData
   );
 
 -- ============================================================
--- 8. Schema version bump (consolidates migrations 14 and 15)
+-- 8. Grants for rdb_app so RLS policies can be tested and enforced.
+--    rdb_app needs SELECT (and write) on all tables so that
+--    SET LOCAL ROLE rdb_app does not produce permission errors
+--    before the RLS filter is applied.
+-- ============================================================
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO rdb_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO rdb_app;
+
+-- ============================================================
+-- 9. Schema version bump
 -- ============================================================
 INSERT INTO SchemaVersion (version, updateDate) VALUES (14, now());
-INSERT INTO SchemaVersion (version, updateDate) VALUES (15, now());
-
 COMMIT;
