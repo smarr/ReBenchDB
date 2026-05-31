@@ -10,6 +10,8 @@ import {
   addProjectMember,
   countOwners,
   createProjectWithOwner,
+  generateApiTokenForUser,
+  getApiTokenStatusForUser,
   getProjectsForUser,
   getUserRoleForProject,
   isProjectRole,
@@ -257,6 +259,26 @@ export async function updateMember(
   ctx.status = 200;
   ctx.type = 'json';
   ctx.body = { ok: true };
+}
+
+export async function getMyApiToken(
+  ctx: ParameterizedContext,
+  db: Database
+): Promise<void> {
+  const status = await getApiTokenStatusForUser(db, ctx.state.userId);
+  ctx.status = 200;
+  ctx.type = 'json';
+  ctx.body = status;
+}
+
+export async function generateMyApiToken(
+  ctx: ParameterizedContext,
+  db: Database
+): Promise<void> {
+  const token = await generateApiTokenForUser(db, ctx.state.userId);
+  ctx.status = 200;
+  ctx.type = 'json';
+  ctx.body = { token };
 }
 
 export async function deleteMember(

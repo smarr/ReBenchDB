@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto';
+
 import type { Database } from '../db/db.js';
 
 export type ProjectRole = 'view' | 'edit' | 'owner';
@@ -149,6 +151,62 @@ export interface CreatedProject {
  * (superuser) connection — RLS on Project would otherwise reject the INSERT
  * because no membership exists for the project yet.
  */
+export async function generateApiTokenForUser(
+  db: Database,
+  userId: number
+): Promise<string> {
+  const token = randomBytes(32).toString('hex');
+  await db.query({
+    name: 'admin_generateApiTokenForUser',
+    text: `UPDATE appuser SET api_token = $2 WHERE id = $1`,
+    values: [userId, token]
+  });
+  return token;
+}
+
+export async function getApiTokenStatusForUser(
+  db: Database,
+  userId: number
+): Promise<{ hasToken: boolean; suffix: string | null }> {
+  const result = await db.query<{ api_token: string | null }>({
+    name: 'admin_getApiTokenStatusForUser',
+    text: `SELECT api_token FROM appuser WHERE id = $1`,
+    values: [userId]
+  });
+  const token = result.rows[0]?.api_token ?? null;
+  return {
+    hasToken: token !== null,
+    suffix: token ? token.slice(-8) : null
+  };
+}
+
+export async function getUserByApiToken(
+  db: Database,
+  token: string
+): Promise<{ id: number } | null> {
+  const result = await db.query<{ id: number }>({
+    name: 'admin_getUserByApiToken',
+    text: `SELECT id FROM appuser WHERE api_token = $1 AND is_active = true`,
+    values: [token]
+  });
+  return result.rows[0] ?? null;
+}
+
+export async function getUserRoleForProjectByName(
+  db: Database,
+  userId: number,
+  projectName: string
+): Promise<ProjectRole | null> {
+  const result = await db.query<{ role: ProjectRole }>({
+    name: 'admin_getUserRoleForProjectByName',
+    text: `SELECT pm.role FROM ProjectMembership pm
+             JOIN Project p ON p.id = pm.projectId
+             WHERE pm.userId = $1 AND p.name = $2`,
+    values: [userId, projectName]
+  });
+  return result.rows[0]?.role ?? null;
+}
+
 export async function createProjectWithOwner(
   db: Database,
   name: string,

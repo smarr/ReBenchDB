@@ -336,8 +336,60 @@ function wireAddMember(): void {
   });
 }
 
+async function fetchApiTokenStatus(): Promise<void> {
+  try {
+    const res = await fetch('/admin/api/token', {
+      headers: { Accept: 'application/json' }
+    });
+    const data = await readJson(res);
+    const statusEl = $id('api-token-status');
+    if (!res.ok) {
+      statusEl.textContent = 'Could not load token status.';
+      return;
+    }
+    if (data.hasToken) {
+      statusEl.innerHTML = `Token set &mdash; ends in <code>…${escapeHtml(data.suffix)}</code>`;
+    } else {
+      statusEl.textContent = 'No token set.';
+    }
+  } catch {
+    $id('api-token-status').textContent = 'Network error loading token status.';
+  }
+}
+
+function wireApiToken(): void {
+  const btn = $id('api-token-generate-btn');
+  btn.addEventListener('click', async () => {
+    if (
+      !confirm(
+        'Generate a new API token? Any existing token will stop working immediately.'
+      )
+    )
+      return;
+    try {
+      const res = await fetch('/admin/api/token/generate', {
+        method: 'POST',
+        headers: { Accept: 'application/json' }
+      });
+      const data = await readJson(res);
+      if (!res.ok) {
+        alert(data.error || `Server error (${res.status})`);
+        return;
+      }
+      const reveal = $id('api-token-reveal');
+      ($id('api-token-value') as HTMLElement).textContent = data.token;
+      reveal.classList.remove('d-none');
+      await fetchApiTokenStatus();
+    } catch {
+      alert('Network error generating token.');
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   wireCreateProject();
   wireAddMember();
+  wireApiToken();
   fetchMyProjects();
+  fetchApiTokenStatus();
 });

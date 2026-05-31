@@ -31,6 +31,23 @@
         </div>
       </div>
 
+      <div class="card mb-3">
+        <h5 class="card-header">API Token</h5>
+        <div class="card-body">
+          <p class="text-muted small">
+            Use this token in <code>rebench.conf</code> to authenticate data submissions.
+          </p>
+          <div id="api-token-status" class="mb-2"></div>
+          <div id="api-token-reveal" class="alert alert-warning d-none" role="alert">
+            <strong>Copy your token now — it will not be shown again.</strong><br>
+            <code id="api-token-value" class="user-select-all"></code>
+          </div>
+          <button id="api-token-generate-btn" type="button" class="btn btn-sm btn-outline-secondary">
+            Generate new token
+          </button>
+        </div>
+      </div>
+
       <div class="card">
         <h5 class="card-header">Create Project</h5>
         <div class="card-body">
