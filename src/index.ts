@@ -46,6 +46,15 @@ import {
 import { getAvailableDataAsJson } from './backend/project/data-export.js';
 import { submitTimelineUpdateJobs } from './backend/admin/operations.js';
 import {
+  addMember,
+  createProject,
+  deleteMember,
+  getMembers,
+  listMyProjects,
+  renderAdminPage,
+  updateMember
+} from './backend/admin/admin-routes.js';
+import {
   acceptResultData,
   reportResultApiVersion
 } from './backend/rebench/results.js';
@@ -90,6 +99,8 @@ Disallow: /rebenchdb*
 
 router.post('/auth/register', koaBody(), async (ctx) => register(ctx, db));
 router.post('/auth/login', koaBody(), async (ctx) => login(ctx, db));
+
+router.get('/admin', requireAuth, async (ctx) => renderAdminPage(ctx));
 
 router.get('/:projectSlug', requireAuth, async (ctx) =>
   renderProjectPage(ctx, db)
@@ -151,6 +162,35 @@ router.post(
   requireAuth,
   koaBody(),
   async (ctx) => getTimelineDataAsJson(ctx, db)
+);
+
+router.get('/admin/api/my-projects', requireAuth, async (ctx) =>
+  listMyProjects(ctx, db)
+);
+router.post('/admin/api/projects', requireAuth, koaBody(), async (ctx) =>
+  createProject(ctx, db)
+);
+router.get(
+  '/admin/api/projects/:projectId/members',
+  requireAuth,
+  async (ctx) => getMembers(ctx, db)
+);
+router.post(
+  '/admin/api/projects/:projectId/members',
+  requireAuth,
+  koaBody(),
+  async (ctx) => addMember(ctx, db)
+);
+router.put(
+  '/admin/api/projects/:projectId/members/:userId',
+  requireAuth,
+  koaBody(),
+  async (ctx) => updateMember(ctx, db)
+);
+router.delete(
+  '/admin/api/projects/:projectId/members/:userId',
+  requireAuth,
+  async (ctx) => deleteMember(ctx, db)
 );
 
 router.get('/admin/perform-timeline-update', requireAuth, async (ctx) =>
