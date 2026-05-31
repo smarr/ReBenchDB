@@ -49,7 +49,9 @@ import {
   addMember,
   createProject,
   deleteMember,
+  generateMyApiToken,
   getMembers,
+  getMyApiToken,
   listMyProjects,
   renderAdminPage,
   updateMember
@@ -191,6 +193,13 @@ router.delete(
   '/admin/api/projects/:projectId/members/:userId',
   requireAuth,
   async (ctx) => deleteMember(ctx, db)
+);
+
+router.get('/admin/api/token', requireAuth, async (ctx) =>
+  getMyApiToken(ctx, db)
+);
+router.post('/admin/api/token/generate', requireAuth, async (ctx) =>
+  generateMyApiToken(ctx, db)
 );
 
 router.get('/admin/perform-timeline-update', requireAuth, async (ctx) =>
