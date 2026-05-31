@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <script src="/static/theme.js" type="module"></script>
+  <script src="/static/login.js" type="module"></script>
   <title>ReBench – Sign In</title>
   {%- include('header.html', { rebenchVersion: it.rebenchVersion }) %}
 </head>
@@ -69,74 +70,5 @@
   </div>
 </div>
 
-<script>
-  function setSessionCookie(token) {
-    document.cookie = 'rdb_session=' + encodeURIComponent(token) +
-      '; path=/; samesite=strict; max-age=86400';
-  }
-
-  function showError(id, message) {
-    const el = document.getElementById(id);
-    el.textContent = message;
-    el.classList.remove('d-none');
-  }
-
-  function hideError(id) {
-    document.getElementById(id).classList.add('d-none');
-  }
-
-  document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    hideError('login-error');
-    const username = document.getElementById('login-username').value;
-    const password = document.getElementById('login-password').value;
-    try {
-      const res = await fetch('/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      let data;
-      try { data = await res.json(); } catch { data = {}; }
-      if (!res.ok) {
-        showError('login-error', data.error || `Server error (${res.status})`);
-        return;
-      }
-      setSessionCookie(data.token);
-      const params = new URLSearchParams(window.location.search);
-      window.location.href = params.get('next') || '/';
-    } catch {
-      showError('login-error', 'Network error. Please try again.');
-    }
-  });
-
-  document.getElementById('register-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    hideError('register-error');
-    document.getElementById('register-success').classList.add('d-none');
-    const username = document.getElementById('reg-username').value;
-    const email = document.getElementById('reg-email').value;
-    const password = document.getElementById('reg-password').value;
-    try {
-      const res = await fetch('/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        showError('register-error', data.error || 'Registration failed');
-        return;
-      }
-      const successEl = document.getElementById('register-success');
-      successEl.textContent = 'Account created! You can now sign in.';
-      successEl.classList.remove('d-none');
-      document.getElementById('login-tab').click();
-      document.getElementById('login-username').value = username;
-    } catch {
-      showError('register-error', 'Network error. Please try again.');
-    }
-  });
-</script>
 </body>
 </html>
