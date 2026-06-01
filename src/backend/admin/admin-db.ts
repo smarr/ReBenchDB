@@ -83,7 +83,7 @@ export async function addProjectMember(
   await db.query({
     name: 'admin_addProjectMember',
     text: `INSERT INTO ProjectMembership (userId, projectId, role)
-             VALUES ($1, $2, $3)`,
+             VALUES ($1, $2, $3::projectRole)`,
     values: [userId, projectId, role]
   });
 }
@@ -97,7 +97,7 @@ export async function updateProjectMemberRole(
   const result = await db.query({
     name: 'admin_updateProjectMemberRole',
     text: `UPDATE ProjectMembership
-             SET role = $3
+             SET role = $3::projectRole
              WHERE projectId = $1 AND userId = $2`,
     values: [projectId, userId, role]
   });
