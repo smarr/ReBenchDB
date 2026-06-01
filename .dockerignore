@@ -1,4 +1,5 @@
 **/node_modules
 /dist
-/resources
+/resources/exp-data
+/resources/reports
 
