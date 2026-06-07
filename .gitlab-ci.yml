@@ -3,7 +3,7 @@ stages:
 
 build-and-benchmark:
   stage: build-and-benchmark
-  tags: [yuria2]
+  tags: [kent-yuria2]
   script:
     - podman build . -f Dockerfile -t rebenchdb-app
     - podman build . -f Dockerfile.rebench -t bench-rdb
