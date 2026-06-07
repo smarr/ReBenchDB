@@ -1,6 +1,6 @@
 # ReBenchDB
 
-[![Build Status](https://travis-ci.com/smarr/ReBenchDB.svg?branch=master)](https://travis-ci.com/smarr/ReBenchDB)
+[![Build Status](https://github.com/smarr/ReBenchDB/actions/workflows/ci.yml/badge.svg)](https://github.com/smarr/ReBenchDB/actions)
 [![Documentation](https://readthedocs.org/projects/rebench/badge/?version=latest)](https://rebench.readthedocs.io/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1311762.svg)](https://doi.org/10.5281/zenodo.1311762)
 
