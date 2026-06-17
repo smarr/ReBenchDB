@@ -100,6 +100,18 @@ export const statsConfig = {
   numberOfBootstrapSamples: 50
 };
 
+const gitlabConfig = {
+  /** Token for accessing the GitLab GraphQL API */
+  token: process.env.GITLAB_TOKEN || '',
+  siteUrl: process.env.GITLAB_SITE_URL || 'https://sourcery.im.jku.at',
+  apiUrl:
+    process.env.GITLAB_API_URL || 'https://sourcery.im.jku.at/api/graphql',
+  group: process.env.GITLAB_GROUP || 'SSW',
+
+  /** How far back to look for pipelines, in seconds from now. */
+  updatedAfterSeconds: 24 * 60 * 60 /* 24 hours */
+};
+
 export const siteConfig = {
   port: process.env.PORT || 33333,
   reportsUrl,
@@ -119,7 +131,9 @@ export const siteConfig = {
   canShowWarmup: (data: ValuesPossiblyMissing[]): boolean => {
     return data.some((ms) => ms != null && ms.length >= 5);
   },
-  inlinePlotCriterion: 'total'
+  inlinePlotCriterion: 'total',
+
+  gitlabConfig
 };
 
 export const TotalCriterion = 'total';

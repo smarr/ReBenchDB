@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script src="/static/theme.js" type="module"></script>
+  <title>ReBenchDB GitLab Runner Status for {%= it.project %}</title>
+  {%- include('header.html', { rebenchVersion: it.rebenchVersion }) %}
+  <link rel="stylesheet" href="/static/gitlab-runner.css?v={%= it.rebenchVersion %}">
+</head>
+<body class="runner-status">
+
+<header>
+<div class="p-4 mb-4 bg-secondary-subtle rounded-2"><div class="container-fluid py-5 compare">
+  <h2>🦊 GitLab Runner Status for {%= it.project %}</h2>
+  <p>GitLab: <a href="{%= it.gitlabSiteUrl %}" target="_blank">{%= it.gitlabSiteUrl %}</a></p>
+  <p>Group: {%= it.gitlabGroup %}</p>
+</div></div>
+
+<div class="menu">
+  <div class="flex-nowrap navbar-light">
+    {%- include('theme-switcher-btn.html') %}
+  </div>
+</div>
+</header>
+
+<div class="job-summary-bar">
+{% for (const status in it.jobStatusStats) { %}
+  <div class="summary-card">
+    <div class="number status-{%= status.toLowerCase().replace(' ', '-') %}">{%= it.jobStatusStats[status] %}</div>
+    <div class="label">{%= status %}</div>
+  </div>
+{% } %}
+</div>
+
+<div class="container-fluid"><div class="row flex-xl-nowrap">
+<main role="main">
+{% if (!it.pipelines) { %}
+<div class="empty-state">✅ No active or recent jobs found.</div>
+{% } else {
+     for (const pipeline of it.pipelines) { %}
+       <div class="job-card">
+         <h3>
+          <span class="badge badge-{%= pipeline.status.toLowerCase().replace(' ', '-') %}">{%= pipeline.status %}</span>
+          &nbsp;
+          <a href="{%= pipeline.project.webUrl %}/-/pipelines/{%= pipeline.pipelineId %}">{%= pipeline.project.fullPath %} #{%= pipeline.iid %}</a></h3>
+         <div class="runner-label">
+           <code>{%= pipeline.ref || "?" %}</code>
+           &nbsp; {%= pipeline.user.name || "Unknown" %}
+           {% if (pipeline.commit.sha) { %}
+                &nbsp; <code>{%= pipeline.commit.sha.substring(0, 8) %}</code>
+           {% }
+              if (pipeline.commit.message) { %}
+                &nbsp; {%= pipeline.commit.message.split('\n')[0] %}
+           {% } %}
+         </div>
+         <div class="runner-label"> 
+          Created: {%- include('relative-time.html', { time: pipeline.createdAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %} %} 
+          {% if (pipeline.startedAt) { %}
+            &nbsp; Started: {%- include('relative-time.html', { time: pipeline.startedAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %} 
+          {% } %}
+          {% if (pipeline.finishedAt) { %}
+            &nbsp; Finished: {%- include('relative-time.html', { time: pipeline.finishedAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %} 
+          {% } %}
+         </div>
+         <div class="job-grid">
+         {% for (const job of pipeline.jobs.nodes) { %}
+           <div class="job-line">
+             <span class="badge badge-{%= job.status.toLowerCase().replace(' ', '-') %}">{%= job.status %}</span>
+             {%- include('tags.html', { tags: job.tags, dataFormatters: it.dataFormatters }) %}
+
+             <span class="job-line-name">
+              <a href="{%= it.gitlabSiteUrl %}{%= job.webUrl %}" class="job-line-name">{%= job.name %}</a>
+             </span>
+
+             <span class="job-line-meta">
+              Runner: {%= job.runner ? (job.runner.description || job.runner.id) : "n/a" %} &nbsp;
+              Created: {%- include('relative-time.html', { time: job.createdAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %} 
+              {% if (job.startedAt) { %}
+                &nbsp; Started: {%- include('relative-time.html', { time: job.startedAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %} 
+              {% } %}
+              {% if (job.finishedAt) { %}
+                &nbsp; Finished: {%- include('relative-time.html', { time: job.finishedAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %} 
+              {% } %}
+             </span>
+           </div>
+         {% } %}
+         </div>
+       </div>
+{%   } 
+   }
+%}
+</main>
+</div></div>
+
+<details class="status-drawer">
+  <summary title="Toggle runner table">
+    <div class="summary">
+      {% for (const status in it.runnerStatusStats) { %}
+        <div class="summary-card">
+          <div class="number status-{%= status.toLowerCase().replace(' ', '-') %}">{%= it.runnerStatusStats[status] %}</div>
+          <div class="label">{%= status %}</div>
+        </div>
+      {% } %}
+    </div>
+  </summary>
+  <div class="status-drawer-content">
+    <h2>Runners {%= it.numRunners %}</h2>
+    {% if (it.runners.length == 0) { %}
+      <div class="empty-state">No runners found.</div>
+    {% } else { %}
+      <table><thead>
+        <tr>
+          <th>#</th><th>Description</th><th>Status</th>
+          <th>Platform</th>
+          <th>Version</th><th>Tags</th><th>Last Contact</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for (const [idx, runner] of it.runners.entries()) { %}
+          <tr>
+            <td>{%= idx + 1 %}</td>
+            <td><strong>{%= runner.description || "(no description)"%}</strong></td>
+            {% const label = runner.paused ? "PAUSED" : (runner.status || "UNKNOWN"); %}
+            <td><span class="badge badge-{%= label.toLowerCase().replace(' ', '-') %}">{%= label %}</span></td>
+            <td>{%= runner.platformName || '-' %} / {%= runner.architectureName || '-' %}</td>
+            <td>{%= runner.version || '-' %}{% if (runner.revision) { %} <small>({%= runner.revision %})</small>{% } %}</td>
+            <td>{%- include('tags.html', { tags: runner.tagList, dataFormatters: it.dataFormatters }) %}</td>
+            <td>{%- include('relative-time.html', { time: runner.contactedAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %}</td>
+          </tr>
+        {% } %}
+      </tbody>
+    </table>
+    {% } %}
+  </div>
+</details>
+
+</body>
+</html>

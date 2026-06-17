@@ -52,6 +52,7 @@ import {
 import { setTimeout } from 'node:timers/promises';
 import { reportConnectionRefused } from './shared/errors.js';
 import { defineRoute } from './backend/server-routes.js';
+import { renderRunners } from './backend/gitlab/runner-status.js';
 
 log.info('Starting ReBenchDB Version ' + rebenchVersion);
 
@@ -90,6 +91,7 @@ Disallow: /rebenchdb*
 router.get('/:projectSlug', async (ctx) => renderProjectPage(ctx, db));
 defineRoute('/:projectSlug/source/:sourceId', router, db, getSourceAsJson);
 router.get('/:projectSlug/timeline', async (ctx) => renderTimeline(ctx, db));
+router.get('/:projectSlug/runners', async (ctx) => renderRunners(ctx, db));
 router.get('/:projectSlug/data', async (ctx) => renderProjectDataPage(ctx, db));
 router.get('/:projectSlug/data/:expIdAndExtension', async (ctx) => {
   if (
