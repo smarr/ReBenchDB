@@ -1,5 +1,6 @@
 -- migration.014.sql
--- Adds user authentication and project-level Row Level Security.
+-- Adds user authentication, project-level Row Level Security,
+-- and user groups for batch-assigning users to projects.
 --
 -- Post-migration manual steps required (run as superuser):
 --   GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO rdb_app;
@@ -44,7 +45,29 @@ CREATE TABLE ProjectMembership (
 CREATE INDEX projectmembership_projectid_idx ON ProjectMembership (projectId);
 
 -- ============================================================
--- 4. Dedicated non-superuser DB role for the application.
+-- 4. User groups (for batch-assigning users to projects)
+--    Groups are a snapshot mechanism: assigning a group to a
+--    project bulk-inserts all current group members into
+--    ProjectMembership.
+-- ============================================================
+CREATE TABLE UserGroup (
+  id          SERIAL PRIMARY KEY,
+  name        VARCHAR(100) NOT NULL UNIQUE,
+  description TEXT,
+  "createdBy" INTEGER REFERENCES AppUser(id) ON DELETE SET NULL,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE UserGroupMembership (
+  userId  INTEGER NOT NULL REFERENCES AppUser(id) ON DELETE CASCADE,
+  groupId INTEGER NOT NULL REFERENCES UserGroup(id) ON DELETE CASCADE,
+  PRIMARY KEY (userId, groupId)
+);
+
+CREATE INDEX usergroupmembership_groupid_idx ON UserGroupMembership (groupId);
+
+-- ============================================================
+-- 5. Dedicated non-superuser DB role for the application.
 --    The backend will SET LOCAL ROLE rdb_app inside each
 --    user-facing transaction so that RLS policies fire even
 --    when the pool connects as the DB owner / superuser.
@@ -57,7 +80,7 @@ BEGIN
 END$$;
 
 -- ============================================================
--- 5. Enable Row Level Security on all relevant tables.
+-- 6. Enable Row Level Security on all relevant tables.
 --    FORCE ensures the table owner / superuser is also filtered
 --    when SET LOCAL ROLE rdb_app is in effect.
 -- ============================================================
@@ -80,7 +103,7 @@ ALTER TABLE Source          FORCE ROW LEVEL SECURITY;
 ALTER TABLE ProfileData     FORCE ROW LEVEL SECURITY;
 
 -- ============================================================
--- 6. Helper function to read the session-local user ID.
+-- 7. Helper function to read the session-local user ID.
 --    SECURITY DEFINER so rdb_app can call current_setting.
 -- ============================================================
 CREATE OR REPLACE FUNCTION app_current_user_id() RETURNS INTEGER
@@ -90,7 +113,7 @@ $$
 $$;
 
 -- ============================================================
--- 7. RLS policies
+-- 8. RLS policies
 --
 --    All user-facing routes are protected by requireAuth which
 --    sets app.currentUserId via withUserContext.
@@ -194,7 +217,7 @@ CREATE POLICY profiledata_access ON ProfileData
   );
 
 -- ============================================================
--- 8. Grants for rdb_app so RLS policies can be tested and enforced.
+-- 9. Grants for rdb_app so RLS policies can be tested and enforced.
 --    rdb_app needs SELECT (and write) on all tables so that
 --    SET LOCAL ROLE rdb_app does not produce permission errors
 --    before the RLS filter is applied.
@@ -203,7 +226,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO rdb_app;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO rdb_app;
 
 -- ============================================================
--- 9. Schema version bump
+-- 10. Schema version bump
 -- ============================================================
 INSERT INTO SchemaVersion (version, updateDate) VALUES (14, now());
+
 COMMIT;

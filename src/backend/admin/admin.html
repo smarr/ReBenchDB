@@ -48,7 +48,7 @@
         </div>
       </div>
 
-      <div class="card">
+      <div class="card mb-3">
         <h5 class="card-header">Create Project</h5>
         <div class="card-body">
           <div id="create-project-error" class="alert alert-danger d-none" role="alert"></div>
@@ -61,6 +61,36 @@
             <div class="mb-3">
               <label for="create-project-description" class="form-label">Description (optional)</label>
               <textarea class="form-control" id="create-project-description" rows="2"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card mb-3">
+        <h5 class="card-header">Groups</h5>
+        <div class="card-body">
+          <div id="admin-groups-error" class="alert alert-danger d-none" role="alert"></div>
+          <ul id="admin-groups-list" class="list-group mb-3"></ul>
+          <p id="admin-no-groups" class="text-muted d-none">
+            No groups yet. Create one below.
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h5 class="card-header">Create Group</h5>
+        <div class="card-body">
+          <div id="create-group-error" class="alert alert-danger d-none" role="alert"></div>
+          <form id="create-group-form" novalidate>
+            <div class="mb-3">
+              <label for="create-group-name" class="form-label">Name</label>
+              <input type="text" class="form-control" id="create-group-name"
+                required maxlength="100">
+            </div>
+            <div class="mb-3">
+              <label for="create-group-description" class="form-label">Description (optional)</label>
+              <textarea class="form-control" id="create-group-description" rows="2"></textarea>
             </div>
             <button type="submit" class="btn btn-primary">Create</button>
           </form>
@@ -92,7 +122,7 @@
 
           <div id="admin-add-member-section">
             <h6>Add Member</h6>
-            <form id="add-member-form" class="row g-2 align-items-end" novalidate>
+            <form id="add-member-form" class="row g-2 align-items-end mb-3" novalidate>
               <div class="col-md-5">
                 <label for="add-member-username" class="form-label">Username</label>
                 <input type="text" class="form-control" id="add-member-username" required>
@@ -109,12 +139,82 @@
                 <button type="submit" class="btn btn-primary w-100">Add</button>
               </div>
             </form>
+
+            <h6>Add Group</h6>
+            <form id="add-group-to-project-form" class="row g-2 align-items-end" novalidate>
+              <div class="col-md-5">
+                <label for="add-group-to-project-select" class="form-label">Group</label>
+                <select class="form-select" id="add-group-to-project-select"></select>
+              </div>
+              <div class="col-md-4">
+                <label for="add-group-to-project-role" class="form-label">Role</label>
+                <select class="form-select" id="add-group-to-project-role">
+                  <option value="view">view</option>
+                  <option value="edit">edit</option>
+                  <option value="owner">owner</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <button type="submit" class="btn btn-outline-primary w-100">Add</button>
+              </div>
+            </form>
+            <div id="add-group-to-project-result" class="mt-2 d-none"></div>
           </div>
         </div>
       </div>
 
+      <div class="card mb-3" id="admin-group-card" style="display: none;">
+        <h5 class="card-header d-flex justify-content-between align-items-center">
+          <span>Group: <span id="admin-group-name"></span></span>
+          <button type="button" class="btn btn-sm btn-outline-danger"
+            id="admin-group-delete-btn">Delete Group</button>
+        </h5>
+        <div class="card-body">
+          <div id="admin-group-error" class="alert alert-danger d-none" role="alert"></div>
+
+          <h6>Members</h6>
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr><th>Username</th><th>Email</th><th></th></tr>
+            </thead>
+            <tbody id="admin-group-members-tbody"></tbody>
+          </table>
+
+          <h6>Add Member</h6>
+          <form id="add-group-member-form" class="row g-2 align-items-end mb-4" novalidate>
+            <div class="col-md-8">
+              <label for="add-group-member-username" class="form-label">Username</label>
+              <input type="text" class="form-control" id="add-group-member-username" required>
+            </div>
+            <div class="col-md-4">
+              <button type="submit" class="btn btn-primary w-100">Add</button>
+            </div>
+          </form>
+
+          <h6>Assign to Project</h6>
+          <form id="assign-group-form" class="row g-2 align-items-end" novalidate>
+            <div class="col-md-5">
+              <label for="assign-group-project" class="form-label">Project</label>
+              <select class="form-select" id="assign-group-project"></select>
+            </div>
+            <div class="col-md-4">
+              <label for="assign-group-role" class="form-label">Role</label>
+              <select class="form-select" id="assign-group-role">
+                <option value="view">view</option>
+                <option value="edit">edit</option>
+                <option value="owner">owner</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <button type="submit" class="btn btn-primary w-100">Assign</button>
+            </div>
+          </form>
+          <div id="assign-group-result" class="mt-2 d-none"></div>
+        </div>
+      </div>
+
       <div id="admin-members-placeholder" class="text-muted p-3">
-        Select a project on the left to manage its members.
+        Select a project or group on the left to manage it.
       </div>
     </div>
   </div>
