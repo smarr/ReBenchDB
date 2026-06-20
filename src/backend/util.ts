@@ -46,9 +46,21 @@ export const robustSrcPath = __dirname.includes('dist/')
       return `${__dirname}/../../dist/src/${path}`;
     };
 
-const port: number = process.env.RDB_PORT
-  ? parseInt(process.env.RDB_PORT)
-  : 5432;
+function getEnvInt(name: string, defaultValue: number): number {
+  const raw = process.env[name];
+  if (!raw) {
+    return defaultValue;
+  }
+
+  const parsed = parseInt(raw, 10);
+  if (Number.isNaN(parsed) || parsed < 0) {
+    return defaultValue;
+  }
+
+  return parsed;
+}
+
+const port: number = getEnvInt('RDB_PORT', 5432);
 
 const _rebench_dev = 'https://rebench.dev';
 const reportsUrl = process.env.REPORTS_URL || '/static/reports';
@@ -113,7 +125,7 @@ const gitlabConfig = {
 };
 
 export const siteConfig = {
-  port: process.env.PORT || 33333,
+  port: getEnvInt('PORT', 33333),
   reportsUrl,
   staticUrl,
   publicUrl,
@@ -124,7 +136,7 @@ export const siteConfig = {
    * and Postgres generated files are accessible.
    */
   dataExportPath: nodeDataExportPath,
-  appId: parseInt(process.env.GITHUB_APP_ID || '') || 76497,
+  appId: getEnvInt('GITHUB_APP_ID', 76497),
   githubPrivateKey:
     process.env.GITHUB_PK || 'rebenchdb.2020-08-11.private-key.pem',
 
