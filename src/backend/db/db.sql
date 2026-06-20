@@ -397,6 +397,25 @@ CREATE POLICY profiledata_access ON ProfileData
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO rdb_app;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO rdb_app;
 
+-- ============================================================
+-- 9. User groups (for batch-assigning users to projects)
+-- ============================================================
+CREATE TABLE UserGroup (
+  id          SERIAL PRIMARY KEY,
+  name        VARCHAR(100) NOT NULL UNIQUE,
+  description TEXT,
+  "createdBy" INTEGER REFERENCES AppUser(id) ON DELETE SET NULL,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE UserGroupMembership (
+  userId  INTEGER NOT NULL REFERENCES AppUser(id) ON DELETE CASCADE,
+  groupId INTEGER NOT NULL REFERENCES UserGroup(id) ON DELETE CASCADE,
+  PRIMARY KEY (userId, groupId)
+);
+
+CREATE INDEX usergroupmembership_groupid_idx ON UserGroupMembership (groupId);
+
 -- Used by ReBenchDB's perf-tracker, for self-performance tracking
 CREATE PROCEDURE recordAdditionalMeasurement(
   aRunId int,
