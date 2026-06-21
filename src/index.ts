@@ -5,7 +5,7 @@ import Router from '@koa/router';
 import { initPerfTracker } from './backend/perf-tracker.js';
 import {
   DEV,
-  cacheInvalidationDelay,
+  dbCacheInvalidationDelay,
   dbConfig,
   rebenchVersion,
   siteConfig,
@@ -63,7 +63,7 @@ export const db = new DatabaseWithPool(
   dbConfig,
   statsConfig.numberOfBootstrapSamples,
   true,
-  cacheInvalidationDelay
+  dbCacheInvalidationDelay
 );
 
 router.get('/', async (ctx) => {
