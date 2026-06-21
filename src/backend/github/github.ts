@@ -27,7 +27,11 @@ export async function handleReBenchCompletion(
   }
 
   try {
-    await reportCompletion(dbConfig, db, github, data);
+    // Webhook-style M2M endpoint with no requireAuth/JWT, so it runs via
+    // the explicit system-context path rather than a per-user RLS scope.
+    await db.withSystemContext(() =>
+      reportCompletion(dbConfig, db, github, data)
+    );
     log.debug(
       `/rebenchdb/completion: ${data.projectName}` +
         `${data.experimentName} was completed`

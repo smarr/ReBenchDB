@@ -145,12 +145,6 @@ export interface CreatedProject {
   slug: string;
 }
 
-/**
- * Inserts the Project and its initial owner ProjectMembership in one
- * statement. Must be called outside withUserContext so it runs as the pool
- * (superuser) connection — RLS on Project would otherwise reject the INSERT
- * because no membership exists for the project yet.
- */
 export async function generateApiTokenForUser(
   db: Database,
   userId: number
@@ -207,6 +201,12 @@ export async function getUserRoleForProjectByName(
   return result.rows[0]?.role ?? null;
 }
 
+/**
+ * Inserts the Project and its initial owner ProjectMembership in one
+ * statement. Runs via withSystemContext so it executes as the pool
+ * (superuser) connection — RLS on Project would otherwise reject the INSERT
+ * because no membership exists for the project yet.
+ */
 export async function createProjectWithOwner(
   db: Database,
   name: string,
@@ -214,18 +214,20 @@ export async function createProjectWithOwner(
   description: string | null,
   ownerUserId: number
 ): Promise<CreatedProject> {
-  const result = await db.query<CreatedProject>({
-    name: 'admin_createProjectWithOwner',
-    text: `WITH new_project AS (
-             INSERT INTO Project (name, slug, description)
-               VALUES ($1, $2, $3)
-               RETURNING id, name, slug
-           ), new_membership AS (
-             INSERT INTO ProjectMembership (userId, projectId, role)
-               SELECT $4, id, 'owner' FROM new_project
-           )
-           SELECT id, name, slug FROM new_project`,
-    values: [name, slug, description, ownerUserId]
-  });
+  const result = await db.withSystemContext(() =>
+    db.query<CreatedProject>({
+      name: 'admin_createProjectWithOwner',
+      text: `WITH new_project AS (
+               INSERT INTO Project (name, slug, description)
+                 VALUES ($1, $2, $3)
+                 RETURNING id, name, slug
+             ), new_membership AS (
+               INSERT INTO ProjectMembership (userId, projectId, role)
+                 SELECT $4, id, 'owner' FROM new_project
+             )
+             SELECT id, name, slug FROM new_project`,
+      values: [name, slug, description, ownerUserId]
+    })
+  );
   return result.rows[0];
 }

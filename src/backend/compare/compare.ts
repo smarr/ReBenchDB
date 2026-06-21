@@ -30,9 +30,7 @@ export async function getProfileAsJson(
 
   const start = startRequest();
 
-  ctx.body = await db.withUserContext(ctx.state.userId, () =>
-    getProfile(runId, ctx.params.commitId, db)
-  );
+  ctx.body = await getProfile(runId, ctx.params.commitId, db);
   if (ctx.body === undefined) {
     ctx.status = 404;
     ctx.body = {};
@@ -86,14 +84,12 @@ export async function getMeasurementsAsJson(
 
   const start = startRequest();
 
-  ctx.body = await db.withUserContext(ctx.state.userId, () =>
-    getMeasurements(
-      ctx.params.projectSlug,
-      runId,
-      ctx.params.baseId,
-      ctx.params.changeId,
-      db
-    )
+  ctx.body = await getMeasurements(
+    ctx.params.projectSlug,
+    runId,
+    ctx.params.baseId,
+    ctx.params.changeId,
+    db
   );
 
   completeRequestAndHandlePromise(start, db, 'get-measurements');
@@ -177,8 +173,9 @@ export async function getTimelineDataAsJson(
   db: Database
 ): Promise<void> {
   const timelineRequest = <TimelineRequest>(<unknown>ctx.request.body);
-  const result = await db.withUserContext(ctx.state.userId, () =>
-    db.getTimelineData(ctx.params.projectName, timelineRequest)
+  const result = await db.getTimelineData(
+    ctx.params.projectName,
+    timelineRequest
   );
   if (result === null) {
     ctx.body = { error: 'Requested data was not found' };
@@ -196,13 +193,11 @@ export async function renderComparePage(
 ): Promise<void> {
   const start = startRequest();
 
-  const data = await db.withUserContext(ctx.state.userId, () =>
-    renderCompare(
-      ctx.params.baseline,
-      ctx.params.change,
-      ctx.params.projectSlug,
-      db
-    )
+  const data = await renderCompare(
+    ctx.params.baseline,
+    ctx.params.change,
+    ctx.params.projectSlug,
+    db
   );
   ctx.body = data.content;
   ctx.type = 'html';
