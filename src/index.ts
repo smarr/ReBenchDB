@@ -52,7 +52,14 @@ import {
 import { setTimeout } from 'node:timers/promises';
 import { reportConnectionRefused } from './shared/errors.js';
 import { defineRoute } from './backend/server-routes.js';
-import { renderRunners } from './backend/gitlab/runner-status.js';
+import {
+  createGraphQLClient,
+  fetchPipelinesUncached,
+  fetchRunnersUncached,
+  renderRunners
+} from './backend/gitlab/runner-status.js';
+import { RequestCache } from './backend/gitlab/request-cache.js';
+import { Pipeline, Runner } from './backend/gitlab/graphql-api.js';
 
 log.info('Starting ReBenchDB Version ' + rebenchVersion);
 
@@ -64,6 +71,18 @@ export const db = new DatabaseWithPool(
   statsConfig.numberOfBootstrapSamples,
   true,
   dbCacheInvalidationDelay
+);
+
+const runnerCache = new RequestCache<Runner[]>(
+  siteConfig.gitlabConfig.runnersCacheTtlSeconds,
+  fetchRunnersUncached,
+  createGraphQLClient()
+);
+
+const pipelinesCache = new RequestCache<Pipeline[]>(
+  siteConfig.gitlabConfig.pipelinesCacheTtlSeconds,
+  fetchPipelinesUncached,
+  createGraphQLClient()
 );
 
 router.get('/', async (ctx) => {
@@ -91,7 +110,9 @@ Disallow: /rebenchdb*
 router.get('/:projectSlug', async (ctx) => renderProjectPage(ctx, db));
 defineRoute('/:projectSlug/source/:sourceId', router, db, getSourceAsJson);
 router.get('/:projectSlug/timeline', async (ctx) => renderTimeline(ctx, db));
-router.get('/:projectSlug/runners', async (ctx) => renderRunners(ctx, db));
+router.get('/:projectSlug/runners', async (ctx) =>
+  renderRunners(ctx, db, runnerCache, pipelinesCache)
+);
 router.get('/:projectSlug/data', async (ctx) => renderProjectDataPage(ctx, db));
 router.get('/:projectSlug/data/:expIdAndExtension', async (ctx) => {
   if (

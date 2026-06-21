@@ -121,7 +121,13 @@ const gitlabConfig = {
   group: process.env.GITLAB_GROUP || 'SSW',
 
   /** How far back to look for pipelines, in seconds from now. */
-  updatedAfterSeconds: 24 * 60 * 60 /* 24 hours */
+  updatedAfterSeconds: getEnvInt('GITLAB_UPDATED_AFTER_SECONDS', 24 * 60 * 60),
+
+  /** Cache TTL for runner data, in seconds. */
+  runnersCacheTtlSeconds: getEnvInt('GITLAB_RUNNERS_CACHE_TTL_SECONDS', 5 * 60),
+
+  /** Cache TTL for pipeline data, in seconds. */
+  pipelinesCacheTtlSeconds: getEnvInt('GITLAB_PIPELINES_CACHE_TTL_SECONDS', 30)
 };
 
 export const siteConfig = {

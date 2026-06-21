@@ -9,11 +9,12 @@ import {
 } from './graphql-api.js';
 import { prepareTemplate } from '../templates.js';
 import { rebenchVersion, robustPath, siteConfig } from '../util.js';
+import { RequestCache } from './request-cache.js';
 import * as dataFormatters from '../../shared/data-format.js';
 import * as viewHelpers from '../../shared/helpers.js';
 import { ParameterizedContext } from 'koa';
 import { Database } from '../db/db.js';
-import { respondProjectNotFound } from '../common/standard-responses.js';
+import { respondProjectNotFound } from '../standard-responses.js';
 import { log } from '../logging.js';
 
 const QUERY_GROUP_RUNNERS = gql`
@@ -201,11 +202,18 @@ async function fetchPipelinesAndJobsPerProject(
 }
 
 export async function fetchRunners(
+  runnerCache: RequestCache<Runner[]>,
+  groupPath: string,
+  updatedAfter: Date
+): Promise<Runner[]> {
+  return runnerCache.getCachedValue(groupPath, updatedAfter);
+}
+
+export async function fetchRunnersUncached(
   client: GraphQLClient,
   groupPath: string,
-  updatedAfter?: Date
+  updatedAfter: Date
 ): Promise<Runner[]> {
-  // TODO reuse GraphQLClient instance
   log.warn(
     `fetchRunners() for group ${groupPath} with updatedAfter ${updatedAfter}`
   );
@@ -246,6 +254,14 @@ export async function fetchRunners(
 }
 
 export async function fetchPipelines(
+  pipelinesCache: RequestCache<Pipeline[]>,
+  groupPath: string,
+  updatedAfter: Date
+): Promise<Pipeline[]> {
+  return pipelinesCache.getCachedValue(groupPath, updatedAfter);
+}
+
+export async function fetchPipelinesUncached(
   client: GraphQLClient,
   groupPath: string,
   updatedAfter?: Date
@@ -307,15 +323,23 @@ export function createGraphQLClient(): GraphQLClient {
 }
 
 export async function renderRunnerStatusToString(
+  runnerCache: RequestCache<Runner[]>,
+  pipelinesCache: RequestCache<Pipeline[]>,
   projectName: string
 ): Promise<string> {
-  const client = createGraphQLClient();
-  const pipelines = await fetchPipelines(
-    client,
-    siteConfig.gitlabConfig.group,
-    new Date(Date.now() - siteConfig.gitlabConfig.updatedAfterSeconds * 1000)
+  const updatedAfter = new Date(
+    Date.now() - siteConfig.gitlabConfig.updatedAfterSeconds * 1000
   );
-  const runners = await fetchRunners(client, siteConfig.gitlabConfig.group);
+  const pipelines = await fetchPipelines(
+    pipelinesCache,
+    siteConfig.gitlabConfig.group,
+    updatedAfter
+  );
+  const runners = await fetchRunners(
+    runnerCache,
+    siteConfig.gitlabConfig.group,
+    updatedAfter
+  );
   return renderRunnerStatusFromData(
     pipelines,
     runners,
@@ -392,13 +416,19 @@ export function renderRunnerStatusFromData(
 
 export async function renderRunners(
   ctx: ParameterizedContext,
-  db: Database
+  db: Database,
+  runnerCache: RequestCache<Runner[]>,
+  pipelinesCache: RequestCache<Pipeline[]>
 ): Promise<void> {
   const project = await db.getProjectBySlug(ctx.params.projectSlug);
 
   if (project) {
     try {
-      ctx.body = await renderRunnerStatusToString(project.name);
+      ctx.body = await renderRunnerStatusToString(
+        runnerCache,
+        pipelinesCache,
+        project.name
+      );
       ctx.type = 'html';
     } catch (e) {
       if (e instanceof ClientError) {

@@ -5,7 +5,9 @@ import runner1 from './runners-1.json' with { type: 'json' };
 import {
   activePipelineFirstComparator,
   fetchPipelines,
+  fetchPipelinesUncached,
   fetchRunners,
+  fetchRunnersUncached,
   getJobStats,
   getRunnerStats,
   renderRunnerStatusFromData
@@ -13,18 +15,19 @@ import {
 import { Pipeline, Runner } from '../../../src/backend/gitlab/graphql-api.js';
 import { initJestMatchers } from '../../helpers.js';
 import { GraphQLClient } from 'graphql-request';
+import { RequestCache } from '../../../src/backend/gitlab/request-cache.js';
 
 initJestMatchers();
 
-function createGraphQLClient(url: string): GraphQLClient {
-  return new GraphQLClient(url, {
+function createGraphQLClient(): GraphQLClient {
+  return new GraphQLClient('https://example/api/graphql', {
     headers: {
       Authorization: `Bearer token`
     }
   });
 }
 
-describe('Test fetchRunners()', () => {
+describe('Test fetchRunnersUncached()', () => {
   describe('with pending jobs', () => {
     let scope: Scope;
     let runners: Runner[];
@@ -34,9 +37,10 @@ describe('Test fetchRunners()', () => {
         .matchHeader('content-type', 'application/json')
         .post('/api/graphql')
         .reply(200, runner1);
-      runners = await fetchRunners(
-        createGraphQLClient('https://example/api/graphql'),
-        'SSW'
+      runners = await fetchRunnersUncached(
+        createGraphQLClient(),
+        'SSW',
+        new Date('2024-06-19T18:51:08.258Z')
       );
     });
 
@@ -170,7 +174,7 @@ describe('Test fetchRunners()', () => {
   });
 });
 
-describe('Test fetchPipelines()', () => {
+describe('Test fetchPipelinesUncached()', () => {
   describe('with pending jobs', () => {
     let scope: Scope;
     let pipelines: Pipeline[];
@@ -180,9 +184,10 @@ describe('Test fetchPipelines()', () => {
         .matchHeader('content-type', 'application/json')
         .post('/api/graphql')
         .reply(200, pipeline1);
-      pipelines = await fetchPipelines(
-        createGraphQLClient('https://example/api/graphql'),
-        'SSW'
+      pipelines = await fetchPipelinesUncached(
+        createGraphQLClient(),
+        'SSW',
+        new Date('2024-06-19T18:51:08.258Z')
       );
     });
 
@@ -418,13 +423,15 @@ describe('render runner status', () => {
         .reply(200, pipeline1)
         .post('/api/graphql')
         .reply(200, runner1);
-      pipelines = await fetchPipelines(
-        createGraphQLClient('https://example/api/graphql'),
-        'SSW'
+      pipelines = await fetchPipelinesUncached(
+        createGraphQLClient(),
+        'SSW',
+        new Date('2024-06-19T18:51:08.258Z')
       );
-      runners = await fetchRunners(
-        createGraphQLClient('https://example/api/graphql'),
-        'SSW'
+      runners = await fetchRunnersUncached(
+        createGraphQLClient(),
+        'SSW',
+        new Date('2024-06-19T18:51:08.258Z')
       );
     });
 
@@ -441,6 +448,55 @@ describe('render runner status', () => {
     afterAll(() => {
       scope.done();
     });
+  });
+});
+
+describe('GitLab request cache', () => {
+  it('should reuse cached runner and pipeline requests', async () => {
+    const scope = nock('https://example')
+      .matchHeader('content-type', 'application/json')
+      .post('/api/graphql')
+      .reply(200, pipeline1)
+      .post('/api/graphql')
+      .reply(200, runner1);
+
+    const runnerCache = new RequestCache<Runner[]>(
+      250,
+      fetchRunnersUncached,
+      createGraphQLClient()
+    );
+
+    const pipelinesCache = new RequestCache<Pipeline[]>(
+      250,
+      fetchPipelinesUncached,
+      createGraphQLClient()
+    );
+
+    const firstPipelines = await fetchPipelines(
+      pipelinesCache,
+      'SSW',
+      new Date('2024-06-19T18:51:08.258Z')
+    );
+    const secondPipelines = await fetchPipelines(
+      pipelinesCache,
+      'SSW',
+      new Date('2024-06-19T18:51:08.258Z')
+    );
+
+    const firstRunners = await fetchRunners(
+      runnerCache,
+      'SSW',
+      new Date('2024-06-19T18:51:08.258Z')
+    );
+    const secondRunners = await fetchRunners(
+      runnerCache,
+      'SSW',
+      new Date('2024-06-19T18:51:08.258Z')
+    );
+
+    expect(secondPipelines).toBe(firstPipelines);
+    expect(secondRunners).toBe(firstRunners);
+    expect(scope.isDone()).toBe(true);
   });
 });
 
