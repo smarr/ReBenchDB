@@ -92,9 +92,14 @@ export class TestDatabase extends Database {
     await this.query({ text: 'SET LOCAL ROLE rdb_app' });
     if (userId !== null) {
       await this.query({
-        text: `SET LOCAL app.currentUserId = '${userId}'`
+        text: `SELECT set_config('app.currentUserId', $1, true)`,
+        values: [String(userId)]
       });
     }
+    return fn();
+  }
+
+  public async withSystemContext<T>(fn: () => Promise<T>): Promise<T> {
     return fn();
   }
 
@@ -136,9 +141,11 @@ export class TestDatabase extends Database {
 
   private async release(): Promise<void> {
     const mainDB = getMainDB();
-    await mainDB.query({
-      text: `DROP DATABASE IF EXISTS ${this.dbConfig.database}`
-    });
+    await mainDB.withSystemContext(() =>
+      mainDB.query({
+        text: `DROP DATABASE IF EXISTS ${this.dbConfig.database}`
+      })
+    );
   }
 }
 
@@ -181,11 +188,13 @@ export async function createDB(
   const cfg = getConfig();
   const db = getMainDB();
   const dbNameForSuite = `${cfg.database}_${testSuite}`;
-  await db.query({
-    text: `DROP DATABASE IF EXISTS ${dbNameForSuite}`
-  });
-  await db.query({
-    text: `CREATE DATABASE ${dbNameForSuite}`
+  await db.withSystemContext(async () => {
+    await db.query({
+      text: `DROP DATABASE IF EXISTS ${dbNameForSuite}`
+    });
+    await db.query({
+      text: `CREATE DATABASE ${dbNameForSuite}`
+    });
   });
 
   cfg.database = dbNameForSuite;

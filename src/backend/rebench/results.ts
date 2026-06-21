@@ -92,22 +92,66 @@ export async function acceptResultData(
     ctx.status = 401;
     return;
   }
-
-  const user = await getUserByApiToken(db, token);
-  if (user === null) {
-    ctx.body = 'Invalid API token.';
-    ctx.status = 401;
-    return;
-  }
-
-  const role = await getUserRoleForProjectByName(db, user.id, data.projectName);
-  if (role !== 'edit' && role !== 'owner') {
-    // eslint-disable-next-line max-len
-    ctx.body = `User does not have write permission on project "${data.projectName}".`;
-    ctx.status = 403;
-    return;
-  }
-
+// TODO(SM): Here, I deliberately did not keep the changes because I will need to figure out how to do this right. New code (based on the old version of this function) below.
+    /*   // M2M endpoint: authenticated by API token rather than JWT/requireAuth,
+     // with its own explicit role check above instead of relying on RLS — so
+     // it deliberately runs as the pool's privileged connection.
+     await db.withSystemContext(async () => {
+     const user = await getUserByApiToken(db, token);
+     if (user === null) {
+     ctx.body = 'Invalid API token.';
+     ctx.status = 401;
+     return;
+     }
+     
+     const role = await getUserRoleForProjectByName(
+     db,
+     user.id,
+     data.projectName
+     );
+     if (role !== 'edit' && role !== 'owner') {
+     // eslint-disable-next-line max-len
+     ctx.body = `User does not have write permission on project "${data.projectName}".`;
+     ctx.status = 403;
+     return;
+     }
+     
+     try {
+     const recRunsPromise = db.recordMetaDataAndRuns(data);
+     log.info(`/rebenchdb/results: Content-Length=${ctx.request.length}`);
+     const recordedRuns = await recRunsPromise;
+     
+     // Runs in its own withSystemContext so its connection stays alive for
+     // the full background duration, independent of this request's scope.
+     db.withSystemContext(() => db.recordAllData(data))
+     .then(([recMs, recPs]) =>
+     log.info(
+     // eslint-disable-next-line max-len
+     `/rebenchdb/results: stored ${recMs} sets of measurements, ${recPs} profiles`
+     )
+     )
+     .catch((e) => {
+     log.error(
+     '/rebenchdb/results failed to store measurements:',
+     e.stack
+     );
+     });
+     
+     ctx.body =
+     `Meta data for ${recordedRuns} stored.` +
+     ' Storing of measurements is ongoing';
+     ctx.status = 201;
+     } catch (e: any) {
+     ctx.status = 500;
+     ctx.body = `${e.stack}`;
+     log.error(e, e.stack);
+     }
+     });
+     
+     completeRequestAndHandlePromise(start, db, 'put-results');
+*/
+    
+    
   try {
     const numRuns = data.data.length;
     const recRunsPromise = db.recordMetaDataAndRuns(data);

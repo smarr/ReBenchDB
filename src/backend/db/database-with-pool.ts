@@ -32,7 +32,11 @@ export class DatabaseWithPool extends Database {
     if (context) {
       return context.client.query(queryConfig);
     }
-    return this.pool.query(queryConfig);
+    throw new Error(
+      'Database query attempted without an established context. ' +
+        'Use requireAuth (user-facing routes) or db.withSystemContext() ' +
+        '(explicitly privileged, audited operations).'
+    );
   }
 
   public async withUserContext<T>(
@@ -44,7 +48,9 @@ export class DatabaseWithPool extends Database {
       await client.query('BEGIN');
       await client.query('SET LOCAL ROLE rdb_app');
       if (userId !== null) {
-        await client.query(`SET LOCAL app.currentUserId = '${userId}'`);
+        await client.query(`SELECT set_config('app.currentUserId', $1, true)`, [
+          String(userId)
+        ]);
       }
       const result = await userContextStorage.run({ client }, fn);
       await client.query('COMMIT');
@@ -52,6 +58,15 @@ export class DatabaseWithPool extends Database {
     } catch (e) {
       await client.query('ROLLBACK');
       throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  public async withSystemContext<T>(fn: () => Promise<T>): Promise<T> {
+    const client = await this.pool.connect();
+    try {
+      return await userContextStorage.run({ client }, fn);
     } finally {
       client.release();
     }

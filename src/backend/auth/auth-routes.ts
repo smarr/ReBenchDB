@@ -53,28 +53,32 @@ export async function register(
     return;
   }
 
-  const existingByUsername = await getUserByUsername(db, username);
-  if (existingByUsername) {
-    ctx.status = 409;
+  // Pre-authentication: no JWT/ctx.state.userId exists yet, and AppUser
+  // isn't RLS-protected, so this runs via the explicit system-context path.
+  await db.withSystemContext(async () => {
+    const existingByUsername = await getUserByUsername(db, username);
+    if (existingByUsername) {
+      ctx.status = 409;
+      ctx.type = 'json';
+      ctx.body = { error: 'Username already taken' };
+      return;
+    }
+
+    const existingByEmail = await getUserByEmail(db, email);
+    if (existingByEmail) {
+      ctx.status = 409;
+      ctx.type = 'json';
+      ctx.body = { error: 'Email already registered' };
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    const user = await createUser(db, username, email, passwordHash);
+
+    ctx.status = 201;
     ctx.type = 'json';
-    ctx.body = { error: 'Username already taken' };
-    return;
-  }
-
-  const existingByEmail = await getUserByEmail(db, email);
-  if (existingByEmail) {
-    ctx.status = 409;
-    ctx.type = 'json';
-    ctx.body = { error: 'Email already registered' };
-    return;
-  }
-
-  const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-  const user = await createUser(db, username, email, passwordHash);
-
-  ctx.status = 201;
-  ctx.type = 'json';
-  ctx.body = { userId: user.id, username: user.username };
+    ctx.body = { userId: user.id, username: user.username };
+  });
 }
 
 export async function login(
@@ -91,30 +95,34 @@ export async function login(
     return;
   }
 
-  const user = await getUserByUsername(db, username);
+  // Pre-authentication: no JWT/ctx.state.userId exists yet, and AppUser
+  // isn't RLS-protected, so this runs via the explicit system-context path.
+  await db.withSystemContext(async () => {
+    const user = await getUserByUsername(db, username);
 
-  if (!user || !user.isActive) {
-    ctx.status = 401;
+    if (!user || !user.isActive) {
+      ctx.status = 401;
+      ctx.type = 'json';
+      ctx.body = { error: 'Invalid credentials' };
+      return;
+    }
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) {
+      ctx.status = 401;
+      ctx.type = 'json';
+      ctx.body = { error: 'Invalid credentials' };
+      return;
+    }
+
+    const token = jwt.sign(
+      { sub: user.id, username: user.username },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    ctx.status = 200;
     ctx.type = 'json';
-    ctx.body = { error: 'Invalid credentials' };
-    return;
-  }
-
-  const valid = await bcrypt.compare(password, user.passwordHash);
-  if (!valid) {
-    ctx.status = 401;
-    ctx.type = 'json';
-    ctx.body = { error: 'Invalid credentials' };
-    return;
-  }
-
-  const token = jwt.sign(
-    { sub: user.id, username: user.username },
-    JWT_SECRET,
-    { expiresIn: '24h' }
-  );
-
-  ctx.status = 200;
-  ctx.type = 'json';
-  ctx.body = { token };
+    ctx.body = { token };
+  });
 }

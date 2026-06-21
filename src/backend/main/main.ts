@@ -25,9 +25,7 @@ export async function renderMainPage(
   ctx: ParameterizedContext,
   db: Database
 ): Promise<void> {
-  const projects = await db.withUserContext(ctx.state.userId, () =>
-    db.getAllProjects()
-  );
+  const projects = await db.getAllProjects();
   ctx.body = mainTpl({
     rebenchVersion,
     projects,
@@ -49,9 +47,7 @@ export async function getLast100MeasurementsAsJson(
   }
 
   const start = startRequest();
-  ctx.body = await db.withUserContext(ctx.state.userId, () =>
-    getLast100Measurements(projectId, db)
-  );
+  ctx.body = await getLast100Measurements(projectId, db);
   completeRequestAndHandlePromise(start, db, 'get-results');
 }
 
@@ -129,8 +125,7 @@ export async function getSiteStatsAsJson(
   ctx: ParameterizedContext,
   db: Database
 ): Promise<void> {
-  ctx.body = await db.withUserContext(ctx.state.userId, () =>
-    getStatistics(db));
+  ctx.body = await getStatistics(db);
   ctx.type = 'application/json';
 }
 
@@ -188,9 +183,7 @@ export async function getChangesAsJson(
     return;
   }
 
-  ctx.body = await db.withUserContext(ctx.state.userId, () =>
-    getChanges(projectId, db)
-  );
+  ctx.body = await getChanges(projectId, db);
 }
 
 export async function getChanges(

@@ -137,12 +137,12 @@ export async function renderCompare(
     };
     reportGeneration.set(reportId, reportStatus);
 
-    const p = renderCompareViewToFile(
-      base,
-      change,
-      projectSlug,
-      reportFile,
-      db
+    // Detached background job: the request that triggered it returns
+    // immediately (inProgress: true) and its RLS-scoped connection may
+    // already be released by the time this runs, so it needs its own
+    // independent context rather than inheriting the caller's.
+    const p = db.withSystemContext(() =>
+      renderCompareViewToFile(base, change, projectSlug, reportFile, db)
     );
     const pp = p
       .then(() => {
