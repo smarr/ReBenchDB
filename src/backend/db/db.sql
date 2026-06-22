@@ -218,7 +218,7 @@ CREATE TABLE AppUser (
 
 -- Project membership (user <-> project with role)
 
-CREATE TABLE ProjectMembership ( -- TODO: Test what gets deleted when deleting a user
+CREATE TABLE ProjectMembership (
   userId    INTEGER NOT NULL REFERENCES AppUser(id) ON DELETE CASCADE,
   projectId INTEGER NOT NULL REFERENCES Project(id) ON DELETE CASCADE,
   role      projectRole NOT NULL DEFAULT 'view',
