@@ -26,7 +26,8 @@ export async function createGroup(
     name: 'group_createGroup',
     text: `INSERT INTO UserGroup (name, description, "createdBy")
              VALUES ($1, $2, $3)
-             RETURNING id, name, description, "createdBy", "createdAt", 0 AS "memberCount"`,
+             RETURNING id, name, description, "createdBy", "createdAt",
+               0 AS "memberCount"`,
     values: [name, description, createdByUserId]
   });
   return result.rows[0];

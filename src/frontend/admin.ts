@@ -707,7 +707,8 @@ function wireAssignGroupToProject(): void {
         return;
       }
       const added: number = data.added ?? 0;
-      resultEl.textContent = `${added} member${added === 1 ? '' : 's'} added to project.`;
+      resultEl.textContent =
+        `${added} member${added === 1 ? '' : 's'} added to project.`;
       resultEl.className = 'mt-2 alert alert-success';
     } catch {
       showAlert('admin-group-error', 'Network error assigning group.');
@@ -752,11 +753,13 @@ function wireAddGroupToProject(): void {
         return;
       }
       const added: number = data.added ?? 0;
-      resultEl.textContent = `${added} member${added === 1 ? '' : 's'} added to project.`;
+      resultEl.textContent =
+        `${added} member${added === 1 ? '' : 's'} added to project.`;
       resultEl.className = 'mt-2 alert alert-success';
       if (added > 0) selectProject(selectedProjectId);
     } catch {
-      showAlert('admin-members-error', 'Network error adding group to project.');
+      showAlert(
+        'admin-members-error', 'Network error adding group to project.');
     }
   });
 }

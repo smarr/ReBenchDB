@@ -9,7 +9,9 @@ import {
   getUserByUsername
 } from './auth-db.js';
 import { prepareTemplate } from '../templates.js';
-import { BCRYPT_ROUNDS, JWT_SECRET, rebenchVersion, robustPath } from '../util.js';
+import {
+  BCRYPT_ROUNDS, JWT_SECRET, rebenchVersion, robustPath
+} from '../util.js';
 
 const loginTpl = prepareTemplate(robustPath('backend/auth/login.html'));
 

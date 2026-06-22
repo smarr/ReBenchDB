@@ -432,7 +432,9 @@ export async function addGroupMember(
     await addUserToGroup(db, groupId, user.id);
     ctx.status = 201;
     ctx.type = 'json';
-    ctx.body = { member: { userId: user.id, username: user.username, email: user.email } };
+    ctx.body = {
+      member: { userId: user.id, username: user.username, email: user.email }
+    };
   } catch (e: any) {
     if (e?.code === '23505') {
       jsonError(ctx, 409, 'User is already a member of this group');
@@ -470,7 +472,8 @@ export async function assignGroupToProject(
   if (!(await requireOwner(ctx, db, projectId))) return;
 
   const body = ctx.request.body as any;
-  const groupId = typeof body?.groupId === 'number' ? body.groupId : Number(body?.groupId);
+  const groupId =
+    typeof body?.groupId === 'number' ? body.groupId : Number(body?.groupId);
   if (!Number.isInteger(groupId) || groupId <= 0) {
     jsonError(ctx, 400, 'groupId is required');
     return;
