@@ -122,7 +122,7 @@ export async function login(
     const token = jwt.sign(
       { sub: user.id, username: user.username },
       JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '72h' }
     );
 
     ctx.status = 200;
