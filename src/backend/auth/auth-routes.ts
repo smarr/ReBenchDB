@@ -46,10 +46,14 @@ export async function register(
     return;
   }
 
-  if (typeof password !== 'string' || password.length < 8) {
+  if (
+    typeof password !== 'string' ||
+    password.length < 8 ||
+    password.length > 72
+  ) {
     ctx.status = 400;
     ctx.type = 'json';
-    ctx.body = { error: 'password must be at least 8 characters' };
+    ctx.body = { error: 'password must be between 8 and 72 characters' };
     return;
   }
 
