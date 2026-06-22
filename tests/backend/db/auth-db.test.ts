@@ -415,7 +415,8 @@ describe('UserGroupMembership table operations', () => {
     expect(members[0].username).toEqual('bob');
   });
 
-  it('should return false when removing a user who is not a group member', async () => {
+  it('should return false when removing a user who is not a group member',
+    async () => {
     const alice = await createUser(db, 'alice', 'alice@example.com', 'h');
     const group = await createGroup(db, 'Team', null, alice.id);
 
@@ -446,7 +447,8 @@ describe('UserGroupMembership table operations', () => {
     expect(members).toHaveLength(0);
   });
 
-  it('should cascade-delete all memberships when the group is deleted', async () => {
+  it('should cascade-delete all memberships when the group is deleted',
+    async () => {
     const alice = await createUser(db, 'alice', 'alice@example.com', 'h');
     const bob = await createUser(db, 'bob', 'bob@example.com', 'h');
     const group = await createGroup(db, 'Team', null, alice.id);
@@ -482,7 +484,8 @@ describe('UserGroupMembership table operations', () => {
     expect(result.rows.map((r) => r.role)).toEqual(['view', 'view']);
   });
 
-  it('should assign the specified role when adding a group to a project', async () => {
+  it('should assign the specified role when adding a group to a project',
+    async () => {
     const alice = await createUser(db, 'alice', 'alice@example.com', 'h');
     const group = await createGroup(db, 'Team', null, alice.id);
     await addUserToGroup(db, group.id, alice.id);
@@ -491,7 +494,8 @@ describe('UserGroupMembership table operations', () => {
     await addGroupToProject(db, projectId, group.id, 'edit');
 
     const result = await db.query<{ role: string }>({
-      text: `SELECT role FROM ProjectMembership WHERE projectId = $1 AND userId = $2`,
+      text: `SELECT role FROM ProjectMembership` +
+        ` WHERE projectId = $1 AND userId = $2`,
       values: [projectId, alice.id]
     });
     expect(result.rows[0].role).toEqual('edit');
@@ -507,7 +511,8 @@ describe('UserGroupMembership table operations', () => {
     expect(added).toEqual(0);
   });
 
-  it('should skip members already in the project (ON CONFLICT DO NOTHING)', async () => {
+  it('should skip members already in the project (ON CONFLICT DO NOTHING)',
+    async () => {
     const alice = await createUser(db, 'alice', 'alice@example.com', 'h');
     const bob = await createUser(db, 'bob', 'bob@example.com', 'h');
     const group = await createGroup(db, 'Team', null, alice.id);
