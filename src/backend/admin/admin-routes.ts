@@ -28,7 +28,8 @@ import {
   getGroupById,
   listGroupMembers,
   listGroups,
-  removeUserFromGroup
+  removeUserFromGroup,
+  UserGroup
 } from './group-db.js';
 
 const adminTpl = prepareTemplate(robustPath('backend/admin/admin.html'));
@@ -311,6 +312,17 @@ export async function deleteMember(
   ctx.body = { ok: true };
 }
 
+function requireGroupCreator(
+  ctx: ParameterizedContext,
+  group: UserGroup
+): boolean {
+  if (group.createdBy !== ctx.state.userId) {
+    jsonError(ctx, 403, 'Only the group creator can edit its members');
+    return false;
+  }
+  return true;
+}
+
 function parseGroupId(ctx: ParameterizedContext): number | null {
   const raw = ctx.params.groupId;
   const id = Number(raw);
@@ -372,11 +384,14 @@ export async function removeGroup(
   const groupId = parseGroupId(ctx);
   if (groupId === null) return;
 
-  const deleted = await deleteGroup(db, groupId);
-  if (!deleted) {
+  const group = await getGroupById(db, groupId);
+  if (group === null) {
     jsonError(ctx, 404, 'Group not found');
     return;
   }
+  if (!requireGroupCreator(ctx, group)) return;
+
+  await deleteGroup(db, groupId);
   ctx.status = 200;
   ctx.type = 'json';
   ctx.body = { ok: true };
@@ -413,6 +428,7 @@ export async function addGroupMember(
     jsonError(ctx, 404, 'Group not found');
     return;
   }
+  if (!requireGroupCreator(ctx, group)) return;
 
   const body = ctx.request.body as any;
   const username =
@@ -452,6 +468,13 @@ export async function removeGroupMember(
   if (groupId === null) return;
   const userId = parseUserId(ctx);
   if (userId === null) return;
+
+  const group = await getGroupById(db, groupId);
+  if (group === null) {
+    jsonError(ctx, 404, 'Group not found');
+    return;
+  }
+  if (!requireGroupCreator(ctx, group)) return;
 
   const removed = await removeUserFromGroup(db, groupId, userId);
   if (!removed) {
