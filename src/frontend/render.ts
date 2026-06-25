@@ -82,7 +82,9 @@ export function renderProjectDataOverview(
         )}</p></td>
         <td>${row.hostnames}</td>
         <td class="num-col">${row.runs}</td>
-        <td class="num-col">${row.measurements}
+        <td class="num-col">${row.measurements}</td>
+        <td class="num-col">${row.expid}</td>
+        <td class="num-col">
           <a rel="nofollow" href="/${pSlug}/data/${row.expid}.json.gz">JSON</a>,
           <a rel="nofollow" href="/${pSlug}/data/${row.expid}.csv.gz">CSV</a>
         </td>
