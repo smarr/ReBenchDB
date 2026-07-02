@@ -307,28 +307,24 @@ export abstract class Database {
   private async recordCached(
     cache: Map<string, any>,
     cacheKey: string,
-    fetchQ: QueryConfig,
-    insertQ: QueryConfig
+    /**
+     * `insertUnionFetchQ` is expected to be a common table expression
+     * that tries to insert the relevant row and explicitly handles
+     * the conflict with a `DO NOTHING` and then does a `UNION ALL`
+     * with a `SELECT` on the table.
+     */
+    insertUnionFetchQ: QueryConfig
   ) {
     if (cache.has(cacheKey)) {
       return cache.get(cacheKey);
     }
 
-    let result = await this.query(fetchQ);
-    if (result.rowCount === 0) {
-      try {
-        result = await this.query(insertQ);
-      } catch (e) {
-        // there may have been a racy insert,
-        // which causes us to fail on unique constraints
-        result = await this.query(fetchQ);
-        if (result.rowCount === 0) {
-          throw e;
-        }
-      }
-    }
-
-    assert(result.rowCount === 1);
+    const result = await this.query(insertUnionFetchQ);
+    assert(
+      result.rowCount === 1,
+      'recordCached insertUnionFetchQ did not return exactly one row. ' +
+        'rowCount: ${result.rowCount}'
+    );
     cache.set(cacheKey, result.rows[0]);
     return result.rows[0];
   }
@@ -368,88 +364,82 @@ export abstract class Database {
       return <Run>this.runs.get(run.cmdline);
     }
 
-    return this.recordCached(
-      this.runs,
-      run.cmdline,
-      {
-        name: 'fetchRunByCmdline',
-        text: 'SELECT * from Run WHERE cmdline = $1',
-        values: [run.cmdline]
-      },
-      {
-        name: 'insertRun',
-        text: `INSERT INTO Run (
-                  cmdline,
-                  benchmark, executor, suite,
-                  location,
-                  cores, inputSize, varValue, extraArgs,
-                  maxInvocationTime, minIterationTime, warmup)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-                RETURNING *`,
-        values: [
-          run.cmdline,
-          run.benchmark.name,
-          run.benchmark.suite.executor.name,
-          run.benchmark.suite.name,
-          run.location,
-          run.cores,
-          run.inputSize,
-          run.varValue,
-          run.extraArgs,
-          run.benchmark.runDetails.maxInvocationTime,
-          run.benchmark.runDetails.minIterationTime,
-          run.benchmark.runDetails.warmup
-        ]
-      }
-    );
+    return this.recordCached(this.runs, run.cmdline, {
+      name: 'insertOrFetchRunByCmdline',
+      text: `WITH insertedRow AS (
+                    INSERT INTO Run (
+                      cmdline,
+                      benchmark, executor, suite,
+                      location,
+                      cores, inputSize, varValue, extraArgs,
+                      maxInvocationTime, minIterationTime, warmup
+                    )
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                    ON CONFLICT DO NOTHING
+                    RETURNING *
+                )
+                SELECT * FROM insertedRow
+                UNION ALL
+                SELECT * FROM Run WHERE cmdline = $1;`,
+      values: [
+        run.cmdline,
+        run.benchmark.name,
+        run.benchmark.suite.executor.name,
+        run.benchmark.suite.name,
+        run.location,
+        run.cores,
+        run.inputSize,
+        run.varValue,
+        run.extraArgs,
+        run.benchmark.runDetails.maxInvocationTime,
+        run.benchmark.runDetails.minIterationTime,
+        run.benchmark.runDetails.warmup
+      ]
+    });
   }
 
   public async recordSource(s: ApiSource): Promise<Source> {
-    return this.recordCached(
-      this.sources,
-      s.commitId,
-      {
-        name: 'fetchSourceById',
-        text: 'SELECT * from Source WHERE commitId = $1',
-        values: [s.commitId]
-      },
-      {
-        name: 'insertSource',
-        text: `INSERT INTO Source (
+    return this.recordCached(this.sources, s.commitId, {
+      name: 'insertOrFetchSourceById',
+      text: `WITH insertedRow AS (
+                INSERT INTO Source (
                   repoURL, branchOrTag, commitId, commitMessage,
                   authorName, authorEmail, committerName, committerEmail)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-        values: [
-          s.repoURL,
-          s.branchOrTag,
-          s.commitId,
-          s.commitMsg,
-          s.authorName,
-          s.authorEmail,
-          s.committerName,
-          s.committerEmail
-        ]
-      }
-    );
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                ON CONFLICT DO NOTHING
+                RETURNING *
+              )
+              SELECT * FROM insertedRow
+              UNION ALL
+              SELECT * FROM Source WHERE commitId = $3;`,
+      values: [
+        s.repoURL,
+        s.branchOrTag,
+        s.commitId,
+        s.commitMsg,
+        s.authorName,
+        s.authorEmail,
+        s.committerName,
+        s.committerEmail
+      ]
+    });
   }
 
   public async recordEnvironment(e: ApiEnvironment): Promise<Environment> {
-    return this.recordCached(
-      this.envs,
-      e.hostName,
-      {
-        name: 'fetchEnvironmentByHostname',
-        text: 'SELECT * from Environment WHERE hostname =  $1',
-        values: [e.hostName]
-      },
-      {
-        name: 'insertEnvironment',
-        text: `INSERT INTO Environment (
-                  hostname, osType, memory, cpu, clockSpeed)
-                VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        values: [e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed]
-      }
-    );
+    return this.recordCached(this.envs, e.hostName, {
+      name: 'insertOrFetchEnvironmentByHostname',
+      text: `WITH insertedRow AS (
+                  INSERT INTO Environment (
+                    hostname, osType, memory, cpu, clockSpeed)
+                  VALUES ($1, $2, $3, $4, $5)
+                  ON CONFLICT DO NOTHING
+                  RETURNING *
+                )
+                SELECT * FROM insertedRow
+                UNION ALL
+                SELECT * FROM Environment WHERE hostname = $1;`,
+      values: [e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed]
+    });
   }
 
   public async recordTrial(
@@ -465,51 +455,49 @@ export abstract class Database {
     }
     const source = await this.recordSource(data.source);
 
-    return this.recordCached(
-      this.trials,
-      cacheKey,
-      {
-        name: 'fetchTrialByUserEnvIdStartTimeExpId',
-        text: `SELECT * FROM Trial
-                  WHERE username = $1 AND envId = $2 AND
-                        startTime = $3 AND expId = $4`,
-        values: [e.userName, env.id, data.startTime, exp.id]
-      },
-      {
-        name: 'insertTrial',
-        text: `INSERT INTO Trial (manualRun, startTime, expId, username,
-                        envId, sourceId, denoise)
-                VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-        values: [
-          e.manualRun,
-          data.startTime,
-          exp.id,
-          e.userName,
-          env.id,
-          source.id,
-          e.denoise
-        ]
-      }
-    );
+    return this.recordCached(this.trials, cacheKey, {
+      name: 'insertOrFetchTrialByUserEnvIdStartTimeExpId',
+      text: `WITH insertedRow AS (
+                  INSERT INTO Trial (
+                    manualRun, startTime, expId, username,
+                    envId, sourceId, denoise)
+                  VALUES ($1, $2, $3, $4, $5, $6, $7)
+                  ON CONFLICT DO NOTHING
+                  RETURNING *
+                )
+                SELECT * FROM insertedRow
+                UNION ALL
+                SELECT * FROM Trial
+                  WHERE username = $4 AND
+                    envId = $5 AND
+                    startTime = $2 AND
+                    expId = $3`,
+      values: [
+        e.manualRun, // $1
+        data.startTime, // $2
+        exp.id, // $3
+        e.userName, // $4
+        env.id, // $5
+        source.id, // $6
+        e.denoise // $7
+      ]
+    });
   }
 
   public async recordProject(projectName: string): Promise<Project> {
-    return this.recordCached(
-      this.projects,
-      projectName,
-      {
-        name: 'fetchProjectByName',
-        text: this.queries.fetchProjectByName,
-        values: [projectName]
-      },
-      {
-        name: 'insertProject',
-        text: `INSERT INTO Project (name, slug)
+    return this.recordCached(this.projects, projectName, {
+      name: 'insertOrFetchProjectByName',
+      text: `WITH insertedRow AS (
+                  INSERT INTO Project (name, slug)
                   VALUES ($1, regexp_replace($2, '[^0-9a-zA-Z-]', '-', 'g'))
-                RETURNING *`,
-        values: [projectName, projectName]
-      }
-    );
+                  ON CONFLICT DO NOTHING
+                  RETURNING *
+                )
+                SELECT * FROM insertedRow
+                UNION ALL
+                SELECT * FROM Project WHERE name = $1;`,
+      values: [projectName, projectName]
+    });
   }
 
   public async getProjectBySlug(
@@ -672,21 +660,19 @@ export abstract class Database {
 
     const project = await this.recordProject(data.projectName);
 
-    return this.recordCached(
-      this.exps,
-      cacheKey,
-      {
-        name: 'fetchExperimentByProjectIdAndName',
-        text: 'SELECT * FROM Experiment WHERE projectId = $1 AND name = $2',
-        values: [project.id, data.experimentName]
-      },
-      {
-        name: 'insertExperiment',
-        text: `INSERT INTO Experiment (name, projectId, description)
-                  VALUES ($1, $2, $3) RETURNING *`,
-        values: [data.experimentName, project.id, data.experimentDesc]
-      }
-    );
+    return this.recordCached(this.exps, cacheKey, {
+      name: 'insertOrFetchExperimentByProjectIdAndName',
+      text: `WITH insertedRow AS (
+                  INSERT INTO Experiment (projectId, name, description)
+                  VALUES ($1, $2, $3)
+                  ON CONFLICT DO NOTHING
+                  RETURNING *
+              )
+              SELECT * FROM insertedRow
+              UNION ALL
+              SELECT * FROM Experiment WHERE projectId = $1 AND name = $2;`,
+      values: [project.id, data.experimentName, data.experimentDesc]
+    });
   }
 
   public async getExperimentByNames(
@@ -890,20 +876,19 @@ export abstract class Database {
       return <Criterion>this.criteria.get(cacheKey);
     }
 
-    return this.recordCached(
-      this.criteria,
-      cacheKey,
-      {
-        name: 'fetchCriterionByNameAndUnit',
-        text: 'SELECT * FROM Criterion WHERE name = $1 AND unit = $2',
-        values: [c.c, c.u]
-      },
-      {
-        name: 'insertCriterion',
-        text: 'INSERT INTO Criterion (name, unit) VALUES ($1, $2) RETURNING *',
-        values: [c.c, c.u]
-      }
-    );
+    return this.recordCached(this.criteria, cacheKey, {
+      name: 'fetchCriterionByNameAndUnit',
+      text: `WITH insertedRow AS (
+                INSERT INTO Criterion (name, unit)
+                VALUES ($1, $2)
+                ON CONFLICT DO NOTHING
+                RETURNING *
+              )
+              SELECT * FROM insertedRow
+              UNION ALL
+              SELECT * FROM Criterion WHERE name = $1 AND unit = $2`,
+      values: [c.c, c.u]
+    });
   }
 
   private async resolveCriteria(
