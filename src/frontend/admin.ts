@@ -22,20 +22,14 @@ const ROLES: ProjectRole[] = ['view', 'edit', 'owner'];
 let myProjects: MyProject[] = [];
 let selectedProjectId: number | null = null;
 
-function $id(id: string): HTMLElement {
-  const el = document.getElementById(id);
-  if (!el) throw new Error(`Missing element #${id}`);
-  return el;
-}
-
 function showAlert(id: string, message: string): void {
-  const el = $id(id);
-  el.textContent = message;
-  el.classList.remove('d-none');
+  const el = $(id);
+  el.text(message);
+  el.removeClass('d-none');
 }
 
 function hideAlert(id: string): void {
-  $id(id).classList.add('d-none');
+  $(id).addClass('d-none');
 }
 
 async function readJson(res: Response): Promise<any> {
