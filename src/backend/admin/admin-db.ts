@@ -8,8 +8,7 @@ export const PROJECT_ROLES: ProjectRole[] = ['view', 'edit', 'owner'];
 
 export function isProjectRole(value: unknown): value is ProjectRole {
   return (
-    typeof value === 'string' &&
-    (PROJECT_ROLES as string[]).includes(value)
+    typeof value === 'string' && (PROJECT_ROLES as string[]).includes(value)
   );
 }
 

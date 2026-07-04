@@ -1,7 +1,13 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 // eslint-disable-next-line max-len
-import pg, { PoolClient, PoolConfig, QueryConfig, QueryResult, QueryResultRow } from 'pg';
+import pg, {
+  PoolClient,
+  PoolConfig,
+  QueryConfig,
+  QueryResult,
+  QueryResultRow
+} from 'pg';
 
 import { Database } from './db.js';
 import { BatchingTimelineUpdater } from '../timeline/timeline-calc.js';
