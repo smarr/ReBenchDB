@@ -3,14 +3,13 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 import type { Database } from '../db/db.js';
-import {
-  createUser,
-  getUserByEmail,
-  getUserByUsername
-} from './auth-db.js';
+import { createUser, getUserByEmail, getUserByUsername } from './auth-db.js';
 import { prepareTemplate } from '../templates.js';
 import {
-  BCRYPT_ROUNDS, JWT_SECRET, rebenchVersion, robustPath
+  BCRYPT_ROUNDS,
+  JWT_SECRET,
+  rebenchVersion,
+  robustPath
 } from '../util.js';
 
 const loginTpl = prepareTemplate(robustPath('backend/auth/login.html'));

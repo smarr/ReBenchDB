@@ -92,8 +92,8 @@ export async function acceptResultData(
     ctx.status = 401;
     return;
   }
-// TODO(SM): Here, I deliberately did not keep the changes because I will need to figure out how to do this right. New code (based on the old version of this function) below.
-    /*   // M2M endpoint: authenticated by API token rather than JWT/requireAuth,
+  // TODO(SM): Here, I deliberately did not keep the changes because I will need to figure out how to do this right. New code (based on the old version of this function) below.
+  /*   // M2M endpoint: authenticated by API token rather than JWT/requireAuth,
      // with its own explicit role check above instead of relying on RLS — so
      // it deliberately runs as the pool's privileged connection.
      await db.withSystemContext(async () => {
@@ -150,8 +150,7 @@ export async function acceptResultData(
      
      completeRequestAndHandlePromise(start, db, 'put-results');
 */
-    
-    
+
   try {
     const numRuns = data.data.length;
     const recRunsPromise = db.recordMetaDataAndRuns(data);

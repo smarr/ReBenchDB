@@ -177,11 +177,7 @@ export async function addMember(
     return;
   }
   if (!isProjectRole(role)) {
-    jsonError(
-      ctx,
-      400,
-      `role must be one of: ${PROJECT_ROLES.join(', ')}`
-    );
+    jsonError(ctx, 400, `role must be one of: ${PROJECT_ROLES.join(', ')}`);
     return;
   }
 
@@ -225,11 +221,7 @@ export async function updateMember(
   const body = ctx.request.body as any;
   const role = body?.role;
   if (!isProjectRole(role)) {
-    jsonError(
-      ctx,
-      400,
-      `role must be one of: ${PROJECT_ROLES.join(', ')}`
-    );
+    jsonError(ctx, 400, `role must be one of: ${PROJECT_ROLES.join(', ')}`);
     return;
   }
 
@@ -238,11 +230,7 @@ export async function updateMember(
     if (current === 'owner') {
       const owners = await countOwners(db, projectId);
       if (owners <= 1) {
-        jsonError(
-          ctx,
-          409,
-          'Cannot demote the last owner of the project'
-        );
+        jsonError(ctx, 409, 'Cannot demote the last owner of the project');
         return;
       }
     }

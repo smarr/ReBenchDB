@@ -194,8 +194,9 @@ router.post('/admin/api/projects', requireAuth(db), koaBody(), async (ctx) =>
   createProject(ctx, db)
 );
 router.get(
-  '/admin/api/projects/:projectId/members', requireAuth(db), async (ctx) =>
-    getMembers(ctx, db)
+  '/admin/api/projects/:projectId/members',
+  requireAuth(db),
+  async (ctx) => getMembers(ctx, db)
 );
 router.post(
   '/admin/api/projects/:projectId/members',
