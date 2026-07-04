@@ -14,6 +14,22 @@ env:
   LC_ALL: en_US.UTF-8
 
 jobs:
+  pre-merge-todo-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout ReBench
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '26'
+
+      - name: Check Pre-Merge TODO
+        run: |
+          node .github/scripts/check-pre-merge-todo.mjs
+
   build-and-test:
     runs-on: ubuntu-latest
 
