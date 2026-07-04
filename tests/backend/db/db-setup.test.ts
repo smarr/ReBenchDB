@@ -296,17 +296,13 @@ describe('Recording a ReBench execution from payload files', () => {
     // now, manually do the recording
     const r = smallTestData.data[0];
 
-    // and pretend there's no data yet
-    const availableMs = {};
-
     const run = await db.recordRun(r.runId);
 
     const recordedMeasurements = await db.recordMeasurements(
       <DataPoint[]>r.d,
       run,
       trial,
-      criteria,
-      availableMs
+      criteria
     );
     expect(recordedMeasurements).toEqual(0);
   });

@@ -303,7 +303,7 @@ describe('createValueBatchForInsertion()', () => {
   it('should add to the batchedValues', async () => {
     const db = new BatchTestDatabase();
     const batched: any[] = [];
-    db.createValueBatchForInsertion(dps, run1, trial1, criteria, {}, batched);
+    db.createValueBatchForInsertion(dps, run1, trial1, criteria, batched);
 
     expect(batched).toHaveLength(3 * Database.batchInsertSize);
 
@@ -316,7 +316,7 @@ describe('createValueBatchForInsertion()', () => {
   it('should add "total" values to timeline updater', () => {
     const db = new BatchTestDatabase();
     const batched: any[] = [];
-    db.createValueBatchForInsertion(dps, run1, trial1, criteria, {}, batched);
+    db.createValueBatchForInsertion(dps, run1, trial1, criteria, batched);
 
     expect(addValues).toHaveBeenCalledWith(1, 1, 12, [7, 8, 9]);
   });
@@ -324,7 +324,7 @@ describe('createValueBatchForInsertion()', () => {
   it('should map criteria to correct db ids (simple)', () => {
     const db = new BatchTestDatabase();
     const batched: any[] = [];
-    db.createValueBatchForInsertion(dps, run1, trial1, criteria, {}, batched);
+    db.createValueBatchForInsertion(dps, run1, trial1, criteria, batched);
 
     const bIdx = 3; // 4th element in the batch
     expect(batched[Database.batchInsertSize * 0 + bIdx]).toEqual(10);
@@ -341,7 +341,7 @@ describe('createValueBatchForInsertion()', () => {
     ];
     const db = new BatchTestDatabase();
     const batched: any[] = [];
-    db.createValueBatchForInsertion(dps, run1, trial1, criteria, {}, batched);
+    db.createValueBatchForInsertion(dps, run1, trial1, criteria, batched);
 
     expect(batched).toHaveLength(2 * Database.batchInsertSize);
 
@@ -359,7 +359,7 @@ describe('createValueBatchForInsertion()', () => {
     ];
     const db = new BatchTestDatabase();
     const batched: any[] = [];
-    db.createValueBatchForInsertion(dps, run1, trial1, criteria, {}, batched);
+    db.createValueBatchForInsertion(dps, run1, trial1, criteria, batched);
 
     expect(batched).toHaveLength(1 * Database.batchInsertSize);
 

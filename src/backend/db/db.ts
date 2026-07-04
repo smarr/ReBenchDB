@@ -39,12 +39,6 @@ import { TimedCacheValidity } from './timed-cache-validity.js';
 import { HasProfile } from './has-profile.js';
 import type { BatchingTimelineUpdater } from '../timeline/timeline-calc.js';
 
-export type AvailableMeasurements = {
-  [runId: number]: {
-    [critId: number]: { [inv: number]: number };
-  };
-};
-
 type MeasurementValueArray = [
   /* runId */ number,
   /* trialId */ number,
@@ -902,65 +896,6 @@ export abstract class Database {
     return criteria;
   }
 
-  private async retrieveAvailableMeasurements(
-    trialId: number
-  ): Promise<AvailableMeasurements> {
-    const results = await this.query({
-      name: 'fetchAvailableMeasurements',
-      text: `SELECT
-              runId,
-              criterion,
-              invocation as inv,
-              array_length(values, 1) as ite
-            FROM Measurement
-            WHERE trialId = $1
-            GROUP BY runId, criterion, invocation, values
-            ORDER BY runId, inv, ite, criterion`,
-      values: [trialId]
-    });
-
-    const measurements = {};
-    for (const r of results.rows) {
-      // runid, criterion, inv, ite
-      if (!(r.runid in measurements)) {
-        measurements[r.runid] = {};
-      }
-
-      const run = measurements[r.runid];
-
-      if (!(r.criterion in run)) {
-        run[r.criterion] = {};
-      }
-
-      const crit = run[r.criterion];
-
-      assert(
-        !(r.inv in crit),
-        `${r.runid}, ${r.criterion}, ${r.inv} in ${JSON.stringify(crit)}`
-      );
-      crit[r.inv] = r.ite;
-    }
-
-    return measurements;
-  }
-
-  private alreadyRecorded(
-    measurements: AvailableMeasurements,
-    runId: number,
-    inv: number,
-    critId: number
-  ) {
-    if (runId in measurements) {
-      const run = measurements[runId];
-      if (critId in run) {
-        const crit = run[critId];
-        return inv in crit;
-      }
-    }
-
-    return false;
-  }
-
   private async recordMeasurementsFromBatch(batchedValues: any[]) {
     let recordedMeasurements = 0;
 
@@ -1019,7 +954,6 @@ export abstract class Database {
     run: Run,
     trial: Trial,
     criteria: Map<number, Criterion>,
-    availableMs: AvailableMeasurements,
     batchedValues: any[]
   ): void {
     for (const d of dataPoints) {
@@ -1037,11 +971,6 @@ export abstract class Database {
 
         // batched inserts are much faster
         // so let's do this
-        if (this.alreadyRecorded(availableMs, run.id, d.in, criterion.id)) {
-          // then,just skip this one.
-          continue;
-        }
-
         if (this.timelineUpdater && criterion.name === TotalCriterion) {
           this.timelineUpdater.addValues(run.id, trial.id, criterion.id, m);
         }
@@ -1057,8 +986,7 @@ export abstract class Database {
     dataPoints: ApiDataPoint[],
     run: Run,
     trial: Trial,
-    criteria: Map<number, Criterion>,
-    availableMs: AvailableMeasurements
+    criteria: Map<number, Criterion>
   ): Promise<number> {
     let recordedMeasurements = 0;
     let batchedValues: any[] = [];
@@ -1068,7 +996,6 @@ export abstract class Database {
       run,
       trial,
       criteria,
-      availableMs,
       batchedValues
     );
 
@@ -1157,13 +1084,11 @@ export abstract class Database {
       const run = await this.recordRun(r.runId);
 
       if (r.d) {
-        const availableMs = await this.retrieveAvailableMeasurements(trial.id);
         recordedMeasurements += await this.recordMeasurements(
           r.d,
           run,
           trial,
-          criteria,
-          availableMs
+          criteria
         );
       }
 
