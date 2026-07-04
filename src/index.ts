@@ -21,15 +21,12 @@ import {
 } from './backend/main/main.js';
 import {
   getSourceAsJson,
-  redirectToNewProjectDataExportUrl,
-  redirectToNewProjectDataUrl,
   renderDataExport,
   renderProjectDataPage,
   renderProjectPage
 } from './backend/project/project.js';
 import {
   getTimelineAsJson,
-  redirectToNewTimelineUrl,
   renderTimeline
 } from './backend/timeline/timeline.js';
 import {
@@ -44,7 +41,6 @@ import {
   getMeasurementsAsJson,
   getProfileAsJson,
   getTimelineDataAsJson,
-  redirectToNewCompareUrl,
   renderComparePage
 } from './backend/compare/compare.js';
 import { getAvailableDataAsJson } from './backend/project/data-export.js';
@@ -110,19 +106,6 @@ router.get('/:projectSlug/data/:expIdAndExtension', async (ctx) => {
 });
 router.get('/:projectSlug/compare/:baseline..:change', async (ctx) =>
   renderComparePage(ctx, db)
-);
-// DEPRECATED: remove for 1.0
-router.get('/timeline/:projectId', async (ctx) =>
-  redirectToNewTimelineUrl(ctx, db)
-);
-router.get('/project/:projectId', async (ctx) =>
-  redirectToNewProjectDataUrl(ctx, db)
-);
-router.get('/rebenchdb/get-exp-data/:expId', async (ctx) =>
-  redirectToNewProjectDataExportUrl(ctx, db)
-);
-router.get('/compare/:project/:baseline/:change', async (ctx) =>
-  redirectToNewCompareUrl(ctx, db)
 );
 
 // todo: rename this to say that this endpoint gets the last 100 measurements

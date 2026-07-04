@@ -1,8 +1,5 @@
 import { ParameterizedContext } from 'koa';
-import {
-  respondProjectIdNotFound,
-  respondProjectNotFound
-} from '../common/standard-responses.js';
+import { respondProjectNotFound } from '../common/standard-responses.js';
 import { prepareTemplate } from '../templates.js';
 import { TimelineSuite } from '../../shared/api.js';
 import { Database } from '../db/db.js';
@@ -36,21 +33,6 @@ export async function getTimelineAsJson(
   ctx.body = await db.getTimelineForRun(projectId, runId);
   if (ctx.body === null) {
     ctx.status = 500;
-  }
-}
-
-/**
- * @deprecated remove for 1.0
- */
-export async function redirectToNewTimelineUrl(
-  ctx: ParameterizedContext,
-  db: Database
-): Promise<void> {
-  const project = await db.getProject(Number(ctx.params.projectId));
-  if (project) {
-    ctx.redirect(`/${project.slug}/timeline`);
-  } else {
-    respondProjectIdNotFound(ctx, Number(ctx.params.projectId));
   }
 }
 

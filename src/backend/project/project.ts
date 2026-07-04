@@ -1,9 +1,7 @@
 import { ParameterizedContext } from 'koa';
 import { prepareTemplate } from '../templates.js';
 import {
-  respondExpIdNotFound,
   respondProjectAndSourceNotFound,
-  respondProjectIdNotFound,
   respondProjectNotFound
 } from '../common/standard-responses.js';
 import {
@@ -50,22 +48,6 @@ export async function getSourceAsJson(
   }
 }
 
-/**
- * @deprecated remove for 1.0
- */
-export async function redirectToNewProjectDataUrl(
-  ctx: ParameterizedContext,
-  db: Database
-): Promise<void> {
-  const project = await db.getProject(Number(ctx.params.projectId));
-  if (project) {
-    ctx.redirect(`/${project.slug}/data`);
-  } else {
-    respondProjectIdNotFound(ctx, Number(ctx.params.projectId));
-  }
-  ctx.type = 'html';
-}
-
 const projectDataTpl = prepareTemplate(
   robustPath('backend/project/project-data.html'),
   false
@@ -81,21 +63,6 @@ export async function renderProjectDataPage(
     ctx.type = 'html';
   } else {
     respondProjectNotFound(ctx, ctx.params.projectSlug);
-  }
-}
-
-/**
- * @deprecated remove for 1.0
- */
-export async function redirectToNewProjectDataExportUrl(
-  ctx: ParameterizedContext,
-  db: Database
-): Promise<void> {
-  const project = await db.getProjectByExpId(Number(ctx.params.expId));
-  if (project) {
-    ctx.redirect(`/${project.slug}/data/${ctx.params.expId}`);
-  } else {
-    respondExpIdNotFound(ctx, ctx.params.expId);
   }
 }
 

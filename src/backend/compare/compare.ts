@@ -10,7 +10,6 @@ import type {
   WarmupDataForTrial,
   WarmupDataPerCriterion
 } from '../../shared/view-types.js';
-import { respondProjectNotFound } from '../common/standard-responses.js';
 import { refreshSecret } from '../util.js';
 import { deleteReport, renderCompare } from './report.js';
 import type { TimelineRequest } from '../../shared/api.js';
@@ -186,23 +185,6 @@ export async function getTimelineDataAsJson(
     ctx.status = 200;
   }
   ctx.type = 'json';
-}
-
-/**
- * @deprecated remove for 1.0
- */
-export async function redirectToNewCompareUrl(
-  ctx: ParameterizedContext,
-  db: Database
-): Promise<void> {
-  const project = await db.getProjectByName(ctx.params.project);
-  if (project) {
-    ctx.redirect(
-      `/${project.slug}/compare/${ctx.params.baseline}..${ctx.params.change}`
-    );
-  } else {
-    respondProjectNotFound(ctx, ctx.params.project);
-  }
 }
 
 export async function renderComparePage(
