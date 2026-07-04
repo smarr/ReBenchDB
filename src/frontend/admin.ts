@@ -22,20 +22,14 @@ const ROLES: ProjectRole[] = ['view', 'edit', 'owner'];
 let myProjects: MyProject[] = [];
 let selectedProjectId: number | null = null;
 
-function $id(id: string): HTMLElement {
-  const el = document.getElementById(id);
-  if (!el) throw new Error(`Missing element #${id}`);
-  return el;
-}
-
 function showAlert(id: string, message: string): void {
-  const el = $id(id);
-  el.textContent = message;
-  el.classList.remove('d-none');
+  const el = $(id);
+  el.text(message);
+  el.removeClass('d-none');
 }
 
 function hideAlert(id: string): void {
-  $id(id).classList.add('d-none');
+  $(id).addClass('d-none');
 }
 
 async function readJson(res: Response): Promise<any> {
@@ -68,14 +62,14 @@ async function fetchMyProjects(): Promise<void> {
 }
 
 function renderProjectsList(): void {
-  const ul = $id('admin-projects-list');
-  const empty = $id('admin-no-projects');
-  ul.innerHTML = '';
+  const ul = $('#admin-projects-list');
+  const empty = $('#admin-no-projects');
+  ul.html('');
   if (myProjects.length === 0) {
-    empty.classList.remove('d-none');
+    empty.removeClass('d-none');
     return;
   }
-  empty.classList.add('d-none');
+  empty.addClass('d-none');
   for (const p of myProjects) {
     const li = document.createElement('li');
     li.className =
@@ -92,7 +86,7 @@ function renderProjectsList(): void {
       <span class="badge bg-secondary">${escapeForHtml(p.role)}</span>
     `;
     li.addEventListener('click', () => selectProject(p.id));
-    ul.appendChild(li);
+    ul.append(li);
   }
 }
 
@@ -100,33 +94,33 @@ async function selectProject(projectId: number): Promise<void> {
   selectedProjectId = projectId;
   selectedGroupId = null;
   renderGroupsList();
-  $id('admin-group-card').style.display = 'none';
+  $('#admin-group-card').hide();
   renderProjectsList();
 
   const project = myProjects.find((p) => p.id === projectId);
   if (!project) return;
 
-  const card = $id('admin-members-card');
-  const placeholder = $id('admin-members-placeholder');
-  const nameEl = $id('admin-members-project-name');
-  const notOwnerAlert = $id('admin-members-not-owner');
-  const addSection = $id('admin-add-member-section');
-  const tbody = $id('admin-members-tbody');
+  const card = $('#admin-members-card');
+  const placeholder = $('#admin-members-placeholder');
+  const nameEl = $('#admin-members-project-name');
+  const notOwnerAlert = $('#admin-members-not-owner');
+  const addSection = $('#admin-add-member-section');
+  const tbody = $('#admin-members-tbody');
 
-  nameEl.textContent = project.name;
-  card.style.display = 'block';
-  placeholder.style.display = 'none';
+  nameEl.text(project.name);
+  card.show();
+  placeholder.hide();
   hideAlert('admin-members-error');
 
   if (project.role !== 'owner') {
-    notOwnerAlert.classList.remove('d-none');
-    addSection.style.display = 'none';
-    tbody.innerHTML = '';
+    notOwnerAlert.removeClass('d-none');
+    addSection.hide();
+    tbody.html('');
     return;
   }
 
-  notOwnerAlert.classList.add('d-none');
-  addSection.style.display = '';
+  notOwnerAlert.addClass('d-none');
+  addSection.show();
 
   try {
     const res = await fetch(`/admin/api/projects/${projectId}/members`, {
@@ -138,7 +132,7 @@ async function selectProject(projectId: number): Promise<void> {
         'admin-members-error',
         data.error || `Server error (${res.status})`
       );
-      tbody.innerHTML = '';
+      tbody.html('');
       return;
     }
     renderMembersTable(projectId, data.members || []);
@@ -148,8 +142,8 @@ async function selectProject(projectId: number): Promise<void> {
 }
 
 function renderMembersTable(projectId: number, members: Member[]): void {
-  const tbody = $id('admin-members-tbody');
-  tbody.innerHTML = '';
+  const tbody = $('#admin-members-tbody');
+  tbody.html('');
   for (const m of members) {
     const tr = document.createElement('tr');
     const roleOptions = ROLES.map(
@@ -169,24 +163,22 @@ function renderMembersTable(projectId: number, members: Member[]): void {
           data-user-id="${m.userId}">Remove</button>
       </td>
     `;
-    tbody.appendChild(tr);
+    tbody.append(tr);
   }
 
-  tbody
-    .querySelectorAll<HTMLSelectElement>('.member-role-select')
-    .forEach((select) => {
-      const userId = Number(select.dataset.userId);
-      const originalRole = select.value as ProjectRole;
-      select.addEventListener('change', () =>
-        changeMemberRole(projectId, userId, select, originalRole)
-      );
-    });
-  tbody
-    .querySelectorAll<HTMLButtonElement>('.member-remove-btn')
-    .forEach((btn) => {
-      const userId = Number(btn.dataset.userId);
-      btn.addEventListener('click', () => removeMember(projectId, userId));
-    });
+  tbody.find('.member-role-select').each((_, s) => {
+    const select = s as HTMLSelectElement;
+    const userId = Number(select.dataset.userId);
+    const originalRole = select.value as ProjectRole;
+    select.addEventListener('change', () =>
+      changeMemberRole(projectId, userId, select, originalRole)
+    );
+  });
+  tbody.find('.member-remove-btn').each((_, b) => {
+    const btn = b as HTMLButtonElement;
+    const userId = Number(btn.dataset.userId);
+    btn.addEventListener('click', () => removeMember(projectId, userId));
+  });
 }
 
 async function changeMemberRole(
@@ -250,15 +242,23 @@ async function removeMember(projectId: number, userId: number): Promise<void> {
   }
 }
 
+function trim(val: number | string | string[] | undefined): string {
+  if (typeof val === 'string') {
+    return val.trim();
+  }
+  if (Array.isArray(val)) {
+    throw new Error('Expected a single string value, but got an array.');
+  }
+  return String(val).trim();
+}
+
 function wireCreateProject(): void {
-  const form = $id('create-project-form') as HTMLFormElement;
-  form.addEventListener('submit', async (e) => {
+  const form = $('#create-project-form');
+  form.on('submit', async (e) => {
     e.preventDefault();
     hideAlert('create-project-error');
-    const name = ($id('create-project-name') as HTMLInputElement).value.trim();
-    const description = (
-      $id('create-project-description') as HTMLTextAreaElement
-    ).value.trim();
+    const name = trim($('#create-project-name').val());
+    const description = trim($('#create-project-description').val());
     if (!name) return;
     try {
       const res = await fetch('/admin/api/projects', {
@@ -277,7 +277,7 @@ function wireCreateProject(): void {
         );
         return;
       }
-      form.reset();
+      form.trigger('reset');
       await fetchMyProjects();
       if (data.project?.id) {
         selectProject(data.project.id);
@@ -289,15 +289,13 @@ function wireCreateProject(): void {
 }
 
 function wireAddMember(): void {
-  const form = $id('add-member-form') as HTMLFormElement;
-  form.addEventListener('submit', async (e) => {
+  const form = $('#add-member-form');
+  form.on('submit', async (e) => {
     e.preventDefault();
     hideAlert('admin-members-error');
     if (selectedProjectId === null) return;
-    const username = (
-      $id('add-member-username') as HTMLInputElement
-    ).value.trim();
-    const role = ($id('add-member-role') as HTMLSelectElement).value;
+    const username = trim($('#add-member-username').val());
+    const role = $('#add-member-role').val();
     if (!username) return;
     try {
       const res = await fetch(
@@ -319,7 +317,7 @@ function wireAddMember(): void {
         );
         return;
       }
-      form.reset();
+      form.trigger('reset');
       selectProject(selectedProjectId);
     } catch {
       showAlert('admin-members-error', 'Network error adding member.');
@@ -333,25 +331,26 @@ async function fetchApiTokenStatus(): Promise<void> {
       headers: { Accept: 'application/json' }
     });
     const data = await readJson(res);
-    const statusEl = $id('api-token-status');
+    const statusEl = $('#api-token-status');
     if (!res.ok) {
-      statusEl.textContent = 'Could not load token status.';
+      statusEl.text('Could not load token status.');
       return;
     }
     if (data.hasToken) {
-      // eslint-disable-next-line max-len
-      statusEl.innerHTML = `Token set &mdash; ends in <code>…${escapeForHtml(data.suffix)}</code>`;
+      statusEl.html(
+        `Token set &mdash; ends in <code>…${escapeForHtml(data.suffix)}</code>`
+      );
     } else {
-      statusEl.textContent = 'No token set.';
+      statusEl.text('No token set.');
     }
   } catch {
-    $id('api-token-status').textContent = 'Network error loading token status.';
+    $('#api-token-status').text('Network error loading token status.');
   }
 }
 
 function wireApiToken(): void {
-  const btn = $id('api-token-generate-btn');
-  btn.addEventListener('click', async () => {
+  const btn = $('#api-token-generate-btn');
+  btn.on('click', async () => {
     if (
       !confirm(
         // eslint-disable-next-line max-len
@@ -369,9 +368,9 @@ function wireApiToken(): void {
         alert(data.error || `Server error (${res.status})`);
         return;
       }
-      const reveal = $id('api-token-reveal');
-      ($id('api-token-value') as HTMLElement).textContent = data.token;
-      reveal.classList.remove('d-none');
+      const reveal = $('#api-token-reveal');
+      $('#api-token-value').text(data.token);
+      reveal.removeClass('d-none');
       await fetchApiTokenStatus();
     } catch {
       alert('Network error generating token.');
@@ -420,14 +419,14 @@ async function fetchGroups(): Promise<void> {
 }
 
 function renderGroupsList(): void {
-  const ul = $id('admin-groups-list');
-  const empty = $id('admin-no-groups');
-  ul.innerHTML = '';
+  const ul = $('#admin-groups-list');
+  const empty = $('#admin-no-groups');
+  ul.html('');
   if (groups.length === 0) {
-    empty.classList.remove('d-none');
+    empty.removeClass('d-none');
     return;
   }
-  empty.classList.add('d-none');
+  empty.addClass('d-none');
   for (const g of groups) {
     const li = document.createElement('li');
     li.className =
@@ -441,7 +440,7 @@ function renderGroupsList(): void {
       </span>
     `;
     li.addEventListener('click', () => selectGroup(g.id));
-    ul.appendChild(li);
+    ul.append(li);
   }
 }
 
@@ -479,12 +478,12 @@ async function selectGroup(groupId: number): Promise<void> {
   const group = groups.find((g) => g.id === groupId);
   if (!group) return;
 
-  $id('admin-group-name').textContent = group.name;
-  $id('admin-group-card').style.display = 'block';
-  $id('admin-members-card').style.display = 'none';
-  $id('admin-members-placeholder').style.display = 'none';
+  $('#admin-group-name').text(group.name);
+  $('#admin-group-card').show();
+  $('#admin-members-card').hide();
+  $('#admin-members-placeholder').hide();
   hideAlert('admin-group-error');
-  $id('assign-group-result').classList.add('d-none');
+  $('#assign-group-result').addClass('d-none');
 
   populateOwnerProjectSelect();
 
@@ -498,7 +497,7 @@ async function selectGroup(groupId: number): Promise<void> {
         'admin-group-error',
         data.error || `Server error (${res.status})`
       );
-      $id('admin-group-members-tbody').innerHTML = '';
+      $('#admin-group-members-tbody').html('');
       return;
     }
     renderGroupMembersTable(groupId, data.members || []);
@@ -511,11 +510,12 @@ function renderGroupMembersTable(
   groupId: number,
   members: GroupMember[]
 ): void {
-  const tbody = $id('admin-group-members-tbody');
-  tbody.innerHTML = '';
+  const tbody = $('#admin-group-members-tbody');
+  tbody.html('');
   if (members.length === 0) {
-    tbody.innerHTML =
-      '<tr><td colspan="3" class="text-muted">No members yet.</td></tr>';
+    tbody.html(
+      '<tr><td colspan="3" class="text-muted">No members yet.</td></tr>'
+    );
     return;
   }
   for (const m of members) {
@@ -529,14 +529,12 @@ function renderGroupMembersTable(
           data-user-id="${m.userId}">Remove</button>
       </td>
     `;
-    tbody.appendChild(tr);
+    tbody.append(tr);
   }
-  tbody
-    .querySelectorAll<HTMLButtonElement>('.group-member-remove-btn')
-    .forEach((btn) => {
-      const userId = Number(btn.dataset.userId);
-      btn.addEventListener('click', () => removeGroupMember(groupId, userId));
-    });
+  tbody.find('.group-member-remove-btn').each((idx, btn) => {
+    const userId = Number(btn.dataset.userId);
+    btn.addEventListener('click', () => removeGroupMember(groupId, userId));
+  });
 }
 
 async function removeGroupMember(
@@ -584,8 +582,8 @@ async function deleteSelectedGroup(): Promise<void> {
       return;
     }
     selectedGroupId = null;
-    $id('admin-group-card').style.display = 'none';
-    $id('admin-members-placeholder').style.display = '';
+    $('#admin-group-card').addClass('d-none');
+    $('#admin-members-placeholder').removeClass('d-none');
     await fetchGroups();
   } catch {
     showAlert('admin-group-error', 'Network error deleting group.');
@@ -593,14 +591,12 @@ async function deleteSelectedGroup(): Promise<void> {
 }
 
 function wireCreateGroup(): void {
-  const form = $id('create-group-form') as HTMLFormElement;
-  form.addEventListener('submit', async (e) => {
+  const form = $('#create-group-form');
+  form.on('submit', async (e) => {
     e.preventDefault();
     hideAlert('create-group-error');
-    const name = ($id('create-group-name') as HTMLInputElement).value.trim();
-    const description = (
-      $id('create-group-description') as HTMLTextAreaElement
-    ).value.trim();
+    const name = trim($('#create-group-name').val());
+    const description = trim($('#create-group-description').val());
     if (!name) return;
     try {
       const res = await fetch('/admin/api/groups', {
@@ -619,7 +615,7 @@ function wireCreateGroup(): void {
         );
         return;
       }
-      form.reset();
+      form.trigger('reset');
       await fetchGroups();
       if (data.group?.id) selectGroup(data.group.id);
     } catch {
@@ -629,14 +625,12 @@ function wireCreateGroup(): void {
 }
 
 function wireAddGroupMember(): void {
-  const form = $id('add-group-member-form') as HTMLFormElement;
-  form.addEventListener('submit', async (e) => {
+  const form = $('#add-group-member-form');
+  form.on('submit', async (e) => {
     e.preventDefault();
     hideAlert('admin-group-error');
     if (selectedGroupId === null) return;
-    const username = (
-      $id('add-group-member-username') as HTMLInputElement
-    ).value.trim();
+    const username = trim($('#add-group-member-username').val());
     if (!username) return;
     try {
       const res = await fetch(`/admin/api/groups/${selectedGroupId}/members`, {
@@ -655,7 +649,7 @@ function wireAddGroupMember(): void {
         );
         return;
       }
-      form.reset();
+      form.trigger('reset');
       await fetchGroups();
       await selectGroup(selectedGroupId);
     } catch {
@@ -665,17 +659,15 @@ function wireAddGroupMember(): void {
 }
 
 function wireAssignGroupToProject(): void {
-  const form = $id('assign-group-form') as HTMLFormElement;
-  const resultEl = $id('assign-group-result');
-  form.addEventListener('submit', async (e) => {
+  const form = $('#assign-group-form');
+  const resultEl = $('#assign-group-result');
+  form.on('submit', async (e) => {
     e.preventDefault();
     hideAlert('admin-group-error');
-    resultEl.classList.add('d-none');
+    resultEl.addClass('d-none');
     if (selectedGroupId === null) return;
-    const projectId = Number(
-      ($id('assign-group-project') as HTMLSelectElement).value
-    );
-    const role = ($id('assign-group-role') as HTMLSelectElement).value;
+    const projectId = Number($('#assign-group-project').val());
+    const role = $('#assign-group-role').val();
     if (!projectId) {
       showAlert('admin-group-error', 'Please select a project.');
       return;
@@ -699,8 +691,8 @@ function wireAssignGroupToProject(): void {
       }
       const added: number = data.added ?? 0;
       const members = 'member' + (added === 1 ? '' : 's');
-      resultEl.textContent = `${added} ${members} added to project.`;
-      resultEl.className = 'mt-2 alert alert-success';
+      resultEl.text(`${added} ${members} added to project.`);
+      resultEl.addClass('mt-2 alert alert-success');
     } catch {
       showAlert('admin-group-error', 'Network error assigning group.');
     }
@@ -708,17 +700,15 @@ function wireAssignGroupToProject(): void {
 }
 
 function wireAddGroupToProject(): void {
-  const form = $id('add-group-to-project-form') as HTMLFormElement;
-  const resultEl = $id('add-group-to-project-result');
-  form.addEventListener('submit', async (e) => {
+  const form = $('#add-group-to-project-form');
+  const resultEl = $('#add-group-to-project-result');
+  form.on('submit', async (e) => {
     e.preventDefault();
     hideAlert('admin-members-error');
-    resultEl.classList.add('d-none');
+    resultEl.addClass('d-none');
     if (selectedProjectId === null) return;
-    const groupId = Number(
-      ($id('add-group-to-project-select') as HTMLSelectElement).value
-    );
-    const role = ($id('add-group-to-project-role') as HTMLSelectElement).value;
+    const groupId = Number($('#add-group-to-project-select').val());
+    const role = $('#add-group-to-project-role').val();
     if (!groupId) {
       showAlert('admin-members-error', 'Please select a group.');
       return;
@@ -745,8 +735,8 @@ function wireAddGroupToProject(): void {
       }
       const added: number = data.added ?? 0;
       const members = 'member' + (added === 1 ? '' : 's');
-      resultEl.textContent = `${added} ${members} added to project.`;
-      resultEl.className = 'mt-2 alert alert-success';
+      resultEl.text(`${added} ${members} added to project.`);
+      resultEl.addClass('mt-2 alert alert-success');
       if (added > 0) selectProject(selectedProjectId);
     } catch {
       showAlert(
@@ -758,7 +748,7 @@ function wireAddGroupToProject(): void {
 }
 
 function wireDeleteGroup(): void {
-  $id('admin-group-delete-btn').addEventListener('click', deleteSelectedGroup);
+  $('#admin-group-delete-btn').on('click', deleteSelectedGroup);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
