@@ -1,16 +1,10 @@
 import type { AllResults } from '../shared/api.js';
 import type { ChangesResponse, ChangesRow } from '../shared/view-types.js';
 import { renderResultsPlots } from './plots.js';
+import { escapeForHtml } from './utils.js';
 
 export function filterCommitMessage(msg: string): string {
-  const result = msg
-    .normalize() // normalise Unicode first
-    .replace(/Signed-off-by:.*?\n/g, '')
-    .replace(/&/g, '&amp;') // & must be first
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+  const result = escapeForHtml(msg).replace(/Signed-off-by:.*?\n/g, '');
   return result.trim();
 }
 
