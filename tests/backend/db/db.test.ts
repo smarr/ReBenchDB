@@ -45,7 +45,9 @@ describe('Record Trial', () => {
   });
 
   afterAll(async () => {
-    return db.close();
+    if (db) {
+      return db.close();
+    }
   });
 
   it('the database should not have any trials', async () => {
@@ -143,7 +145,9 @@ describe('Timeline-plot Queries', () => {
   });
 
   afterAll(async () => {
-    return db.close();
+    if (db) {
+      return db.close();
+    }
   });
 
   describe('Retrieving branch names based on commit ids', () => {

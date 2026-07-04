@@ -75,7 +75,9 @@ describe('Test basic performance self-tracking', () => {
   });
 
   afterAll(async () => {
-    return db.close();
+    if (db) {
+      return db.close();
+    }
   });
 });
 

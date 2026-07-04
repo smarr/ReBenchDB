@@ -67,7 +67,9 @@ describe('Test with basic test data loaded', () => {
   });
 
   afterAll(async () => {
-    return db.close();
+    if (db) {
+      return db.close();
+    }
   });
 
   it('Should get a project', async () => {
