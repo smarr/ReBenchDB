@@ -48,7 +48,7 @@ describe('Test with basic test data loaded', () => {
     // have a second experiment in the database
     basicTestData.experimentName += ' 2';
     expName2 = basicTestData.experimentName;
-    basicTestData.startTime = '2019-12-14T22:49:56';
+    basicTestData.startTime = '2019-12-14T22:49:56Z';
     basicTestData.source.branchOrTag = 'exp2';
     basicTestData.source.commitId = '2222222222222222222222222222222222222222';
 
@@ -57,7 +57,7 @@ describe('Test with basic test data loaded', () => {
     // have a merge in the database
     basicTestData.experimentName += ' 3';
     expNameMerge = basicTestData.experimentName;
-    basicTestData.startTime = '2019-12-15T22:49:56';
+    basicTestData.startTime = '2019-12-15T22:49:56Z';
     basicTestData.source.branchOrTag = baseBranch;
     basicTestData.source.commitId = '3333333333333333333333333333333333333333';
 
@@ -67,7 +67,9 @@ describe('Test with basic test data loaded', () => {
   });
 
   afterAll(async () => {
-    return db.close();
+    if (db) {
+      return db.close();
+    }
   });
 
   it('Should get a project', async () => {

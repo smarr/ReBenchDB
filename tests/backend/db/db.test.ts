@@ -45,7 +45,9 @@ describe('Record Trial', () => {
   });
 
   afterAll(async () => {
-    return db.close();
+    if (db) {
+      return db.close();
+    }
   });
 
   it('the database should not have any trials', async () => {
@@ -117,7 +119,7 @@ describe('Timeline-plot Queries', () => {
 
     // have a second experiment in the database
     basicTestData.experimentName += ' 2';
-    basicTestData.startTime = '2019-12-14T22:49:56';
+    basicTestData.startTime = '2019-12-14T22:49:56Z';
     changeBranch = basicTestData.source.branchOrTag = 'change-branch';
     changeCommitId = basicTestData.source.commitId =
       '2222222222222222222222222222222222222222';
@@ -127,7 +129,7 @@ describe('Timeline-plot Queries', () => {
 
     // have a merge in the database
     basicTestData.experimentName += ' 3';
-    basicTestData.startTime = '2019-12-15T22:49:56';
+    basicTestData.startTime = '2019-12-15T22:49:56Z';
     basicTestData.source.branchOrTag = baseBranch;
     baseCommitId = basicTestData.source.commitId =
       '3333333333333333333333333333333333333333';
@@ -143,7 +145,9 @@ describe('Timeline-plot Queries', () => {
   });
 
   afterAll(async () => {
-    return db.close();
+    if (db) {
+      return db.close();
+    }
   });
 
   describe('Retrieving branch names based on commit ids', () => {
@@ -303,7 +307,7 @@ describe('createValueBatchForInsertion()', () => {
   it('should add to the batchedValues', async () => {
     const db = new BatchTestDatabase();
     const batched: any[] = [];
-    db.createValueBatchForInsertion(dps, run1, trial1, criteria, {}, batched);
+    db.createValueBatchForInsertion(dps, run1, trial1, criteria, batched);
 
     expect(batched).toHaveLength(3 * Database.batchInsertSize);
 
@@ -316,7 +320,7 @@ describe('createValueBatchForInsertion()', () => {
   it('should add "total" values to timeline updater', () => {
     const db = new BatchTestDatabase();
     const batched: any[] = [];
-    db.createValueBatchForInsertion(dps, run1, trial1, criteria, {}, batched);
+    db.createValueBatchForInsertion(dps, run1, trial1, criteria, batched);
 
     expect(addValues).toHaveBeenCalledWith(1, 1, 12, [7, 8, 9]);
   });
@@ -324,7 +328,7 @@ describe('createValueBatchForInsertion()', () => {
   it('should map criteria to correct db ids (simple)', () => {
     const db = new BatchTestDatabase();
     const batched: any[] = [];
-    db.createValueBatchForInsertion(dps, run1, trial1, criteria, {}, batched);
+    db.createValueBatchForInsertion(dps, run1, trial1, criteria, batched);
 
     const bIdx = 3; // 4th element in the batch
     expect(batched[Database.batchInsertSize * 0 + bIdx]).toEqual(10);
@@ -341,7 +345,7 @@ describe('createValueBatchForInsertion()', () => {
     ];
     const db = new BatchTestDatabase();
     const batched: any[] = [];
-    db.createValueBatchForInsertion(dps, run1, trial1, criteria, {}, batched);
+    db.createValueBatchForInsertion(dps, run1, trial1, criteria, batched);
 
     expect(batched).toHaveLength(2 * Database.batchInsertSize);
 
@@ -359,7 +363,7 @@ describe('createValueBatchForInsertion()', () => {
     ];
     const db = new BatchTestDatabase();
     const batched: any[] = [];
-    db.createValueBatchForInsertion(dps, run1, trial1, criteria, {}, batched);
+    db.createValueBatchForInsertion(dps, run1, trial1, criteria, batched);
 
     expect(batched).toHaveLength(1 * Database.batchInsertSize);
 

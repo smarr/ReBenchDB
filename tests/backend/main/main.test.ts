@@ -29,7 +29,9 @@ describe('Test on empty DB', () => {
   });
 
   afterAll(async () => {
-    return db.close();
+    if (db) {
+      return db.close();
+    }
   });
 
   it('Should get empty results request', async () => {
@@ -142,7 +144,9 @@ describe('getLast100Measurements', () => {
   });
 
   afterAll(async () => {
-    return db.close();
+    if (db) {
+      return db.close();
+    }
   });
 
   it(`should only consider the total criterion

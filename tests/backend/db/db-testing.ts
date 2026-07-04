@@ -196,7 +196,7 @@ function getMainDB(): Database {
 }
 
 export async function closeMainDb(): Promise<void> {
-  if (mainDB !== null) {
+  if (mainDB) {
     return mainDB.close();
   }
 }

@@ -80,29 +80,41 @@ export async function acceptResultData(
   }
 
   try {
+    const numRuns = data.data.length;
     const recRunsPromise = db.recordMetaDataAndRuns(data);
     log.info(`/rebenchdb/results: Content-Length=${ctx.request.length}`);
-    const recordedRuns = await recRunsPromise;
-    db.recordAllData(data)
-      .then(([recMs, recPs]) =>
-        log.info(
-          // eslint-disable-next-line max-len
-          `/rebenchdb/results: stored ${recMs} sets of measurements, ${recPs} profiles`
-        )
-      )
-      .catch((e) => {
-        log.error('/rebenchdb/results failed to store measurements:', e.stack);
-      });
+    log.info(`/rebenchdb/results: Num Runs=${numRuns}`);
 
     ctx.body =
-      `Meta data for ${recordedRuns} stored.` +
-      ' Storing of measurements is ongoing';
+      `Data for ${numRuns} received.` + ' Storing of measurements ongoing';
     ctx.status = 201;
+
+    recRunsPromise
+      .then(() => {
+        db.recordAllData(data)
+          .then(([recMs, recPs]) => {
+            log.info(
+              // eslint-disable-next-line max-len
+              `/rebenchdb/results: stored ${recMs} sets of measurements, ${recPs} profiles`
+            );
+            completeRequestAndHandlePromise(start, db, 'put-results');
+          })
+          .catch((e) => {
+            log.error(
+              '/rebenchdb/results failed to store measurements:',
+              e.stack
+            );
+          });
+      })
+      .catch((e) => {
+        log.error(
+          '/rebenchdb/results failed to store metadata and runs:',
+          e.stack
+        );
+      });
   } catch (e: any) {
     ctx.status = 500;
     ctx.body = `${e.stack}`;
     log.error(e, e.stack);
   }
-
-  completeRequestAndHandlePromise(start, db, 'put-results');
 }
