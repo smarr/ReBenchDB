@@ -10,31 +10,22 @@ if (!fs.existsSync(todoFile)) {
 const content = fs.readFileSync(todoFile, 'utf8');
 const lines = content.split(/\r?\n/);
 
-const incompleteTasks = [];
+let incompleteTasks = 0;
+const reportLines = [];
 
 for (let i = 0; i < lines.length; i += 1) {
   const line = lines[i];
   if (/^\s*-\s*\[\s\]/.test(line)) {
     const taskText = line.replace(/^\s*-\s*\[\s+\]\s*/, '').trim();
-    incompleteTasks.push({
-      line: i + 1,
-      text: taskText || '(empty task text)'
-    });
+    incompleteTasks += 1;
+    reportLines.push(line);
+  } else if (line.startsWith('#')) {
+    reportLines.push(line);
   }
 }
 
-const reportLines = [];
 reportLines.push('Pre-merge TODO check failed.');
 reportLines.push(`File exists: ${todoFile}`);
-
-if (incompleteTasks.length > 0) {
-  reportLines.push('Incomplete markdown checkboxes found:');
-  for (const task of incompleteTasks) {
-    reportLines.push(`- [ ] ${task.text}`);
-  }
-} else {
-  reportLines.push('No unchecked markdown checkboxes were found in the file.');
-}
 
 const report = reportLines.join('\n');
 console.error(report);
