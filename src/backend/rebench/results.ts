@@ -3,10 +3,6 @@ import { ValidateFunction } from 'ajv';
 
 import { BenchmarkData } from '../../shared/api.js';
 import { Database } from '../db/db.js';
-import {
-  getUserByApiToken,
-  getUserRoleForProjectByName
-} from '../admin/admin-db.js';
 import { createValidator } from './api-validator.js';
 import { DEBUG } from '../util.js';
 import { log } from '../logging.js';
@@ -92,7 +88,9 @@ export async function acceptResultData(
     ctx.status = 401;
     return;
   }
-  // TODO(SM): Here, I deliberately did not keep the changes because I will need to figure out how to do this right. New code (based on the old version of this function) below.
+  // TODO(SM): Here, I deliberately did not keep the changes because
+  // I will need to figure out how to do this right. New code
+  // (based on the old version of this function) below.
   /*   // M2M endpoint: authenticated by API token rather than JWT/requireAuth,
      // with its own explicit role check above instead of relying on RLS — so
      // it deliberately runs as the pool's privileged connection.
@@ -111,7 +109,8 @@ export async function acceptResultData(
      );
      if (role !== 'edit' && role !== 'owner') {
      // eslint-disable-next-line max-len
-     ctx.body = `User does not have write permission on project "${data.projectName}".`;
+     ctx.body = 
+     `User does not have write permission on project "${data.projectName}".`;
      ctx.status = 403;
      return;
      }
@@ -127,7 +126,8 @@ export async function acceptResultData(
      .then(([recMs, recPs]) =>
      log.info(
      // eslint-disable-next-line max-len
-     `/rebenchdb/results: stored ${recMs} sets of measurements, ${recPs} profiles`
+     `/rebenchdb/results: stored ${recMs} sets of measurements,
+      ${recPs} profiles`
      )
      )
      .catch((e) => {

@@ -1,6 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 
-// eslint-disable-next-line max-len
 import pg, {
   PoolClient,
   PoolConfig,
