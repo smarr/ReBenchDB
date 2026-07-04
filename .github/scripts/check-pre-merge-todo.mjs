@@ -30,7 +30,7 @@ reportLines.push(`File exists: ${todoFile}`);
 if (incompleteTasks.length > 0) {
   reportLines.push('Incomplete markdown checkboxes found:');
   for (const task of incompleteTasks) {
-    reportLines.push(`- line ${task.line}: ${task.text}`);
+    reportLines.push(`- [ ] ${task.text}`);
   }
 } else {
   reportLines.push('No unchecked markdown checkboxes were found in the file.');
@@ -42,9 +42,9 @@ console.error(report);
 const summaryPath = process.env.GITHUB_STEP_SUMMARY;
 if (summaryPath) {
   fs.appendFileSync(summaryPath, '## Pre-merge TODO Check\n\n');
-  fs.appendFileSync(summaryPath, '```text\n');
+  fs.appendFileSync(summaryPath, '\n');
   fs.appendFileSync(summaryPath, `${report}\n`);
-  fs.appendFileSync(summaryPath, '```\n');
+  fs.appendFileSync(summaryPath, '\n');
 }
 
 // Intentionally fail while the pre-merge TODO file still exists.
