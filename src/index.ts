@@ -68,11 +68,7 @@ import {
   reportResultApiVersion
 } from './backend/rebench/results.js';
 import { requireAuth } from './backend/auth/auth-middleware.js';
-import {
-  login,
-  register,
-  renderLoginPage
-} from './backend/auth/auth-routes.js';
+import { login, register } from './backend/auth/auth-routes.js';
 import { setTimeout } from 'node:timers/promises';
 import { reportConnectionRefused } from './shared/errors.js';
 
