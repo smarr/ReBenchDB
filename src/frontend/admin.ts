@@ -1,3 +1,5 @@
+import { escapeForHtml } from './utils.js';
+
 type ProjectRole = 'view' | 'edit' | 'owner';
 
 interface MyProject {
@@ -34,15 +36,6 @@ function showAlert(id: string, message: string): void {
 
 function hideAlert(id: string): void {
   $id(id).classList.add('d-none');
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 }
 
 async function readJson(res: Response): Promise<any> {
@@ -93,10 +86,10 @@ function renderProjectsList(): void {
     li.style.cursor = 'pointer';
     li.innerHTML = `
       <span>
-        <strong>${escapeHtml(p.name)}</strong>
-        <small class="text-muted ms-2">/${escapeHtml(p.slug)}</small>
+        <strong>${escapeForHtml(p.name)}</strong>
+        <small class="text-muted ms-2">/${escapeForHtml(p.slug)}</small>
       </span>
-      <span class="badge bg-secondary">${escapeHtml(p.role)}</span>
+      <span class="badge bg-secondary">${escapeForHtml(p.role)}</span>
     `;
     li.addEventListener('click', () => selectProject(p.id));
     ul.appendChild(li);
@@ -164,8 +157,8 @@ function renderMembersTable(projectId: number, members: Member[]): void {
         `<option value="${r}"${r === m.role ? ' selected' : ''}>${r}</option>`
     ).join('');
     tr.innerHTML = `
-      <td>${escapeHtml(m.username)}</td>
-      <td>${escapeHtml(m.email)}</td>
+      <td>${escapeForHtml(m.username)}</td>
+      <td>${escapeForHtml(m.email)}</td>
       <td>
         <select class="form-select form-select-sm member-role-select"
           data-user-id="${m.userId}">${roleOptions}</select>
@@ -347,7 +340,7 @@ async function fetchApiTokenStatus(): Promise<void> {
     }
     if (data.hasToken) {
       // eslint-disable-next-line max-len
-      statusEl.innerHTML = `Token set &mdash; ends in <code>…${escapeHtml(data.suffix)}</code>`;
+      statusEl.innerHTML = `Token set &mdash; ends in <code>…${escapeForHtml(data.suffix)}</code>`;
     } else {
       statusEl.textContent = 'No token set.';
     }
@@ -442,7 +435,7 @@ function renderGroupsList(): void {
     if (g.id === selectedGroupId) li.classList.add('active');
     li.style.cursor = 'pointer';
     li.innerHTML = `
-      <strong>${escapeHtml(g.name)}</strong>
+      <strong>${escapeForHtml(g.name)}</strong>
       <span class="badge bg-secondary">
         ${g.memberCount} member${g.memberCount === 1 ? '' : 's'}
       </span>
@@ -459,7 +452,7 @@ function populateGroupSelect(): void {
   if (!select) return;
   const prev = select.value;
   select.innerHTML = groups
-    .map((g) => `<option value="${g.id}">${escapeHtml(g.name)}</option>`)
+    .map((g) => `<option value="${g.id}">${escapeForHtml(g.name)}</option>`)
     .join('');
   if (groups.some((g) => String(g.id) === prev)) select.value = prev;
 }
@@ -472,7 +465,7 @@ function populateOwnerProjectSelect(): void {
   const ownerProjects = myProjects.filter((p) => p.role === 'owner');
   const prev = select.value;
   select.innerHTML = ownerProjects
-    .map((p) => `<option value="${p.id}">${escapeHtml(p.name)}</option>`)
+    .map((p) => `<option value="${p.id}">${escapeForHtml(p.name)}</option>`)
     .join('');
   if (ownerProjects.some((p) => String(p.id) === prev)) select.value = prev;
 }
@@ -528,8 +521,8 @@ function renderGroupMembersTable(
   for (const m of members) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${escapeHtml(m.username)}</td>
-      <td>${escapeHtml(m.email)}</td>
+      <td>${escapeForHtml(m.username)}</td>
+      <td>${escapeForHtml(m.email)}</td>
       <td class="text-end">
         <button type="button"
           class="btn btn-sm btn-outline-danger group-member-remove-btn"
