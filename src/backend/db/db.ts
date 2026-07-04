@@ -1184,7 +1184,7 @@ export abstract class Database {
   ): Promise<number> {
     const q = {
       name: 'insertTimelineStats',
-      text: `INSERT INTO timeline
+      text: `INSERT INTO Timeline
               (runid, trialid, criterion,
                minval, maxval, sdval, mean, median,
                numsamples, bci95low, bci95up)
@@ -1520,7 +1520,7 @@ export abstract class Database {
   ): QueryConfig {
     const sql = `
       SELECT
-        extract(epoch from tr.startTime at time zone 'UTC')::int as startTime,
+        extract(epoch from tr.startTime)::int as startTime,
         s.branchOrTag as branch,
         s.id as sourceId,
         ti.median, ti.bci95low, ti.bci95up
@@ -1552,7 +1552,7 @@ export abstract class Database {
   ): QueryConfig {
     let sql = `
       SELECT
-        extract(epoch from tr.startTime at time zone 'UTC')::int as startTime,
+        extract(epoch from tr.startTime)::int as startTime,
         s.branchOrTag as branch, s.commitid IN ($1, $2) as isCurrent,
         s.id as sourceId,
         ti.median, ti.bci95low, ti.bci95up

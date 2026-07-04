@@ -119,7 +119,7 @@ describe('Timeline-plot Queries', () => {
 
     // have a second experiment in the database
     basicTestData.experimentName += ' 2';
-    basicTestData.startTime = '2019-12-14T22:49:56';
+    basicTestData.startTime = '2019-12-14T22:49:56Z';
     changeBranch = basicTestData.source.branchOrTag = 'change-branch';
     changeCommitId = basicTestData.source.commitId =
       '2222222222222222222222222222222222222222';
@@ -129,7 +129,7 @@ describe('Timeline-plot Queries', () => {
 
     // have a merge in the database
     basicTestData.experimentName += ' 3';
-    basicTestData.startTime = '2019-12-15T22:49:56';
+    basicTestData.startTime = '2019-12-15T22:49:56Z';
     basicTestData.source.branchOrTag = baseBranch;
     baseCommitId = basicTestData.source.commitId =
       '3333333333333333333333333333333333333333';
