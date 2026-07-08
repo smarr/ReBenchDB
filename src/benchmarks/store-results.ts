@@ -1,4 +1,3 @@
-import { convertToCurrentApi } from '../backend/common/api-v1.js';
 import { RebenchDbBenchmark } from './rebenchdb-benchmark.js';
 
 export default class StoreResults extends RebenchDbBenchmark {
@@ -33,7 +32,6 @@ export default class StoreResults extends RebenchDbBenchmark {
     } else {
       throw new Error('Unsupported problem size given: ' + problemSize);
     }
-    (<any>this).testData = convertToCurrentApi(this.testData);
   }
 
   public async benchmark(): Promise<any> {

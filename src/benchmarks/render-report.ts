@@ -3,7 +3,6 @@ import { tmpdir } from 'os';
 import * as path from 'path';
 import { RebenchDbBenchmark } from './rebenchdb-benchmark.js';
 import { renderCompareViewToString } from '../backend/compare/report.js';
-import { convertToCurrentApi } from '../backend/common/api-v1.js';
 
 export default class RenderReport extends RebenchDbBenchmark {
   private baseHash: string | null = null;
@@ -34,7 +33,6 @@ export default class RenderReport extends RebenchDbBenchmark {
     } else {
       throw new Error('Unsupported problem size given: ' + problemSize);
     }
-    (<any>this).testData = convertToCurrentApi(this.testData);
 
     this.testData.experimentName = 'Benchmark 1';
     this.baseHash = this.testData.source.commitId = 'commit-1';
