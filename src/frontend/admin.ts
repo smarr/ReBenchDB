@@ -62,14 +62,14 @@ async function fetchMyProjects(): Promise<void> {
 }
 
 function renderProjectsList(): void {
-  const ul = $id('admin-projects-list');
-  const empty = $id('admin-no-projects');
-  ul.innerHTML = '';
+  const ul = $('#admin-projects-list');
+  const empty = $('#admin-no-projects');
+  ul.html('');
   if (myProjects.length === 0) {
-    empty.classList.remove('d-none');
+    empty.removeClass('d-none');
     return;
   }
-  empty.classList.add('d-none');
+  empty.addClass('d-none');
   for (const p of myProjects) {
     const li = document.createElement('li');
     li.className =
@@ -86,7 +86,7 @@ function renderProjectsList(): void {
       <span class="badge bg-secondary">${escapeForHtml(p.role)}</span>
     `;
     li.addEventListener('click', () => selectProject(p.id));
-    ul.appendChild(li);
+    ul.append(li);
   }
 }
 
@@ -94,33 +94,33 @@ async function selectProject(projectId: number): Promise<void> {
   selectedProjectId = projectId;
   selectedGroupId = null;
   renderGroupsList();
-  $id('admin-group-card').style.display = 'none';
+  $('#admin-group-card').hide();
   renderProjectsList();
 
   const project = myProjects.find((p) => p.id === projectId);
   if (!project) return;
 
-  const card = $id('admin-members-card');
-  const placeholder = $id('admin-members-placeholder');
-  const nameEl = $id('admin-members-project-name');
-  const notOwnerAlert = $id('admin-members-not-owner');
-  const addSection = $id('admin-add-member-section');
-  const tbody = $id('admin-members-tbody');
+  const card = $('#admin-members-card');
+  const placeholder = $('#admin-members-placeholder');
+  const nameEl = $('#admin-members-project-name');
+  const notOwnerAlert = $('#admin-members-not-owner');
+  const addSection = $('#admin-add-member-section');
+  const tbody = $('#admin-members-tbody');
 
-  nameEl.textContent = project.name;
-  card.style.display = 'block';
-  placeholder.style.display = 'none';
+  nameEl.text(project.name);
+  card.show();
+  placeholder.hide();
   hideAlert('admin-members-error');
 
   if (project.role !== 'owner') {
-    notOwnerAlert.classList.remove('d-none');
-    addSection.style.display = 'none';
-    tbody.innerHTML = '';
+    notOwnerAlert.removeClass('d-none');
+    addSection.hide();
+    tbody.html('');
     return;
   }
 
-  notOwnerAlert.classList.add('d-none');
-  addSection.style.display = '';
+  notOwnerAlert.addClass('d-none');
+  addSection.show();
 
   try {
     const res = await fetch(`/admin/api/projects/${projectId}/members`, {
@@ -132,7 +132,7 @@ async function selectProject(projectId: number): Promise<void> {
         'admin-members-error',
         data.error || `Server error (${res.status})`
       );
-      tbody.innerHTML = '';
+      tbody.html('');
       return;
     }
     renderMembersTable(projectId, data.members || []);
@@ -142,8 +142,8 @@ async function selectProject(projectId: number): Promise<void> {
 }
 
 function renderMembersTable(projectId: number, members: Member[]): void {
-  const tbody = $id('admin-members-tbody');
-  tbody.innerHTML = '';
+  const tbody = $('#admin-members-tbody');
+  tbody.html('');
   for (const m of members) {
     const tr = document.createElement('tr');
     const roleOptions = ROLES.map(
@@ -163,7 +163,7 @@ function renderMembersTable(projectId: number, members: Member[]): void {
           data-user-id="${m.userId}">Remove</button>
       </td>
     `;
-    tbody.appendChild(tr);
+    tbody.append(tr);
   }
 
   tbody
@@ -245,14 +245,12 @@ async function removeMember(projectId: number, userId: number): Promise<void> {
 }
 
 function wireCreateProject(): void {
-  const form = $id('create-project-form') as HTMLFormElement;
-  form.addEventListener('submit', async (e) => {
+  const form = $('#create-project-form');
+  form.on('submit', async (e) => {
     e.preventDefault();
     hideAlert('create-project-error');
-    const name = ($id('create-project-name') as HTMLInputElement).value.trim();
-    const description = (
-      $id('create-project-description') as HTMLTextAreaElement
-    ).value.trim();
+    const name = $('#create-project-name').val()?.trim();
+    const description = $('#create-project-description').val()?.trim();
     if (!name) return;
     try {
       const res = await fetch('/admin/api/projects', {
@@ -271,7 +269,7 @@ function wireCreateProject(): void {
         );
         return;
       }
-      form.reset();
+      form.trigger('reset');
       await fetchMyProjects();
       if (data.project?.id) {
         selectProject(data.project.id);
@@ -283,15 +281,13 @@ function wireCreateProject(): void {
 }
 
 function wireAddMember(): void {
-  const form = $id('add-member-form') as HTMLFormElement;
-  form.addEventListener('submit', async (e) => {
+  const form = $('#add-member-form');
+  form.on('submit', async (e) => {
     e.preventDefault();
     hideAlert('admin-members-error');
     if (selectedProjectId === null) return;
-    const username = (
-      $id('add-member-username') as HTMLInputElement
-    ).value.trim();
-    const role = ($id('add-member-role') as HTMLSelectElement).value;
+    const username = $('#add-member-username').val()?.trim();
+    const role = $('#add-member-role').val();
     if (!username) return;
     try {
       const res = await fetch(
@@ -313,7 +309,7 @@ function wireAddMember(): void {
         );
         return;
       }
-      form.reset();
+      form.trigger('reset');
       selectProject(selectedProjectId);
     } catch {
       showAlert('admin-members-error', 'Network error adding member.');
@@ -327,25 +323,27 @@ async function fetchApiTokenStatus(): Promise<void> {
       headers: { Accept: 'application/json' }
     });
     const data = await readJson(res);
-    const statusEl = $id('api-token-status');
+    const statusEl = $('#api-token-status');
     if (!res.ok) {
-      statusEl.textContent = 'Could not load token status.';
+      statusEl.text('Could not load token status.');
       return;
     }
     if (data.hasToken) {
       // eslint-disable-next-line max-len
-      statusEl.innerHTML = `Token set &mdash; ends in <code>…${escapeForHtml(data.suffix)}</code>`;
+      statusEl.html(
+        `Token set &mdash; ends in <code>…${escapeForHtml(data.suffix)}</code>`
+      );
     } else {
-      statusEl.textContent = 'No token set.';
+      statusEl.text('No token set.');
     }
   } catch {
-    $id('api-token-status').textContent = 'Network error loading token status.';
+    $('#api-token-status').text('Network error loading token status.');
   }
 }
 
 function wireApiToken(): void {
-  const btn = $id('api-token-generate-btn');
-  btn.addEventListener('click', async () => {
+  const btn = $('#api-token-generate-btn');
+  btn.on('click', async () => {
     if (
       !confirm(
         // eslint-disable-next-line max-len
@@ -363,9 +361,9 @@ function wireApiToken(): void {
         alert(data.error || `Server error (${res.status})`);
         return;
       }
-      const reveal = $id('api-token-reveal');
-      ($id('api-token-value') as HTMLElement).textContent = data.token;
-      reveal.classList.remove('d-none');
+      const reveal = $('#api-token-reveal');
+      $('#api-token-value').text(data.token);
+      reveal.removeClass('d-none');
       await fetchApiTokenStatus();
     } catch {
       alert('Network error generating token.');
@@ -414,14 +412,14 @@ async function fetchGroups(): Promise<void> {
 }
 
 function renderGroupsList(): void {
-  const ul = $id('admin-groups-list');
-  const empty = $id('admin-no-groups');
-  ul.innerHTML = '';
+  const ul = $('#admin-groups-list');
+  const empty = $('#admin-no-groups');
+  ul.html('');
   if (groups.length === 0) {
-    empty.classList.remove('d-none');
+    empty.removeClass('d-none');
     return;
   }
-  empty.classList.add('d-none');
+  empty.addClass('d-none');
   for (const g of groups) {
     const li = document.createElement('li');
     li.className =
@@ -435,7 +433,7 @@ function renderGroupsList(): void {
       </span>
     `;
     li.addEventListener('click', () => selectGroup(g.id));
-    ul.appendChild(li);
+    ul.append(li);
   }
 }
 
@@ -473,12 +471,12 @@ async function selectGroup(groupId: number): Promise<void> {
   const group = groups.find((g) => g.id === groupId);
   if (!group) return;
 
-  $id('admin-group-name').textContent = group.name;
-  $id('admin-group-card').style.display = 'block';
-  $id('admin-members-card').style.display = 'none';
-  $id('admin-members-placeholder').style.display = 'none';
+  $('#admin-group-name').text(group.name);
+  $('#admin-group-card').show();
+  $('#admin-members-card').hide();
+  $('#admin-members-placeholder').hide();
   hideAlert('admin-group-error');
-  $id('assign-group-result').classList.add('d-none');
+  $('#assign-group-result').addClass('d-none');
 
   populateOwnerProjectSelect();
 
@@ -492,7 +490,7 @@ async function selectGroup(groupId: number): Promise<void> {
         'admin-group-error',
         data.error || `Server error (${res.status})`
       );
-      $id('admin-group-members-tbody').innerHTML = '';
+      $('#admin-group-members-tbody').html('');
       return;
     }
     renderGroupMembersTable(groupId, data.members || []);
@@ -505,11 +503,12 @@ function renderGroupMembersTable(
   groupId: number,
   members: GroupMember[]
 ): void {
-  const tbody = $id('admin-group-members-tbody');
-  tbody.innerHTML = '';
+  const tbody = $('#admin-group-members-tbody');
+  tbody.html('');
   if (members.length === 0) {
-    tbody.innerHTML =
-      '<tr><td colspan="3" class="text-muted">No members yet.</td></tr>';
+    tbody.html(
+      '<tr><td colspan="3" class="text-muted">No members yet.</td></tr>'
+    );
     return;
   }
   for (const m of members) {
@@ -523,7 +522,7 @@ function renderGroupMembersTable(
           data-user-id="${m.userId}">Remove</button>
       </td>
     `;
-    tbody.appendChild(tr);
+    tbody.append(tr);
   }
   tbody
     .querySelectorAll<HTMLButtonElement>('.group-member-remove-btn')
