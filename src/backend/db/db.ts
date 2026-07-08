@@ -26,7 +26,6 @@ import type {
   Environment,
   Experiment,
   MeasurementData,
-  MeasurementDataOld,
   Metadata,
   Project,
   RevisionComparison,
@@ -775,25 +774,24 @@ export abstract class Database {
 
   public async getExperimentMeasurements(
     expId: number
-  ): Promise<MeasurementDataOld[]> {
+  ): Promise<MeasurementData[]> {
     const result = await this.query({
       name: 'fetchExpMeasurements',
       text: `WITH results AS (
               SELECT
-                ${measurementDataColumns.replace(
-                  'values',
-                  `unnest(values) as value,
-                   generate_series(1, array_length(values, 1)) as iteration`
-                )}
+                ${measurementDataColumns}
               FROM
                 ${measurementDataTableJoins}
               WHERE
                 Experiment.id = $2
               ORDER BY
-                runId, trialId, cmdline, invocation, iteration, criterion
+                runId, trialId, cmdline, invocation, criterion
             )
-            SELECT * FROM results WHERE value is NOT NULL`,
-      values: [6, expId]
+            SELECT * FROM results WHERE values is NOT NULL`,
+      values: [
+        6, // only 6 chars of commitid in `measurementDataColumns`
+        expId
+      ]
     });
     return result.rows;
   }
@@ -807,11 +805,13 @@ export abstract class Database {
     const query = `COPY (
       WITH results AS (
         SELECT
-          ${measurementDataColumns.replace('$1', '6').replace(
-            'values',
-            `unnest(values) as value,
+          ${measurementDataColumns
+            .replace('$1', '6') // only 6 chars of commitid
+            .replace(
+              'values',
+              `unnest(values) as value,
             generate_series(1, array_length(values, 1)) as iteration`
-          )}
+            )}
         FROM
           ${measurementDataTableJoins}
         WHERE
