@@ -29,44 +29,31 @@ function getPreferredTheme(): string {
 }
 
 function setTheme(theme: string) {
-  document.documentElement.setAttribute('data-bs-theme', theme);
+  $('html').attr('data-bs-theme', theme);
 }
 
 function showActiveTheme(theme: string) {
-  const themeSwitcher = document.querySelector('#theme-switcher');
-
-  if (!themeSwitcher) {
+  const themeSwitcher = $('#theme-switcher');
+  if (themeSwitcher.length === 0) {
     return;
   }
 
-  const themeIcons = document.querySelectorAll('.theme-icon');
-  for (const themeIcon of themeIcons) {
-    themeIcon.classList.remove('active');
-  }
-
-  const iconToActivate = document.querySelector(`#theme-icon-${theme}`);
-
-  if (!iconToActivate) {
-    return;
-  }
-
-  iconToActivate.classList.add('active');
+  $('.theme-icon').removeClass('active');
+  $(`#theme-icon-${theme}`).addClass('active');
 }
 
 function toggleTheme() {
-  const themeIcons = document.querySelectorAll('.theme-icon');
+  const themeIcons = $('.theme-icon');
 
   let currentTheme = getPreferredTheme(); // that's the fallback
 
   // let's see what the current user setting is
-  for (const themeIcon of themeIcons) {
-    if (themeIcon.classList.contains('active')) {
-      if (themeIcon.id === 'theme-icon-light') {
-        currentTheme = 'light';
-      } else {
-        currentTheme = 'dark';
-      }
-      break;
+  const activeThemeIcon = themeIcons.filter('.active').first();
+  if (activeThemeIcon.length > 0) {
+    if (activeThemeIcon.attr('id') === 'theme-icon-light') {
+      currentTheme = 'light';
+    } else {
+      currentTheme = 'dark';
     }
   }
 
@@ -89,14 +76,8 @@ function toggleTheme() {
       showActiveTheme(newTheme);
     });
 
-  window.addEventListener('DOMContentLoaded', () => {
+  $(() => {
     showActiveTheme(getPreferredTheme());
-
-    const themeSwitcher = document.querySelector('#theme-switcher');
-    if (!themeSwitcher) {
-      return;
-    }
-
-    themeSwitcher.addEventListener('click', toggleTheme);
+    $('#theme-switcher').on('click', toggleTheme);
   });
 })();
