@@ -7,6 +7,23 @@ import {
 import { Benchmark } from './benchmark.js';
 import { loadLargePayload } from '../../tests/payload.js';
 
+export function reduceData(
+  bd: BenchmarkData,
+  maxRuns: number,
+  maxMeasurements: number
+): void {
+  bd.data = bd.data.slice(0, maxRuns);
+  for (const run of bd.data) {
+    for (const d of run.d || []) {
+      for (const i in d.m) {
+        if (d.m[i] !== null) {
+          d.m[i] = d.m[i]!.slice(0, maxMeasurements);
+        }
+      }
+    }
+  }
+}
+
 export class RebenchDbBenchmark extends Benchmark {
   protected readonly testData: BenchmarkData;
   protected db: TestDatabase | null;

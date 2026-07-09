@@ -1,4 +1,4 @@
-import { RebenchDbBenchmark } from './rebenchdb-benchmark.js';
+import { RebenchDbBenchmark, reduceData } from './rebenchdb-benchmark.js';
 
 export default class StoreResults extends RebenchDbBenchmark {
   private iteration: number;
@@ -14,21 +14,11 @@ export default class StoreResults extends RebenchDbBenchmark {
     if (problemSize === 'full') {
       // just use the testData as is
     } else if (problemSize === 'large') {
-      this.testData.data.length = 50;
+      this.testData.data = this.testData.data.slice(0, 50);
     } else if (problemSize === 'medium') {
-      this.testData.data.length = 20;
-      for (const run of this.testData.data) {
-        if (run.d) {
-          run.d.length = 200;
-        }
-      }
+      reduceData(this.testData, 20, 200);
     } else if (problemSize === 'small') {
-      this.testData.data.length = 10;
-      for (const run of this.testData.data) {
-        if (run.d) {
-          run.d.length = 15;
-        }
-      }
+      reduceData(this.testData, 10, 15);
     } else {
       throw new Error('Unsupported problem size given: ' + problemSize);
     }
