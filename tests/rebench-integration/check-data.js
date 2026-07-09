@@ -27,7 +27,7 @@ function getJsonData() {
   const byCriterion = { mem: [], compile: [], total: [] };
 
   for (const e of data) {
-    byCriterion[e.criterion][e.iteration] = e.value;
+    byCriterion[e.criterion] = [null, ...e.values];
   }
 
   return byCriterion;

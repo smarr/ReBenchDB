@@ -170,12 +170,6 @@ export interface MeasurementData extends BasicMeasurementData {
   values: ValuesPossiblyMissing;
 }
 
-/** Was used previously, but is also still used for the raw data export. */
-export interface MeasurementDataOld extends BasicMeasurementData {
-  iteration: number;
-  value: number;
-}
-
 export interface AvailableProfile extends BenchmarkId {
   commitid: string;
   runid: number;

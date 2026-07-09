@@ -38,7 +38,12 @@ export async function serveStaticResource(
   } else {
     throw new Error(`Unsupported file type. Filename: ${filename}`);
   }
-  ctx.body = readFileSync(path);
+  try {
+    ctx.body = readFileSync(path);
+  } catch (_e) {
+    log.error(`Tried to serve file, but failed: ${path}`);
+    ctx.status = 404;
+  }
 }
 
 export async function serveStaticSharedResource(
