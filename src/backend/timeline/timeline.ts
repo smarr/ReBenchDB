@@ -1,5 +1,5 @@
 import { ParameterizedContext } from 'koa';
-import { respondProjectNotFound } from '../common/standard-responses.js';
+import { respondProjectNotFound } from '../standard-responses.js';
 import { prepareTemplate } from '../templates.js';
 import { TimelineSuite } from '../../shared/api.js';
 import { Database } from '../db/db.js';

@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 import {
   respondProjectAndSourceNotFound,
   respondProjectNotFound
-} from '../../../src/backend/common/standard-responses.js';
+} from '../../src/backend/standard-responses.js';
 
 describe('respondProjectNotFound', () => {
   it('should set status to 404 and respond with text', () => {
