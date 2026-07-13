@@ -3,7 +3,7 @@ import { prepareTemplate } from '../templates.js';
 import {
   respondProjectAndSourceNotFound,
   respondProjectNotFound
-} from '../common/standard-responses.js';
+} from '../standard-responses.js';
 import {
   completeRequestAndHandlePromise,
   startRequest
