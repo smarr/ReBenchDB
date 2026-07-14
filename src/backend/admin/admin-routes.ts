@@ -3,7 +3,7 @@ import { ParameterizedContext } from 'koa';
 import type { Database } from '../db/db.js';
 import { prepareTemplate } from '../templates.js';
 import { rebenchVersion, robustPath } from '../util.js';
-import { getUserByUsername } from '../auth/auth-db.js';
+import { checkUserByUsername } from '../auth/auth-db.js';
 import {
   PROJECT_ROLES,
   ProjectRole,
@@ -181,7 +181,7 @@ export async function addMember(
     return;
   }
 
-  const user = await getUserByUsername(db, username);
+  const user = await checkUserByUsername(db, username);
   if (!user) {
     jsonError(ctx, 404, `No user found with username "${username}"`);
     return;
@@ -426,7 +426,7 @@ export async function addGroupMember(
     return;
   }
 
-  const user = await getUserByUsername(db, username);
+  const user = await checkUserByUsername(db, username);
   if (!user) {
     jsonError(ctx, 404, `No user found with username "${username}"`);
     return;

@@ -9,28 +9,32 @@ export interface AppUser {
   isActive: boolean;
 }
 
-export async function getUserByUsername(
+export async function checkUserByUsername(
   db: Database,
   username: string
-): Promise<AppUser | null> {
-  const result = await db.query<AppUser>({
-    name: 'getUserByUsername',
-    text: 'SELECT * FROM AppUser WHERE username = $1',
+): Promise<boolean> {
+  const result = await db.query<{
+    exists: boolean;
+  }>({
+    name: 'checkUserByUsername',
+    text: 'SELECT EXISTS ( SELECT 1 FROM AppUser WHERE username = $1 )',
     values: [username]
   });
-  return result.rows[0] ?? null;
+  return result.rows[0]?.exists ?? false;
 }
 
-export async function getUserByEmail(
+export async function checkUserByEmail(
   db: Database,
   email: string
-): Promise<AppUser | null> {
-  const result = await db.query<AppUser>({
-    name: 'getUserByEmail',
-    text: 'SELECT * FROM AppUser WHERE email = $1',
+): Promise<boolean> {
+  const result = await db.query<{
+    exists: boolean;
+  }>({
+    name: 'checkUserByEmail',
+    text: 'SELECT EXISTS ( SELECT 1 FROM AppUser WHERE email = $1 )',
     values: [email]
   });
-  return result.rows[0] ?? null;
+  return result.rows[0]?.exists ?? false;
 }
 
 export async function createUser(
