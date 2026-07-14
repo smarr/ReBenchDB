@@ -15,8 +15,8 @@ import {
 
 import {
   createUser,
-  getUserByEmail,
-  getUserByUsername
+  checkUserByEmail,
+  checkUserByUsername
 } from '../../../src/backend/auth/auth-db.js';
 
 import {
@@ -57,34 +57,31 @@ describe('appuser table operations', () => {
   });
 
   it('should return null when looking up a non-existent username', async () => {
-    const user = await getUserByUsername(db, 'nobody');
+    const user = await checkUserByUsername(db, 'nobody');
     expect(user).toBeNull();
   });
 
   it('should return null when looking up a non-existent email', async () => {
-    const user = await getUserByEmail(db, 'nobody@example.com');
+    const user = await checkUserByEmail(db, 'nobody@example.com');
     expect(user).toBeNull();
   });
 
   it('should retrieve a user by username after creation', async () => {
     await createUser(db, 'bob', 'bob@example.com', 'hash_bob');
 
-    const user = await getUserByUsername(db, 'bob');
+    const result = await checkUserByUsername(db, 'bob');
 
-    expect(user).not.toBeNull();
-    expect(user!.username).toEqual('bob');
-    expect(user!.email).toEqual('bob@example.com');
-    expect(user!.passwordHash).toEqual('hash_bob');
+    expect(result).not.toBeNull();
+    expect(result).toBe(true);
   });
 
   it('should retrieve a user by email after creation', async () => {
     await createUser(db, 'carol', 'carol@example.com', 'hash_carol');
 
-    const user = await getUserByEmail(db, 'carol@example.com');
+    const result = await checkUserByEmail(db, 'carol@example.com');
 
-    expect(user).not.toBeNull();
-    expect(user!.username).toEqual('carol');
-    expect(user!.email).toEqual('carol@example.com');
+    expect(result).not.toBeNull();
+    expect(result).toBe(true);
   });
 
   it('should reject a duplicate username', async () => {

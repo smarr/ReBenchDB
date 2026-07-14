@@ -3,7 +3,11 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 import type { Database } from '../db/db.js';
-import { createUser, getUserByEmail, getUserByUsername } from './auth-db.js';
+import {
+  createUser,
+  checkUserByEmail,
+  checkUserByUsername
+} from './auth-db.js';
 import { prepareTemplate } from '../templates.js';
 import {
   BCRYPT_ROUNDS,
@@ -61,7 +65,7 @@ export async function register(
   // Pre-authentication: no JWT/ctx.state.userId exists yet, and AppUser
   // isn't RLS-protected, so this runs via the explicit system-context path.
   await db.withSystemContext(async () => {
-    const existingByUsername = await getUserByUsername(db, username);
+    const existingByUsername = await checkUserByUsername(db, username);
     if (existingByUsername) {
       ctx.status = 409;
       ctx.type = 'json';
@@ -69,7 +73,7 @@ export async function register(
       return;
     }
 
-    const existingByEmail = await getUserByEmail(db, email);
+    const existingByEmail = await checkUserByEmail(db, email);
     if (existingByEmail) {
       ctx.status = 409;
       ctx.type = 'json';
@@ -103,7 +107,7 @@ export async function login(
   // Pre-authentication: no JWT/ctx.state.userId exists yet, and AppUser
   // isn't RLS-protected, so this runs via the explicit system-context path.
   await db.withSystemContext(async () => {
-    const user = await getUserByUsername(db, username);
+    const user = await checkUserByUsername(db, username);
 
     if (!user || !user.isActive) {
       ctx.status = 401;
