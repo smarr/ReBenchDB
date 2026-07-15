@@ -90,7 +90,11 @@ export class TimelineWorker {
     }
 
     const results = <ComputeResults>message;
-    this.updater.receiveResults(results);
+    try {
+      await this.updater.receiveResults(results);
+    } catch (e: any) {
+      log.error('Error while recording timeline results', e.stack);
+    }
   }
 
   public async shutdown(): Promise<void> {
@@ -155,14 +159,19 @@ export class BatchingTimelineUpdater implements ResultReceiver {
       return;
     }
 
-    for (const result of r.results) {
-      await this.db.recordTimeline(
-        result.runId,
-        result.trialId,
-        result.criterion,
-        result.stats
-      );
-    }
+    // Runs in its own withSystemContext because this is invoked from the
+    // timeline worker's message handler, a background context that never
+    // goes through requireAuth.
+    await this.db.withSystemContext(async () => {
+      for (const result of r.results) {
+        await this.db!.recordTimeline(
+          result.runId,
+          result.trialId,
+          result.criterion,
+          result.stats
+        );
+      }
+    });
 
     const req = this.activeRequests.get(r.requestId);
     if (!req) {

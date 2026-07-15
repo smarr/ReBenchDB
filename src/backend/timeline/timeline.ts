@@ -41,13 +41,12 @@ export async function renderTimeline(
   db: Database
 ): Promise<void> {
   const project = await db.getProjectBySlug(ctx.params.projectSlug);
+  const benchmarks = project
+    ? await getLatestBenchmarksForTimelineView(project.id, db)
+    : null;
 
   if (project) {
-    ctx.body = timelineTpl({
-      rebenchVersion,
-      project,
-      benchmarks: await getLatestBenchmarksForTimelineView(project.id, db)
-    });
+    ctx.body = timelineTpl({ rebenchVersion, project, benchmarks });
     ctx.type = 'html';
   } else {
     respondProjectNotFound(ctx, ctx.params.projectSlug);

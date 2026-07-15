@@ -85,19 +85,30 @@ export class TestDatabase extends Database {
     }
   }
 
+  public async withUserContext<T>(
+    userId: number | null,
+    fn: () => Promise<T>
+  ): Promise<T> {
+    await this.query({ text: 'SET LOCAL ROLE rdb_app' });
+    if (userId !== null) {
+      await this.query({
+        text: `SELECT set_config('app.currentUserId', $1, true)`,
+        values: [String(userId)]
+      });
+    }
+    return fn();
+  }
+
+  public async withSystemContext<T>(fn: () => Promise<T>): Promise<T> {
+    return fn();
+  }
+
   public async rollback(): Promise<void> {
     this.clearCache();
 
     if (this.usesTransactions) {
       await this.query({ text: 'ROLLBACK TO SAVEPOINT freshDB' });
     }
-  }
-
-  private async release(): Promise<void> {
-    const mainDB = getMainDB();
-    await mainDB.query({
-      text: `DROP DATABASE IF EXISTS ${this.dbConfig.database}`
-    });
   }
 
   public async close(): Promise<void> {
@@ -126,6 +137,15 @@ export class TestDatabase extends Database {
         await this.release();
       }
     }
+  }
+
+  private async release(): Promise<void> {
+    const mainDB = getMainDB();
+    await mainDB.withSystemContext(() =>
+      mainDB.query({
+        text: `DROP DATABASE IF EXISTS ${this.dbConfig.database}`
+      })
+    );
   }
 }
 
@@ -168,11 +188,13 @@ export async function createDB(
   const cfg = getConfig();
   const db = getMainDB();
   const dbNameForSuite = `${cfg.database}_${testSuite}`;
-  await db.query({
-    text: `DROP DATABASE IF EXISTS ${dbNameForSuite}`
-  });
-  await db.query({
-    text: `CREATE DATABASE ${dbNameForSuite}`
+  await db.withSystemContext(async () => {
+    await db.query({
+      text: `DROP DATABASE IF EXISTS ${dbNameForSuite}`
+    });
+    await db.query({
+      text: `CREATE DATABASE ${dbNameForSuite}`
+    });
   });
 
   cfg.database = dbNameForSuite;
