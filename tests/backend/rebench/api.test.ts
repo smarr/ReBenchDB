@@ -20,7 +20,7 @@ describe('Ensure Test Payloads conform to API', () => {
 
     const result = validateFn(testData);
     if (!result) {
-      log.error(validateFn.errors);
+      log.error({ errors: validateFn.errors });
     }
     expect(result).toBeTruthy();
   });
@@ -30,7 +30,7 @@ describe('Ensure Test Payloads conform to API', () => {
 
     const result = validateFn(testData);
     if (!result) {
-      log.error(validateFn.errors);
+      log.error({ errors: validateFn.errors });
     }
     expect(result).toBeTruthy();
   });
@@ -42,7 +42,7 @@ describe('Ensure Test Payloads conform to API', () => {
 
     const result = validateFn(testData);
     if (!result) {
-      log.error(validateFn.errors);
+      log.error({ errors: validateFn.errors });
     }
     expect(result).toBeTruthy();
   });
