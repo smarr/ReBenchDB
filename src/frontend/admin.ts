@@ -166,21 +166,19 @@ function renderMembersTable(projectId: number, members: Member[]): void {
     tbody.append(tr);
   }
 
-  tbody
-    .querySelectorAll<HTMLSelectElement>('.member-role-select')
-    .forEach((select) => {
-      const userId = Number(select.dataset.userId);
-      const originalRole = select.value as ProjectRole;
-      select.addEventListener('change', () =>
-        changeMemberRole(projectId, userId, select, originalRole)
-      );
-    });
-  tbody
-    .querySelectorAll<HTMLButtonElement>('.member-remove-btn')
-    .forEach((btn) => {
-      const userId = Number(btn.dataset.userId);
-      btn.addEventListener('click', () => removeMember(projectId, userId));
-    });
+  tbody.find('.member-role-select').each((_, s) => {
+    const select = s as HTMLSelectElement;
+    const userId = Number(select.dataset.userId);
+    const originalRole = select.value as ProjectRole;
+    select.addEventListener('change', () =>
+      changeMemberRole(projectId, userId, select, originalRole)
+    );
+  });
+  tbody.find('.member-remove-btn').each((_, b) => {
+    const btn = b as HTMLButtonElement;
+    const userId = Number(btn.dataset.userId);
+    btn.addEventListener('click', () => removeMember(projectId, userId));
+  });
 }
 
 async function changeMemberRole(
@@ -524,12 +522,10 @@ function renderGroupMembersTable(
     `;
     tbody.append(tr);
   }
-  tbody
-    .querySelectorAll<HTMLButtonElement>('.group-member-remove-btn')
-    .forEach((btn) => {
-      const userId = Number(btn.dataset.userId);
-      btn.addEventListener('click', () => removeGroupMember(groupId, userId));
-    });
+  tbody.find('.group-member-remove-btn').each((idx, btn) => {
+    const userId = Number(btn.dataset.userId);
+    btn.addEventListener('click', () => removeGroupMember(groupId, userId));
+  });
 }
 
 async function removeGroupMember(
@@ -577,8 +573,8 @@ async function deleteSelectedGroup(): Promise<void> {
       return;
     }
     selectedGroupId = null;
-    $id('admin-group-card').style.display = 'none';
-    $id('admin-members-placeholder').style.display = '';
+    $('#admin-group-card').addClass('d-none');
+    $('#admin-members-placeholder').removeClass('d-none');
     await fetchGroups();
   } catch {
     showAlert('admin-group-error', 'Network error deleting group.');
@@ -586,14 +582,12 @@ async function deleteSelectedGroup(): Promise<void> {
 }
 
 function wireCreateGroup(): void {
-  const form = $id('create-group-form') as HTMLFormElement;
-  form.addEventListener('submit', async (e) => {
+  const form = $('#create-group-form');
+  form.on('submit', async (e) => {
     e.preventDefault();
     hideAlert('create-group-error');
-    const name = ($id('create-group-name') as HTMLInputElement).value.trim();
-    const description = (
-      $id('create-group-description') as HTMLTextAreaElement
-    ).value.trim();
+    const name = $('#create-group-name').val()?.trim();
+    const description = $('#create-group-description').val()?.trim();
     if (!name) return;
     try {
       const res = await fetch('/admin/api/groups', {
@@ -612,7 +606,7 @@ function wireCreateGroup(): void {
         );
         return;
       }
-      form.reset();
+      form.trigger('reset');
       await fetchGroups();
       if (data.group?.id) selectGroup(data.group.id);
     } catch {
@@ -622,14 +616,12 @@ function wireCreateGroup(): void {
 }
 
 function wireAddGroupMember(): void {
-  const form = $id('add-group-member-form') as HTMLFormElement;
-  form.addEventListener('submit', async (e) => {
+  const form = $('#add-group-member-form');
+  form.on('submit', async (e) => {
     e.preventDefault();
     hideAlert('admin-group-error');
     if (selectedGroupId === null) return;
-    const username = (
-      $id('add-group-member-username') as HTMLInputElement
-    ).value.trim();
+    const username = $('#add-group-member-username').val()?.trim();
     if (!username) return;
     try {
       const res = await fetch(`/admin/api/groups/${selectedGroupId}/members`, {
@@ -648,7 +640,7 @@ function wireAddGroupMember(): void {
         );
         return;
       }
-      form.reset();
+      form.trigger('reset');
       await fetchGroups();
       await selectGroup(selectedGroupId);
     } catch {
@@ -658,17 +650,15 @@ function wireAddGroupMember(): void {
 }
 
 function wireAssignGroupToProject(): void {
-  const form = $id('assign-group-form') as HTMLFormElement;
-  const resultEl = $id('assign-group-result');
-  form.addEventListener('submit', async (e) => {
+  const form = $('#assign-group-form');
+  const resultEl = $('#assign-group-result');
+  form.on('submit', async (e) => {
     e.preventDefault();
     hideAlert('admin-group-error');
-    resultEl.classList.add('d-none');
+    resultEl.addClass('d-none');
     if (selectedGroupId === null) return;
-    const projectId = Number(
-      ($id('assign-group-project') as HTMLSelectElement).value
-    );
-    const role = ($id('assign-group-role') as HTMLSelectElement).value;
+    const projectId = Number($('#assign-group-project').val());
+    const role = $('#assign-group-role').val();
     if (!projectId) {
       showAlert('admin-group-error', 'Please select a project.');
       return;
@@ -692,8 +682,8 @@ function wireAssignGroupToProject(): void {
       }
       const added: number = data.added ?? 0;
       const members = 'member' + (added === 1 ? '' : 's');
-      resultEl.textContent = `${added} ${members} added to project.`;
-      resultEl.className = 'mt-2 alert alert-success';
+      resultEl.text(`${added} ${members} added to project.`);
+      resultEl.addClass('mt-2 alert alert-success');
     } catch {
       showAlert('admin-group-error', 'Network error assigning group.');
     }
@@ -701,17 +691,15 @@ function wireAssignGroupToProject(): void {
 }
 
 function wireAddGroupToProject(): void {
-  const form = $id('add-group-to-project-form') as HTMLFormElement;
-  const resultEl = $id('add-group-to-project-result');
-  form.addEventListener('submit', async (e) => {
+  const form = $('#add-group-to-project-form');
+  const resultEl = $('#add-group-to-project-result');
+  form.on('submit', async (e) => {
     e.preventDefault();
     hideAlert('admin-members-error');
-    resultEl.classList.add('d-none');
+    resultEl.addClass('d-none');
     if (selectedProjectId === null) return;
-    const groupId = Number(
-      ($id('add-group-to-project-select') as HTMLSelectElement).value
-    );
-    const role = ($id('add-group-to-project-role') as HTMLSelectElement).value;
+    const groupId = Number($('#add-group-to-project-select').val());
+    const role = $('#add-group-to-project-role').val();
     if (!groupId) {
       showAlert('admin-members-error', 'Please select a group.');
       return;
@@ -738,8 +726,8 @@ function wireAddGroupToProject(): void {
       }
       const added: number = data.added ?? 0;
       const members = 'member' + (added === 1 ? '' : 's');
-      resultEl.textContent = `${added} ${members} added to project.`;
-      resultEl.className = 'mt-2 alert alert-success';
+      resultEl.text(`${added} ${members} added to project.`);
+      resultEl.addClass('mt-2 alert alert-success');
       if (added > 0) selectProject(selectedProjectId);
     } catch {
       showAlert(
@@ -751,7 +739,7 @@ function wireAddGroupToProject(): void {
 }
 
 function wireDeleteGroup(): void {
-  $id('admin-group-delete-btn').addEventListener('click', deleteSelectedGroup);
+  $('#admin-group-delete-btn').on('click', deleteSelectedGroup);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
