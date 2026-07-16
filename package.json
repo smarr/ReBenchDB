@@ -131,6 +131,7 @@
     "update-expected-results": "UPDATE_EXPECTED_DATA=true npm test"
   },
   "allowScripts": {
+    "bcrypt@6.0.0": true,
     "unrs-resolver@1.12.2": true,
     "fsevents@2.3.3": true,
     "canvas@3.2.3": true
