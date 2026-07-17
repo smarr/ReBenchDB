@@ -242,13 +242,23 @@ async function removeMember(projectId: number, userId: number): Promise<void> {
   }
 }
 
+function trim(val: number | string | string[] | undefined): string {
+  if (typeof val === 'string') {
+    return val.trim();
+  }
+  if (Array.isArray(val)) {
+    throw new Error('Expected a single string value, but got an array.');
+  }
+  return String(val).trim();
+}
+
 function wireCreateProject(): void {
   const form = $('#create-project-form');
   form.on('submit', async (e) => {
     e.preventDefault();
     hideAlert('create-project-error');
-    const name = $('#create-project-name').val()?.trim();
-    const description = $('#create-project-description').val()?.trim();
+    const name = trim($('#create-project-name').val());
+    const description = trim($('#create-project-description').val());
     if (!name) return;
     try {
       const res = await fetch('/admin/api/projects', {
@@ -284,7 +294,7 @@ function wireAddMember(): void {
     e.preventDefault();
     hideAlert('admin-members-error');
     if (selectedProjectId === null) return;
-    const username = $('#add-member-username').val()?.trim();
+    const username = trim($('#add-member-username').val());
     const role = $('#add-member-role').val();
     if (!username) return;
     try {
@@ -327,7 +337,6 @@ async function fetchApiTokenStatus(): Promise<void> {
       return;
     }
     if (data.hasToken) {
-      // eslint-disable-next-line max-len
       statusEl.html(
         `Token set &mdash; ends in <code>…${escapeForHtml(data.suffix)}</code>`
       );
@@ -586,8 +595,8 @@ function wireCreateGroup(): void {
   form.on('submit', async (e) => {
     e.preventDefault();
     hideAlert('create-group-error');
-    const name = $('#create-group-name').val()?.trim();
-    const description = $('#create-group-description').val()?.trim();
+    const name = trim($('#create-group-name').val());
+    const description = trim($('#create-group-description').val());
     if (!name) return;
     try {
       const res = await fetch('/admin/api/groups', {
@@ -621,7 +630,7 @@ function wireAddGroupMember(): void {
     e.preventDefault();
     hideAlert('admin-group-error');
     if (selectedGroupId === null) return;
-    const username = $('#add-group-member-username').val()?.trim();
+    const username = trim($('#add-group-member-username').val());
     if (!username) return;
     try {
       const res = await fetch(`/admin/api/groups/${selectedGroupId}/members`, {
