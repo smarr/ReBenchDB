@@ -293,3 +293,12 @@ export interface ChangesRow {
 export interface ChangesResponse {
   changes: ChangesRow[];
 }
+
+export const apiRoutes = {
+  '/rebenchdb/dash/:projectId/changes': {
+    method: 'GET',
+    response: undefined as unknown as ChangesResponse
+  }
+} as const;
+
+export type ApiRoutes = typeof apiRoutes;

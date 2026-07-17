@@ -174,16 +174,14 @@ export async function getStatistics(
 export async function getChangesAsJson(
   ctx: ParameterizedContext,
   db: Database
-): Promise<void> {
-  ctx.type = 'application/json';
-
+): Promise<ChangesResponse> {
   const projectId = getNumberOrError(ctx, 'projectId');
   if (projectId === null) {
     log.error((ctx.body as any).error);
-    return;
+    return null as any;
   }
 
-  ctx.body = await getChanges(projectId, db);
+  return await getChanges(projectId, db);
 }
 
 export async function getChanges(

@@ -51,6 +51,7 @@ import {
 } from './backend/rebench/results.js';
 import { setTimeout } from 'node:timers/promises';
 import { reportConnectionRefused } from './shared/errors.js';
+import { defineRoute } from './backend/server-routes.js';
 
 log.info('Starting ReBenchDB Version ' + rebenchVersion);
 
@@ -125,9 +126,9 @@ router.get(
   async (ctx) => getMeasurementsAsJson(ctx, db)
 );
 router.get('/rebenchdb/stats', async (ctx) => getSiteStatsAsJson(ctx, db));
-router.get('/rebenchdb/dash/:projectId/changes', async (ctx) =>
-  getChangesAsJson(ctx, db)
-);
+
+defineRoute('/rebenchdb/dash/:projectId/changes', router, db, getChangesAsJson);
+
 router.get('/rebenchdb/dash/:projectId/data-overview', async (ctx) =>
   getAvailableDataAsJson(ctx, db)
 );
