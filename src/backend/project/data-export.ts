@@ -98,16 +98,15 @@ export async function getExpData(
 export async function getAvailableDataAsJson(
   ctx: ParameterizedContext,
   db: Database
-): Promise<void> {
-  ctx.type = 'application/json';
-
+): Promise<{ data: any[] }> {
   const projectId = getNumberOrError(ctx, 'projectId');
   if (projectId === null) {
     log.error((ctx.body as any).error);
-    return;
+    ctx.status = 404;
+    return null as any;
   }
 
-  ctx.body = await getDataOverview(projectId, db);
+  return await getDataOverview(projectId, db);
 }
 
 export async function getDataOverview(

@@ -88,9 +88,7 @@ Disallow: /rebenchdb*
 });
 
 router.get('/:projectSlug', async (ctx) => renderProjectPage(ctx, db));
-router.get('/:projectSlug/source/:sourceId', async (ctx) =>
-  getSourceAsJson(ctx, db)
-);
+defineRoute('/:projectSlug/source/:sourceId', router, db, getSourceAsJson);
 router.get('/:projectSlug/timeline', async (ctx) => renderTimeline(ctx, db));
 router.get('/:projectSlug/data', async (ctx) => renderProjectDataPage(ctx, db));
 router.get('/:projectSlug/data/:expIdAndExtension', async (ctx) => {
@@ -109,31 +107,47 @@ router.get('/:projectSlug/compare/:baseline..:change', async (ctx) =>
   renderComparePage(ctx, db)
 );
 
-// todo: rename this to say that this endpoint gets the last 100 measurements
+// TODO: rename this to say that this endpoint gets the last 100 measurements
 //       for the project
-router.get('/rebenchdb/dash/:projectId/results', async (ctx) =>
-  getLast100MeasurementsAsJson(ctx, db)
+defineRoute(
+  '/rebenchdb/dash/:projectId/results',
+  router,
+  db,
+  getLast100MeasurementsAsJson
 );
-router.get('/rebenchdb/dash/:projectId/timeline/:runId', async (ctx) =>
-  getTimelineAsJson(ctx, db)
+defineRoute(
+  '/rebenchdb/dash/:projectId/timeline/:runId',
+  router,
+  db,
+  getTimelineAsJson
 );
-router.get(
+defineRoute(
   '/rebenchdb/dash/:projectSlug/profiles/:runId/:commitId',
-  async (ctx) => getProfileAsJson(ctx, db)
+  router,
+  db,
+  getProfileAsJson
 );
-router.get(
+defineRoute(
   '/rebenchdb/dash/:projectSlug/measurements/:runId/:baseId/:changeId',
-  async (ctx) => getMeasurementsAsJson(ctx, db)
+  router,
+  db,
+  getMeasurementsAsJson
 );
-router.get('/rebenchdb/stats', async (ctx) => getSiteStatsAsJson(ctx, db));
-
+defineRoute('/rebenchdb/stats', router, db, getSiteStatsAsJson);
 defineRoute('/rebenchdb/dash/:projectId/changes', router, db, getChangesAsJson);
 
-router.get('/rebenchdb/dash/:projectId/data-overview', async (ctx) =>
-  getAvailableDataAsJson(ctx, db)
+defineRoute(
+  '/rebenchdb/dash/:projectId/data-overview',
+  router,
+  db,
+  getAvailableDataAsJson
 );
-router.post('/rebenchdb/dash/:projectName/timelines', koaBody(), async (ctx) =>
-  getTimelineDataAsJson(ctx, db)
+defineRoute(
+  '/rebenchdb/dash/:projectName/timelines',
+  router,
+  db,
+  getTimelineDataAsJson,
+  koaBody()
 );
 
 router.get('/admin/perform-timeline-update', async (ctx) =>

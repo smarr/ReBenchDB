@@ -1,7 +1,7 @@
 import { ParameterizedContext } from 'koa';
 import { respondProjectNotFound } from '../standard-responses.js';
 import { prepareTemplate } from '../templates.js';
-import { TimelineSuite } from '../../shared/api.js';
+import { TimelineResponse, TimelineSuite } from '../../shared/api.js';
 import { Database } from '../db/db.js';
 import { rebenchVersion, robustPath } from '../util.js';
 import { getNumberOrError } from '../request-check.js';
@@ -15,25 +15,26 @@ const timelineTpl = prepareTemplate(
 export async function getTimelineAsJson(
   ctx: ParameterizedContext,
   db: Database
-): Promise<void> {
-  ctx.type = 'application/json';
-
+): Promise<TimelineResponse | null> {
   const projectId = getNumberOrError(ctx, 'projectId');
   if (projectId === null) {
     log.error((ctx.body as any).error);
-    return;
+    ctx.status = 404;
+    return null;
   }
 
   const runId = getNumberOrError(ctx, 'runId');
   if (runId === null) {
     log.error((ctx.body as any).error);
-    return;
+    ctx.status = 404;
+    return null;
   }
 
-  ctx.body = await db.getTimelineForRun(projectId, runId);
-  if (ctx.body === null) {
+  const result = await db.getTimelineForRun(projectId, runId);
+  if (result === null) {
     ctx.status = 500;
   }
+  return result;
 }
 
 export async function renderTimeline(

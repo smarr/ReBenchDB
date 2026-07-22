@@ -13,7 +13,10 @@ import {
   startRequest
 } from '../perf-tracker.js';
 import type { AllResults } from '../../shared/api.js';
-import type { ChangesResponse } from '../../shared/view-types.js';
+import type {
+  ChangesResponse,
+  SiteStatsResponse
+} from '../../shared/view-types.js';
 import { Database } from '../db/db.js';
 import { TimedCacheValidity } from '../db/timed-cache-validity.js';
 import { getNumberOrError } from '../request-check.js';
@@ -37,18 +40,18 @@ export async function renderMainPage(
 export async function getLast100MeasurementsAsJson(
   ctx: ParameterizedContext,
   db: Database
-): Promise<void> {
-  ctx.type = 'application/json';
-
+): Promise<AllResults[]> {
   const projectId = getNumberOrError(ctx, 'projectId');
   if (projectId === null) {
     log.error((ctx.body as any).error);
-    return;
+    ctx.status = 404;
+    return null as any;
   }
 
   const start = startRequest();
-  ctx.body = await getLast100Measurements(projectId, db);
+  const result = await getLast100Measurements(projectId, db);
   completeRequestAndHandlePromise(start, db, 'get-results');
+  return result;
 }
 
 const resultsCache: AllResults[][] = [];
@@ -121,14 +124,6 @@ export async function getLast100Measurements(
   return resultsCache[projectId];
 }
 
-export async function getSiteStatsAsJson(
-  ctx: ParameterizedContext,
-  db: Database
-): Promise<void> {
-  ctx.body = await getStatistics(db);
-  ctx.type = 'application/json';
-}
-
 let statisticsCache: { stats: any[]; version: number } | null = null;
 let statsCacheValid: TimedCacheValidity | null = null;
 
@@ -136,9 +131,10 @@ export function statsCache(): TimedCacheValidity | null {
   return statsCacheValid;
 }
 
-export async function getStatistics(
+export async function getSiteStatsAsJson(
+  _: ParameterizedContext,
   db: Database
-): Promise<{ stats: any[]; version: number }> {
+): Promise<SiteStatsResponse> {
   if (
     statisticsCache !== null &&
     statsCacheValid !== null &&
@@ -178,6 +174,7 @@ export async function getChangesAsJson(
   const projectId = getNumberOrError(ctx, 'projectId');
   if (projectId === null) {
     log.error((ctx.body as any).error);
+    ctx.status = 404;
     return null as any;
   }
 
