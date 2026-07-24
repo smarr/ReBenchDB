@@ -1,3 +1,4 @@
+import { apiFetch } from './api-client.js';
 import {
   populateStatistics,
   renderAllResults,
@@ -5,8 +6,8 @@ import {
 } from './render.js';
 
 async function showStatistics(): Promise<void> {
-  const statsP = fetch(`/rebenchdb/stats`);
-  await populateStatistics(statsP);
+  const stats = await apiFetch('/rebenchdb/stats', {});
+  await populateStatistics(stats);
   $('#stats-table-button').hide();
 }
 

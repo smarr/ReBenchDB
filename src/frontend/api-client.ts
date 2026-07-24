@@ -1,4 +1,4 @@
-import { ApiRoutes } from '../shared/view-types.js';
+import { ApiRoutes, apiRoutes } from '../shared/view-types.js';
 
 type ExtractParams<Path extends string> =
   Path extends `${string}:${infer Param}/${infer Rest}`
@@ -9,14 +9,29 @@ type ExtractParams<Path extends string> =
 
 export async function apiFetch<Path extends keyof ApiRoutes>(
   path: Path,
-  params: ExtractParams<Path>
+  params: ExtractParams<Path>,
+  jsonData?: any
 ): Promise<ApiRoutes[Path]['response']> {
   let url: string = path;
   for (const [key, value] of Object.entries(params)) {
     url = url.replace(`:${key}`, String(value));
   }
 
-  const res = await fetch(url);
+  let options: RequestInit | undefined = undefined;
+  if (apiRoutes[path].method === 'POST') {
+    options = {
+      method: 'POST',
+      mode: 'same-origin',
+      cache: 'no-cache',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      redirect: 'follow',
+      referrerPolicy: 'no-referrer',
+      body: JSON.stringify(jsonData)
+    };
+  }
+
+  const res = await fetch(url, options);
   if (!res.ok) {
     throw new Error(`API request failed with status ${res.status}`);
   }

@@ -1,5 +1,8 @@
-import type { AllResults } from '../shared/api.js';
-import type { ChangesResponse, ChangesRow } from '../shared/view-types.js';
+import type {
+  ChangesResponse,
+  ChangesRow,
+  SiteStatsResponse
+} from '../shared/view-types.js';
 import { apiFetch } from './api-client.js';
 import { renderResultsPlots } from './plots.js';
 
@@ -300,17 +303,17 @@ function updateChangesList(
 }
 
 export function renderAllResults(projectId: string): void {
-  const resultsP = fetch(`/rebenchdb/dash/${projectId}/results`);
-  resultsP.then(async (resultsResponse) => {
-    const results = <AllResults[]>await resultsResponse.json();
+  const resultsP = apiFetch('/rebenchdb/dash/:projectId/results', {
+    projectId
+  });
+  resultsP.then(async (results) => {
     renderResultsPlots(results, projectId);
   });
 }
 
-export async function populateStatistics(statsP: any): Promise<void> {
-  const statsResponse = await statsP;
-  const stats = await statsResponse.json();
-
+export async function populateStatistics(
+  stats: SiteStatsResponse
+): Promise<void> {
   const table = $('#stats-table');
   for (const t of stats.stats) {
     table.append(`<tr><td>${t.table}</td><td>${t.cnt}</td></tr>`);

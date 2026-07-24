@@ -1,7 +1,7 @@
 import { initializeFilters } from './filter.js';
 import { renderComparisonTimelinePlot, renderWarmupPlot } from './plots.js';
-import type { ProfileRow, WarmupDataForTrial } from '../shared/view-types.js';
-import type { ProfileElement } from '../shared/api.js';
+import type { ProfileElement, TimelineRequest } from '../shared/api.js';
+import { apiFetch } from './api-client.js';
 
 function determineAndDisplaySignificance() {
   const val = parseFloat($('#significance').val() as string);
@@ -33,13 +33,15 @@ async function fetchWarmupData(
   changeCommitId: string,
   targetElement: JQuery<HTMLElement>
 ) {
-  const warmupR = await fetch(
-    `/rebenchdb/dash/${projectSlug}/measurements/` +
-      `${runId}/${baseCommitId}/${changeCommitId}`
+  const warmup = await apiFetch(
+    '/rebenchdb/dash/:projectSlug/measurements/:runId/:baseId/:changeId',
+    { projectSlug, runId, baseId: baseCommitId, changeId: changeCommitId }
   );
 
-  const warmupData: WarmupDataForTrial[] = await warmupR.json();
-  renderWarmupPlot(warmupData, baseCommitId, changeCommitId, targetElement);
+  if (warmup === null) {
+    return;
+  }
+  renderWarmupPlot(warmup, baseCommitId, changeCommitId, targetElement);
 }
 
 async function insertWarmupPlot(e) {
@@ -124,11 +126,11 @@ function fetchProfile(
   runId: number,
   jqInsert: JQuery<HTMLElement>
 ) {
-  const profileP = fetch(
-    `/rebenchdb/dash/${projectSlug}/profiles/${runId}/${commitId}`
+  const profileP = apiFetch(
+    '/rebenchdb/dash/:projectSlug/profiles/:runId/:commitId',
+    { projectSlug, runId, commitId }
   );
-  profileP.then(async (profileResponse) => {
-    const profileData: ProfileRow[] = await profileResponse.json();
+  profileP.then(async (profileData) => {
     const profId = `prof-${commitId}-${runId}`;
 
     const container = jqInsert.children();
@@ -178,20 +180,6 @@ function insertProfiles(e): void {
   }
 }
 
-async function fetchPost(url: string, data: any): Promise<any> {
-  const response = await fetch(url, {
-    method: 'POST',
-    mode: 'same-origin',
-    cache: 'no-cache',
-    credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json' },
-    redirect: 'follow',
-    referrerPolicy: 'no-referrer',
-    body: JSON.stringify(data)
-  });
-  return response.json();
-}
-
 async function insertTimeline(e): Promise<void> {
   const jqButton = $(e.target);
 
@@ -218,11 +206,12 @@ async function insertTimeline(e): Promise<void> {
 
 async function fetchTimelineData(
   projectName: string,
-  dataId,
-  jqInsert
+  dataId: TimelineRequest,
+  jqInsert: JQuery<HTMLElement>
 ): Promise<void> {
-  const response = await fetchPost(
-    `/rebenchdb/dash/${projectName}/timelines`,
+  const response = await apiFetch(
+    '/rebenchdb/dash/:projectName/timelines',
+    { projectName },
     dataId
   );
   renderComparisonTimelinePlot(response, jqInsert);
