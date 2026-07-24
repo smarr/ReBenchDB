@@ -1,4 +1,4 @@
-import { ApiRoutes, apiRoutes } from '../shared/view-types.js';
+import { ApiRoutes, apiRoutes } from '../shared/routes.js';
 
 type ExtractParams<Path extends string> =
   Path extends `${string}:${infer Param}/${infer Rest}`

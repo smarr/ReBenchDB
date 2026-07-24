@@ -1,5 +1,5 @@
 import { Middleware, ParameterizedContext } from 'koa';
-import { apiRoutes, ApiRoutes } from '../shared/view-types.js';
+import { apiRoutes, ApiRoutes } from '../shared/routes.js';
 import Router from '@koa/router';
 import { Database } from './db/db.js';
 
