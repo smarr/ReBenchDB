@@ -10,7 +10,7 @@ import { robustPath } from '../../../src/backend/util.js';
 import {
   getChanges,
   getLast100Measurements,
-  getStatistics
+  getSiteStatsAsJson
 } from '../../../src/backend/main/main.js';
 import { getDataOverview } from '../../../src/backend/project/data-export.js';
 import { prepareTemplate } from '../../../src/backend/templates.js';
@@ -91,7 +91,7 @@ describe('Test with basic test data loaded', () => {
   });
 
   it('Should get statistics', async () => {
-    const result = (await getStatistics(db)).stats;
+    const result = (await getSiteStatsAsJson(null as any, db)).stats;
     expect(result.length).toBeGreaterThan(2);
 
     for (const table of result) {

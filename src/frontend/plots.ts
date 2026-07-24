@@ -13,6 +13,7 @@ import type {
   WarmupDataPerCriterion
 } from '../shared/view-types.js';
 import { siteAesthetics } from '../shared/aesthetics.js';
+import { apiFetch } from './api-client.js';
 
 function simpleSlug(str) {
   return str.replace(/[\W_]+/g, '');
@@ -196,7 +197,7 @@ const sourceCache = new Map();
 async function getSource(
   projectSlug: string,
   sourceId: number
-): Promise<Source> {
+): Promise<Source | null> {
   let project = sourceCache.get(projectSlug);
   if (!project) {
     project = new Map();
@@ -205,8 +206,14 @@ async function getSource(
 
   let source: Source | undefined = project.get(sourceId);
   if (!source) {
-    const p = await fetch(`/${projectSlug}/source/${sourceId}`);
-    source = <Source>await p.json();
+    const sourceOrString = await apiFetch('/:projectSlug/source/:sourceId', {
+      projectSlug,
+      sourceId
+    });
+    if (typeof sourceOrString === 'string') {
+      return null;
+    }
+    source = sourceOrString;
     source.commitmessage = filterCommitMessage(source.commitmessage);
     project.set(sourceId, source);
   }
@@ -215,6 +222,9 @@ async function getSource(
 
 async function tooltipOnClick(projectSlug: string, sourceId: number) {
   const source = await getSource(projectSlug, sourceId);
+  if (source === null) {
+    return;
+  }
   window.open(`${source.repourl}/commit/${source.commitid}`);
 }
 
@@ -253,6 +263,9 @@ function tooltipPlugin({
 
   async function setTooltip(u, seriesIdx: number, dataIdx: number) {
     const source = await getSource(projectSlug, sourceIds[dataIdx]);
+    if (source === null) {
+      return;
+    }
     showTooltip();
 
     const top = u.valToPos(u.data[seriesIdx][dataIdx], 'y');
@@ -330,7 +343,7 @@ function tooltipPlugin({
 
 export function renderTimelinePlot(
   response: TimelineResponse,
-  jqInsert: any,
+  jqInsert: JQuery<HTMLElement>,
   projectSlug: string
 ): any {
   ensureThemeColors();
@@ -386,7 +399,7 @@ export function renderTimelinePlot(
 
 export function renderComparisonTimelinePlot(
   response: TimelineResponse,
-  jqInsert: any
+  jqInsert: JQuery<HTMLElement>
 ): uPlot {
   const series = [
     {},

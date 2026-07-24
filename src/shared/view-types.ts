@@ -293,3 +293,8 @@ export interface ChangesRow {
 export interface ChangesResponse {
   changes: ChangesRow[];
 }
+
+export interface SiteStatsResponse {
+  stats: any[];
+  version: number;
+}

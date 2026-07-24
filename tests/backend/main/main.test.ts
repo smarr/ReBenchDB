@@ -18,7 +18,7 @@ import {
 import {
   getChanges,
   getLast100Measurements,
-  getStatistics
+  getSiteStatsAsJson
 } from '../../../src/backend/main/main.js';
 
 describe('Test on empty DB', () => {
@@ -40,7 +40,7 @@ describe('Test on empty DB', () => {
   });
 
   it('Should get empty statistics', async () => {
-    const result = await getStatistics(db);
+    const result = await getSiteStatsAsJson(null as any, db);
     expect(result.stats.length).toBeGreaterThan(1);
     for (const table of result.stats) {
       expect(table.cnt).toEqual('0');

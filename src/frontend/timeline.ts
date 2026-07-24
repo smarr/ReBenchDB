@@ -1,8 +1,8 @@
-import type { TimelineResponse } from '../shared/api.js';
+import { apiFetch } from './api-client.js';
 import { initializeFilters } from './filter.js';
 import { renderTimelinePlot } from './plots.js';
 
-const projectId = $('#project-id').attr('value');
+const projectId = <string>$('#project-id').attr('value');
 const projectSlug = <string>$('#project-slug').attr('value');
 
 async function loadPlotOnce(this: any) {
@@ -14,11 +14,16 @@ async function loadPlotOnce(this: any) {
   thisJq.data('requested', true);
 
   const runId = thisJq.data('runid');
-  const timelineP = await fetch(
-    `/rebenchdb/dash/${projectId}/timeline/${runId}`
+  const timeline = await apiFetch(
+    '/rebenchdb/dash/:projectId/timeline/:runId',
+    { projectId, runId }
   );
-  const response = <TimelineResponse>await timelineP.json();
-  renderTimelinePlot(response, thisJq, projectSlug);
+
+  if (!timeline) {
+    return;
+  }
+
+  renderTimelinePlot(timeline, thisJq, projectSlug);
   thisJq.off('appear', onPlotAppearing);
 }
 

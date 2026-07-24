@@ -13,10 +13,11 @@ export function respondProjectAndSourceNotFound(
   ctx: ParameterizedContext,
   projectSlug: string,
   sourceId: string
-): void {
-  ctx.body =
-    `Requested combination of project "${projectSlug}"` +
-    ` and source ${sourceId} not found`;
+): string {
   ctx.status = 404;
   ctx.type = 'text';
+  return (
+    `Requested combination of project "${projectSlug}"` +
+    ` and source ${sourceId} not found`
+  );
 }

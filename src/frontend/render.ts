@@ -1,10 +1,14 @@
-import type { AllResults } from '../shared/api.js';
-import type { ChangesResponse, ChangesRow } from '../shared/view-types.js';
+import type {
+  ChangesResponse,
+  ChangesRow,
+  SiteStatsResponse
+} from '../shared/view-types.js';
+import { apiFetch } from './api-client.js';
 import { renderResultsPlots } from './plots.js';
 
 export function filterCommitMessage(msg: string): string {
   const result = msg
-    .normalize() // normalise Unicode first
+    .normalize() // normalize Unicode first
     .replace(/Signed-off-by:.*?\n/g, '')
     .replace(/&/g, '&amp;') // & must be first
     .replace(/</g, '&lt;')
@@ -98,10 +102,8 @@ export function renderProjectDataOverview(
 }
 
 export function renderChanges(projectId: string): void {
-  const changesP = fetch(`/rebenchdb/dash/${projectId}/changes`);
-  changesP.then(
-    async (changesDetailsResponse: Response) =>
-      await renderChangeDetails(changesDetailsResponse, projectId)
+  apiFetch(`/rebenchdb/dash/:projectId/changes`, { projectId }).then(
+    async (details) => await renderChangeDetails(details, projectId)
   );
 }
 
@@ -159,11 +161,7 @@ function setHref(event, projectId: string, isBaseline: boolean) {
   );
 }
 
-async function renderChangeDetails(
-  changesDetailsResponse: Response,
-  projId: string
-) {
-  const details: ChangesResponse = await changesDetailsResponse.json();
+async function renderChangeDetails(details: ChangesResponse, projId: string) {
   const changes = details.changes;
 
   const p1baseline = $(`#p${projId}-baseline`);
@@ -305,17 +303,17 @@ function updateChangesList(
 }
 
 export function renderAllResults(projectId: string): void {
-  const resultsP = fetch(`/rebenchdb/dash/${projectId}/results`);
-  resultsP.then(async (resultsResponse) => {
-    const results = <AllResults[]>await resultsResponse.json();
+  const resultsP = apiFetch('/rebenchdb/dash/:projectId/results', {
+    projectId
+  });
+  resultsP.then(async (results) => {
     renderResultsPlots(results, projectId);
   });
 }
 
-export async function populateStatistics(statsP: any): Promise<void> {
-  const statsResponse = await statsP;
-  const stats = await statsResponse.json();
-
+export async function populateStatistics(
+  stats: SiteStatsResponse
+): Promise<void> {
   const table = $('#stats-table');
   for (const t of stats.stats) {
     table.append(`<tr><td>${t.table}</td><td>${t.cnt}</td></tr>`);

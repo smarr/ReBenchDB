@@ -12,30 +12,29 @@ import type {
 } from '../../shared/view-types.js';
 import { refreshSecret } from '../util.js';
 import { deleteReport, renderCompare } from './report.js';
-import type { TimelineRequest } from '../../shared/api.js';
+import type { TimelineRequest, TimelineResponse } from '../../shared/api.js';
 import { getNumberOrError } from '../request-check.js';
 import { log } from '../logging.js';
 
 export async function getProfileAsJson(
   ctx: ParameterizedContext,
   db: Database
-): Promise<void> {
-  ctx.type = 'application/json';
-
+): Promise<ProfileRow[]> {
   const runId = getNumberOrError(ctx, 'runId');
   if (runId === null) {
     log.error((ctx.body as any).error);
-    return;
+    ctx.status = 404;
+    return null as any;
   }
 
   const start = startRequest();
 
-  ctx.body = await getProfile(runId, ctx.params.commitId, db);
-  if (ctx.body === undefined) {
+  const result = await getProfile(runId, ctx.params.commitId, db);
+  if (result === undefined || result.length === 0) {
     ctx.status = 404;
-    ctx.body = {};
   }
   completeRequestAndHandlePromise(start, db, 'get-profiles');
+  return result;
 }
 
 async function getProfile(
@@ -73,18 +72,17 @@ async function getProfile(
 export async function getMeasurementsAsJson(
   ctx: ParameterizedContext,
   db: Database
-): Promise<void> {
-  ctx.type = 'application/json';
-
+): Promise<WarmupDataForTrial[] | null> {
   const runId = getNumberOrError(ctx, 'runId');
   if (runId === null) {
     log.error((ctx.body as any).error);
-    return;
+    ctx.status = 404;
+    return null;
   }
 
   const start = startRequest();
 
-  ctx.body = await getMeasurements(
+  const result = await getMeasurements(
     ctx.params.projectSlug,
     runId,
     ctx.params.baseId,
@@ -93,6 +91,7 @@ export async function getMeasurementsAsJson(
   );
 
   completeRequestAndHandlePromise(start, db, 'get-measurements');
+  return result;
 }
 
 /**
@@ -171,20 +170,17 @@ export async function getMeasurements(
 export async function getTimelineDataAsJson(
   ctx: ParameterizedContext,
   db: Database
-): Promise<void> {
+): Promise<TimelineResponse> {
   const timelineRequest = <TimelineRequest>(<unknown>ctx.request.body);
   const result = await db.getTimelineData(
     ctx.params.projectName,
     timelineRequest
   );
   if (result === null) {
-    ctx.body = { error: 'Requested data was not found' };
     ctx.status = 404;
-  } else {
-    ctx.body = result;
-    ctx.status = 200;
+    return { error: 'Requested data was not found' } as any;
   }
-  ctx.type = 'json';
+  return result;
 }
 
 export async function renderComparePage(

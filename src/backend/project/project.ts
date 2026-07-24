@@ -11,6 +11,7 @@ import {
 import { getExpData } from './data-export.js';
 import { Database } from '../db/db.js';
 import { rebenchVersion, robustPath } from '../../backend/util.js';
+import { Source } from '../db/types.js';
 
 const projectHtml = prepareTemplate(robustPath('backend/project/project.html'));
 
@@ -30,22 +31,21 @@ export async function renderProjectPage(
 export async function getSourceAsJson(
   ctx: ParameterizedContext,
   db: Database
-): Promise<void> {
+): Promise<Source | string> {
   const result = await db.getSourceById(
     ctx.params.projectSlug,
     ctx.params.sourceId
   );
 
   if (result !== null) {
-    ctx.body = result;
-    ctx.type = 'application/json';
-  } else {
-    respondProjectAndSourceNotFound(
-      ctx,
-      ctx.params.projectSlug,
-      ctx.params.sourceId
-    );
+    return result;
   }
+
+  return respondProjectAndSourceNotFound(
+    ctx,
+    ctx.params.projectSlug,
+    ctx.params.sourceId
+  );
 }
 
 const projectDataTpl = prepareTemplate(
