@@ -200,6 +200,42 @@ CREATE TABLE Timeline (
   foreign key (criterion) references Criterion (id)
 );
 
+-- User Accounts
+CREATE TABLE Account (
+  id serial primary key,
+  userName varchar unique, -- has to be a valid `slug`
+  email varchar unique,
+  passwordHash varchar,
+  apiToken char(64) NULL,
+  createdAt timestamp with time zone DEFAULT now(),
+  isActive bool NOT NULL DEFAULT true -- deactivated users cannot log in
+);
+
+CREATE TABLE Group (
+  id serial primary key,
+  groupName varchar unique, -- has to be a valid `slug`
+  description text,
+  createdAt timestamp with time zone DEFAULT now(),
+  createdBy int REFERENCES Account (id)
+);
+
+-- A Namespace is either a user or group, and ensures that
+-- there are no name collisions between users and groups.
+CREATE TABLE Namespace (
+  id serial primary key,
+  name varchar unique NOT NULL, -- has to be a valid `slug`
+  type char(1) CHECK (type IN ('u', 'g')),
+  accountId int NULL REFERENCES Account (id),
+  groupId int NULL REFERENCES Group (id),
+
+  CONSTRAINT eitherAccountOrGroup CHECK (
+    (accountId IS NOT NULL AND groupId IS NULL AND type = 'u') OR
+    (accountId IS NULL AND groupId IS NOT NULL AND type = 'g')
+  )
+);
+
+TODO: group and project memberships
+
 -- Used by ReBenchDB's perf-tracker, for self-performance tracking
 CREATE PROCEDURE recordAdditionalMeasurement(
   aRunId int,
