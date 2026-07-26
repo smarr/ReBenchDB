@@ -1,3 +1,42 @@
+## Overview of key changes in the PR
+
+ - support for JWT_SECRET/API tokens when sending data
+ - admin UI to manage
+      - projects, users, and group membership
+      - generate API tokens
+      - create project with owner
+ - support for row-level-security to limit database access per user
+ - user login
+
+ What I really want:
+  - a change of URL schema, introduce the user/group before the project name
+  - support redirecting legacy project names to the new group
+      - hm, maybe that's not needed and more headache than what it is worth
+  - a migration path for benchmark setups
+    - currently, they only have a project name, they need a user
+      or the project name needs to be changed to "user/project" in the config
+    - but, if we do authorization checks, the config needs to be changed
+      either way, so, doing a hard removal of the old functionality is probably
+      fine
+
+We need a fairly easy step-wise plan, since things won't happen otherwise.
+
+Step 1:
+ - introduce the notion of users/groups in the database
+ - add support for generating tokens for a user
+ - no user-facing changes, no UI
+
+Step 2:
+ - change URL schema
+ - require adaptation of benchmarking configurations
+
+Step 3:
+ - introduce the various UI elements
+
+Step 4:
+ - introduce row-level security
+
+
 ## General Things to think about
 
 - [ ] I don't like the code in admin.ts. The network interaction is verbose and not really abstracted, and does not match the style used elsewhere in the frontend
