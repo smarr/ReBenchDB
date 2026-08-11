@@ -49,7 +49,9 @@ CREATE TABLE Project (
   position integer DEFAULT 0,
 
   -- the bases for comparisons that we generate when a experiment is completed
-  baseBranch varchar
+  baseBranch varchar,
+
+  namespaceId int NOT NULL REFERENCES Namespace (id)
 );
 
 -- Identifies the specific state of the source, the code, on which
@@ -229,10 +231,27 @@ CREATE TABLE Namespace (
   groupId int NULL REFERENCES Group (id),
 
   CONSTRAINT eitherAccountOrGroup CHECK (
-    (accountId IS NOT NULL AND groupId IS NULL AND type = 'u') OR
-    (accountId IS NULL AND groupId IS NOT NULL AND type = 'g')
+    (accountId IS NOT NULL AND groupId IS     NULL AND type = 'u') OR
+    (accountId IS     NULL AND groupId IS NOT NULL AND type = 'g')
   )
 );
+
+ALTER TABLE Account
+  ADD COLUMN namespaceId int REFERENCES Namespace (id);
+ALTER TABLE Group
+  ADD COLUMN namespaceId int REFERENCES Namespace (id);
+
+CREATE TYPE projectRole AS ENUM ('view', 'edit', 'owner');
+
+CREATE TABLE ProjectPermissions (
+  projectId int REFERENCES Project (id),
+  namespaceId int REFERENCES Namespace (id),
+  role projectRole NOT NULL,
+  PRIMARY KEY (projectId, namespaceId)
+);
+
+
+  
 
 TODO: group and project memberships
 
