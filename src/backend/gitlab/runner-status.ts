@@ -202,10 +202,10 @@ async function fetchPipelinesAndJobsPerProject(
 }
 
 export async function fetchRunners(
-  runnerCache: RequestCache<Runner[]>,
+  runnerCache: RequestCache<Map<string, Runner>>,
   groupPath: string,
   updatedAfter: Date
-): Promise<Runner[]> {
+): Promise<Map<string, Runner>> {
   return runnerCache.getCachedValue(groupPath, updatedAfter);
 }
 
@@ -213,12 +213,12 @@ export async function fetchRunnersUncached(
   client: GraphQLClient,
   groupPath: string,
   updatedAfter: Date
-): Promise<Runner[]> {
+): Promise<Map<string, Runner>> {
   log.warn(
     `fetchRunners() for group ${groupPath} with updatedAfter ${updatedAfter}`
   );
 
-  const runners: Runner[] = [];
+  const runners: Map<string, Runner> = new Map();
   let after: string | null = null;
   while (true) {
     const data: RunnersResponse = await client.request<RunnersResponse>(
@@ -243,7 +243,9 @@ export async function fetchRunnersUncached(
       return runners;
     }
 
-    runners.push(...rs.nodes);
+    for (const runner of rs.nodes) {
+      runners.set(runner.id, runner);
+    }
 
     if (!rs.pageInfo.hasNextPage) {
       return runners;
@@ -323,7 +325,7 @@ export function createGraphQLClient(): GraphQLClient {
 }
 
 export async function renderRunnerStatusToString(
-  runnerCache: RequestCache<Runner[]>,
+  runnerCache: RequestCache<Map<string, Runner>>,
   pipelinesCache: RequestCache<Pipeline[]>,
   projectName: string
 ): Promise<string> {
@@ -368,12 +370,14 @@ export function getJobStats(pipelines: Pipeline[]): Record<string, number> {
   return result;
 }
 
-export function getRunnerStats(runners: Runner[]): Record<string, number> {
+export function getRunnerStats(
+  runners: Map<string, Runner>
+): Record<string, number> {
   let online = 0;
   let offline = 0;
   let paused = 0;
 
-  for (const runner of runners) {
+  for (const runner of runners.values()) {
     if (runner.active) {
       if (runner.paused) {
         paused++;
@@ -386,7 +390,7 @@ export function getRunnerStats(runners: Runner[]): Record<string, number> {
   }
 
   return {
-    'Total Runners': runners.length,
+    'Total Runners': runners.size,
     Online: online,
     Offline: offline,
     Paused: paused
@@ -395,7 +399,7 @@ export function getRunnerStats(runners: Runner[]): Record<string, number> {
 
 export function renderRunnerStatusFromData(
   pipelines: Pipeline[],
-  runners: Runner[],
+  runners: Map<string, Runner>,
   renderStartTime: Date,
   projectName: string
 ): string {
@@ -417,7 +421,7 @@ export function renderRunnerStatusFromData(
 export async function renderRunners(
   ctx: ParameterizedContext,
   db: Database,
-  runnerCache: RequestCache<Runner[]>,
+  runnerCache: RequestCache<Map<string, Runner>>,
   pipelinesCache: RequestCache<Pipeline[]>
 ): Promise<void> {
   const project = await db.getProjectBySlug(ctx.params.projectSlug);

@@ -50,6 +50,7 @@
 .badge-never_contacted { background-color: var(--muted-gray); }
 .badge-skipped { background-color: var(--muted-gray); }
 .badge-paused { background-color: var(--orange); }
+.badge-manual { background-color: var(--muted-gray); }
 
 @media (min-width: 1200px) {
   main {
@@ -212,13 +213,13 @@ tr:hover td { background-color: var(--surface2); }
 .job-line-name {
     min-width: 0;
     white-space: nowrap;
-    overflow: scroll;
+    overflow: clip;
     font-weight: 600;
 }
 .job-line-meta {
     min-width: 0;
     white-space: nowrap;
-    overflow: scroll;
+    overflow: clip;
     color: var(--text-dim);
     font-size: 0.8rem;
 }
