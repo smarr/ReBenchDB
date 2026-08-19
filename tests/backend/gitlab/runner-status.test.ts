@@ -30,7 +30,7 @@ function createGraphQLClient(): GraphQLClient {
 describe('Test fetchRunnersUncached()', () => {
   describe('with pending jobs', () => {
     let scope: Scope;
-    let runners: Runner[];
+    let runners: Map<string, Runner>;
 
     beforeAll(async () => {
       scope = nock('https://example')
@@ -45,7 +45,7 @@ describe('Test fetchRunnersUncached()', () => {
     });
 
     it('should return the correct number of runners', async () => {
-      expect(runners).toHaveLength(7);
+      expect(runners.size).toBe(7);
     });
 
     it('should give the expected stats', async () => {
@@ -75,7 +75,7 @@ describe('Test fetchRunnersUncached()', () => {
       new Date('2024-06-19T18:51:08.258Z')
     );
 
-    expect(runners).toEqual([]);
+    expect(runners.size).toEqual(0);
     scope.done();
   });
 
@@ -153,7 +153,7 @@ describe('Test fetchRunnersUncached()', () => {
       new Date('2024-06-19T18:51:08.258Z')
     );
 
-    expect(runners).toHaveLength(2);
+    expect(runners.size).toBe(2);
     expect(scope.isDone()).toBe(true);
   });
 
@@ -169,7 +169,7 @@ describe('Test fetchRunnersUncached()', () => {
       new Date('2024-06-19T18:51:08.258Z')
     );
 
-    expect(runners).toEqual([]);
+    expect(runners.size).toBe(0);
     scope.done();
   });
 });
@@ -414,7 +414,7 @@ describe('render runner status', () => {
   describe('with pending jobs', () => {
     let scope: Scope;
     let pipelines: Pipeline[];
-    let runners: Runner[];
+    let runners: Map<string, Runner>;
 
     beforeAll(async () => {
       scope = nock('https://example')
@@ -460,7 +460,7 @@ describe('GitLab request cache', () => {
       .post('/api/graphql')
       .reply(200, runner1);
 
-    const runnerCache = new RequestCache<Runner[]>(
+    const runnerCache = new RequestCache<Map<string, Runner>>(
       250,
       fetchRunnersUncached,
       createGraphQLClient()

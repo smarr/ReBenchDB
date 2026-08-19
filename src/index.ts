@@ -73,7 +73,7 @@ export const db = new DatabaseWithPool(
   dbCacheInvalidationDelay
 );
 
-const runnerCache = new RequestCache<Runner[]>(
+const runnerCache = new RequestCache<Map<string, Runner>>(
   siteConfig.gitlabConfig.runnersCacheTtlSeconds,
   fetchRunnersUncached,
   createGraphQLClient()

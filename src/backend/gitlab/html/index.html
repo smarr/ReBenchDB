@@ -52,13 +52,13 @@
                 &nbsp; {%= pipeline.commit.message.split('\n')[0] %}
            {% } %}
          </div>
-         <div class="runner-label"> 
-          Created: {%- include('relative-time.html', { time: pipeline.createdAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %} %} 
+         <div class="runner-label">
+          Created: {%- include('relative-time.html', { time: pipeline.createdAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %} %}
           {% if (pipeline.startedAt) { %}
-            &nbsp; Started: {%- include('relative-time.html', { time: pipeline.startedAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %} 
+            &nbsp; Started: {%- include('relative-time.html', { time: pipeline.startedAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %}
           {% } %}
           {% if (pipeline.finishedAt) { %}
-            &nbsp; Finished: {%- include('relative-time.html', { time: pipeline.finishedAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %} 
+            &nbsp; Finished: {%- include('relative-time.html', { time: pipeline.finishedAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %}
           {% } %}
          </div>
          <div class="job-grid">
@@ -72,20 +72,20 @@
              </span>
 
              <span class="job-line-meta">
-              Runner: {%= job.runner ? (job.runner.description || job.runner.id) : "n/a" %} &nbsp;
-              Created: {%- include('relative-time.html', { time: job.createdAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %} 
+              Runner: {%= job.runner ? it.runners.get(job.runner.id)?.description || job.runner.id : "n/a" %} &nbsp;
+              Created: {%- include('relative-time.html', { time: job.createdAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %}
               {% if (job.startedAt) { %}
-                &nbsp; Started: {%- include('relative-time.html', { time: job.startedAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %} 
+                &nbsp; Started: {%- include('relative-time.html', { time: job.startedAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %}
               {% } %}
               {% if (job.finishedAt) { %}
-                &nbsp; Finished: {%- include('relative-time.html', { time: job.finishedAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %} 
+                &nbsp; Finished: {%- include('relative-time.html', { time: job.finishedAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %}
               {% } %}
              </span>
            </div>
          {% } %}
          </div>
        </div>
-{%   } 
+{%   }
    }
 %}
 </main>
@@ -104,7 +104,7 @@
   </summary>
   <div class="status-drawer-content">
     <h2>Runners {%= it.numRunners %}</h2>
-    {% if (it.runners.length == 0) { %}
+    {% if (it.runners.size == 0) { %}
       <div class="empty-state">No runners found.</div>
     {% } else { %}
       <table><thead>
@@ -115,9 +115,10 @@
         </tr>
       </thead>
       <tbody>
-        {% for (const [idx, runner] of it.runners.entries()) { %}
+        {%  let idx = 1;
+            for (const runner of it.runners.values()) { %}
           <tr>
-            <td>{%= idx + 1 %}</td>
+            <td>{%= idx %}</td>
             <td><strong>{%= runner.description || "(no description)"%}</strong></td>
             {% const label = runner.paused ? "PAUSED" : (runner.status || "UNKNOWN"); %}
             <td><span class="badge badge-{%= label.toLowerCase().replace(' ', '-') %}">{%= label %}</span></td>
@@ -126,7 +127,8 @@
             <td>{%- include('tags.html', { tags: runner.tagList, dataFormatters: it.dataFormatters }) %}</td>
             <td>{%- include('relative-time.html', { time: runner.contactedAt, dataFormatters: it.dataFormatters, renderStartTime: it.renderStartTime }) %}</td>
           </tr>
-        {% } %}
+        {%  idx += 1;
+            } %}
       </tbody>
     </table>
     {% } %}
