@@ -1,0 +1,136 @@
+{
+  "data": {
+    "group": {
+      "id": "gid://gitlab/Group/3069",
+      "name": "SSW",
+      "fullPath": "ssw",
+      "runners": {
+        "pageInfo": {
+          "hasNextPage": false,
+          "endCursor": "eyJjcmVhdGVkX2F0IjoiMjAyNi0wNi0wNiAyMjozNzoyNi41OTc1NDcwMDAgKzAyMDAiLCJpZCI6IjQ4In0"
+        },
+        "nodes": [
+          {
+            "id": "gid://gitlab/Ci::Runner/54",
+            "description": "cassius: Ampera Altra Q64-22 (arm64)",
+            "active": true,
+            "paused": false,
+            "status": "ONLINE",
+            "tagList": [
+              "ssw-cassius"
+            ],
+            "architectureName": "arm64",
+            "platformName": "linux",
+            "version": "19.0.1",
+            "revision": "c2831b75",
+            "contactedAt": "2026-06-11T23:08:28+02:00",
+            "maximumTimeout": null,
+            "accessLevel": "NOT_PROTECTED"
+          },
+          {
+            "id": "gid://gitlab/Ci::Runner/53",
+            "description": "brutus: Xeon 6520P, RTX 5090",
+            "active": true,
+            "paused": false,
+            "status": "ONLINE",
+            "tagList": [
+              "ssw-brutus"
+            ],
+            "architectureName": "amd64",
+            "platformName": "linux",
+            "version": "19.0.1",
+            "revision": "c2831b75",
+            "contactedAt": "2026-06-11T23:08:27+02:00",
+            "maximumTimeout": null,
+            "accessLevel": "NOT_PROTECTED"
+          },
+          {
+            "id": "gid://gitlab/Ci::Runner/52",
+            "description": "zullie1: Apple M2 ARM",
+            "active": true,
+            "paused": false,
+            "status": "ONLINE",
+            "tagList": [
+              "kent-zullie1"
+            ],
+            "architectureName": "arm64",
+            "platformName": "darwin",
+            "version": "18.8.0",
+            "revision": "9ffb4aa0",
+            "contactedAt": "2026-06-11T23:08:28+02:00",
+            "maximumTimeout": null,
+            "accessLevel": "NOT_PROTECTED"
+          },
+          {
+            "id": "gid://gitlab/Ci::Runner/51",
+            "description": "yuria4: 13th Gen Intel(R) Core(TM) i9-13900K",
+            "active": true,
+            "paused": false,
+            "status": "ONLINE",
+            "tagList": [
+              "kent-yuria4"
+            ],
+            "architectureName": "amd64",
+            "platformName": "linux",
+            "version": "18.11.2",
+            "revision": "68229485",
+            "contactedAt": "2026-06-11T23:07:55+02:00",
+            "maximumTimeout": null,
+            "accessLevel": "NOT_PROTECTED"
+          },
+          {
+            "id": "gid://gitlab/Ci::Runner/50",
+            "description": "yuria3: Intel(R) Xeon(R) Gold 6209U CPU @ 2.10GHz",
+            "active": true,
+            "paused": false,
+            "status": "ONLINE",
+            "tagList": [
+              "kent-yuria3"
+            ],
+            "architectureName": "amd64",
+            "platformName": "linux",
+            "version": "19.0.1",
+            "revision": "c2831b75",
+            "contactedAt": "2026-06-11T23:07:49+02:00",
+            "maximumTimeout": 864000,
+            "accessLevel": "NOT_PROTECTED"
+          },
+          {
+            "id": "gid://gitlab/Ci::Runner/49",
+            "description": "yuria2: Intel(R) Xeon(R) Gold 6209U CPU @ 2.10GHz",
+            "active": true,
+            "paused": false,
+            "status": "ONLINE",
+            "tagList": [
+              "kent-yuria2"
+            ],
+            "architectureName": "amd64",
+            "platformName": "linux",
+            "version": "19.0.1",
+            "revision": "c2831b75",
+            "contactedAt": "2026-06-11T23:08:37+02:00",
+            "maximumTimeout": null,
+            "accessLevel": "NOT_PROTECTED"
+          },
+          {
+            "id": "gid://gitlab/Ci::Runner/48",
+            "description": "yuria: Intel(R) Xeon(R) CPU E5-2620 v3 @ 2.40GHz",
+            "active": true,
+            "paused": false,
+            "status": "ONLINE",
+            "tagList": [
+              "kent-yuria"
+            ],
+            "architectureName": "amd64",
+            "platformName": "linux",
+            "version": "19.0.0",
+            "revision": "d4bac16c",
+            "contactedAt": "2026-06-11T23:08:02+02:00",
+            "maximumTimeout": 864000,
+            "accessLevel": "NOT_PROTECTED"
+          }
+        ]
+      }
+    }
+  }
+}

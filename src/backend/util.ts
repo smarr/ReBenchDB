@@ -46,9 +46,21 @@ export const robustSrcPath = __dirname.includes('dist/')
       return `${__dirname}/../../dist/src/${path}`;
     };
 
-const port: number = process.env.RDB_PORT
-  ? parseInt(process.env.RDB_PORT)
-  : 5432;
+function getEnvInt(name: string, defaultValue: number): number {
+  const raw = process.env[name];
+  if (!raw) {
+    return defaultValue;
+  }
+
+  const parsed = parseInt(raw, 10);
+  if (Number.isNaN(parsed) || parsed < 0) {
+    return defaultValue;
+  }
+
+  return parsed;
+}
+
+const port: number = getEnvInt('RDB_PORT', 5432);
 
 const _rebench_dev = 'https://rebench.dev';
 const reportsUrl = process.env.REPORTS_URL || '/static/reports';
@@ -82,7 +94,7 @@ export const refreshSecret =
   'REFRESH_SECRET' in process.env ? process.env.REFRESH_SECRET : undefined;
 
 /** How long to still hold on to the cache after it became invalid. In ms. */
-export const cacheInvalidationDelay = 1000 * 60 * 5; /* 5 minutes */
+export const dbCacheInvalidationDelay = 1000 * 60 * 5; /* 5 minutes */
 
 export function isReBenchDotDev(): boolean {
   return siteConfig.publicUrl === _rebench_dev;
@@ -100,8 +112,26 @@ export const statsConfig = {
   numberOfBootstrapSamples: 50
 };
 
+const gitlabConfig = {
+  /** Token for accessing the GitLab GraphQL API */
+  token: process.env.GITLAB_TOKEN || '',
+  siteUrl: process.env.GITLAB_SITE_URL || 'https://sourcery.im.jku.at',
+  apiUrl:
+    process.env.GITLAB_API_URL || 'https://sourcery.im.jku.at/api/graphql',
+  group: process.env.GITLAB_GROUP || 'SSW',
+
+  /** How far back to look for pipelines, in seconds from now. */
+  updatedAfterSeconds: getEnvInt('GITLAB_UPDATED_AFTER_SECONDS', 24 * 60 * 60),
+
+  /** Cache TTL for runner data, in seconds. */
+  runnersCacheTtlSeconds: getEnvInt('GITLAB_RUNNERS_CACHE_TTL_SECONDS', 5 * 60),
+
+  /** Cache TTL for pipeline data, in seconds. */
+  pipelinesCacheTtlSeconds: getEnvInt('GITLAB_PIPELINES_CACHE_TTL_SECONDS', 30)
+};
+
 export const siteConfig = {
-  port: process.env.PORT || 33333,
+  port: getEnvInt('PORT', 33333),
   reportsUrl,
   staticUrl,
   publicUrl,
@@ -112,14 +142,16 @@ export const siteConfig = {
    * and Postgres generated files are accessible.
    */
   dataExportPath: nodeDataExportPath,
-  appId: parseInt(process.env.GITHUB_APP_ID || '') || 76497,
+  appId: getEnvInt('GITHUB_APP_ID', 76497),
   githubPrivateKey:
     process.env.GITHUB_PK || 'rebenchdb.2020-08-11.private-key.pem',
 
   canShowWarmup: (data: ValuesPossiblyMissing[]): boolean => {
     return data.some((ms) => ms != null && ms.length >= 5);
   },
-  inlinePlotCriterion: 'total'
+  inlinePlotCriterion: 'total',
+
+  gitlabConfig
 };
 
 export const TotalCriterion = 'total';

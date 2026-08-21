@@ -145,3 +145,35 @@ export function shortenCriteria(text: string): string {
   }
   return result.join(' ');
 }
+
+export function absoluteTimeFromStr(date: string): string {
+  return absoluteTime(new Date(date));
+}
+
+export function absoluteTime(date: Date): string {
+  return date.toISOString().replace('T', ' ').replace('Z', '').substring(0, 19);
+}
+
+export function relativeTimeFromStr(date: string, base: Date): string {
+  return relativeTime(new Date(date), base);
+}
+
+export function relativeTime(date: Date, base: Date): string {
+  if (!date) {
+    return '';
+  }
+  const secs = Math.floor((base.getTime() - date.getTime()) / 1000);
+  if (secs <= 0) {
+    return 'just now';
+  } else if (secs < 60) {
+    return `${secs}s ago`;
+  } else if (secs < 3600) {
+    return `${Math.floor(secs / 60)}m ${secs % 60}s ago`;
+  } else if (secs < 86400) {
+    return `${Math.floor(secs / 3600)}h ${Math.floor((secs % 3600) / 60)}m ago`;
+  } else {
+    return `${Math.floor(secs / 86400)}d ${Math.floor(
+      (secs % 86400) / 3600
+    )}h ago`;
+  }
+}

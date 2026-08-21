@@ -1,0 +1,7 @@
+{% if (it.tags && it.tags.length > 0) {
+    for (const tag of it.tags) { %}
+  <span class="tag">{%= tag %}</span>
+{%  } 
+  } else { %}
+  <span class="no-tag">-</span>
+{% } %}

@@ -1,13 +1,16 @@
 import { describe, expect, it } from '@jest/globals';
 import type { Environment } from '../../src/backend/db/types.js';
 import {
+  absoluteTime,
+  absoluteTimeFromStr,
   asHumanHz,
   asHumanMem,
   benchmarkId,
   formatEnvironment,
   per,
   r0,
-  r2
+  r2,
+  relativeTime
 } from '../../src/shared/data-format.js';
 
 describe('Format Functions for Numerical Values', () => {
@@ -202,5 +205,52 @@ describe('Format Functions for Numerical Values', () => {
         )
       ).toBe('{"b":"bench","e":"exe","s":"suite"}');
     });
+  });
+});
+
+describe('absoluteTimeFromStr - format as an absolute time string', () => {
+  it('should format a date string as an absolute time string', () => {
+    expect(absoluteTimeFromStr('2026-06-11T16:14:50+02:00')).toBe(
+      '2026-06-11 14:14:50'
+    );
+  });
+});
+
+describe('absoluteTime - format a date as an absolute time string', () => {
+  it('should format a date as an absolute time string', () => {
+    const date = new Date('2024-01-01T12:34:56Z');
+    expect(absoluteTime(date)).toBe('2024-01-01 12:34:56');
+  });
+});
+
+describe('relativeTime - format a date as a relative time string', () => {
+  it('should format a date as string with less than a second', () => {
+    const base = new Date('2024-01-01T12:34:50.000Z');
+    const date = new Date('2024-01-01T12:34:50.900Z');
+    expect(relativeTime(date, base)).toBe('just now');
+  });
+
+  it('should format a date with less than a minute as seconds', () => {
+    const base = new Date('2024-01-01T12:34:56Z');
+    const date = new Date('2024-01-01T12:34:50Z');
+    expect(relativeTime(date, base)).toBe('6s ago');
+  });
+
+  it('should format a date with more than an hour as minutes and secs', () => {
+    const base = new Date('2024-01-01T12:34:56Z');
+    const date = new Date('2024-01-01T12:30:50Z');
+    expect(relativeTime(date, base)).toBe('4m 6s ago');
+  });
+
+  it('should format less than a day difference as hours and mins', () => {
+    const base = new Date('2024-01-01T12:34:56Z');
+    const date = new Date('2024-01-01T10:30:50Z');
+    expect(relativeTime(date, base)).toBe('2h 4m ago');
+  });
+
+  it('should format more than a day difference as days and hours', () => {
+    const base = new Date('2024-01-02T12:34:56Z');
+    const date = new Date('2024-01-01T10:30:50Z');
+    expect(relativeTime(date, base)).toBe('1d 2h ago');
   });
 });
