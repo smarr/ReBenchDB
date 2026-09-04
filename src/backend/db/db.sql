@@ -51,8 +51,31 @@ CREATE TABLE Project (
   -- the bases for comparisons that we generate when a experiment is completed
   baseBranch varchar,
 
-  namespaceId int NOT NULL REFERENCES Namespace (id)
+  namespaceId int -- will add  REFERENCES Namespace (id) once we defined the table
+                  -- TODO: add  NOT NULL
 );
+
+-- TODO: which way do I want to approach this?
+-- while introducing namespaces, do I go with a default namespace for existing projects,
+-- like a specifically chosen user, or do I use a named legacy "global" namespace that is handled differently,
+-- or do I have it be NULL, which is kind of the legacy global namespace.
+-- I think, for my own sanity, and for the effort it takes to implement all this,
+-- I should probably just go and assign all existing projects to a specific user.
+-- Though, at the very least this also means I need to make sure that when I add data, that's theres the user info.
+-- And that also applies to the performance self-tracking feature.
+
+
+-- New Thoughts:
+-- I think the effort of backwards compatibility is small and will make the transition easier.
+-- Specifically, it will allow me to minimize the code changes in the early phase.
+-- By having a small number of redirects and default values,
+-- we should be able to attribute each project to a specific namespace.
+
+-- I'll create the "legacy" group as a start.
+-- I'll also create the "admin" user, which will be the owner of the legacy group.
+-- All projects without namespace, i.e., namespaceId is NULL, will be assigned to the legacy group.
+-- All requests without namespace will be redirected to the legacy group.
+
 
 -- Identifies the specific state of the source, the code, on which
 -- an experiment and its measurements are based.
@@ -203,7 +226,7 @@ CREATE TABLE Timeline (
 );
 
 -- User Accounts
-CREATE TABLE Account (
+CREATE TABLE UserAccount (
   id serial primary key,
   userName varchar unique, -- has to be a valid `slug`
   email varchar unique,
@@ -213,22 +236,22 @@ CREATE TABLE Account (
   isActive bool NOT NULL DEFAULT true -- deactivated users cannot log in
 );
 
-CREATE TABLE Group (
+CREATE TABLE UserGroup (
   id serial primary key,
   groupName varchar unique, -- has to be a valid `slug`
   description text,
   createdAt timestamp with time zone DEFAULT now(),
-  createdBy int REFERENCES Account (id)
+  createdBy int REFERENCES UserAccount (id)
 );
 
--- A Namespace is either a user or group, and ensures that
+-- A Namespace is either a user account or user group, and ensures that
 -- there are no name collisions between users and groups.
 CREATE TABLE Namespace (
   id serial primary key,
   name varchar unique NOT NULL, -- has to be a valid `slug`
   type char(1) CHECK (type IN ('u', 'g')),
-  accountId int NULL REFERENCES Account (id),
-  groupId int NULL REFERENCES Group (id),
+  accountId int NULL REFERENCES UserAccount (id),
+  groupId int NULL REFERENCES UserGroup (id),
 
   CONSTRAINT eitherAccountOrGroup CHECK (
     (accountId IS NOT NULL AND groupId IS     NULL AND type = 'u') OR
@@ -236,9 +259,11 @@ CREATE TABLE Namespace (
   )
 );
 
-ALTER TABLE Account
+ALTER TABLE Project
+  ADD CONSTRAINT fk_namespace FOREIGN KEY (namespaceId) REFERENCES Namespace (id);
+ALTER TABLE UserAccount
   ADD COLUMN namespaceId int REFERENCES Namespace (id);
-ALTER TABLE Group
+ALTER TABLE UserGroup
   ADD COLUMN namespaceId int REFERENCES Namespace (id);
 
 CREATE TYPE projectRole AS ENUM ('view', 'edit', 'owner');
@@ -249,11 +274,6 @@ CREATE TABLE ProjectPermissions (
   role projectRole NOT NULL,
   PRIMARY KEY (projectId, namespaceId)
 );
-
-
-  
-
-TODO: group and project memberships
 
 -- Used by ReBenchDB's perf-tracker, for self-performance tracking
 CREATE PROCEDURE recordAdditionalMeasurement(

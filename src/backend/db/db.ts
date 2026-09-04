@@ -16,7 +16,7 @@ import {
   FullPlotData,
   TimelineSuite
 } from '../../shared/api.js';
-import { robustPath, TotalCriterion } from '../util.js';
+import { legacyGroupName, robustPath, TotalCriterion } from '../util.js';
 import { assert } from '../logging.js';
 import { simplifyCmdline } from '../../shared/util.js';
 import type { SummaryStatistics } from '../../shared/stats.js';
@@ -312,14 +312,20 @@ export abstract class Database {
       return cache.get(cacheKey);
     }
 
-    const result = await this.query(insertUnionFetchQ);
-    assert(
-      result.rowCount === 1,
-      'recordCached insertUnionFetchQ did not return exactly one row. ' +
-        'rowCount: ${result.rowCount}'
-    );
-    cache.set(cacheKey, result.rows[0]);
-    return result.rows[0];
+    try {
+      const result = await this.query(insertUnionFetchQ);
+      assert(
+        result.rowCount === 1,
+        'recordCached insertUnionFetchQ did not return exactly one row. ' +
+          'rowCount: ${result.rowCount}'
+      );
+      cache.set(cacheKey, result.rows[0]);
+      return result.rows[0];
+    } catch (e: any) {
+      e.rebenchdbQuery = insertUnionFetchQ;
+      console.log({ e });
+      throw e;
+    }
   }
 
   public async getBenchmarksByProjectId(projectId: number): Promise<
@@ -493,16 +499,35 @@ export abstract class Database {
     });
   }
 
-  public async getProjectBySlug(
+  public async getProjectBySlugs(
+    namespaceSlug: string,
     projectNameSlug: string
   ): Promise<Project | undefined> {
-    const q = {
-      name: 'fetchProjectBySlugName',
-      text: `SELECT * FROM Project
-              WHERE lower($1) = lower(slug)`,
-      values: [projectNameSlug]
-    };
+    let q: any;
 
+    if (namespaceSlug === legacyGroupName) {
+      q = {
+        name: 'fetchProjectBySlugNameLegacy',
+        text: `SELECT p.*
+               FROM Project p
+             WHERE lower($1) = lower(p.slug)
+               AND p.namespaceId IS NULL`,
+        values: [projectNameSlug]
+      };
+    } else {
+      q = {
+        name: 'fetchProjectBySlugName',
+        text: `SELECT p.*
+               FROM Project p
+               JOIN Namespace n ON p.namespaceId = n.id
+             WHERE lower($2) = lower(p.slug)
+               AND lower($1) = lower(n.name)`,
+        values: [namespaceSlug, projectNameSlug]
+      };
+    }
+
+    console.log(q.text);
+    console.log({ q });
     const result = await this.query(q);
 
     if (result.rowCount !== 1) {

@@ -41,7 +41,10 @@ export async function renderTimeline(
   ctx: ParameterizedContext,
   db: Database
 ): Promise<void> {
-  const project = await db.getProjectBySlug(ctx.params.projectSlug);
+  const project = await db.getProjectBySlugs(
+    ctx.params.namespaceSlug,
+    ctx.params.projectSlug
+  );
 
   if (project) {
     ctx.body = timelineTpl({

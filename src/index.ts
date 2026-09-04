@@ -21,6 +21,7 @@ import {
 } from './backend/main/main.js';
 import {
   getSourceAsJson,
+  redirectToLegacyProjectPage,
   renderDataExport,
   renderProjectDataPage,
   renderProjectPage
@@ -117,25 +118,15 @@ router.post('/runners', koaBody({ urlencoded: true }), async (ctx) =>
   renderRunners(ctx, runnerCache, pipelinesCache)
 );
 
-router.get('/:projectSlug', async (ctx) => renderProjectPage(ctx, db));
-defineRoute('/:projectSlug/source/:sourceId', router, db, getSourceAsJson);
-router.get('/:projectSlug/timeline', async (ctx) => renderTimeline(ctx, db));
-router.get('/:projectSlug/data', async (ctx) => renderProjectDataPage(ctx, db));
-router.get('/:projectSlug/data/:expIdAndExtension', async (ctx) => {
-  if (
-    ctx.header['X-Purpose'] === 'preview' ||
-    ctx.header['Purpose'] === 'prefetch' ||
-    ctx.header['X-Moz'] === 'prefetch'
-  ) {
-    ctx.set('Cache-Control', 'must-revalidate');
-    ctx.status = 425; // HTTP Code for 'Too Early'
-    return;
-  }
-  return renderDataExport(ctx, db);
-});
-router.get('/:projectSlug/compare/:baseline..:change', async (ctx) =>
-  renderComparePage(ctx, db)
-);
+if (DEV) {
+  router.get(`${siteConfig.staticUrl}/*filename`, serveStaticResource);
+  router.get(`/shared/*filename`, serveStaticSharedResource);
+  router.get(`/src/frontend/*filename`, serveViewJs);
+  router.get(
+    `${siteConfig.reportsUrl}/:change/figure-html/:filename`,
+    serveReport
+  );
+}
 
 // TODO: rename this to say that this endpoint gets the last 100 measurements
 //       for the project
@@ -189,16 +180,6 @@ router.post(
   deleteCachedReport
 );
 
-if (DEV) {
-  router.get(`${siteConfig.staticUrl}/*filename`, serveStaticResource);
-  router.get(`/shared/*filename`, serveStaticSharedResource);
-  router.get(`/src/frontend/*filename`, serveViewJs);
-  router.get(
-    `${siteConfig.reportsUrl}/:change/figure-html/:filename`,
-    serveReport
-  );
-}
-
 // curl -X OPTIONS http://localhost:33333/rebenchdb/results -i
 router.options('/rebenchdb/results', reportResultApiVersion);
 
@@ -215,6 +196,34 @@ router.put('/rebenchdb/results', koaBody({ jsonLimit: '500mb' }), async (ctx) =>
 //  https://rebench.stefan-marr.de/rebenchdb/completion
 router.put('/rebenchdb/completion', koaBody(), async (ctx) =>
   handleReBenchCompletion(ctx, db)
+);
+
+// all the generic routes with variables need to come after
+// the fixed special-purpose routes. Otherwise, the generic
+// routes will match first.
+router.get('/:namespaceSlug/:projectSlug', async (ctx) =>
+  renderProjectPage(ctx, db)
+);
+router.get('/:projectSlug', async (ctx) => redirectToLegacyProjectPage(ctx));
+
+// TODO: need to be adapted still
+defineRoute('/:projectSlug/source/:sourceId', router, db, getSourceAsJson);
+router.get('/:projectSlug/timeline', async (ctx) => renderTimeline(ctx, db));
+router.get('/:projectSlug/data', async (ctx) => renderProjectDataPage(ctx, db));
+router.get('/:projectSlug/data/:expIdAndExtension', async (ctx) => {
+  if (
+    ctx.header['X-Purpose'] === 'preview' ||
+    ctx.header['Purpose'] === 'prefetch' ||
+    ctx.header['X-Moz'] === 'prefetch'
+  ) {
+    ctx.set('Cache-Control', 'must-revalidate');
+    ctx.status = 425; // HTTP Code for 'Too Early'
+    return;
+  }
+  return renderDataExport(ctx, db);
+});
+router.get('/:projectSlug/compare/:baseline..:change', async (ctx) =>
+  renderComparePage(ctx, db)
 );
 
 app.use(router.routes());
