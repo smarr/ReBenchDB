@@ -407,7 +407,7 @@ export function renderRunnerStatusFromData(
 export async function renderRunnersPasswordRequest(
   ctx: ParameterizedContext
 ): Promise<void> {
-  ctx.body = await passwordPageTpl({});
+  ctx.body = await passwordPageTpl({ rebenchVersion });
   ctx.type = 'html';
   return;
 }
