@@ -417,6 +417,12 @@ export async function renderRunners(
   runnerCache: RequestCache<Map<string, Runner>>,
   pipelinesCache: RequestCache<Pipeline[]>
 ): Promise<void> {
+  if (siteConfig.gitlabConfig.runnerSecret === undefined) {
+    ctx.body = 'ReBenchDB is not configured to show the runners status page.';
+    ctx.status = 503;
+    return;
+  }
+
   if (
     (<any>ctx.request.body)?.password === siteConfig.gitlabConfig.runnerSecret
   ) {
