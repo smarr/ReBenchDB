@@ -439,8 +439,7 @@ describe('render runner status', () => {
       const result = renderRunnerStatusFromData(
         pipelines,
         runners,
-        new Date('2026-06-19T18:51:08.258Z'),
-        'Test Project'
+        new Date('2026-06-19T18:51:08.258Z')
       );
       expect(result).toEqualHtmlFragment('gitlab-runner/runner-with-pending');
     });

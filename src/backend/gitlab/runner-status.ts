@@ -13,8 +13,6 @@ import { RequestCache } from './request-cache.js';
 import * as dataFormatters from '../../shared/data-format.js';
 import * as viewHelpers from '../../shared/helpers.js';
 import { ParameterizedContext } from 'koa';
-import { Database } from '../db/db.js';
-import { respondProjectNotFound } from '../standard-responses.js';
 import { log } from '../logging.js';
 
 const QUERY_GROUP_RUNNERS = gql`
@@ -326,8 +324,7 @@ export function createGraphQLClient(): GraphQLClient {
 
 export async function renderRunnerStatusToString(
   runnerCache: RequestCache<Map<string, Runner>>,
-  pipelinesCache: RequestCache<Pipeline[]>,
-  projectName: string
+  pipelinesCache: RequestCache<Pipeline[]>
 ): Promise<string> {
   const updatedAfter = new Date(
     Date.now() - siteConfig.gitlabConfig.updatedAfterSeconds * 1000
@@ -342,12 +339,7 @@ export async function renderRunnerStatusToString(
     siteConfig.gitlabConfig.group,
     updatedAfter
   );
-  return renderRunnerStatusFromData(
-    pipelines,
-    runners,
-    new Date(),
-    projectName
-  );
+  return renderRunnerStatusFromData(pipelines, runners, new Date());
 }
 
 export function getJobStats(pipelines: Pipeline[]): Record<string, number> {
@@ -400,13 +392,11 @@ export function getRunnerStats(
 export function renderRunnerStatusFromData(
   pipelines: Pipeline[],
   runners: Map<string, Runner>,
-  renderStartTime: Date,
-  projectName: string
+  renderStartTime: Date
 ): string {
   return runnerPageTpl({
     gitlabSiteUrl: siteConfig.gitlabConfig.siteUrl,
     gitlabGroup: siteConfig.gitlabConfig.group,
-    project: projectName,
     pipelines,
     runners,
     rebenchVersion,
@@ -420,33 +410,22 @@ export function renderRunnerStatusFromData(
 
 export async function renderRunners(
   ctx: ParameterizedContext,
-  db: Database,
   runnerCache: RequestCache<Map<string, Runner>>,
   pipelinesCache: RequestCache<Pipeline[]>
 ): Promise<void> {
-  const project = await db.getProjectBySlug(ctx.params.projectSlug);
-
-  if (project) {
-    try {
-      ctx.body = await renderRunnerStatusToString(
-        runnerCache,
-        pipelinesCache,
-        project.name
-      );
-      ctx.type = 'html';
-    } catch (e) {
-      if (e instanceof ClientError) {
-        log.error('Error fetching runner status from GitLab API', {
-          error: e,
-          response: e.response,
-          request: e.request
-        });
-      } else {
-        log.error('Unexpected error rendering runner status', { error: e });
-      }
-      ctx.status = 500;
+  try {
+    ctx.body = await renderRunnerStatusToString(runnerCache, pipelinesCache);
+    ctx.type = 'html';
+  } catch (e) {
+    if (e instanceof ClientError) {
+      log.error('Error fetching runner status from GitLab API', {
+        error: e,
+        response: e.response,
+        request: e.request
+      });
+    } else {
+      log.error('Unexpected error rendering runner status', { error: e });
     }
-  } else {
-    respondProjectNotFound(ctx, ctx.params.projectSlug);
+    ctx.status = 500;
   }
 }

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <script src="/static/theme.js" type="module"></script>
-  <title>ReBenchDB GitLab Runner Status for {%= it.project %}</title>
+  <title>ReBenchDB GitLab Runner Status</title>
   {%- include('header.html', { rebenchVersion: it.rebenchVersion }) %}
   <link rel="stylesheet" href="/static/gitlab-runner.css?v={%= it.rebenchVersion %}">
 </head>
@@ -10,7 +10,7 @@
 
 <header>
 <div class="p-4 mb-4 bg-secondary-subtle rounded-2"><div class="container-fluid py-5 compare">
-  <h2>🦊 GitLab Runner Status for {%= it.project %}</h2>
+  <h2>🦊 GitLab Runner Status</h2>
   <p>GitLab: <a href="{%= it.gitlabSiteUrl %}" target="_blank">{%= it.gitlabSiteUrl %}</a></p>
   <p>Group: {%= it.gitlabGroup %}</p>
 </div></div>

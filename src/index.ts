@@ -107,12 +107,13 @@ Disallow: /rebenchdb*
   ctx.type = 'text';
 });
 
+router.get('/runners', async (ctx) =>
+  renderRunners(ctx, runnerCache, pipelinesCache)
+);
+
 router.get('/:projectSlug', async (ctx) => renderProjectPage(ctx, db));
 defineRoute('/:projectSlug/source/:sourceId', router, db, getSourceAsJson);
 router.get('/:projectSlug/timeline', async (ctx) => renderTimeline(ctx, db));
-router.get('/:projectSlug/runners', async (ctx) =>
-  renderRunners(ctx, db, runnerCache, pipelinesCache)
-);
 router.get('/:projectSlug/data', async (ctx) => renderProjectDataPage(ctx, db));
 router.get('/:projectSlug/data/:expIdAndExtension', async (ctx) => {
   if (
