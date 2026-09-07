@@ -5,7 +5,7 @@ import Router from '@koa/router';
 import { initPerfTracker } from './backend/perf-tracker.js';
 import {
   DEV,
-  cacheInvalidationDelay,
+  dbCacheInvalidationDelay,
   dbConfig,
   rebenchVersion,
   siteConfig,
@@ -52,6 +52,15 @@ import {
 import { setTimeout } from 'node:timers/promises';
 import { reportConnectionRefused } from './shared/errors.js';
 import { defineRoute } from './backend/server-routes.js';
+import {
+  createGraphQLClient,
+  fetchPipelinesUncached,
+  fetchRunnersUncached,
+  renderRunners,
+  renderRunnersPasswordRequest
+} from './backend/gitlab/runner-status.js';
+import { RequestCache } from './backend/gitlab/request-cache.js';
+import { Pipeline, Runner } from './backend/gitlab/graphql-api.js';
 
 log.info('Starting ReBenchDB Version ' + rebenchVersion);
 
@@ -62,7 +71,23 @@ export const db = new DatabaseWithPool(
   dbConfig,
   statsConfig.numberOfBootstrapSamples,
   true,
-  cacheInvalidationDelay
+  dbCacheInvalidationDelay
+);
+
+const graphqlClient = createGraphQLClient();
+
+const runnerCache = new RequestCache<Map<string, Runner>>(
+  siteConfig.gitlabConfig.runnersCacheTtlSeconds,
+  fetchRunnersUncached,
+  graphqlClient,
+  siteConfig.gitlabConfig.group
+);
+
+const pipelinesCache = new RequestCache<Pipeline[]>(
+  siteConfig.gitlabConfig.pipelinesCacheTtlSeconds,
+  fetchPipelinesUncached,
+  graphqlClient,
+  siteConfig.gitlabConfig.group
 );
 
 router.get('/', async (ctx) => {
@@ -86,6 +111,11 @@ Disallow: /rebenchdb*
 `;
   ctx.type = 'text';
 });
+
+router.get('/runners', async (ctx) => renderRunnersPasswordRequest(ctx));
+router.post('/runners', koaBody({ urlencoded: true }), async (ctx) =>
+  renderRunners(ctx, runnerCache, pipelinesCache)
+);
 
 router.get('/:projectSlug', async (ctx) => renderProjectPage(ctx, db));
 defineRoute('/:projectSlug/source/:sourceId', router, db, getSourceAsJson);
