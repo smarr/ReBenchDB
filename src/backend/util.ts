@@ -119,6 +119,7 @@ const gitlabConfig = {
   apiUrl:
     process.env.GITLAB_API_URL || 'https://sourcery.im.jku.at/api/graphql',
   group: process.env.GITLAB_GROUP || 'SSW',
+  runnerSecret: process.env.GITLAB_RUNNER_SECRET || '',
 
   /** How far back to look for pipelines, in seconds from now. */
   updatedAfterSeconds: getEnvInt('GITLAB_UPDATED_AFTER_SECONDS', 24 * 60 * 60),

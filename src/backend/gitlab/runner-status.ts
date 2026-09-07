@@ -306,6 +306,12 @@ const runnerPageTpl = prepareTemplate(
   robustPath('backend/gitlab/html')
 );
 
+const passwordPageTpl = prepareTemplate(
+  robustPath('backend/gitlab/html/password.html'),
+  false,
+  robustPath('backend/gitlab/html')
+);
+
 function isJobActive(job: Job) {
   return (
     job.status == 'RUNNING' ||
@@ -408,24 +414,38 @@ export function renderRunnerStatusFromData(
   });
 }
 
+export async function renderRunnersPasswordRequest(
+  ctx: ParameterizedContext
+): Promise<void> {
+  ctx.body = await passwordPageTpl({});
+  ctx.type = 'html';
+  return;
+}
+
 export async function renderRunners(
   ctx: ParameterizedContext,
   runnerCache: RequestCache<Map<string, Runner>>,
   pipelinesCache: RequestCache<Pipeline[]>
 ): Promise<void> {
-  try {
-    ctx.body = await renderRunnerStatusToString(runnerCache, pipelinesCache);
-    ctx.type = 'html';
-  } catch (e) {
-    if (e instanceof ClientError) {
-      log.error('Error fetching runner status from GitLab API', {
-        error: e,
-        response: e.response,
-        request: e.request
-      });
-    } else {
-      log.error('Unexpected error rendering runner status', { error: e });
+  if (
+    (<any>ctx.request.body)?.password === siteConfig.gitlabConfig.runnerSecret
+  ) {
+    try {
+      ctx.body = await renderRunnerStatusToString(runnerCache, pipelinesCache);
+      ctx.type = 'html';
+    } catch (e) {
+      if (e instanceof ClientError) {
+        log.error('Error fetching runner status from GitLab API', {
+          error: e,
+          response: e.response,
+          request: e.request
+        });
+      } else {
+        log.error('Unexpected error rendering runner status', { error: e });
+      }
+      ctx.status = 500;
     }
-    ctx.status = 500;
+  } else {
+    return renderRunnersPasswordRequest(ctx);
   }
 }

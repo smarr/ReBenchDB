@@ -56,7 +56,8 @@ import {
   createGraphQLClient,
   fetchPipelinesUncached,
   fetchRunnersUncached,
-  renderRunners
+  renderRunners,
+  renderRunnersPasswordRequest
 } from './backend/gitlab/runner-status.js';
 import { RequestCache } from './backend/gitlab/request-cache.js';
 import { Pipeline, Runner } from './backend/gitlab/graphql-api.js';
@@ -107,7 +108,8 @@ Disallow: /rebenchdb*
   ctx.type = 'text';
 });
 
-router.get('/runners', async (ctx) =>
+router.get('/runners', async (ctx) => renderRunnersPasswordRequest(ctx));
+router.post('/runners', koaBody({ urlencoded: true }), async (ctx) =>
   renderRunners(ctx, runnerCache, pipelinesCache)
 );
 
