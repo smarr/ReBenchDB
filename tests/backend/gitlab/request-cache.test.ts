@@ -30,11 +30,12 @@ describe('RequestCache', () => {
         fetchCount += 1;
         return 42;
       },
-      createGraphQLClient()
+      createGraphQLClient(),
+      'SSW'
     );
 
-    const first = await cache.getCachedValue('SSW', new Date('2024-01-01'));
-    const second = await cache.getCachedValue('SSW', new Date('2024-01-02'));
+    const first = await cache.getCachedValue(new Date('2024-01-01'));
+    const second = await cache.getCachedValue(new Date('2024-01-02'));
 
     expect(first).toBe(42);
     expect(second).toBe(42);
@@ -51,11 +52,12 @@ describe('RequestCache', () => {
         fetchCount += 1;
         return inFlight.promise;
       },
-      createGraphQLClient()
+      createGraphQLClient(),
+      'SSW'
     );
 
-    const first = cache.getCachedValue('SSW', new Date('2024-01-01'));
-    const second = cache.getCachedValue('SSW', new Date('2024-01-01'));
+    const first = cache.getCachedValue(new Date('2024-01-01'));
+    const second = cache.getCachedValue(new Date('2024-01-01'));
 
     expect(fetchCount).toBe(1);
 
@@ -64,7 +66,7 @@ describe('RequestCache', () => {
     await expect(first).resolves.toBe('done');
     await expect(second).resolves.toBe('done');
 
-    const cached = await cache.getCachedValue('SSW', new Date('2024-01-01'));
+    const cached = await cache.getCachedValue(new Date('2024-01-01'));
     expect(cached).toBe('done');
     expect(fetchCount).toBe(1);
   });
@@ -77,12 +79,13 @@ describe('RequestCache', () => {
         fetchCount += 1;
         return fetchCount;
       },
-      createGraphQLClient()
+      createGraphQLClient(),
+      'SSW'
     );
 
-    const first = await cache.getCachedValue('SSW', new Date('2024-01-01'));
+    const first = await cache.getCachedValue(new Date('2024-01-01'));
     cache.clear();
-    const second = await cache.getCachedValue('SSW', new Date('2024-01-01'));
+    const second = await cache.getCachedValue(new Date('2024-01-01'));
 
     expect(first).toBe(1);
     expect(second).toBe(2);
@@ -102,18 +105,19 @@ describe('RequestCache', () => {
         }
         return 'ok';
       },
-      createGraphQLClient()
+      createGraphQLClient(),
+      'SSW'
     );
 
-    await expect(
-      cache.getCachedValue('SSW', new Date('2024-01-01'))
-    ).rejects.toThrow('temporary failure');
+    await expect(cache.getCachedValue(new Date('2024-01-01'))).rejects.toThrow(
+      'temporary failure'
+    );
 
     shouldFail = false;
 
-    await expect(
-      cache.getCachedValue('SSW', new Date('2024-01-01'))
-    ).resolves.toBe('ok');
+    await expect(cache.getCachedValue(new Date('2024-01-01'))).resolves.toBe(
+      'ok'
+    );
     expect(fetchCount).toBe(2);
   });
 });

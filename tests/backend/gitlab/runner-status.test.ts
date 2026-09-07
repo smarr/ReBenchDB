@@ -462,34 +462,32 @@ describe('GitLab request cache', () => {
     const runnerCache = new RequestCache<Map<string, Runner>>(
       250,
       fetchRunnersUncached,
-      createGraphQLClient()
+      createGraphQLClient(),
+      'SSW'
     );
 
     const pipelinesCache = new RequestCache<Pipeline[]>(
       250,
       fetchPipelinesUncached,
-      createGraphQLClient()
+      createGraphQLClient(),
+      'SSW'
     );
 
     const firstPipelines = await fetchPipelines(
       pipelinesCache,
-      'SSW',
       new Date('2024-06-19T18:51:08.258Z')
     );
     const secondPipelines = await fetchPipelines(
       pipelinesCache,
-      'SSW',
       new Date('2024-06-19T18:51:08.258Z')
     );
 
     const firstRunners = await fetchRunners(
       runnerCache,
-      'SSW',
       new Date('2024-06-19T18:51:08.258Z')
     );
     const secondRunners = await fetchRunners(
       runnerCache,
-      'SSW',
       new Date('2024-06-19T18:51:08.258Z')
     );
 

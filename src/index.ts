@@ -74,16 +74,20 @@ export const db = new DatabaseWithPool(
   dbCacheInvalidationDelay
 );
 
+const graphqlClient = createGraphQLClient();
+
 const runnerCache = new RequestCache<Map<string, Runner>>(
   siteConfig.gitlabConfig.runnersCacheTtlSeconds,
   fetchRunnersUncached,
-  createGraphQLClient()
+  graphqlClient,
+  siteConfig.gitlabConfig.group
 );
 
 const pipelinesCache = new RequestCache<Pipeline[]>(
   siteConfig.gitlabConfig.pipelinesCacheTtlSeconds,
   fetchPipelinesUncached,
-  createGraphQLClient()
+  graphqlClient,
+  siteConfig.gitlabConfig.group
 );
 
 router.get('/', async (ctx) => {

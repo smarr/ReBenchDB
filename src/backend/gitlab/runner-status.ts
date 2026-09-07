@@ -201,10 +201,9 @@ async function fetchPipelinesAndJobsPerProject(
 
 export async function fetchRunners(
   runnerCache: RequestCache<Map<string, Runner>>,
-  groupPath: string,
   updatedAfter: Date
 ): Promise<Map<string, Runner>> {
-  return runnerCache.getCachedValue(groupPath, updatedAfter);
+  return runnerCache.getCachedValue(updatedAfter);
 }
 
 export async function fetchRunnersUncached(
@@ -255,10 +254,9 @@ export async function fetchRunnersUncached(
 
 export async function fetchPipelines(
   pipelinesCache: RequestCache<Pipeline[]>,
-  groupPath: string,
   updatedAfter: Date
 ): Promise<Pipeline[]> {
-  return pipelinesCache.getCachedValue(groupPath, updatedAfter);
+  return pipelinesCache.getCachedValue(updatedAfter);
 }
 
 export async function fetchPipelinesUncached(
@@ -335,16 +333,8 @@ export async function renderRunnerStatusToString(
   const updatedAfter = new Date(
     Date.now() - siteConfig.gitlabConfig.updatedAfterSeconds * 1000
   );
-  const pipelines = await fetchPipelines(
-    pipelinesCache,
-    siteConfig.gitlabConfig.group,
-    updatedAfter
-  );
-  const runners = await fetchRunners(
-    runnerCache,
-    siteConfig.gitlabConfig.group,
-    updatedAfter
-  );
+  const pipelines = await fetchPipelines(pipelinesCache, updatedAfter);
+  const runners = await fetchRunners(runnerCache, updatedAfter);
   return renderRunnerStatusFromData(pipelines, runners, new Date());
 }
 
