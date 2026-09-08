@@ -77,7 +77,18 @@ const QUERY_PIPELINES_AND_JOBS = gql`
                 name
                 username
               }
-              jobs(first: 100) {
+              jobs(
+                first: 100
+                statuses: [
+                  CREATED
+                  PENDING
+                  PREPARING
+                  RUNNING
+                  SCHEDULED
+                  WAITING_FOR_CALLBACK
+                  WAITING_FOR_RESOURCE
+                ]
+              ) {
                 nodes {
                   id
                   name
@@ -311,11 +322,10 @@ const passwordPageTpl = prepareTemplate(
 );
 
 function isJobActive(job: Job) {
-  return (
-    job.status == 'RUNNING' ||
-    job.status == 'PENDING' ||
-    job.status == 'CREATED'
-  );
+  // Note, this does not contain everything that's requested from GitLab.
+  // SCHEDULED, WAITING_FOR_CALLBACK, WAITING_FOR_RESOURCE are not included,
+  // because they are not necessarily depending on running jobs.
+  return ['RUNNING', 'PENDING', 'PREPARING', 'CREATED'].includes(job.status);
 }
 
 export function createGraphQLClient(): GraphQLClient {
