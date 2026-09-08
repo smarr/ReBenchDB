@@ -68,7 +68,7 @@
              {%- include('tags.html', { tags: job.tags, dataFormatters: it.dataFormatters }) %}
 
              <span class="job-line-name">
-              <a href="{%= it.gitlabSiteUrl %}{%= job.webUrl %}" class="job-line-name">{%= job.name %}</a>
+              <a href="{%= it.gitlabSiteUrl %}{%= job.webPath %}" class="job-line-name">{%= job.name %}</a>
              </span>
 
              <span class="job-line-meta">
@@ -103,7 +103,7 @@
     </div>
   </summary>
   <div class="status-drawer-content">
-    <h2>Runners {%= it.numRunners %}</h2>
+    <h2>Runners</h2>
     {% if (it.runners.size == 0) { %}
       <div class="empty-state">No runners found.</div>
     {% } else { %}
