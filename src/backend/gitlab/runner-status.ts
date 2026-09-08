@@ -77,7 +77,18 @@ const QUERY_PIPELINES_AND_JOBS = gql`
                 name
                 username
               }
-              jobs(first: 100) {
+              jobs(
+                first: 100
+                statuses: [
+                  CREATED
+                  PENDING
+                  PREPARING
+                  RUNNING
+                  SCHEDULED
+                  WAITING_FOR_CALLBACK
+                  WAITING_FOR_RESOURCE
+                ]
+              ) {
                 nodes {
                   id
                   name
