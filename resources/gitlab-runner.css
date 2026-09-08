@@ -38,19 +38,17 @@
 .job-status-pending { color: var(--orange); }
 .job-status-canceled { color: var(--muted-gray); }
 
-.badge-created { background-color: var(--muted-gray); }
 .badge-running { background-color: var(--accent); }
 .badge-failed { background-color: var(--red); }
 .badge-pending { background-color: var(--orange); }
-.badge-canceled { background-color: var(--muted-gray); }
 .badge-success { background-color: var(--green); }
 .badge-online { background-color: var(--green); }
 .badge-offline { background-color: var(--red); }
-.badge-stale { background-color: var(--muted-gray); }
-.badge-never_contacted { background-color: var(--muted-gray); }
-.badge-skipped { background-color: var(--muted-gray); }
+
 .badge-paused { background-color: var(--orange); }
-.badge-manual { background-color: var(--muted-gray); }
+.badge-skipped, .badge-created, .badge-canceled, .badge-stale,
+  .badge-never_contacted, .badge-manual, .badge-waiting_for_resource, .badge-waiting_for_callback,
+  .badge-preparing, .badge-scheduled { background-color: var(--muted-gray); }
 
 @media (min-width: 1200px) {
   main {
