@@ -157,7 +157,7 @@ CREATE TABLE Measurement (
 
   values float4[] NOT NULL,
 
-  primary key (invocation, runId, trialId, criterion),
+  primary key (runId, trialId, criterion, invocation),
   foreign key (trialId) references Trial (id),
   foreign key (runId) references Run (id),
   foreign key (criterion) references Criterion (id)
@@ -171,7 +171,7 @@ CREATE TABLE ProfileData (
 
   value text NOT NULL,
 
-  primary key (numIterations, invocation, runId, trialId),
+  primary key (runId, trialId, numIterations, invocation),
   foreign key (trialId) references Trial (id),
   foreign key (runId) references Run (id)
 );
