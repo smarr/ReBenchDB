@@ -99,7 +99,7 @@ jobs:
 
           # run integration tests
           pushd tests/rebench-integration
-          rebench --experiment IntegrationTest rebench.conf
+          rebench --no-denoise --experiment IntegrationTest rebench.conf
 
           sleep 1
           PROJID=$(curl -s http://localhost:33333/ReBenchDB-integration-test/data | grep project-id | grep -o -E '[0-9]+')

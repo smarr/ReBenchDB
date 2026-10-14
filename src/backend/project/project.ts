@@ -10,8 +10,17 @@ import {
 } from '../perf-tracker.js';
 import { getExpData } from './data-export.js';
 import { Database } from '../db/db.js';
-import { rebenchVersion, robustPath } from '../../backend/util.js';
+import {
+  legacyGroupName,
+  rebenchVersion,
+  robustPath
+} from '../../backend/util.js';
 import { Source } from '../db/types.js';
+
+/** @deprecated This is support for urls without the namespace slug. */
+export function redirectToLegacyProjectPage(ctx: ParameterizedContext): void {
+  ctx.redirect(`/${legacyGroupName}/${ctx.params.projectSlug}`);
+}
 
 const projectHtml = prepareTemplate(robustPath('backend/project/project.html'));
 
@@ -19,7 +28,10 @@ export async function renderProjectPage(
   ctx: ParameterizedContext,
   db: Database
 ): Promise<void> {
-  const project = await db.getProjectBySlug(ctx.params.projectSlug);
+  const project = await db.getProjectBySlugs(
+    ctx.params.namespaceSlug,
+    ctx.params.projectSlug
+  );
   if (project) {
     ctx.body = projectHtml({ ...project, rebenchVersion });
     ctx.type = 'html';
@@ -57,7 +69,10 @@ export async function renderProjectDataPage(
   ctx: ParameterizedContext,
   db: Database
 ): Promise<void> {
-  const project = await db.getProjectBySlug(ctx.params.projectSlug);
+  const project = await db.getProjectBySlugs(
+    ctx.params.namespaceSlug,
+    ctx.params.projectSlug
+  );
   if (project) {
     ctx.body = projectDataTpl({ project, rebenchVersion });
     ctx.type = 'html';
