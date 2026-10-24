@@ -5,6 +5,7 @@ import { promisify } from 'node:util';
 import { gzip as gzipCallback } from 'node:zlib';
 import { readFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
+import { setImmediate } from 'node:timers/promises';
 import type { ValuesPossiblyMissing } from '../shared/api.js';
 
 const gzip = promisify(gzipCallback);
@@ -16,6 +17,22 @@ export async function storeJsonGzip(
   const str = JSON.stringify(data);
   const compressedData = await gzip(str);
   await writeFile(filePath, compressedData);
+}
+
+let lastYieldToEventLoop = performance.now();
+
+/**
+ * Allow other items on the event loop to run,
+ * if we may have been doing a lot of sequential work.
+ */
+export async function yieldToEventLoopPeriodically(
+  maxBlockingMs = 20
+): Promise<void> {
+  if (performance.now() - lastYieldToEventLoop < maxBlockingMs) {
+    return;
+  }
+  await setImmediate();
+  lastYieldToEventLoop = performance.now();
 }
 
 export function getDirname(importMetaUrl: string): string {

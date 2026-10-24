@@ -37,7 +37,11 @@ import {
   renderOverviewPlot,
   renderOverviewPlots
 } from './charts.js';
-import { rebenchVersion, siteConfig } from '../util.js';
+import {
+  rebenchVersion,
+  siteConfig,
+  yieldToEventLoopPeriodically
+} from '../util.js';
 import { siteAesthetics } from '../../shared/aesthetics.js';
 
 import { collateMeasurements } from './db-data.js';
@@ -665,6 +669,7 @@ export async function calculateAllChangeStatisticsAndInlinePlots(
       };
 
       for (const bench of suiteWithBench.benchmarks.values()) {
+        await yieldToEventLoopPeriodically();
         const result = await calculateChangeStatsForBenchmark(
           bench,
           hasProfiles,
@@ -767,6 +772,8 @@ export async function calculateAcrossExesStatsAndAllPlots(
     };
 
     for (const results of suiteWithBench.benchmarks.values()) {
+      await yieldToEventLoopPeriodically();
+
       // 1. calculate stats and inline plots per benchmark
       const result = await calculateAcrossExesStatsForBenchmark(
         results,
