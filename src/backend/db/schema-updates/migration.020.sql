@@ -7,6 +7,24 @@ ALTER TABLE Source
 
 -- With more sources, the smallint sourceId would overflow sooner.
 ALTER TABLE Trial
-  ALTER COLUMN sourceId TYPE int;
+  ALTER COLUMN sourceId TYPE integer;
+
+-- Make PK and FK types consistent.
+ALTER TABLE Experiment
+  ALTER COLUMN projectId TYPE integer;
+
+ALTER TABLE Trial
+  ALTER COLUMN expId TYPE integer,
+  ALTER COLUMN envId TYPE integer;
+
+ALTER TABLE SoftwareUse
+  ALTER COLUMN envId TYPE integer,
+  ALTER COLUMN softId TYPE integer;
+
+-- There are few criteria, and Measurement is large,
+-- so we narrow the id instead of widening Measurement.criterion.
+ALTER SEQUENCE criterion_id_seq AS smallint;
+ALTER TABLE Criterion
+  ALTER COLUMN id TYPE smallint;
 
 UPDATE SchemaVersion SET version = 20;

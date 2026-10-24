@@ -35,7 +35,8 @@ CREATE TABLE Environment (
 -- This can be anything, from total time over memory consumption
 -- to other things or parts worth measuring.
 CREATE TABLE Criterion (
-  id serial primary key,
+  -- there are few criteria, and a smallint keeps Measurement compact
+  id smallserial primary key,
   name varchar,
   unit varchar,
 
@@ -85,7 +86,7 @@ CREATE TABLE Experiment (
   id serial primary key,
 
   name varchar NOT NULL,
-  projectId smallint,
+  projectId integer,
 
   description text,
 
@@ -103,11 +104,11 @@ CREATE TABLE Trial (
   manualRun bool,
   startTime timestamp with time zone,
 
-  expId smallint,
+  expId integer,
 
   username varchar,
-  envId smallint,
-  sourceId int,
+  envId integer,
+  sourceId integer,
 
   -- details on system settings that influence noise level for measurements
   denoise jsonb,
@@ -132,8 +133,8 @@ CREATE INDEX trial_sourceid_idx ON Trial (sourceId);
 
 -- Documents the software versions used by a specific environment.
 CREATE TABLE SoftwareUse (
-  envId smallint,
-  softId smallint,
+  envId integer,
+  softId integer,
   primary key (envId, softId),
 
   foreign key (envId) references Environment (id),
@@ -157,9 +158,9 @@ CREATE TABLE Run (
   cores varchar,
   inputSize varchar,
   extraArgs varchar,
-  maxInvocationTime int NOT NULL,
-  minIterationTime int NOT NULL,
-  warmup int,
+  maxInvocationTime integer NOT NULL,
+  minIterationTime integer NOT NULL,
+  warmup integer,
 
   constraint run_identity_key unique nulls not distinct (
     cmdline, benchmark, suite, executor, location,
@@ -169,8 +170,8 @@ CREATE TABLE Run (
 
 -- One value for one specific criterion.
 CREATE TABLE Measurement (
-  runId int,
-  trialId int,
+  runId integer,
+  trialId integer,
   criterion smallint,
   invocation smallint,
 
@@ -183,8 +184,8 @@ CREATE TABLE Measurement (
 );
 
 CREATE TABLE ProfileData (
-  runId int,
-  trialId int,
+  runId integer,
+  trialId integer,
   invocation smallint,
   numIterations smallint,
 
@@ -197,11 +198,11 @@ CREATE TABLE ProfileData (
 
 -- Summary Statistics for comparing over time
 CREATE TABLE Timeline (
-  runId int,
-  trialId int,
+  runId integer,
+  trialId integer,
   criterion smallint,
 
-  numSamples int,
+  numSamples integer,
 
   minVal float4,
   maxVal float4,
@@ -221,8 +222,8 @@ CREATE TABLE Timeline (
 
 -- Used by ReBenchDB's perf-tracker, for self-performance tracking
 CREATE PROCEDURE recordAdditionalMeasurement(
-  aRunId int,
-  aTrialId int,
+  aRunId integer,
+  aTrialId integer,
   aCriterionId smallint,
   aValue float4)
 LANGUAGE plpgsql
