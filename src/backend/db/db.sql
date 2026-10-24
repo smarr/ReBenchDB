@@ -5,7 +5,7 @@ CREATE TABLE SchemaVersion (
   id boolean primary key default true check (id),
   version integer NOT NULL
 );
-INSERT INTO SchemaVersion (version) VALUES (19);
+INSERT INTO SchemaVersion (version) VALUES (20);
 
 -- A specific software version, possibly used by multiple environments
 -- or versions of environments.
@@ -67,12 +67,14 @@ CREATE TABLE Source (
   id serial primary key,
   repoURL varchar,
   branchOrTag varchar,
-  commitId varchar unique,
+  commitId varchar,
   commitMessage text,
   authorName varchar,
   authorEmail varchar,
   committerName varchar,
-  committerEmail varchar
+  committerEmail varchar,
+
+  unique nulls not distinct (commitId, branchOrTag, repoURL)
 );
 
 -- ReBench executes experiments to collect the desired measurements.
@@ -105,7 +107,7 @@ CREATE TABLE Trial (
 
   username varchar,
   envId smallint,
-  sourceId smallint,
+  sourceId int,
 
   -- details on system settings that influence noise level for measurements
   denoise jsonb,

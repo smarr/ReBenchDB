@@ -474,8 +474,9 @@ export abstract class Database {
   }
 
   public async recordSource(s: ApiSource): Promise<Source> {
-    return this.recordCached(this.sources, s.commitId, {
-      name: 'insertOrFetchSourceById',
+    const cacheKey = `${s.commitId}::${s.branchOrTag}::${s.repoURL}`;
+    return this.recordCached(this.sources, cacheKey, {
+      name: 'insertOrFetchSourceByCommitIdBranchRepo',
       text: `WITH insertedRow AS (
                 INSERT INTO Source (
                   repoURL, branchOrTag, commitId, commitMessage,
@@ -486,7 +487,10 @@ export abstract class Database {
               )
               SELECT * FROM insertedRow
               UNION ALL
-              SELECT * FROM Source WHERE commitId = $3;`,
+              SELECT * FROM Source
+              WHERE commitId = $3 AND
+                    branchOrTag IS NOT DISTINCT FROM $2 AND
+                    repoURL IS NOT DISTINCT FROM $1;`,
       values: [
         s.repoURL,
         s.branchOrTag,
@@ -1329,42 +1333,40 @@ export abstract class Database {
   ): Promise<null | { baseBranchName: string; changeBranchName: string }> {
     const q = {
       name: 'fetchBranchNamesForChange',
-      text: `SELECT DISTINCT branchOrTag, s.commitId
+      text: `SELECT s.branchOrTag, s.commitId
              FROM Source s
                JOIN Trial      tr ON tr.sourceId = s.id
                JOIN Experiment e  ON tr.expId = e.id
                JOIN Project    p  ON p.id = e.projectId
              WHERE
                p.name = $1 AND
-               (s.commitid = $2 OR s.commitid = $3)`,
+               (s.commitid = $2 OR s.commitid = $3)
+             GROUP BY s.branchOrTag, s.commitId, p.baseBranch
+             ORDER BY s.branchOrTag IS NOT DISTINCT FROM p.baseBranch DESC,
+                      max(tr.startTime) DESC`,
       values: [projectName, base, change]
     };
     const result = await this.query(q);
 
-    if (result.rowCount === null || result.rowCount < 1) {
+    // A commit can be on multiple branches. The rows are ordered so that
+    // the project's base branch comes first, and otherwise the branch
+    // with the most recent trial.
+    const baseRows = result.rows.filter((r) => r.commitid === base);
+    const changeRows = result.rows.filter((r) => r.commitid === change);
+
+    if (baseRows.length === 0 && changeRows.length === 0) {
       return null;
     }
 
-    if (result.rowCount == 1) {
-      return {
-        baseBranchName: result.rows[0].branchortag,
-        changeBranchName: result.rows[0].branchortag
-      };
+    const baseBranchName = (baseRows[0] ?? changeRows[0]).branchortag;
+    if (base === change || changeRows.length === 0) {
+      return { baseBranchName, changeBranchName: baseBranchName };
     }
 
-    assert(result.rowCount == 2);
-    if (result.rows[0].commitid == base) {
-      return {
-        baseBranchName: result.rows[0].branchortag,
-        changeBranchName: result.rows[1].branchortag
-      };
-    }
-
-    assert(result.rows[0].commitid == change);
-    return {
-      baseBranchName: result.rows[1].branchortag,
-      changeBranchName: result.rows[0].branchortag
-    };
+    // prefer a branch that distinguishes the change from the base
+    const changeRow =
+      changeRows.find((r) => r.branchortag !== baseBranchName) ?? changeRows[0];
+    return { baseBranchName, changeBranchName: changeRow.branchortag };
   }
 
   public async getProfileAvailability(
