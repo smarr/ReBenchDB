@@ -125,7 +125,10 @@ const gitlabConfig = {
       : undefined,
 
   /** How far back to look for pipelines, in seconds from now. */
-  updatedAfterSeconds: getEnvInt('GITLAB_UPDATED_AFTER_SECONDS', 24 * 60 * 60),
+  updatedAfterSeconds: getEnvInt(
+    'GITLAB_UPDATED_AFTER_SECONDS',
+    10 * 24 * 60 * 60
+  ),
 
   /** Cache TTL for runner data, in seconds. */
   runnersCacheTtlSeconds: getEnvInt('GITLAB_RUNNERS_CACHE_TTL_SECONDS', 5 * 60),

@@ -1,5 +1,5 @@
 import { describe, expect, beforeAll, afterAll, it } from '@jest/globals';
-import nock, { Scope } from 'nock';
+import nock from 'nock';
 import pipeline1 from './pipelines-1.json' with { type: 'json' };
 import runner1 from './runners-1.json' with { type: 'json' };
 import {
@@ -29,7 +29,7 @@ function createGraphQLClient(): GraphQLClient {
 
 describe('Test fetchRunnersUncached()', () => {
   describe('with pending jobs', () => {
-    let scope: Scope;
+    let scope: nock.Scope;
     let runners: Map<string, Runner>;
 
     beforeAll(async () => {
@@ -176,7 +176,7 @@ describe('Test fetchRunnersUncached()', () => {
 
 describe('Test fetchPipelinesUncached()', () => {
   describe('with pending jobs', () => {
-    let scope: Scope;
+    let scope: nock.Scope;
     let pipelines: Pipeline[];
 
     beforeAll(async () => {
@@ -412,7 +412,7 @@ describe('Test fetchPipelinesUncached()', () => {
 
 describe('render runner status', () => {
   describe('with pending jobs', () => {
-    let scope: Scope;
+    let scope: nock.Scope;
     let pipelines: Pipeline[];
     let runners: Map<string, Runner>;
 
