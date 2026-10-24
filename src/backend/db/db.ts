@@ -293,8 +293,7 @@ export abstract class Database {
           JOIN Trial t ON e.id = t.expId
           JOIN Source s ON t.sourceId = s.id
         WHERE lower(p.slug) = lower($1)
-          AND s.commitid = $2
-          OR s.commitid = $3`,
+          AND (s.commitid = $2 OR s.commitid = $3)`,
       values: [projectSlug, base, change]
     });
 
@@ -306,39 +305,14 @@ export abstract class Database {
     const changeCommitId6 = change.substring(0, minDistinctLength);
 
     // we can have multiple experiments with the same revisions
-    if (result.rowCount !== null && result.rowCount >= 2) {
-      let baseData: RevisionData | undefined = undefined;
-      let changeData: RevisionData | undefined = undefined;
-      for (const row of result.rows) {
-        const r: RevisionData = row;
-        if (row.commitid === base) {
-          baseData = r;
-        } else if (row.commitid === change) {
-          changeData = r;
-        }
-      }
+    const baseData: RevisionData | undefined = result.rows.find(
+      (r) => r.commitid === base
+    );
+    const changeData: RevisionData | undefined = result.rows.find(
+      (r) => r.commitid === change
+    );
 
-      if (baseData) {
-        baseData.commitmessage = filterCommitMessage(baseData.commitmessage);
-      }
-
-      if (changeData) {
-        changeData.commitmessage = filterCommitMessage(
-          changeData.commitmessage
-        );
-      }
-
-      return {
-        dataFound: true,
-        base: baseData,
-        change: changeData,
-        baseCommitId: base,
-        changeCommitId: change,
-        baseCommitId6,
-        changeCommitId6,
-        minDistinctLength
-      };
-    } else {
+    if (baseData === undefined || changeData === undefined) {
       return {
         dataFound: false,
         baseCommitId: base,
@@ -348,6 +322,22 @@ export abstract class Database {
         minDistinctLength
       };
     }
+
+    baseData.commitmessage = filterCommitMessage(baseData.commitmessage);
+    if (changeData !== baseData) {
+      changeData.commitmessage = filterCommitMessage(changeData.commitmessage);
+    }
+
+    return {
+      dataFound: true,
+      base: baseData,
+      change: changeData,
+      baseCommitId: base,
+      changeCommitId: change,
+      baseCommitId6,
+      changeCommitId6,
+      minDistinctLength
+    };
   }
 
   private async getCached(cache, cacheKey, fetchQ: QueryConfig): Promise<any> {
