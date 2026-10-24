@@ -20,7 +20,7 @@ CREATE TABLE SoftwareVersionInfo (
 -- the relevant software versions.
 CREATE TABLE Environment (
   id serial primary key,
-  hostname varchar unique,
+  hostname varchar,
   osType varchar,
   -- total number of bytes of memory provided by the system
   memory bigint,
@@ -28,7 +28,9 @@ CREATE TABLE Environment (
 
   -- nominal clock speed in Hz
   clockSpeed bigint,
-  note text
+  note text,
+
+  unique nulls not distinct (hostname, osType, memory, cpu, clockSpeed)
 );
 
 -- A specific criterion that is measured for a benchmark.

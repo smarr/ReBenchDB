@@ -27,4 +27,10 @@ ALTER SEQUENCE criterion_id_seq AS smallint;
 ALTER TABLE Criterion
   ALTER COLUMN id TYPE smallint;
 
+-- An `environment` can change over time.
+ALTER TABLE Environment
+  DROP CONSTRAINT environment_hostname_key,
+  ADD CONSTRAINT environment_hostname_ostype_memory_cpu_clockspeed_key
+    UNIQUE NULLS NOT DISTINCT (hostname, osType, memory, cpu, clockSpeed);
+
 UPDATE SchemaVersion SET version = 20;

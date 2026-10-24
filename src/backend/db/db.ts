@@ -495,8 +495,10 @@ export abstract class Database {
   }
 
   public async recordEnvironment(e: ApiEnvironment): Promise<Environment> {
-    return this.recordCached(this.envs, e.hostName, {
-      name: 'insertOrFetchEnvironmentByHostname',
+    const cacheKey =
+      `${e.hostName}:${e.osType}:` + `${e.memory}:${e.cpu}:${e.clockSpeed}`;
+    return this.recordCached(this.envs, cacheKey, {
+      name: 'insertOrFetchEnvironmentByDetails',
       text: `WITH insertedRow AS (
                   INSERT INTO Environment (
                     hostname, osType, memory, cpu, clockSpeed)
@@ -506,7 +508,12 @@ export abstract class Database {
                 )
                 SELECT * FROM insertedRow
                 UNION ALL
-                SELECT * FROM Environment WHERE hostname = $1;`,
+                SELECT * FROM Environment
+                WHERE hostname = $1 AND
+                      osType IS NOT DISTINCT FROM $2 AND
+                      memory IS NOT DISTINCT FROM $3 AND
+                      cpu IS NOT DISTINCT FROM $4 AND
+                      clockSpeed IS NOT DISTINCT FROM $5;`,
       values: [e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed]
     });
   }
