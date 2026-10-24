@@ -116,6 +116,9 @@ CREATE TABLE Trial (
   foreign key (sourceId) references Source (id)
 );
 
+-- Trials are often looked up by their sourceId
+CREATE INDEX trial_sourceid_idx ON Trial (sourceId);
+
 -- Documents the software versions used by a specific environment.
 CREATE TABLE SoftwareUse (
   envId smallint,
@@ -157,7 +160,7 @@ CREATE TABLE Measurement (
 
   values float4[] NOT NULL,
 
-  primary key (runId, trialId, criterion, invocation),
+  primary key (trialId, runId, criterion, invocation),
   foreign key (trialId) references Trial (id),
   foreign key (runId) references Run (id),
   foreign key (criterion) references Criterion (id)
@@ -171,7 +174,7 @@ CREATE TABLE ProfileData (
 
   value text NOT NULL,
 
-  primary key (runId, trialId, numIterations, invocation),
+  primary key (trialId, runId, numIterations, invocation),
   foreign key (trialId) references Trial (id),
   foreign key (runId) references Run (id)
 );
