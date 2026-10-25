@@ -353,12 +353,18 @@ export abstract class Database {
   }
 
   public async recordRun(run: ApiRunId): Promise<Run> {
-    if (this.runs.has(run.cmdline)) {
-      return <Run>this.runs.get(run.cmdline);
+    const details = run.benchmark.runDetails;
+    const cacheKey =
+      `${run.cmdline}::${run.benchmark.name}::` +
+      `${run.benchmark.suite.name}::${run.benchmark.suite.executor.name}::` +
+      `${run.location}::${details.maxInvocationTime}::` +
+      `${details.minIterationTime}::${details.warmup}`;
+    if (this.runs.has(cacheKey)) {
+      return <Run>this.runs.get(cacheKey);
     }
 
-    return this.recordCached(this.runs, run.cmdline, {
-      name: 'insertOrFetchRunByCmdline',
+    return this.recordCached(this.runs, cacheKey, {
+      name: 'insertOrFetchRunByCmdlineNamesAndDetails',
       text: `WITH insertedRow AS (
                     INSERT INTO Run (
                       cmdline,
@@ -373,7 +379,13 @@ export abstract class Database {
                 )
                 SELECT * FROM insertedRow
                 UNION ALL
-                SELECT * FROM Run WHERE cmdline = $1;`,
+                SELECT * FROM Run
+                WHERE cmdline = $1 AND benchmark = $2 AND
+                      executor = $3 AND suite = $4 AND
+                      location IS NOT DISTINCT FROM $5 AND
+                      maxInvocationTime = $10 AND
+                      minIterationTime = $11 AND
+                      warmup IS NOT DISTINCT FROM $12;`,
       values: [
         run.cmdline,
         run.benchmark.name,
@@ -384,9 +396,9 @@ export abstract class Database {
         run.inputSize,
         run.varValue,
         run.extraArgs,
-        run.benchmark.runDetails.maxInvocationTime,
-        run.benchmark.runDetails.minIterationTime,
-        run.benchmark.runDetails.warmup
+        details.maxInvocationTime,
+        details.minIterationTime,
+        details.warmup
       ]
     });
   }

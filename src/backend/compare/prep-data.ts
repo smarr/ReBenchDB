@@ -81,12 +81,15 @@ export function compareToSortForSinglePassChangeStats(
     return r;
   }
 
-  r = a.runId - b.runId;
+  // the baseline needs to come before the change, even if the cmdline
+  // or other details, e.g. warmup, changed and resulted in different runIds
+  r = a.commitId.localeCompare(b.commitId);
   if (r !== 0) {
     return r;
   }
 
-  return a.commitId.localeCompare(b.commitId);
+  // still compare the runId, to get a stable ordering
+  return a.runId - b.runId;
 }
 
 export function compareToSortForSinglePassChangeStatsNonStrict(
@@ -515,8 +518,9 @@ async function computeStatisticsAndInlinePlot(
 
     // add the various details
     row.details.hasWarmup = siteConfig.canShowWarmup(change.values);
-    if (row.inconsistentRunIds === undefined || row.inconsistentRunIds) {
-      row.inconsistentRunIds = base.runId !== change.runId;
+    // change in runId indicates a configuration drift
+    if (row.inconsistentRunCfg === undefined || row.inconsistentRunCfg) {
+      row.inconsistentRunCfg = base.runId !== change.runId;
     }
 
     if (!row.versionStats) {

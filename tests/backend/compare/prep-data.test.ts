@@ -577,11 +577,11 @@ describe('calculateChangeStatsForBenchmark() with changed run settings', () => {
   function expectPaired(
     stats: CompareStatsRow[],
     changeM: number,
-    inconsistentRunIds = false
+    inconsistentRunCfg = false
   ) {
     expect(stats).toHaveLength(1);
     expect(stats[0].missing).toBeUndefined();
-    expect(stats[0].inconsistentRunIds).toBe(inconsistentRunIds);
+    expect(stats[0].inconsistentRunCfg).toBe(inconsistentRunCfg);
     expect(stats[0].versionStats?.total.change_m).toBeCloseTo(changeM);
   }
 

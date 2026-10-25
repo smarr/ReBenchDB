@@ -120,7 +120,7 @@ export interface CompareStatsRow {
 
   inlinePlot?: string;
 
-  inconsistentRunIds?: boolean;
+  inconsistentRunCfg?: boolean;
 
   /** Statistics per criterion, comparing base and change. */
   versionStats?: CompareStatsRowAcrossVersions;

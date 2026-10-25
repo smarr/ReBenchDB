@@ -40,11 +40,11 @@ if (!stats.missing || hasTotal) {
 
     if (hasTotal) {
       let inconsistent = '';
-      if (stats.inconsistentRunIds) {
+      if (stats.inconsistentRunCfg) {
         inconsistent = `<div class="alert alert-warning" role="alert"
-            title="The run configuration changed between the two versions. Comparison is likely invalid.">
+            title="The run configuration changed between the two versions. Comparison may be invalid.">
           <svg class="bi flex-shrink-0 me-2" width="16" height="16" role="img"
-            aria-label="The run configuration changed between the two versions. Comparison is likely invalid."><use xlink:href="#exclamation-triangle-fill"/></svg>
+            aria-label="The run configuration changed between the two versions. Comparison may be invalid."><use xlink:href="#exclamation-triangle-fill"/></svg>
         </div>`;
       }
 %}<tr>
