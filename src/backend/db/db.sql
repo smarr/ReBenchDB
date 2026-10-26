@@ -51,31 +51,8 @@ CREATE TABLE Project (
   -- the bases for comparisons that we generate when a experiment is completed
   baseBranch varchar,
 
-  namespaceId int -- will add  REFERENCES Namespace (id) once we defined the table
-                  -- TODO: add  NOT NULL
+  namespaceId int NOT NULL -- foreign key is added below
 );
-
--- TODO: which way do I want to approach this?
--- while introducing namespaces, do I go with a default namespace for existing projects,
--- like a specifically chosen user, or do I use a named legacy "global" namespace that is handled differently,
--- or do I have it be NULL, which is kind of the legacy global namespace.
--- I think, for my own sanity, and for the effort it takes to implement all this,
--- I should probably just go and assign all existing projects to a specific user.
--- Though, at the very least this also means I need to make sure that when I add data, that's theres the user info.
--- And that also applies to the performance self-tracking feature.
-
-
--- New Thoughts:
--- I think the effort of backwards compatibility is small and will make the transition easier.
--- Specifically, it will allow me to minimize the code changes in the early phase.
--- By having a small number of redirects and default values,
--- we should be able to attribute each project to a specific namespace.
-
--- I'll create the "legacy" group as a start.
--- I'll also create the "admin" user, which will be the owner of the legacy group.
--- All projects without namespace, i.e., namespaceId is NULL, will be assigned to the legacy group.
--- All requests without namespace will be redirected to the legacy group.
-
 
 -- Identifies the specific state of the source, the code, on which
 -- an experiment and its measurements are based.
@@ -260,7 +237,7 @@ CREATE TABLE Namespace (
 );
 
 ALTER TABLE Project
-  ADD CONSTRAINT fk_namespace FOREIGN KEY (namespaceId) REFERENCES Namespace (id);
+  ADD FOREIGN KEY (namespaceId) REFERENCES Namespace (id);
 ALTER TABLE UserAccount
   ADD COLUMN namespaceId int REFERENCES Namespace (id);
 ALTER TABLE UserGroup
@@ -274,6 +251,25 @@ CREATE TABLE ProjectPermissions (
   role projectRole NOT NULL,
   PRIMARY KEY (projectId, namespaceId)
 );
+
+-- The admin account owns the legacy group.
+-- Because Authentication is not yet implemented, the admin account has no password hash, so it cannot log in.
+INSERT INTO UserAccount (userName) VALUES ('admin');
+INSERT INTO Namespace (name, type, accountId)
+  SELECT userName, 'u', id FROM UserAccount WHERE userName = 'admin';
+UPDATE UserAccount
+  SET namespaceId = (SELECT id FROM Namespace WHERE name = 'admin')
+  WHERE userName = 'admin';
+
+-- Old projects that were created before users and groups existed belong to the legacy group.
+INSERT INTO UserGroup (groupName, description, createdBy)
+  SELECT 'legacy', 'Projects created before users and groups existed', id
+  FROM UserAccount WHERE userName = 'admin';
+INSERT INTO Namespace (name, type, groupId)
+  SELECT groupName, 'g', id FROM UserGroup WHERE groupName = 'legacy';
+UPDATE UserGroup
+  SET namespaceId = (SELECT id FROM Namespace WHERE name = 'legacy')
+  WHERE groupName = 'legacy';
 
 -- Used by ReBenchDB's perf-tracker, for self-performance tracking
 CREATE PROCEDURE recordAdditionalMeasurement(

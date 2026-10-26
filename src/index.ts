@@ -21,7 +21,7 @@ import {
 } from './backend/main/main.js';
 import {
   getSourceAsJson,
-  redirectToLegacyProjectPage,
+  redirectToLegacyNamespace,
   renderDataExport,
   renderProjectDataPage,
   renderProjectPage
@@ -201,29 +201,46 @@ router.put('/rebenchdb/completion', koaBody(), async (ctx) =>
 // all the generic routes with variables need to come after
 // the fixed special-purpose routes. Otherwise, the generic
 // routes will match first.
+
+// These routes are for legacy URLs that predate namespaces.
+router.get('/:projectSlug', redirectToLegacyNamespace);
+router.get('/:projectSlug/timeline', redirectToLegacyNamespace);
+router.get('/:projectSlug/data', redirectToLegacyNamespace);
+router.get('/:projectSlug/data/:expIdAndExtension', redirectToLegacyNamespace);
+router.get(
+  '/:projectSlug/compare/:baseline..:change',
+  redirectToLegacyNamespace
+);
+
+defineRoute('/:projectSlug/source/:sourceId', router, db, getSourceAsJson);
+
 router.get('/:namespaceSlug/:projectSlug', async (ctx) =>
   renderProjectPage(ctx, db)
 );
-router.get('/:projectSlug', async (ctx) => redirectToLegacyProjectPage(ctx));
-
-// TODO: need to be adapted still
-defineRoute('/:projectSlug/source/:sourceId', router, db, getSourceAsJson);
-router.get('/:projectSlug/timeline', async (ctx) => renderTimeline(ctx, db));
-router.get('/:projectSlug/data', async (ctx) => renderProjectDataPage(ctx, db));
-router.get('/:projectSlug/data/:expIdAndExtension', async (ctx) => {
-  if (
-    ctx.header['X-Purpose'] === 'preview' ||
-    ctx.header['Purpose'] === 'prefetch' ||
-    ctx.header['X-Moz'] === 'prefetch'
-  ) {
-    ctx.set('Cache-Control', 'must-revalidate');
-    ctx.status = 425; // HTTP Code for 'Too Early'
-    return;
+router.get('/:namespaceSlug/:projectSlug/timeline', async (ctx) =>
+  renderTimeline(ctx, db)
+);
+router.get('/:namespaceSlug/:projectSlug/data', async (ctx) =>
+  renderProjectDataPage(ctx, db)
+);
+router.get(
+  '/:namespaceSlug/:projectSlug/data/:expIdAndExtension',
+  async (ctx) => {
+    if (
+      ctx.header['X-Purpose'] === 'preview' ||
+      ctx.header['Purpose'] === 'prefetch' ||
+      ctx.header['X-Moz'] === 'prefetch'
+    ) {
+      ctx.set('Cache-Control', 'must-revalidate');
+      ctx.status = 425; // HTTP Code 425 Too Early
+      return;
+    }
+    return renderDataExport(ctx, db);
   }
-  return renderDataExport(ctx, db);
-});
-router.get('/:projectSlug/compare/:baseline..:change', async (ctx) =>
-  renderComparePage(ctx, db)
+);
+router.get(
+  '/:namespaceSlug/:projectSlug/compare/:baseline..:change',
+  async (ctx) => renderComparePage(ctx, db)
 );
 
 app.use(router.routes());

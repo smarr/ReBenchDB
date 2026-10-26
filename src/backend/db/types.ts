@@ -72,6 +72,11 @@ export interface Project {
   allresults: boolean;
   githubnotification: boolean;
   basebranch: string;
+  namespaceid: number;
+}
+
+export interface ProjectWithNamespace extends Project {
+  namespacename: string;
 }
 
 export interface Source {

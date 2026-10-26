@@ -22,6 +22,11 @@ export function redirectToLegacyProjectPage(ctx: ParameterizedContext): void {
   ctx.redirect(`/${legacyGroupName}/${ctx.params.projectSlug}`);
 }
 
+/** Supports URLs that predate namespaces. */
+export function redirectToLegacyNamespace(ctx: ParameterizedContext): void {
+  ctx.redirect(`/${legacyGroupName}${ctx.url}`);
+}
+
 const projectHtml = prepareTemplate(robustPath('backend/project/project.html'));
 
 export async function renderProjectPage(

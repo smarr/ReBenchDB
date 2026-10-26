@@ -28,6 +28,7 @@ import type {
   MeasurementData,
   Metadata,
   Project,
+  ProjectWithNamespace,
   RevisionComparison,
   RevisionData,
   Run,
@@ -487,48 +488,35 @@ export abstract class Database {
     return this.recordCached(this.projects, projectName, {
       name: 'insertOrFetchProjectByName',
       text: `WITH insertedRow AS (
-                  INSERT INTO Project (name, slug)
-                  VALUES ($1, regexp_replace($2, '[^0-9a-zA-Z-]', '-', 'g'))
+                  INSERT INTO Project (name, slug, namespaceId)
+                  SELECT $1,
+                         regexp_replace($2, '[^0-9a-zA-Z-]', '-', 'g'),
+                         n.id
+                    FROM Namespace n
+                   WHERE n.name = $3
                   ON CONFLICT DO NOTHING
                   RETURNING *
                 )
                 SELECT * FROM insertedRow
                 UNION ALL
                 SELECT * FROM Project WHERE name = $1;`,
-      values: [projectName, projectName]
+      values: [projectName, projectName, legacyGroupName]
     });
   }
 
   public async getProjectBySlugs(
     namespaceSlug: string,
-    projectNameSlug: string
-  ): Promise<Project | undefined> {
-    let q: any;
-
-    if (namespaceSlug === legacyGroupName) {
-      q = {
-        name: 'fetchProjectBySlugNameLegacy',
-        text: `SELECT p.*
-               FROM Project p
-             WHERE lower($1) = lower(p.slug)
-               AND p.namespaceId IS NULL`,
-        values: [projectNameSlug]
-      };
-    } else {
-      q = {
-        name: 'fetchProjectBySlugName',
-        text: `SELECT p.*
+    projectSlug: string
+  ): Promise<ProjectWithNamespace | undefined> {
+    const result = await this.query({
+      name: 'fetchProjectByNamespaceAndSlug',
+      text: `SELECT p.*, n.name AS namespacename
                FROM Project p
                JOIN Namespace n ON p.namespaceId = n.id
-             WHERE lower($2) = lower(p.slug)
-               AND lower($1) = lower(n.name)`,
-        values: [namespaceSlug, projectNameSlug]
-      };
-    }
-
-    console.log(q.text);
-    console.log({ q });
-    const result = await this.query(q);
+              WHERE lower(n.name) = lower($1)
+                AND lower(p.slug) = lower($2)`,
+      values: [namespaceSlug, projectSlug]
+    });
 
     if (result.rowCount !== 1) {
       return undefined;
@@ -561,10 +549,13 @@ export abstract class Database {
     });
   }
 
-  public async getAllProjects(): Promise<Project[]> {
+  public async getAllProjects(): Promise<ProjectWithNamespace[]> {
     const result = await this.query({
       name: 'fetchAllProjects',
-      text: 'SELECT * FROM Project ORDER BY position DESC'
+      text: `SELECT p.*, n.name AS namespacename
+               FROM Project p
+               JOIN Namespace n ON p.namespaceId = n.id
+              ORDER BY p.position DESC`
     });
     return result.rows;
   }

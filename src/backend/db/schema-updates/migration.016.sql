@@ -47,3 +47,29 @@ CREATE TABLE ProjectPermissions (
   role projectRole NOT NULL,
   PRIMARY KEY (projectId, namespaceId)
 );
+
+-- The admin account owns the legacy group.
+-- Because Authentication is not yet implemented, the admin account has no password hash, so it cannot log in.
+INSERT INTO UserAccount (userName) VALUES ('admin');
+INSERT INTO Namespace (name, type, accountId)
+  SELECT userName, 'u', id FROM UserAccount WHERE userName = 'admin';
+UPDATE UserAccount
+  SET namespaceId = (SELECT id FROM Namespace WHERE name = 'admin')
+  WHERE userName = 'admin';
+
+-- Old projects that were created before users and groups existed belong to the legacy group.
+INSERT INTO UserGroup (groupName, description, createdBy)
+  SELECT 'legacy', 'Projects created before users and groups existed', id
+  FROM UserAccount WHERE userName = 'admin';
+INSERT INTO Namespace (name, type, groupId)
+  SELECT groupName, 'g', id FROM UserGroup WHERE groupName = 'legacy';
+UPDATE UserGroup
+  SET namespaceId = (SELECT id FROM Namespace WHERE name = 'legacy')
+  WHERE groupName = 'legacy';
+
+
+-- Update all existing projects to belong to the legacy group,
+-- and make the namespaceId column non-nullable.
+UPDATE Project
+  SET namespaceId = (SELECT id FROM Namespace WHERE name = 'legacy');
+ALTER TABLE Project ALTER COLUMN namespaceId SET NOT NULL;
