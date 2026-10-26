@@ -13,9 +13,19 @@ import {
   loadCompareViewJsSomPayload,
   loadCompareViewTSomPayload
 } from '../../payload.js';
+import { makeMeasurementData } from './measurement-data.js';
 
 const dataJsSOM = loadCompareViewJsSomPayload();
 const dataTSOM = loadCompareViewTSomPayload();
+
+function measure(
+  details: Partial<MeasurementData> & { inputsize: string }
+): MeasurementData {
+  return makeMeasurementData({
+    cmdline: 'b e s ' + details.inputsize,
+    ...details
+  });
+}
 
 describe('collateMeasurements()', () => {
   describe('with data from JsSOM', () => {
@@ -233,31 +243,7 @@ describe('collateMeasurements()', () => {
       inputsize: string,
       commitid: string
     ): MeasurementData {
-      return {
-        expid: 1,
-        runid,
-        commitid,
-        trialid: 1,
-
-        bench: 'b',
-        exe: 'e',
-        suite: 's',
-
-        cmdline: 'b e s ' + inputsize,
-        varvalue: null,
-        cores: null,
-        inputsize,
-        extraargs: null,
-
-        invocation: 1,
-        warmup: null,
-
-        criterion: 'total',
-        unit: 'ms',
-        values: [1],
-
-        envid: 1
-      };
+      return measure({ runid, inputsize, commitid });
     }
 
     const data: MeasurementData[] = [
@@ -304,31 +290,7 @@ describe('collateMeasurements()', () => {
       inputsize: string,
       commitid: string
     ): MeasurementData {
-      return {
-        expid: 1,
-        runid,
-        commitid,
-        trialid,
-
-        bench: 'b',
-        exe: 'e',
-        suite: 's',
-
-        cmdline: 'b e s ' + inputsize,
-        varvalue: null,
-        cores: null,
-        inputsize,
-        extraargs: null,
-
-        invocation: 1,
-        warmup: null,
-
-        criterion: 'total',
-        unit: 'ms',
-        values: [1],
-
-        envid: 1
-      };
+      return measure({ runid, trialid, inputsize, commitid });
     }
 
     const data: MeasurementData[] = [
@@ -376,31 +338,7 @@ describe('collateMeasurements()', () => {
       inputsize: string,
       commitid: string
     ): MeasurementData {
-      return {
-        expid,
-        runid,
-        commitid,
-        trialid,
-
-        bench: 'b',
-        exe: 'e',
-        suite: 's',
-
-        cmdline: 'b e s ' + inputsize,
-        varvalue: null,
-        cores: null,
-        inputsize,
-        extraargs: null,
-
-        invocation: 1,
-        warmup: null,
-
-        criterion: 'total',
-        unit: 'ms',
-        values: [1],
-
-        envid: 1
-      };
+      return measure({ expid, runid, trialid, inputsize, commitid });
     }
 
     const data: MeasurementData[] = [

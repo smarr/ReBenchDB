@@ -37,9 +37,12 @@ export async function getProfileAsJson(
   return result;
 }
 
-async function getProfile(
+/**
+ * Only exported for testing, meant to be private.
+ */
+export async function getProfile(
   runId: number,
-  commitId: number,
+  commitId: string,
   db: Database
 ): Promise<ProfileRow[]> {
   const result = await db.query({

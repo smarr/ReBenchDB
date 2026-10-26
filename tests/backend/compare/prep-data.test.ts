@@ -4,6 +4,7 @@ import { mkdirSync, existsSync } from 'node:fs';
 
 import { robustPath } from '../../../src/backend/util.js';
 import type {
+  MeasurementData,
   Measurements,
   ProcessedResult,
   RevisionComparison,
@@ -21,6 +22,7 @@ import {
   compareStringOrNull,
   compareToSortForSinglePassChangeStats,
   countVariantsAndDropMissing,
+  getCommitOffsetsInSortedMeasurements,
   getChangeDataBySuiteAndExe,
   getNavigation,
   groupDataBySuiteAndBenchmark,
@@ -37,6 +39,7 @@ import {
 import { prepareTemplate } from '../../../src/backend/templates.js';
 import * as dataFormatters from '../../../src/shared/data-format.js';
 import * as viewHelpers from '../../../src/shared/helpers.js';
+import { makeMeasurementData } from './measurement-data.js';
 import {
   initJestMatchers,
   isRequestedToUpdateExpectedData,
@@ -90,14 +93,18 @@ function makeM(
   unit: string,
   envId: number,
   commitId: string,
-  runId = 1
+  runId = 1,
+  cmdline = runSettings.cmdline
 ) {
   return {
     criterion: { name: criterion, unit },
     values: [[]],
     envId,
     commitId,
-    runSettings,
+    runSettings:
+      cmdline === runSettings.cmdline
+        ? runSettings
+        : { ...runSettings, cmdline, simplifiedCmdline: cmdline },
     runId,
     trialId: 1,
     expId: 1
@@ -244,6 +251,89 @@ describe('compareToSortForSinglePassChangeStats()', () => {
       expect(data[3].criterion.name).toBe('total');
     }
   );
+
+  it('should place base first, even when its runId is larger', () => {
+    // run settings, e.g. warmup, changed, so there are different runIds,
+    // but the change commit's run was recorded first
+    const data: Measurements[] = [
+      makeM('total', 'ms', 1, 'a', 2),
+      makeM('total', 'ms', 1, 'b', 1)
+    ];
+
+    data.sort(compareToSortForSinglePassChangeStats);
+
+    expect(data[0].commitId).toBe('a');
+    expect(data[0].runId).toBe(2);
+    expect(data[1].commitId).toBe('b');
+    expect(data[1].runId).toBe(1);
+  });
+
+  it(
+    'should place base first, even when the cmdline of change ' +
+      'sorts before the one of base',
+    () => {
+      const data: Measurements[] = [
+        makeM('total', 'ms', 1, 'a', 1, 'Exec-new TestBenchmark1'),
+        makeM('total', 'ms', 1, 'b', 2, 'Exec-a TestBenchmark1')
+      ];
+
+      data.sort(compareToSortForSinglePassChangeStats);
+
+      expect(data[0].commitId).toBe('a');
+      expect(data[1].commitId).toBe('b');
+    }
+  );
+
+  it(
+    'should give pairs for each criterion and env, ' +
+      'even when cmdline and runId changed',
+    () => {
+      const data: Measurements[] = [
+        makeM('total', 'ms', 2, 'b', 1, 'Exec-a TestBenchmark1'),
+        makeM('alloc', 'by', 1, 'a', 2, 'Exec-new TestBenchmark1'),
+        makeM('total', 'ms', 1, 'b', 1, 'Exec-a TestBenchmark1'),
+        makeM('alloc', 'by', 2, 'a', 2, 'Exec-new TestBenchmark1'),
+        makeM('total', 'ms', 1, 'a', 2, 'Exec-new TestBenchmark1'),
+        makeM('alloc', 'by', 1, 'b', 1, 'Exec-a TestBenchmark1'),
+        makeM('total', 'ms', 2, 'a', 2, 'Exec-new TestBenchmark1'),
+        makeM('alloc', 'by', 2, 'b', 1, 'Exec-a TestBenchmark1')
+      ];
+
+      data.sort(compareToSortForSinglePassChangeStats);
+
+      const order = data.map((m) => [m.envId, m.criterion.name, m.commitId]);
+      expect(order).toEqual([
+        [1, 'alloc', 'a'],
+        [1, 'alloc', 'b'],
+        [1, 'total', 'a'],
+        [1, 'total', 'b'],
+        [2, 'alloc', 'a'],
+        [2, 'alloc', 'b'],
+        [2, 'total', 'a'],
+        [2, 'total', 'b']
+      ]);
+    }
+  );
+
+  it('should keep runs of the same commit together', () => {
+    // base was benchmarked twice, with changed run settings,
+    // so, it has two runIds, for the same cmdline,
+    // and the runId of change is between them
+    const data: Measurements[] = [
+      makeM('total', 'ms', 1, 'a', 3),
+      makeM('total', 'ms', 1, 'b', 2),
+      makeM('total', 'ms', 1, 'a', 1)
+    ];
+
+    data.sort(compareToSortForSinglePassChangeStats);
+
+    const order = data.map((m) => [m.commitId, m.runId]);
+    expect(order).toEqual([
+      ['a', 1],
+      ['a', 3],
+      ['b', 2]
+    ]);
+  });
 });
 
 describe('countVariantsAndDropMissing()', () => {
@@ -430,6 +520,169 @@ describe('calculateChangeStatsForBenchmark()', () => {
 
       expect(total.data[0]).toBe(versionStats.total);
     });
+  });
+});
+
+describe('calculateChangeStatsForBenchmark() with changed run settings', () => {
+  type RunRow = Partial<MeasurementData> & { value: number };
+
+  /**
+   * Create the rows as they come from the database,
+   * with three iterations of one invocation for each run.
+   */
+  function makeRows(runs: RunRow[]): MeasurementData[] {
+    const rows = runs.map(({ value, ...r }) =>
+      makeMeasurementData({
+        trialid: r.runid,
+        ...r,
+        values: [value, value, value]
+      })
+    );
+    rows.sort(
+      (a, b) =>
+        a.runid - b.runid ||
+        a.trialid - b.trialid ||
+        a.criterion.localeCompare(b.criterion)
+    );
+    return rows;
+  }
+
+  async function getStats(
+    runs: RunRow[],
+    base: string,
+    change: string
+  ): Promise<CompareStatsRow[]> {
+    const collated = collateMeasurements(makeRows(runs));
+    const bench = <ProcessedResult>(
+      collated.get('e')?.get('s')?.benchmarks.get('b')
+    );
+
+    const { baseOffset, changeOffset } = getCommitOffsetsInSortedMeasurements(
+      base,
+      change
+    );
+    const result = await calculateChangeStatsForBenchmark(
+      bench,
+      null,
+      base,
+      change,
+      baseOffset,
+      changeOffset,
+      null,
+      0
+    );
+    return result.stats;
+  }
+
+  function expectPaired(
+    stats: CompareStatsRow[],
+    changeM: number,
+    inconsistentRunIds = false
+  ) {
+    expect(stats).toHaveLength(1);
+    expect(stats[0].missing).toBeUndefined();
+    expect(stats[0].inconsistentRunIds).toBe(inconsistentRunIds);
+    expect(stats[0].versionStats?.total.change_m).toBeCloseTo(changeM);
+  }
+
+  it('should not flag runs as inconsistent with the same runId', async () => {
+    const stats = await getStats(
+      [
+        { commitid: 'a', runid: 1, value: 10 },
+        { commitid: 'b', runid: 1, value: 20 }
+      ],
+      'a',
+      'b'
+    );
+    expectPaired(stats, 1, false);
+  });
+
+  it('should pair same cmdline when base has larger runId', async () => {
+    // same cmdline, but other run settings, e.g. warmup, changed
+    const stats = await getStats(
+      [
+        { commitid: 'b', runid: 1, value: 20 },
+        { commitid: 'a', runid: 2, value: 10 }
+      ],
+      'a',
+      'b'
+    );
+    expectPaired(stats, 1, true);
+  });
+
+  it('should pair runs when base commit id sorts after change', async () => {
+    const stats = await getStats(
+      [
+        { commitid: 'b', runid: 1, value: 10 },
+        { commitid: 'a', runid: 2, value: 20 }
+      ],
+      'b',
+      'a'
+    );
+    expectPaired(stats, 1, true);
+  });
+
+  it('should flag runs as inconsistent when the cmdline changed', async () => {
+    // the cmdline of change sorts before the one of base
+    const stats = await getStats(
+      [
+        { commitid: 'a', runid: 1, cmdline: 'Exec-new Bench', value: 10 },
+        { commitid: 'b', runid: 2, cmdline: 'Exec-a Bench', value: 20 }
+      ],
+      'a',
+      'b'
+    );
+    expectPaired(stats, 1, true);
+  });
+
+  it('should combine runs with the same cmdline of one commit', async () => {
+    // base was benchmarked twice, with different run settings, e.g. warmup
+    const stats = await getStats(
+      [
+        { commitid: 'a', runid: 1, value: 10 },
+        { commitid: 'a', runid: 2, value: 10 },
+        { commitid: 'b', runid: 3, value: 20 }
+      ],
+      'a',
+      'b'
+    );
+    expectPaired(stats, 1, true);
+    expect(stats[0].versionStats?.total.samples).toBe(6);
+  });
+
+  it('should pair each env and criterion with changed runIds', async () => {
+    // factor: by how much change differs from base
+    const pair = (envid: number, criterion: string, factor: number) => [
+      { commitid: 'a', runid: 2, envid, criterion, value: 100 },
+      {
+        commitid: 'b',
+        runid: 1,
+        cmdline: 'Exec-a Bench',
+        envid,
+        criterion,
+        value: 100 * factor
+      }
+    ];
+
+    const stats = await getStats(
+      [
+        ...pair(1, 'total', 2),
+        ...pair(1, 'alloc', 0.5),
+        ...pair(2, 'total', 3),
+        ...pair(2, 'alloc', 4)
+      ],
+      'a',
+      'b'
+    );
+
+    expect(stats).toHaveLength(2);
+    const byEnv = new Map(stats.map((s) => [s.details.envId, s]));
+    expect(byEnv.get(1)?.missing).toBeUndefined();
+    expect(byEnv.get(1)?.versionStats?.total.change_m).toBeCloseTo(1);
+    expect(byEnv.get(1)?.versionStats?.alloc.change_m).toBeCloseTo(-0.5);
+    expect(byEnv.get(2)?.missing).toBeUndefined();
+    expect(byEnv.get(2)?.versionStats?.total.change_m).toBeCloseTo(2);
+    expect(byEnv.get(2)?.versionStats?.alloc.change_m).toBeCloseTo(3);
   });
 });
 

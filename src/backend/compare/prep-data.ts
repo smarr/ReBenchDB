@@ -121,7 +121,7 @@ export function compareToSortForSinglePassChangeStatsNonStrict(
   return a.criterion.name.localeCompare(b.criterion.name);
 }
 
-function getCommitOffsetsInSortedMeasurements(
+export function getCommitOffsetsInSortedMeasurements(
   baseCommitId: string,
   changeCommitId: string
 ): { baseOffset: number; changeOffset: number } {
