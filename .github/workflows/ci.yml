@@ -102,12 +102,12 @@ jobs:
           rebench --no-denoise --experiment IntegrationTest rebench.conf
 
           sleep 1
-          PROJID=$(curl -s http://localhost:33333/ReBenchDB-integration-test/data | grep project-id | grep -o -E '[0-9]+')
-          EXPID=$(curl -s http://localhost:33333/rebenchdb/dash/$PROJID/data-overview | jq '.data[0].expid')
+          PROJID=$(curl -sL http://localhost:33333/ReBenchDB-integration-test/data | grep project-id | grep -o -E '[0-9]+')
+          EXPID=$(curl -sL http://localhost:33333/rebenchdb/dash/$PROJID/data-overview | jq '.data[0].expid')
 
           # Trigger data generation
-          curl -s http://localhost:33333/ReBenchDB-integration-test/data/$EXPID.json.gz > /dev/null
-          curl -s http://localhost:33333/ReBenchDB-integration-test/data/$EXPID.csv.gz > /dev/null
+          curl -sL http://localhost:33333/ReBenchDB-integration-test/data/$EXPID.json.gz > /dev/null
+          curl -sL http://localhost:33333/ReBenchDB-integration-test/data/$EXPID.csv.gz > /dev/null
 
           sleep 10 # give the server some time to generate the files
           # reposses the files to be able to read them
