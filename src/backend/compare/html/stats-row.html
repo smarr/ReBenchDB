@@ -7,7 +7,7 @@ if (stats.argumentsForDisplay.length > 0) {
 }
 
 if (stats.missing) {
-%}<tr>
+%}<tr class="missing-row">
 %}<th scope="row">{%= stats.benchId.b %}{%- args %}</th>
 <td colspan="20">No matching configuration for {%
   const byCommitId = new Map();
