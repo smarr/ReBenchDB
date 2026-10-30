@@ -35,6 +35,8 @@
   <div>
     <button type="button" class="btn btn-secondary" id="filter-all">All</button>
     <button type="button" class="btn btn-secondary" id="filter-none">None</button>
+    <input type="checkbox" class="btn-check" id="show-missing-rows" autocomplete="off">
+    <label class="btn btn-outline-secondary" for="show-missing-rows">Show missing data</label>
   </div>
   <div id="filter-groups"></div>
 </div>
@@ -95,7 +97,7 @@
 
 {%- include('navigation.html', it.navigation) %}
 
-<main class="col-8" role="main">
+<main class="col-8 hide-missing-rows" role="main">
 
 {%- include('stats-summary.html', {
         ...it.stats.acrossVersions.summary,

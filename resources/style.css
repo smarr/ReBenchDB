@@ -674,6 +674,10 @@ table#benchmark-set-change tbody.hide-most-rows tr.benchmark-row:nth-child(n+4) 
   display: none;
 }
 
+main.hide-missing-rows tr.missing-row {
+  display: none;
+}
+
 .link-container {
     width: 100%;
     text-align: center;

@@ -241,6 +241,11 @@ $(() => {
       .text(isActivated ? 'show less' : 'show more');
   });
 
+  $('#show-missing-rows').on('change', (event) => {
+    const showMissingRows = $(event.currentTarget).is(':checked');
+    $('main').toggleClass('hide-missing-rows', !showMissingRows);
+  });
+
   const headlinesForTablesWithWarmupPlots = $('table:has(button.btn-warmup)')
     .prev()
     .prev();
