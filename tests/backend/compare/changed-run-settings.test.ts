@@ -27,7 +27,8 @@ import type {
 import type {
   BenchmarkData,
   DataPoint,
-  RunDetails as ApiRunDetails
+  RunDetails as ApiRunDetails,
+  RunId
 } from '../../../src/shared/api.js';
 import type { CompareViewWithData } from '../../../src/shared/view-types.js';
 
@@ -418,4 +419,61 @@ describe('profiles for runs with changed run settings', () => {
     expect(hasProfiles.has(profile.cmdline)).toBe(true);
     expect(hasProfiles.has(profile.cmdline + ' --other-flag')).toBe(false);
   });
+});
+
+describe('Recording changed run settings, possibly not in cmdline', () => {
+  let db: TestDatabase;
+
+  beforeAll(async () => {
+    db = await createAndInitializeDB('db_run_settings', 0, false, false);
+  });
+
+  afterAll(async () => {
+    if (db) {
+      await db.close();
+    }
+  });
+
+  const changes: [string, (r: RunId) => void, string, any][] = [
+    ['warmup', (r) => (r.benchmark.runDetails.warmup = 7), 'warmup', 7],
+    [
+      'maxInvocationTime',
+      (r) => (r.benchmark.runDetails.maxInvocationTime = 1),
+      'maxinvocationtime',
+      1
+    ],
+    [
+      'minIterationTime',
+      (r) => (r.benchmark.runDetails.minIterationTime = 2),
+      'miniterationtime',
+      2
+    ],
+    ['location', (r) => (r.location = '/elsewhere'), 'location', '/elsewhere'],
+    ['varValue', (r) => (r.varValue = 'var'), 'varvalue', 'var'],
+    ['cores', (r) => (r.cores = '4'), 'cores', '4'],
+    ['inputSize', (r) => (r.inputSize = 'large'), 'inputsize', 'large'],
+    ['extraArgs', (r) => (r.extraArgs = '--extra'), 'extraargs', '--extra']
+  ];
+
+  it.each(changes)(
+    'should record a new run when %s changes',
+    async (_name, change, column, value) => {
+      const runId = loadSmallPayload().data[0].runId;
+      const original = await db.recordRun(runId);
+      const originalValue = original[column];
+
+      change(runId);
+      db.clearCache();
+      const changed = await db.recordRun(runId);
+
+      expect(changed.id).not.toEqual(original.id);
+      expect(changed[column]).toEqual(value);
+
+      const result = await db.query({
+        text: 'SELECT * FROM Run WHERE id = $1',
+        values: [original.id]
+      });
+      expect(result.rows[0][column]).toEqual(originalValue);
+    }
+  );
 });
