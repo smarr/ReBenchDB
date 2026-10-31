@@ -55,6 +55,41 @@ export function loadScheme(): string {
   return readFileSync(schema).toString();
 }
 
+/**
+ * Parse the schema version in db.sql or a migration file
+ * that is set with an `INSERT INTO` or `UPDATE` statement.
+ */
+export function parseSchemaVersion(sql: string): number | null {
+  const insert =
+    /INSERT\s+INTO\s+SchemaVersion\s*\(version\)\s*VALUES\s*\((\d+)\)/;
+  const update = /UPDATE\s+SchemaVersion\s+SET\s+version\s*=\s*(\d+)/;
+  const pattern = new RegExp(`${insert.source}|${update.source}`, 'gi');
+  let version: number | null = null;
+  for (const m of sql.matchAll(pattern)) {
+    version = parseInt(m[1] ?? m[2]);
+  }
+  return version;
+}
+
+export interface SchemaVersionCheck {
+  ok: boolean;
+
+  /** The version recorded in the database, null if there is none. */
+  actual: number | null;
+
+  /** The version expected by db.sql. */
+  expected: number;
+}
+
+/** The schema version this version of ReBenchDB expects, from db.sql. */
+export const expectedSchemaVersion: number = (() => {
+  const version = parseSchemaVersion(loadScheme());
+  if (version === null) {
+    throw new Error('db.sql does not set the SchemaVersion');
+  }
+  return version;
+})();
+
 const measurementDataColumns = `
         expId, runId, trialId,
         substring(commitId, 1, $1) as commitid,
@@ -184,6 +219,36 @@ export abstract class Database {
       const schema = loadScheme();
       await this.query({ text: schema });
     }
+  }
+
+  /**
+   * @returns the schema version recorded in the database, or null if the
+   *          database predates the SchemaVersion table.
+   */
+  public async getSchemaVersion(): Promise<number | null> {
+    const exists = await this.query({
+      text: `SELECT to_regclass('schemaversion') IS NOT NULL as exists`
+    });
+    if (!exists.rows[0].exists) {
+      return null;
+    }
+
+    const result = await this.query({
+      text: 'SELECT version FROM SchemaVersion'
+    });
+    return result.rowCount === 1 ? result.rows[0].version : null;
+  }
+
+  /**
+   * Check whether the database has the schema version expected by db.sql.
+   */
+  public async checkSchemaVersion(): Promise<SchemaVersionCheck> {
+    const actual = await this.getSchemaVersion();
+    return {
+      ok: actual === expectedSchemaVersion,
+      actual,
+      expected: expectedSchemaVersion
+    };
   }
 
   public async close(): Promise<void> {

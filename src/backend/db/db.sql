@@ -1,3 +1,12 @@
+-- The version of the database schema.
+-- It needs to match the last migration in schema-updates.
+CREATE TABLE SchemaVersion (
+  -- ensures that there is only a single row
+  id boolean primary key default true check (id),
+  version integer NOT NULL
+);
+INSERT INTO SchemaVersion (version) VALUES (19);
+
 -- A specific software version, possibly used by multiple environments
 -- or versions of environments.
 CREATE TABLE SoftwareVersionInfo (

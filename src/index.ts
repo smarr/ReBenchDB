@@ -36,6 +36,7 @@ import {
   serveViewJs
 } from './backend/dev-server/server.js';
 import { DatabaseWithPool } from './backend/db/database-with-pool.js';
+import { expectedSchemaVersion } from './backend/db/db.js';
 import {
   deleteCachedReport,
   getMeasurementsAsJson,
@@ -62,7 +63,10 @@ import {
 import { RequestCache } from './backend/gitlab/request-cache.js';
 import { Pipeline, Runner } from './backend/gitlab/graphql-api.js';
 
-log.info('Starting ReBenchDB Version ' + rebenchVersion);
+log.info(
+  `Starting ReBenchDB Version ${rebenchVersion}` +
+    ` (DB schema version ${expectedSchemaVersion})`
+);
 
 const app = new Koa();
 const router = new Router();
@@ -98,6 +102,7 @@ router.get('/status', async (ctx) => {
   ctx.body = `# ReBenchDB Status
 
 - version ${rebenchVersion}
+- database schema version ${expectedSchemaVersion}
 `;
   ctx.type = 'text';
 });
@@ -241,6 +246,17 @@ async function tryToConnect(n: number): Promise<boolean> {
 (async () => {
   log.info('Initialize Database');
   if (!(await tryToConnect(5))) {
+    process.exit(1);
+  }
+
+  const schema = await db.checkSchemaVersion();
+  if (!schema.ok) {
+    const found = schema.actual ?? 'no schema version';
+    log.error(
+      `Database has schema version ${found}, but expected ` +
+        `${schema.expected}. Please apply the missing migrations ` +
+        'from src/backend/db/schema-updates/.'
+    );
     process.exit(1);
   }
 
