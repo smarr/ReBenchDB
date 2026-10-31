@@ -357,7 +357,8 @@ export abstract class Database {
     const cacheKey =
       `${run.cmdline}::${run.benchmark.name}::` +
       `${run.benchmark.suite.name}::${run.benchmark.suite.executor.name}::` +
-      `${run.location}::${details.maxInvocationTime}::` +
+      `${run.location}::${run.cores}::${run.inputSize}::${run.varValue}::` +
+      `${run.extraArgs}::${details.maxInvocationTime}::` +
       `${details.minIterationTime}::${details.warmup}`;
     if (this.runs.has(cacheKey)) {
       return <Run>this.runs.get(cacheKey);
@@ -383,6 +384,10 @@ export abstract class Database {
                 WHERE cmdline = $1 AND benchmark = $2 AND
                       executor = $3 AND suite = $4 AND
                       location IS NOT DISTINCT FROM $5 AND
+                      cores IS NOT DISTINCT FROM $6 AND
+                      inputSize IS NOT DISTINCT FROM $7 AND
+                      varValue IS NOT DISTINCT FROM $8 AND
+                      extraArgs IS NOT DISTINCT FROM $9 AND
                       maxInvocationTime = $10 AND
                       minIterationTime = $11 AND
                       warmup IS NOT DISTINCT FROM $12;`,

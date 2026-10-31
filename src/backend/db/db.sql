@@ -151,8 +151,9 @@ CREATE TABLE Run (
   warmup int,
 
   constraint run_identity_key unique nulls not distinct (
-    cmdline, benchmark, suite, executor,
-    location, maxInvocationTime, minIterationTime, warmup)
+    cmdline, benchmark, suite, executor, location,
+    varValue, cores, inputSize, extraArgs,
+    maxInvocationTime, minIterationTime, warmup)
 );
 
 -- One value for one specific criterion.
