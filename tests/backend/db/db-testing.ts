@@ -135,25 +135,14 @@ export async function createAndInitializeDB(
   timelineEnabled = false,
   useTransactions = true
 ): Promise<TestDatabase> {
-  try {
-    const testDb = await createDB(
-      testSuite,
-      numBootstrapSamples,
-      timelineEnabled,
-      useTransactions
-    );
-    await testDb.prepareForTesting();
-    return testDb;
-  } catch (e: any) {
-    if (e.code == 'ECONNREFUSED') {
-      reportConnectionRefused(e);
-      throw new Error('Database connection refused', {
-        cause: e
-      });
-    }
-
-    throw e;
-  }
+  const testDb = await createDB(
+    testSuite,
+    numBootstrapSamples,
+    timelineEnabled,
+    useTransactions
+  );
+  await testDb.prepareForTesting();
+  return testDb;
 }
 
 export async function createDB(
@@ -168,12 +157,16 @@ export async function createDB(
   const cfg = getConfig();
   const db = getMainDB();
   const dbNameForSuite = `${cfg.database}_${testSuite}`;
-  await db.query({
-    text: `DROP DATABASE IF EXISTS ${dbNameForSuite}`
-  });
-  await db.query({
-    text: `CREATE DATABASE ${dbNameForSuite}`
-  });
+  try {
+    await db.query({
+      text: `DROP DATABASE IF EXISTS ${dbNameForSuite}`
+    });
+    await db.query({
+      text: `CREATE DATABASE ${dbNameForSuite}`
+    });
+  } catch (e: any) {
+    throw explainMainDbError(e, cfg, dbNameForSuite);
+  }
 
   cfg.database = dbNameForSuite;
 
@@ -201,12 +194,56 @@ export async function closeMainDb(): Promise<void> {
   }
 }
 
+const defaultMainDb = 'test_rdb4';
+
+export function explainMainDbError(
+  e: any,
+  cfg: DatabaseConfig,
+  dbNameForSuite: string
+): Error {
+  // pg falls back to the OS user if no user is given
+  const user = cfg.user || process.env.USER;
+  const mainDb =
+    `main database "${cfg.database}" ` +
+    `(user "${user}" on ${cfg.host}:${cfg.port})`;
+  const howToConfigure =
+    'The tests connect to this existing database to create a separate ' +
+    `database per test suite (here "${dbNameForSuite}").\n` +
+    'Configure it with the environment variables ' +
+    `RDB_DB (default "${defaultMainDb}"), RDB_USER, RDB_PASS, and RDB_HOST.\n` +
+    'For instance: RDB_DB=postgres npm test';
+
+  let reason: string;
+  if (e.code === 'ECONNREFUSED' || e.errors?.[0]?.code === 'ECONNREFUSED') {
+    reportConnectionRefused(e);
+    reason = `Connection refused for ${mainDb}. Is PostgreSQL running?`;
+  } else if (e.code === '3D000') {
+    // invalid_catalog_name
+    reason =
+      `The ${mainDb} does not exist.\n` +
+      `Create it with \`createdb ${cfg.database}\`, ` +
+      'or point RDB_DB to an existing database.';
+  } else if (e.code === '28P01' || e.code === '28000') {
+    // invalid_password, invalid_authorization_specification
+    reason = `Authentication failed for ${mainDb}: ${e.message}`;
+  } else if (e.code === '42501') {
+    // insufficient_privilege
+    reason =
+      `The user "${user}" is not permitted to create databases: ` +
+      `${e.message}\nGrant it with \`ALTER ROLE ${user} CREATEDB\`.`;
+  } else {
+    reason = `Failed to create "${dbNameForSuite}" via ${mainDb}: ${e.message}`;
+  }
+
+  return new Error(`${reason}\n\n${howToConfigure}`, { cause: e });
+}
+
 function getConfig(): DatabaseConfig {
   return {
     user: process.env.RDB_USER || '',
     password: process.env.RDB_PASS || '',
     host: process.env.RDB_HOST || 'localhost',
-    database: process.env.RDB_DB || 'test_rdb4',
+    database: process.env.RDB_DB || defaultMainDb,
     port: 5432
   };
 }

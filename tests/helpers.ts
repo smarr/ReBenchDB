@@ -125,6 +125,14 @@ function toBeMostlyIdenticalImage(
   };
 }
 
+/**
+ * The SVG backend may contain ids, which can change based on
+ * test order. Removing the number avoids flaky tests.
+ */
+function normalizeSvg(svg: string): string {
+  return svg.replace(/id="surface\d+"/g, 'id="surface"');
+}
+
 function toBeIdenticalSvgFiles(
   actualFile: string,
   outputFolder: string,
@@ -139,8 +147,10 @@ function toBeIdenticalSvgFiles(
     };
   }
 
-  const actual: string = readFileSync(`${outputFolder}/${actualFile}`, 'utf8');
-  const expected: string = readFileSync(expectedFile, 'utf8');
+  const actual = normalizeSvg(
+    readFileSync(`${outputFolder}/${actualFile}`, 'utf8')
+  );
+  const expected = normalizeSvg(readFileSync(expectedFile, 'utf8'));
 
   if (actual !== expected) {
     const diffArr = diffStringsRaw(expected, actual, true);
