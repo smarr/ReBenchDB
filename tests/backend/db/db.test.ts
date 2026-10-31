@@ -212,6 +212,7 @@ describe('Timeline-plot Queries', () => {
       const request: TimelineRequest = {
         baseline: 'non-existing-commitid',
         change: 'another-non-existing-commitid',
+        runId: 1,
         b: benchmark,
         e: executor,
         s: suite
@@ -225,6 +226,7 @@ describe('Timeline-plot Queries', () => {
       const request: TimelineRequest = {
         baseline: baseCommitId,
         change: changeCommitId,
+        runId: 1,
         b: benchmark,
         e: executor,
         s: suite
@@ -246,6 +248,7 @@ describe('Timeline-plot Queries', () => {
       const request: TimelineRequest = {
         baseline: baseCommitId,
         change: earlierBaseCommitId,
+        runId: 1,
         b: benchmark,
         e: executor,
         s: suite

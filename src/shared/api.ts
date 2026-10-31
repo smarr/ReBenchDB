@@ -192,6 +192,8 @@ export interface TimelineRequest extends BenchmarkId {
 
   /** commit id for change */
   change: string;
+
+  runId: number;
 }
 
 export interface TimelineResponse {

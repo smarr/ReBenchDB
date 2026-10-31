@@ -173,6 +173,7 @@ export interface MeasurementData extends BasicMeasurementData {
 export interface AvailableProfile extends BenchmarkId {
   commitid: string;
   runid: number;
+  cmdline: string;
 }
 
 export interface RunSettings {

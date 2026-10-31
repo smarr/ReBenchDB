@@ -38,6 +38,7 @@ import {
 } from '../../../src/shared/view-types.js';
 import { prepareTemplate } from '../../../src/backend/templates.js';
 import * as dataFormatters from '../../../src/shared/data-format.js';
+import { HasProfile } from '../../../src/backend/db/has-profile.js';
 import * as viewHelpers from '../../../src/shared/helpers.js';
 import { makeMeasurementData } from './measurement-data.js';
 import {
@@ -550,7 +551,8 @@ describe('calculateChangeStatsForBenchmark() with changed run settings', () => {
   async function getStats(
     runs: RunRow[],
     base: string,
-    change: string
+    change: string,
+    hasProfiles: HasProfile | null = null
   ): Promise<CompareStatsRow[]> {
     const collated = collateMeasurements(makeRows(runs));
     const bench = <ProcessedResult>(
@@ -563,7 +565,7 @@ describe('calculateChangeStatsForBenchmark() with changed run settings', () => {
     );
     const result = await calculateChangeStatsForBenchmark(
       bench,
-      null,
+      hasProfiles,
       base,
       change,
       baseOffset,
@@ -683,6 +685,41 @@ describe('calculateChangeStatsForBenchmark() with changed run settings', () => {
     expect(byEnv.get(2)?.missing).toBeUndefined();
     expect(byEnv.get(2)?.versionStats?.total.change_m).toBeCloseTo(2);
     expect(byEnv.get(2)?.versionStats?.alloc.change_m).toBeCloseTo(3);
+  });
+
+  describe('profile availability', () => {
+    const runs: RunRow[] = [
+      { commitid: 'a', runid: 1, cmdline: 'b e s', value: 10 },
+      { commitid: 'b', runid: 2, cmdline: 'b e s', value: 20 }
+    ];
+
+    it('should show profiles available for the cmdline', async () => {
+      const hasProfiles = new HasProfile([
+        { b: 'b', e: 'e', s: 's', commitid: 'b', runid: 2, cmdline: 'b e s' }
+      ]);
+      const stats = await getStats(runs, 'a', 'b', hasProfiles);
+
+      expect(stats).toHaveLength(1);
+      expect(stats[0].details.profiles).toBe(true);
+    });
+
+    it('should not show profiles of other cmdlines, same names', async () => {
+      // same benchmark, executor, and suite names, but a different cmdline
+      const hasProfiles = new HasProfile([
+        {
+          b: 'b',
+          e: 'e',
+          s: 's',
+          commitid: 'b',
+          runid: 3,
+          cmdline: 'b e s --other-flag'
+        }
+      ]);
+      const stats = await getStats(runs, 'a', 'b', hasProfiles);
+
+      expect(stats).toHaveLength(1);
+      expect(stats[0].details.profiles).toBe(false);
+    });
   });
 });
 
