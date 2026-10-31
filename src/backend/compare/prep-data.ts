@@ -245,7 +245,9 @@ function addOrGetCompareStatsRow(
   let row = variants.get(key);
   if (row === undefined) {
     const benchId = { b, e, s, v, c, i, ea };
-    const hasProfile = hasProfiles ? hasProfiles.has(benchId) : false;
+    const hasProfile = hasProfiles
+      ? hasProfiles.has(measurements.runSettings.cmdline)
+      : false;
 
     row = {
       benchId,

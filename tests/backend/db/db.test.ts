@@ -100,10 +100,6 @@ describe('Timeline-plot Queries', () => {
   let baseCommitId: string;
   let changeCommitId: string;
 
-  let benchmark: string;
-  let executor: string;
-  let suite: string;
-
   beforeAll(async () => {
     db = await createAndInitializeDB('db_ts_basic', 25, true, false);
 
@@ -136,10 +132,6 @@ describe('Timeline-plot Queries', () => {
 
     await db.recordMetaDataAndRuns(basicTestData);
     await db.recordAllData(basicTestData);
-
-    benchmark = basicTestData.data[0].runId.benchmark.name;
-    executor = basicTestData.data[0].runId.benchmark.suite.executor.name;
-    suite = basicTestData.data[0].runId.benchmark.suite.name;
 
     await db.awaitQuiescentTimelineUpdater();
   });
@@ -212,10 +204,7 @@ describe('Timeline-plot Queries', () => {
       const request: TimelineRequest = {
         baseline: 'non-existing-commitid',
         change: 'another-non-existing-commitid',
-        runId: 1,
-        b: benchmark,
-        e: executor,
-        s: suite
+        runId: 1
       };
 
       const result = await db.getTimelineData(projectName, request);
@@ -226,10 +215,7 @@ describe('Timeline-plot Queries', () => {
       const request: TimelineRequest = {
         baseline: baseCommitId,
         change: changeCommitId,
-        runId: 1,
-        b: benchmark,
-        e: executor,
-        s: suite
+        runId: 1
       };
 
       const result = await db.getTimelineData(projectName, request);
@@ -248,10 +234,7 @@ describe('Timeline-plot Queries', () => {
       const request: TimelineRequest = {
         baseline: baseCommitId,
         change: earlierBaseCommitId,
-        runId: 1,
-        b: benchmark,
-        e: executor,
-        s: suite
+        runId: 1
       };
 
       const result = await db.getTimelineData(projectName, request);

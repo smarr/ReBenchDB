@@ -186,7 +186,7 @@ export interface BenchmarkId {
   ea?: string;
 }
 
-export interface TimelineRequest extends BenchmarkId {
+export interface TimelineRequest {
   /** commit id for baseline */
   baseline: string;
 

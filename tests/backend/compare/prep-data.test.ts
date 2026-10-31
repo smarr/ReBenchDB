@@ -694,9 +694,7 @@ describe('calculateChangeStatsForBenchmark() with changed run settings', () => {
     ];
 
     it('should show profiles available for the cmdline', async () => {
-      const hasProfiles = new HasProfile([
-        { b: 'b', e: 'e', s: 's', commitid: 'b', runid: 2, cmdline: 'b e s' }
-      ]);
+      const hasProfiles = new HasProfile(['b e s']);
       const stats = await getStats(runs, 'a', 'b', hasProfiles);
 
       expect(stats).toHaveLength(1);
@@ -705,16 +703,7 @@ describe('calculateChangeStatsForBenchmark() with changed run settings', () => {
 
     it('should not show profiles of other cmdlines, same names', async () => {
       // same benchmark, executor, and suite names, but a different cmdline
-      const hasProfiles = new HasProfile([
-        {
-          b: 'b',
-          e: 'e',
-          s: 's',
-          commitid: 'b',
-          runid: 3,
-          cmdline: 'b e s --other-flag'
-        }
-      ]);
+      const hasProfiles = new HasProfile(['b e s --other-flag']);
       const stats = await getStats(runs, 'a', 'b', hasProfiles);
 
       expect(stats).toHaveLength(1);

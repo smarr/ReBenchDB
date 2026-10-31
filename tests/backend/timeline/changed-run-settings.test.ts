@@ -118,10 +118,7 @@ describe('timelines for runs with changed run settings', () => {
     const request: TimelineRequest = {
       baseline: baseCommit,
       change: changeCommit,
-      runId: await getRunIdOf(changeCommit),
-      b: 'NBody',
-      e: 'SOMns-graal',
-      s: 'macro-startup'
+      runId: await getRunIdOf(changeCommit)
     };
     const timeline = await db.getTimelineData(projectName, request);
 

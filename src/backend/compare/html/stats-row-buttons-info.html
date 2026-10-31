@@ -1,6 +1,5 @@
 {%
 const d = it.details;
-const b = it.benchId;
 const f = it.dataFormatters;
 %}<button type="button" class="btn btn-sm btn-cmdline btn-popover"
   data-bs-content="<code>{%= d.cmdline %}</code>"></button>
@@ -19,5 +18,4 @@ const f = it.dataFormatters;
 %}<button type="button" class="btn btn-sm btn-profile" data-content="{%= d.runId %}"></button>
 {%
    }
-%}<button type="button" class="btn btn-sm btn-timeline" data-content='{%- JSON.stringify(
-  f.benchmarkId(b.b, b.e, b.s, b.v, d.numV, b.c, d.numC, b.i, d.numI, b.ea, d.numEa)) %}'></button>
+%}<button type="button" class="btn btn-sm btn-timeline" data-content="{%= d.runId %}"></button>

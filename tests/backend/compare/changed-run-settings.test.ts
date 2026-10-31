@@ -403,4 +403,19 @@ describe('profiles for runs with changed run settings', () => {
     expect(changeProfiles).toHaveLength(1);
     expect(changeProfiles[0].cmdline).toEqual(baseProfiles[0].cmdline);
   });
+
+  it('should report profile availability by cmdline', async () => {
+    const project = await db.getProjectBySlug('TruffleSOM');
+    const hasProfiles = await db.getProfileAvailability(
+      <number>project?.id,
+      profBaseCommit,
+      profChangeCommit
+    );
+
+    const [runId] = await getProfileRunIds(profBaseCommit);
+    const [profile] = await getProfile(runId, profBaseCommit, db);
+
+    expect(hasProfiles.has(profile.cmdline)).toBe(true);
+    expect(hasProfiles.has(profile.cmdline + ' --other-flag')).toBe(false);
+  });
 });
