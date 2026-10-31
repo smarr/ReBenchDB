@@ -184,12 +184,14 @@ async function insertTimeline(e): Promise<void> {
   const jqButton = $(e.target);
 
   const projectSlug = <string>$('#project-slug').attr('value');
-  const baseHash = $('#baseHash').attr('value');
-  const changeHash = $('#changeHash').attr('value');
+  const baseHash = <string>$('#baseHash').attr('value');
+  const changeHash = <string>$('#changeHash').attr('value');
 
-  const dataId = jqButton.data('content');
-  dataId.baseline = baseHash;
-  dataId.change = changeHash;
+  const dataId: TimelineRequest = {
+    runId: parseInt(jqButton.data('content')),
+    baseline: baseHash,
+    change: changeHash
+  };
 
   const insert =
     '<tr><td colspan="6"><div class="plot-container"></div></td></tr>';

@@ -207,7 +207,7 @@ function isSameMeasurements(row: MeasurementData, m: Measurements) {
   return (
     m.envId == row.envid &&
     m.commitId == row.commitid &&
-    m.runId == row.runid &&
+    m.runSettings.cmdline == row.cmdline &&
     m.criterion.name == row.criterion
   );
 }

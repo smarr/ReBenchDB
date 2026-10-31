@@ -68,7 +68,14 @@ export default defineConfig([
         }
       ],
 
-      'jest/no-conditional-expect': 'off'
+      'jest/no-conditional-expect': 'off',
+
+      'jest/expect-expect': [
+        'warn',
+        {
+          assertFunctionNames: ['expect', 'expect*']
+        }
+      ]
     }
   },
   globalIgnores(['**/node_modules', '**/dist', '**/resources', '**/coverage'])

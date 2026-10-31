@@ -37,13 +37,18 @@ export async function getProfileAsJson(
   return result;
 }
 
-async function getProfile(
+/**
+ * `runId` can be of a related run, not necessarily
+ * the one matching the `commitId`.
+ */
+export async function getProfile(
   runId: number,
-  commitId: number,
+  commitId: string,
   db: Database
 ): Promise<ProfileRow[]> {
+  // the cmdline is the identity, but we may have different runIds
   const result = await db.query({
-    name: 'fetchProfileDataByRunIdCommitId',
+    name: 'fetchProfileDataByRunCmdlineCommitId',
     text: `
           SELECT commitid,
             benchmark as bench, executor as exe, suite,
@@ -53,7 +58,8 @@ async function getProfile(
             JOIN Trial ON trialId = Trial.id
             JOIN Source ON source.id = trial.sourceId
             JOIN Run ON runId = run.id
-          WHERE runId = $1 AND source.commitId = $2`,
+          WHERE Run.cmdline = (SELECT cmdline FROM Run WHERE id = $1)
+            AND source.commitId = $2`,
     values: [runId, commitId]
   });
 
@@ -95,7 +101,8 @@ export async function getMeasurementsAsJson(
 }
 
 /**
- * Only exported for testing, meant to be private.
+ * `runId` can be of a related run, not necessarily
+ * the one matching the `commitId`.
  */
 export async function getMeasurements(
   projectSlug: string,
@@ -105,7 +112,8 @@ export async function getMeasurements(
   db: Database
 ): Promise<WarmupDataForTrial[] | null> {
   const q = {
-    name: 'fetchMeasurementsByProjectIdRunIdCommitId',
+    // the cmdline is the identity, but we may have different runIds
+    name: 'fetchMeasurementsByProjectIdRunCmdlineCommitId',
     text: `SELECT
               trialId, source.commitId as commitId,
               invocation, warmup,
@@ -121,7 +129,7 @@ export async function getMeasurements(
               JOIN Run ON runId = run.id
               JOIN Project ON Project.id = Experiment.projectId
             WHERE Project.slug = $1
-              AND runId = $2
+              AND Run.cmdline = (SELECT cmdline FROM Run WHERE id = $2)
               AND (source.commitId = $3 OR source.commitId = $4)
             ORDER BY trialId, criterion, invocation;`,
     values: [projectSlug, runId, baseCommitId, changeCommitId]

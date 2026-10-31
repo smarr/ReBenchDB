@@ -353,12 +353,18 @@ export abstract class Database {
   }
 
   public async recordRun(run: ApiRunId): Promise<Run> {
-    if (this.runs.has(run.cmdline)) {
-      return <Run>this.runs.get(run.cmdline);
+    const details = run.benchmark.runDetails;
+    const cacheKey =
+      `${run.cmdline}::${run.benchmark.name}::` +
+      `${run.benchmark.suite.name}::${run.benchmark.suite.executor.name}::` +
+      `${run.location}::${details.maxInvocationTime}::` +
+      `${details.minIterationTime}::${details.warmup}`;
+    if (this.runs.has(cacheKey)) {
+      return <Run>this.runs.get(cacheKey);
     }
 
-    return this.recordCached(this.runs, run.cmdline, {
-      name: 'insertOrFetchRunByCmdline',
+    return this.recordCached(this.runs, cacheKey, {
+      name: 'insertOrFetchRunByCmdlineNamesAndDetails',
       text: `WITH insertedRow AS (
                     INSERT INTO Run (
                       cmdline,
@@ -373,7 +379,13 @@ export abstract class Database {
                 )
                 SELECT * FROM insertedRow
                 UNION ALL
-                SELECT * FROM Run WHERE cmdline = $1;`,
+                SELECT * FROM Run
+                WHERE cmdline = $1 AND benchmark = $2 AND
+                      executor = $3 AND suite = $4 AND
+                      location IS NOT DISTINCT FROM $5 AND
+                      maxInvocationTime = $10 AND
+                      minIterationTime = $11 AND
+                      warmup IS NOT DISTINCT FROM $12;`,
       values: [
         run.cmdline,
         run.benchmark.name,
@@ -384,9 +396,9 @@ export abstract class Database {
         run.inputSize,
         run.varValue,
         run.extraArgs,
-        run.benchmark.runDetails.maxInvocationTime,
-        run.benchmark.runDetails.minIterationTime,
-        run.benchmark.runDetails.warmup
+        details.maxInvocationTime,
+        details.minIterationTime,
+        details.warmup
       ]
     });
   }
@@ -1291,16 +1303,8 @@ export abstract class Database {
     commitId2: string
   ): Promise<HasProfile> {
     const q = {
-      name: 'fetchProfileAvailability',
-      text: `SELECT DISTINCT
-                benchmark as b,
-                executor as e,
-                suite as s,
-                varValue as v,
-                cores as c,
-                inputSize as i,
-                extraArgs as ea,
-                commitId, runId
+      name: 'fetchProfileAvailabilityByCmdline',
+      text: `SELECT DISTINCT cmdline
               FROM ProfileData pd
                 JOIN Trial ON pd.trialId = Trial.id
                 JOIN Experiment e ON trial.expId = e.id
@@ -1308,14 +1312,12 @@ export abstract class Database {
                 JOIN Run ON runId = run.id
               WHERE
                 (commitId = $1 OR commitId = $2)
-                AND e.projectId = $3
-              ORDER BY
-                b, e, s, v, c, i, ea, runId, commitId`,
+                AND e.projectId = $3`,
       values: [commitId1, commitId2, projectId]
     };
 
     const result = await this.query(q);
-    return new HasProfile(result.rows);
+    return new HasProfile(result.rows.map((r) => r.cmdline));
   }
 
   public async getLatestBenchmarksForTimelineView(
@@ -1534,12 +1536,12 @@ export abstract class Database {
       WHERE
         s.branchOrTag = p.baseBranch AND
         p.id = $1   AND
-        r.id = $2   AND
+        r.cmdline = (SELECT cmdline FROM Run WHERE id = $2) AND
         c.name   = '${TotalCriterion}'
       ORDER BY tr.startTime ASC;
     `;
     return {
-      name: 'get-timeline-data-for-pid-runid',
+      name: 'get-timeline-data-for-pid-run-cmdline',
       text: sql,
       values: [projectId, runId]
     };
@@ -1550,7 +1552,7 @@ export abstract class Database {
     branches: { baseBranchName: string; changeBranchName: string },
     request: TimelineRequest
   ): QueryConfig {
-    let sql = `
+    const sql = `
       SELECT
         extract(epoch from tr.startTime)::int as startTime,
         s.branchOrTag as branch, s.commitid IN ($1, $2) as isCurrent,
@@ -1566,58 +1568,22 @@ export abstract class Database {
       WHERE
         s.branchOrTag IN ($3, $4) AND
         p.name    = $5   AND
-        benchmark = $6   AND
-        suite    = $7  AND
-        executor = $8 AND
+        r.cmdline = (SELECT cmdline FROM Run WHERE id = $6) AND
         c.name   = '${TotalCriterion}'
-        ::ADDITIONAL-PARAMETERS::
       ORDER BY tr.startTime ASC;
     `;
 
-    let additionalParameters = '';
-    let storedQueryName = 'get-timeline-data-bpbs-';
-
-    const parameters = [
-      request.baseline,
-      request.change,
-      branches.baseBranchName,
-      branches.changeBranchName,
-      projectName,
-      request.b,
-      request.s,
-      request.e
-    ];
-
-    if (request.v) {
-      parameters.push(request.v);
-      additionalParameters += 'AND r.varValue = $' + parameters.length + ' ';
-      storedQueryName += 'v';
-    }
-
-    if (request.c) {
-      parameters.push(request.c);
-      additionalParameters += 'AND r.cores = $' + parameters.length + ' ';
-      storedQueryName += 'c';
-    }
-
-    if (request.i) {
-      parameters.push(request.i);
-      additionalParameters += 'AND r.inputSize = $' + parameters.length + ' ';
-      storedQueryName += 'i';
-    }
-
-    if (request.ea) {
-      parameters.push(request.ea);
-      additionalParameters += 'AND r.extraArgs = $' + parameters.length + ' ';
-      storedQueryName += 'ea';
-    }
-
-    sql = sql.replace('::ADDITIONAL-PARAMETERS::', additionalParameters);
-
     return {
-      name: storedQueryName,
+      name: 'get-timeline-data-by-run-cmdline',
       text: sql,
-      values: parameters
+      values: [
+        request.baseline,
+        request.change,
+        branches.baseBranchName,
+        branches.changeBranchName,
+        projectName,
+        request.runId
+      ]
     };
   }
 }

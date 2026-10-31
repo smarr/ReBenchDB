@@ -1,4 +1,4 @@
-import type { BenchmarkId, ValuesPossiblyMissing } from '../../shared/api.js';
+import type { ValuesPossiblyMissing } from '../../shared/api.js';
 import type { SummaryStatistics } from '../../shared/stats.js';
 
 export interface DatabaseConfig {
@@ -168,11 +168,6 @@ interface BasicMeasurementData {
 
 export interface MeasurementData extends BasicMeasurementData {
   values: ValuesPossiblyMissing;
-}
-
-export interface AvailableProfile extends BenchmarkId {
-  commitid: string;
-  runid: number;
 }
 
 export interface RunSettings {

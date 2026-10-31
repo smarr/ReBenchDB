@@ -140,7 +140,7 @@ CREATE TABLE Run (
   benchmark varchar NOT NULL,
   suite varchar NOT NULL,
   executor varchar NOT NULL,
-  cmdline text unique NOT NULL,
+  cmdline text NOT NULL,
   location text,
   varValue varchar,
   cores varchar,
@@ -148,7 +148,11 @@ CREATE TABLE Run (
   extraArgs varchar,
   maxInvocationTime int NOT NULL,
   minIterationTime int NOT NULL,
-  warmup int
+  warmup int,
+
+  constraint run_identity_key unique nulls not distinct (
+    cmdline, benchmark, suite, executor,
+    location, maxInvocationTime, minIterationTime, warmup)
 );
 
 -- One value for one specific criterion.

@@ -5,7 +5,6 @@ import {
   absoluteTimeFromStr,
   asHumanHz,
   asHumanMem,
-  benchmarkId,
   formatEnvironment,
   per,
   r0,
@@ -158,52 +157,6 @@ describe('Format Functions for Numerical Values', () => {
 
     it('should return undefined, if the environment list is empty', () => {
       expect(formatEnvironment(1, [])).toBe(undefined);
-    });
-  });
-
-  describe('benchmarkId - a minimal object to identify benchmark', () => {
-    it('should only include b, e, and s if other bits are unique', () => {
-      expect(
-        benchmarkId('b', 'e', 's', 'v', 1, 'c', 1, 'i', 1, 'ea', 1)
-      ).toEqual({ b: 'b', e: 'e', s: 's' });
-    });
-
-    it('should include v if it is not unique', () => {
-      expect(
-        benchmarkId('b', 'e', 's', 'v', 2, 'c', 1, 'i', 1, 'ea', 1)
-      ).toEqual({ b: 'b', e: 'e', s: 's', v: 'v' });
-    });
-
-    it('should include c if it is not unique', () => {
-      expect(
-        benchmarkId('b', 'e', 's', 'v', 1, 'c', 2, 'i', 1, 'ea', 1)
-      ).toEqual({ b: 'b', e: 'e', s: 's', c: 'c' });
-    });
-
-    it('should include i if it is not unique', () => {
-      expect(
-        benchmarkId('b', 'e', 's', 'v', 1, 'c', 1, 'i', 2, 'ea', 1)
-      ).toEqual({ b: 'b', e: 'e', s: 's', i: 'i' });
-    });
-
-    it('should include ea if it is not unique', () => {
-      expect(
-        benchmarkId('b', 'e', 's', 'v', 1, 'c', 1, 'i', 1, 'ea', 2)
-      ).toEqual({ b: 'b', e: 'e', s: 's', ea: 'ea' });
-    });
-
-    it('should include all if all are not unique', () => {
-      expect(
-        benchmarkId('b', 'e', 's', 'v', 2, 'c', 2, 'i', 2, 'ea', 2)
-      ).toEqual({ b: 'b', e: 'e', s: 's', v: 'v', c: 'c', i: 'i', ea: 'ea' });
-    });
-
-    it('should JSON.stringify without extra characters', () => {
-      expect(
-        JSON.stringify(
-          benchmarkId('bench', 'exe', 'suite', 'v', 1, 'c', 1, 'i', 1, 'ea', 1)
-        )
-      ).toBe('{"b":"bench","e":"exe","s":"suite"}');
     });
   });
 });
