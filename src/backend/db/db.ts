@@ -282,7 +282,7 @@ export abstract class Database {
   ): Promise<RevisionComparison> {
     const result = await this.query({
       name: 'fetchRevisionsInProjectByCommitIds',
-      text: `SELECT DISTINCT
+      text: `SELECT
           p.id as projectId,
           e.name,
           s.id as sourceId,
@@ -293,7 +293,10 @@ export abstract class Database {
           JOIN Trial t ON e.id = t.expId
           JOIN Source s ON t.sourceId = s.id
         WHERE lower(p.slug) = lower($1)
-          AND (s.commitid = $2 OR s.commitid = $3)`,
+          AND (s.commitid = $2 OR s.commitid = $3)
+        GROUP BY p.id, e.id, s.id
+        ORDER BY s.branchOrTag IS NOT DISTINCT FROM p.baseBranch DESC,
+                 max(t.startTime) DESC`,
       values: [projectSlug, base, change]
     });
 
@@ -305,12 +308,8 @@ export abstract class Database {
     const changeCommitId6 = change.substring(0, minDistinctLength);
 
     // we can have multiple experiments with the same revisions
-    const baseData: RevisionData | undefined = result.rows.find(
-      (r) => r.commitid === base
-    );
-    const changeData: RevisionData | undefined = result.rows.find(
-      (r) => r.commitid === change
-    );
+    const { baseRow: baseData, changeRow: changeData } =
+      Database.selectBaseAndChangeRows<RevisionData>(result.rows, base, change);
 
     if (baseData === undefined || changeData === undefined) {
       return {
@@ -1344,26 +1343,46 @@ export abstract class Database {
       values: [projectName, base, change]
     };
     const result = await this.query(q);
+    const { baseRow, changeRow } = Database.selectBaseAndChangeRows(
+      result.rows,
+      base,
+      change
+    );
 
-    // A commit can be on multiple branches. The rows are ordered so that
-    // the project's base branch comes first, and otherwise the branch
-    // with the most recent trial.
-    const baseRows = result.rows.filter((r) => r.commitid === base);
-    const changeRows = result.rows.filter((r) => r.commitid === change);
-
-    if (baseRows.length === 0 && changeRows.length === 0) {
+    if (baseRow === undefined && changeRow === undefined) {
       return null;
     }
 
-    const baseBranchName = (baseRows[0] ?? changeRows[0]).branchortag;
-    if (base === change || changeRows.length === 0) {
-      return { baseBranchName, changeBranchName: baseBranchName };
+    return {
+      baseBranchName: (baseRow ?? changeRow).branchortag,
+      changeBranchName: (changeRow ?? baseRow).branchortag
+    };
+  }
+
+  /**
+   * A commit can be on multiple branches. The rows are expected to be ordered
+   * so that the project's base branch comes first, and otherwise the branch
+   * with the most recent trial.
+   *
+   * For the change, prefer a branch that distinguishes it from the base.
+   */
+  private static selectBaseAndChangeRows<
+    T extends { commitid: string; branchortag: string }
+  >(
+    rows: T[],
+    base: string,
+    change: string
+  ): { baseRow: T | undefined; changeRow: T | undefined } {
+    const baseRow = rows.find((r) => r.commitid === base);
+    if (base === change) {
+      return { baseRow, changeRow: baseRow };
     }
 
-    // prefer a branch that distinguishes the change from the base
+    const changeRows = rows.filter((r) => r.commitid === change);
     const changeRow =
-      changeRows.find((r) => r.branchortag !== baseBranchName) ?? changeRows[0];
-    return { baseBranchName, changeBranchName: changeRow.branchortag };
+      changeRows.find((r) => r.branchortag !== baseRow?.branchortag) ??
+      changeRows[0];
+    return { baseRow, changeRow };
   }
 
   public async getProfileAvailability(
