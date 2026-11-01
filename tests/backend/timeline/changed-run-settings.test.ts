@@ -5,7 +5,7 @@ import {
   closeMainDb,
   createAndInitializeDB
 } from '../db/db-testing.js';
-import { loadSmallPayload } from '../../payload.js';
+import { loadSmallPayloadFor } from '../../payload.js';
 import type {
   BenchmarkData,
   TimelineRequest
@@ -34,10 +34,11 @@ function payloadFor(
   warmup: number | null,
   location: string
 ): BenchmarkData {
-  const data = loadSmallPayload();
-  data.source.commitId = commitId;
-  data.experimentName = `Exp ${commitId}`;
-  data.startTime = new Date(startTime * 1000).toISOString();
+  const data = loadSmallPayloadFor(
+    commitId,
+    `Exp ${commitId}`,
+    new Date(startTime * 1000).toISOString()
+  );
   for (const run of data.data) {
     run.runId.benchmark.suite.name = suiteName;
     run.runId.benchmark.runDetails.warmup = warmup;

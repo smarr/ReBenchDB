@@ -5,7 +5,7 @@ import {
   closeMainDb,
   createAndInitializeDB
 } from '../db/db-testing.js';
-import { loadSmallPayload } from '../../payload.js';
+import { loadSmallPayloadFor } from '../../payload.js';
 import { getCompareViewData } from '../../../src/backend/compare/report.js';
 import type { BenchmarkData } from '../../../src/shared/api.js';
 import type { Project } from '../../../src/backend/db/types.js';
@@ -24,11 +24,8 @@ function payloadFor(
   experimentName: string,
   startTime: string
 ): BenchmarkData {
-  const data = loadSmallPayload();
+  const data = loadSmallPayloadFor(commitId, experimentName, startTime);
   data.projectName = project;
-  data.source.commitId = commitId;
-  data.experimentName = experimentName;
-  data.startTime = startTime;
   return data;
 }
 

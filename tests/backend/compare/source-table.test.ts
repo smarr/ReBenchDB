@@ -5,7 +5,7 @@ import {
   closeMainDb,
   createAndInitializeDB
 } from '../db/db-testing.js';
-import { loadSmallPayload } from '../../payload.js';
+import { loadSmallPayload, loadSmallPayloadFor } from '../../payload.js';
 import type { BenchmarkData } from '../../../src/shared/api.js';
 
 const baseBranch = 'main';
@@ -21,11 +21,8 @@ function payloadFor(
   experimentName: string,
   startTime: string
 ): BenchmarkData {
-  const data = loadSmallPayload();
-  data.source.commitId = commitId;
+  const data = loadSmallPayloadFor(commitId, experimentName, startTime);
   data.source.branchOrTag = branch;
-  data.experimentName = experimentName;
-  data.startTime = startTime;
   return data;
 }
 

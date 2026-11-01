@@ -7,7 +7,7 @@ import {
 } from '../db/db-testing.js';
 import { readFileSync } from 'node:fs';
 
-import { loadSmallPayload } from '../../payload.js';
+import { loadSmallPayload, loadSmallPayloadFor } from '../../payload.js';
 import { robustPath } from '../../../src/backend/util.js';
 import {
   getMeasurements as getWarmupMeasurements,
@@ -120,10 +120,7 @@ function payloadFor(
   details: RunDetails,
   factor = 1
 ): BenchmarkData {
-  const data = loadSmallPayload();
-  data.source.commitId = commitId;
-  data.experimentName = experimentName;
-  data.startTime = startTime;
+  const data = loadSmallPayloadFor(commitId, experimentName, startTime);
   for (const run of data.data) {
     run.runId.benchmark.suite.name = suiteName;
 

@@ -5,7 +5,7 @@ import {
   closeMainDb,
   createAndInitializeDB
 } from '../db/db-testing.js';
-import { loadSmallPayload } from '../../payload.js';
+import { loadSmallPayload, loadSmallPayloadFor } from '../../payload.js';
 import type { BenchmarkData } from '../../../src/shared/api.js';
 import type { Project } from '../../../src/backend/db/types.js';
 
@@ -26,10 +26,7 @@ function payloadFor(
   cpu: string,
   memory: number
 ): BenchmarkData {
-  const data = loadSmallPayload();
-  data.source.commitId = commitId;
-  data.experimentName = experimentName;
-  data.startTime = startTime;
+  const data = loadSmallPayloadFor(commitId, experimentName, startTime);
   data.env.cpu = cpu;
   data.env.memory = memory;
   return data;
