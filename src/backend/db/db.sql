@@ -5,7 +5,7 @@ CREATE TABLE SchemaVersion (
   id boolean primary key default true check (id),
   version integer NOT NULL
 );
-INSERT INTO SchemaVersion (version) VALUES (19);
+INSERT INTO SchemaVersion (version) VALUES (20);
 
 -- A specific software version, possibly used by multiple environments
 -- or versions of environments.
@@ -20,7 +20,7 @@ CREATE TABLE SoftwareVersionInfo (
 -- the relevant software versions.
 CREATE TABLE Environment (
   id serial primary key,
-  hostname varchar unique,
+  hostname varchar,
   osType varchar,
   -- total number of bytes of memory provided by the system
   memory bigint,
@@ -28,14 +28,17 @@ CREATE TABLE Environment (
 
   -- nominal clock speed in Hz
   clockSpeed bigint,
-  note text
+  note text,
+
+  unique nulls not distinct (hostname, osType, memory, cpu, clockSpeed)
 );
 
 -- A specific criterion that is measured for a benchmark.
 -- This can be anything, from total time over memory consumption
 -- to other things or parts worth measuring.
 CREATE TABLE Criterion (
-  id serial primary key,
+  -- there are few criteria, and a smallint keeps Measurement compact
+  id smallserial primary key,
   name varchar,
   unit varchar,
 
@@ -67,12 +70,14 @@ CREATE TABLE Source (
   id serial primary key,
   repoURL varchar,
   branchOrTag varchar,
-  commitId varchar unique,
+  commitId varchar,
   commitMessage text,
   authorName varchar,
   authorEmail varchar,
   committerName varchar,
-  committerEmail varchar
+  committerEmail varchar,
+
+  unique nulls not distinct (commitId, branchOrTag, repoURL)
 );
 
 -- ReBench executes experiments to collect the desired measurements.
@@ -83,7 +88,7 @@ CREATE TABLE Experiment (
   id serial primary key,
 
   name varchar NOT NULL,
-  projectId smallint,
+  projectId integer,
 
   description text,
 
@@ -101,11 +106,11 @@ CREATE TABLE Trial (
   manualRun bool,
   startTime timestamp with time zone,
 
-  expId smallint,
+  expId integer,
 
   username varchar,
-  envId smallint,
-  sourceId smallint,
+  envId integer,
+  sourceId integer,
 
   -- details on system settings that influence noise level for measurements
   denoise jsonb,
@@ -130,8 +135,8 @@ CREATE INDEX trial_sourceid_idx ON Trial (sourceId);
 
 -- Documents the software versions used by a specific environment.
 CREATE TABLE SoftwareUse (
-  envId smallint,
-  softId smallint,
+  envId integer,
+  softId integer,
   primary key (envId, softId),
 
   foreign key (envId) references Environment (id),
@@ -155,9 +160,9 @@ CREATE TABLE Run (
   cores varchar,
   inputSize varchar,
   extraArgs varchar,
-  maxInvocationTime int NOT NULL,
-  minIterationTime int NOT NULL,
-  warmup int,
+  maxInvocationTime integer NOT NULL,
+  minIterationTime integer NOT NULL,
+  warmup integer,
 
   constraint run_identity_key unique nulls not distinct (
     cmdline, benchmark, suite, executor, location,
@@ -167,8 +172,8 @@ CREATE TABLE Run (
 
 -- One value for one specific criterion.
 CREATE TABLE Measurement (
-  runId int,
-  trialId int,
+  runId integer,
+  trialId integer,
   criterion smallint,
   invocation smallint,
 
@@ -181,8 +186,8 @@ CREATE TABLE Measurement (
 );
 
 CREATE TABLE ProfileData (
-  runId int,
-  trialId int,
+  runId integer,
+  trialId integer,
   invocation smallint,
   numIterations smallint,
 
@@ -195,11 +200,11 @@ CREATE TABLE ProfileData (
 
 -- Summary Statistics for comparing over time
 CREATE TABLE Timeline (
-  runId int,
-  trialId int,
+  runId integer,
+  trialId integer,
   criterion smallint,
 
-  numSamples int,
+  numSamples integer,
 
   minVal float4,
   maxVal float4,
@@ -219,8 +224,8 @@ CREATE TABLE Timeline (
 
 -- Used by ReBenchDB's perf-tracker, for self-performance tracking
 CREATE PROCEDURE recordAdditionalMeasurement(
-  aRunId int,
-  aTrialId int,
+  aRunId integer,
+  aTrialId integer,
   aCriterionId smallint,
   aValue float4)
 LANGUAGE plpgsql

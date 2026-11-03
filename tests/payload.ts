@@ -10,6 +10,18 @@ export function loadSmallPayload(): BenchmarkData {
   );
 }
 
+export function loadSmallPayloadFor(
+  commitId: string,
+  experimentName: string,
+  startTime: string
+): BenchmarkData {
+  const data = loadSmallPayload();
+  data.source.commitId = commitId;
+  data.experimentName = experimentName;
+  data.startTime = startTime;
+  return data;
+}
+
 export function loadLargePayload(): BenchmarkData {
   return JSON.parse(
     readFileSync(robustPath('../tests/data/large-payload.json')).toString()

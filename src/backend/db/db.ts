@@ -282,7 +282,7 @@ export abstract class Database {
   ): Promise<RevisionComparison> {
     const result = await this.query({
       name: 'fetchRevisionsInProjectByCommitIds',
-      text: `SELECT DISTINCT
+      text: `SELECT
           p.id as projectId,
           e.name,
           s.id as sourceId,
@@ -293,8 +293,10 @@ export abstract class Database {
           JOIN Trial t ON e.id = t.expId
           JOIN Source s ON t.sourceId = s.id
         WHERE lower(p.slug) = lower($1)
-          AND s.commitid = $2
-          OR s.commitid = $3`,
+          AND (s.commitid = $2 OR s.commitid = $3)
+        GROUP BY p.id, e.id, s.id
+        ORDER BY s.branchOrTag IS NOT DISTINCT FROM p.baseBranch DESC,
+                 max(t.startTime) DESC`,
       values: [projectSlug, base, change]
     });
 
@@ -306,39 +308,10 @@ export abstract class Database {
     const changeCommitId6 = change.substring(0, minDistinctLength);
 
     // we can have multiple experiments with the same revisions
-    if (result.rowCount !== null && result.rowCount >= 2) {
-      let baseData: RevisionData | undefined = undefined;
-      let changeData: RevisionData | undefined = undefined;
-      for (const row of result.rows) {
-        const r: RevisionData = row;
-        if (row.commitid === base) {
-          baseData = r;
-        } else if (row.commitid === change) {
-          changeData = r;
-        }
-      }
+    const { baseRow: baseData, changeRow: changeData } =
+      Database.selectBaseAndChangeRows<RevisionData>(result.rows, base, change);
 
-      if (baseData) {
-        baseData.commitmessage = filterCommitMessage(baseData.commitmessage);
-      }
-
-      if (changeData) {
-        changeData.commitmessage = filterCommitMessage(
-          changeData.commitmessage
-        );
-      }
-
-      return {
-        dataFound: true,
-        base: baseData,
-        change: changeData,
-        baseCommitId: base,
-        changeCommitId: change,
-        baseCommitId6,
-        changeCommitId6,
-        minDistinctLength
-      };
-    } else {
+    if (baseData === undefined || changeData === undefined) {
       return {
         dataFound: false,
         baseCommitId: base,
@@ -348,6 +321,22 @@ export abstract class Database {
         minDistinctLength
       };
     }
+
+    baseData.commitmessage = filterCommitMessage(baseData.commitmessage);
+    if (changeData !== baseData) {
+      changeData.commitmessage = filterCommitMessage(changeData.commitmessage);
+    }
+
+    return {
+      dataFound: true,
+      base: baseData,
+      change: changeData,
+      baseCommitId: base,
+      changeCommitId: change,
+      baseCommitId6,
+      changeCommitId6,
+      minDistinctLength
+    };
   }
 
   private async getCached(cache, cacheKey, fetchQ: QueryConfig): Promise<any> {
@@ -474,8 +463,9 @@ export abstract class Database {
   }
 
   public async recordSource(s: ApiSource): Promise<Source> {
-    return this.recordCached(this.sources, s.commitId, {
-      name: 'insertOrFetchSourceById',
+    const cacheKey = `${s.commitId}::${s.branchOrTag}::${s.repoURL}`;
+    return this.recordCached(this.sources, cacheKey, {
+      name: 'insertOrFetchSourceByCommitIdBranchRepo',
       text: `WITH insertedRow AS (
                 INSERT INTO Source (
                   repoURL, branchOrTag, commitId, commitMessage,
@@ -486,7 +476,10 @@ export abstract class Database {
               )
               SELECT * FROM insertedRow
               UNION ALL
-              SELECT * FROM Source WHERE commitId = $3;`,
+              SELECT * FROM Source
+              WHERE commitId = $3 AND
+                    branchOrTag IS NOT DISTINCT FROM $2 AND
+                    repoURL IS NOT DISTINCT FROM $1;`,
       values: [
         s.repoURL,
         s.branchOrTag,
@@ -501,8 +494,10 @@ export abstract class Database {
   }
 
   public async recordEnvironment(e: ApiEnvironment): Promise<Environment> {
-    return this.recordCached(this.envs, e.hostName, {
-      name: 'insertOrFetchEnvironmentByHostname',
+    const cacheKey =
+      `${e.hostName}:${e.osType}:` + `${e.memory}:${e.cpu}:${e.clockSpeed}`;
+    return this.recordCached(this.envs, cacheKey, {
+      name: 'insertOrFetchEnvironmentByDetails',
       text: `WITH insertedRow AS (
                   INSERT INTO Environment (
                     hostname, osType, memory, cpu, clockSpeed)
@@ -512,7 +507,12 @@ export abstract class Database {
                 )
                 SELECT * FROM insertedRow
                 UNION ALL
-                SELECT * FROM Environment WHERE hostname = $1;`,
+                SELECT * FROM Environment
+                WHERE hostname = $1 AND
+                      osType IS NOT DISTINCT FROM $2 AND
+                      memory IS NOT DISTINCT FROM $3 AND
+                      cpu IS NOT DISTINCT FROM $4 AND
+                      clockSpeed IS NOT DISTINCT FROM $5;`,
       values: [e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed]
     });
   }
@@ -1329,42 +1329,60 @@ export abstract class Database {
   ): Promise<null | { baseBranchName: string; changeBranchName: string }> {
     const q = {
       name: 'fetchBranchNamesForChange',
-      text: `SELECT DISTINCT branchOrTag, s.commitId
+      text: `SELECT s.branchOrTag, s.commitId
              FROM Source s
                JOIN Trial      tr ON tr.sourceId = s.id
                JOIN Experiment e  ON tr.expId = e.id
                JOIN Project    p  ON p.id = e.projectId
              WHERE
                p.name = $1 AND
-               (s.commitid = $2 OR s.commitid = $3)`,
+               (s.commitid = $2 OR s.commitid = $3)
+             GROUP BY s.branchOrTag, s.commitId, p.baseBranch
+             ORDER BY s.branchOrTag IS NOT DISTINCT FROM p.baseBranch DESC,
+                      max(tr.startTime) DESC`,
       values: [projectName, base, change]
     };
     const result = await this.query(q);
+    const { baseRow, changeRow } = Database.selectBaseAndChangeRows(
+      result.rows,
+      base,
+      change
+    );
 
-    if (result.rowCount === null || result.rowCount < 1) {
+    if (baseRow === undefined && changeRow === undefined) {
       return null;
     }
 
-    if (result.rowCount == 1) {
-      return {
-        baseBranchName: result.rows[0].branchortag,
-        changeBranchName: result.rows[0].branchortag
-      };
-    }
-
-    assert(result.rowCount == 2);
-    if (result.rows[0].commitid == base) {
-      return {
-        baseBranchName: result.rows[0].branchortag,
-        changeBranchName: result.rows[1].branchortag
-      };
-    }
-
-    assert(result.rows[0].commitid == change);
     return {
-      baseBranchName: result.rows[1].branchortag,
-      changeBranchName: result.rows[0].branchortag
+      baseBranchName: (baseRow ?? changeRow).branchortag,
+      changeBranchName: (changeRow ?? baseRow).branchortag
     };
+  }
+
+  /**
+   * A commit can be on multiple branches. The rows are expected to be ordered
+   * so that the project's base branch comes first, and otherwise the branch
+   * with the most recent trial.
+   *
+   * For the change, prefer a branch that distinguishes it from the base.
+   */
+  private static selectBaseAndChangeRows<
+    T extends { commitid: string; branchortag: string }
+  >(
+    rows: T[],
+    base: string,
+    change: string
+  ): { baseRow: T | undefined; changeRow: T | undefined } {
+    const baseRow = rows.find((r) => r.commitid === base);
+    if (base === change) {
+      return { baseRow, changeRow: baseRow };
+    }
+
+    const changeRows = rows.filter((r) => r.commitid === change);
+    const changeRow =
+      changeRows.find((r) => r.branchortag !== baseRow?.branchortag) ??
+      changeRows[0];
+    return { baseRow, changeRow };
   }
 
   public async getProfileAvailability(

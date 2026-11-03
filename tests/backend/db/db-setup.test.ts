@@ -66,6 +66,37 @@ describe('Setup of PostgreSQL DB', () => {
   });
 });
 
+describe('Schema of PostgreSQL DB', () => {
+  let db: TestDatabase;
+
+  beforeAll(async () => {
+    db = await createAndInitializeDB('db_setup_schema');
+  });
+
+  afterAll(async () => {
+    if (db) {
+      return db.close();
+    }
+  });
+
+  it('should use the type of the referenced id for foreign keys', async () => {
+    // a narrower foreign key limits the number of ids that can be referenced
+    const result = await db.query({
+      text: `SELECT c.conrelid::regclass || '.' || a.attname AS fk,
+                    format_type(a.atttypid, a.atttypmod) AS fkType,
+                    format_type(r.atttypid, r.atttypmod) AS refType
+              FROM pg_constraint c
+                CROSS JOIN unnest(c.conkey, c.confkey) AS k(col, refCol)
+                JOIN pg_attribute a
+                  ON a.attrelid = c.conrelid AND a.attnum = k.col
+                JOIN pg_attribute r
+                  ON r.attrelid = c.confrelid AND r.attnum = k.refCol
+              WHERE c.contype = 'f' AND a.atttypid <> r.atttypid`
+    });
+    expect(result.rows).toEqual([]);
+  });
+});
+
 describe('Recording a ReBench execution data fragments', () => {
   let db: TestDatabase;
   let basicTestData: BenchmarkData;
