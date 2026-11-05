@@ -9,7 +9,7 @@ import { existsSync, readFileSync } from 'fs';
 import { log } from '../logging.js';
 import { BenchmarkCompletion } from '../../shared/api.js';
 import { dbConfig, siteConfig } from '../util.js';
-import { getSummaryPlotFileName, renderCompare } from '../compare/report.js';
+import { getSummaryPlotPath, renderCompare } from '../compare/report.js';
 
 export async function handleReBenchCompletion(
   ctx: ParameterizedContext,
@@ -129,11 +129,13 @@ function reportCompletionToGitHub(
 
   completionPromise
     .then(() => {
-      const plotFile = getSummaryPlotFileName(reportId + '.html');
-      const summaryPlot = siteConfig.staticUrl + `/reports/${plotFile}`;
       const msg = `#### Performance changes for ${baselineSha}...${changeSha}
 
-![Summary Over All Benchmarks](${siteConfig.publicUrl}/${summaryPlot})
+![Summary Over All 
+Benchmarks](${getSummaryPlotPath(
+        `${siteConfig.publicUrl}/${siteConfig.staticUrl}/reports`,
+        reportId
+      )})
 Summary Over All Benchmarks
 
 [Full Report](${reportUrl})`;
