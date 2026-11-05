@@ -67,11 +67,11 @@ jobs:
           echo "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
           cat coverage/coverage-summary.txt | grep -v "===" | tail -n4 >> $GITHUB_STEP_SUMMARY
 
-      - name: Upload image difference, if there are any
+      - name: Upload image diffs, if there are any
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: Image Differences of charts.test.ts
+          name: Files of failed tests that compare plots
           path: |
             diff-*.png
             *.svg
