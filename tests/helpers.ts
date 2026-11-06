@@ -144,6 +144,36 @@ function normalizeSvg(svg: string): string {
   return svg.replace(/id="surface\d+"/g, 'id="surface"');
 }
 
+/**
+ * Platform differences floating point issue can cause minimally
+ * different SVG coordinates. Allow this tolerance.
+ */
+const svgCoordinateTolerance = 1 / 256 + 1e-6;
+
+const svgNumber = /-?\d+(?:\.\d+)?/g;
+
+/**
+ * Check whether two SVGs are identical, except for numbers that differ by
+ * at most `svgCoordinateTolerance`.
+ */
+export function isSvgEqualWithinTolerance(
+  expected: string,
+  actual: string
+): boolean {
+  // if it's not the same without any numbers, then it's not a tolerance issue
+  if (expected.replace(svgNumber, '#') !== actual.replace(svgNumber, '#')) {
+    return false;
+  }
+
+  // grab the numbers and compare them with tolerance
+  const expectedNumbers = expected.match(svgNumber) ?? [];
+  const actualNumbers = actual.match(svgNumber) ?? [];
+  return expectedNumbers.every(
+    (n, i) =>
+      Math.abs(Number(n) - Number(actualNumbers[i])) <= svgCoordinateTolerance
+  );
+}
+
 function toBeIdenticalSvgFiles(
   actualFile: string,
   outputFolder: string,
@@ -163,7 +193,7 @@ function toBeIdenticalSvgFiles(
   );
   const expected = normalizeSvg(readFileSync(expectedFile, 'utf8'));
 
-  if (actual !== expected) {
+  if (actual !== expected && !isSvgEqualWithinTolerance(expected, actual)) {
     const diffArr = diffStringsRaw(expected, actual, true);
     const diffCount = diffArr.filter((d) => d[0] !== DIFF_EQUAL).length;
 
