@@ -27,12 +27,15 @@ export function getReportId(
   return `${project}-${baselineHash6}-${changeHash6}`;
 }
 
-export function getSummaryPlotFileName(outputFile: string): string {
-  return getOutputImageFolder(outputFile) + '/overview.png';
+export function getSummaryPlotPath(
+  staticPrefix: string,
+  reportId: string
+): string {
+  return `${staticPrefix}/${reportId}/overview.png`;
 }
 
-export function getOutputImageFolder(outputFile: string): string {
-  return outputFile.replace('.html', '_files');
+function getOutputImageFolder(reportId: string): string {
+  return `${reportOutputFolder}/${reportId}`;
 }
 
 export function getReportFilename(reportId: string): string {
@@ -261,7 +264,7 @@ export function deleteReport(
   const reportFilename = getReportFilename(reportId);
   if (existsSync(reportFilename)) {
     unlinkSync(reportFilename);
-    rmSync(getOutputImageFolder(reportFilename), {
+    rmSync(getOutputImageFolder(reportId), {
       recursive: true,
       force: true
     });
