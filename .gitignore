@@ -16,6 +16,7 @@
 /src/views/test.html
 /tests/data/actual-results
 /tests/data/large-payload.json
+/tests/data/boxplots/*/*.json
 /tmp
 test.figures
 test.html

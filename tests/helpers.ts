@@ -5,6 +5,7 @@ import { basename, sep } from 'node:path';
 
 import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
+import sharp from 'sharp';
 import { diffStringsUnified, diffStringsRaw, DIFF_EQUAL } from 'jest-diff';
 
 import { robustPath } from '../src/backend/util.js';
@@ -22,6 +23,11 @@ declare module 'expect' {
       expectedLineDiff?: number
     ): void;
     toEqualHtmlFragment(expectedFragmentFile: string): void;
+    toRasterizeSimilarTo(
+      outputFolder: string,
+      expectedPngFile: string,
+      maxPixelDiff?: number
+    ): void;
   }
   interface Matchers<R> {
     toBeMostlyIdenticalImage(
@@ -35,6 +41,11 @@ declare module 'expect' {
       expectedLineDiff?: number
     ): R;
     toEqualHtmlFragment(expectedFragmentFile: string): R;
+    toRasterizeSimilarTo(
+      outputFolder: string,
+      expectedPngFile: string,
+      maxPixelDiff?: number
+    ): Promise<R>;
   }
 }
 
@@ -133,6 +144,36 @@ function normalizeSvg(svg: string): string {
   return svg.replace(/id="surface\d+"/g, 'id="surface"');
 }
 
+/**
+ * Platform differences floating point issue can cause minimally
+ * different SVG coordinates. Allow this tolerance.
+ */
+const svgCoordinateTolerance = 1 / 256 + 1e-6;
+
+const svgNumber = /-?\d+(?:\.\d+)?/g;
+
+/**
+ * Check whether two SVGs are identical, except for numbers that differ by
+ * at most `svgCoordinateTolerance`.
+ */
+export function isSvgEqualWithinTolerance(
+  expected: string,
+  actual: string
+): boolean {
+  // if it's not the same without any numbers, then it's not a tolerance issue
+  if (expected.replace(svgNumber, '#') !== actual.replace(svgNumber, '#')) {
+    return false;
+  }
+
+  // grab the numbers and compare them with tolerance
+  const expectedNumbers = expected.match(svgNumber) ?? [];
+  const actualNumbers = actual.match(svgNumber) ?? [];
+  return expectedNumbers.every(
+    (n, i) =>
+      Math.abs(Number(n) - Number(actualNumbers[i])) <= svgCoordinateTolerance
+  );
+}
+
 function toBeIdenticalSvgFiles(
   actualFile: string,
   outputFolder: string,
@@ -152,7 +193,7 @@ function toBeIdenticalSvgFiles(
   );
   const expected = normalizeSvg(readFileSync(expectedFile, 'utf8'));
 
-  if (actual !== expected) {
+  if (actual !== expected && !isSvgEqualWithinTolerance(expected, actual)) {
     const diffArr = diffStringsRaw(expected, actual, true);
     const diffCount = diffArr.filter((d) => d[0] !== DIFF_EQUAL).length;
 
@@ -233,11 +274,94 @@ ${diffShort}`,
   };
 }
 
+/**
+ * Render an SVG into a PNG and check that it is mostly similar,
+ * with only `maxPixelDiff` pixels different.
+ *
+ * On failure, a diff image is written to the working directory.
+ */
+async function toRasterizeSimilarTo(
+  actualSvgFile: string,
+  outputFolder: string,
+  expectedPngFile: string,
+  maxPixelDiff = 0
+) {
+  if (!isSupportingSvgTests()) {
+    return {
+      pass: true,
+      message: () =>
+        `Skipping SVG rasterization tests on ${type()} ` +
+        `because of different rendering.`
+    };
+  }
+
+  const actualSvgPath = `${outputFolder}/${actualSvgFile}`;
+  const actualPngBuffer = await sharp(actualSvgPath).png().toBuffer();
+
+  if (isRequestedToUpdateExpectedData()) {
+    writeFileSync(expectedPngFile, actualPngBuffer);
+    return {
+      pass: true,
+      message: () =>
+        `Updating of expected data was enabled, so no comparison was done.`
+    };
+  }
+
+  const actualPng = PNG.sync.read(actualPngBuffer);
+  const expectedPng = PNG.sync.read(readFileSync(expectedPngFile));
+
+  if (
+    actualPng.width !== expectedPng.width ||
+    actualPng.height !== expectedPng.height
+  ) {
+    return {
+      message: () =>
+        `expected ${actualSvgFile} to be the same size as ` +
+        `${expectedPngFile}.\n` +
+        `Expected: ${expectedPng.width}x${expectedPng.height}\n` +
+        `Actual:   ${actualPng.width}x${actualPng.height}`,
+      pass: false
+    };
+  }
+
+  const diff = new PNG({ width: actualPng.width, height: actualPng.height });
+  const numMismatchedPixel = pixelmatch(
+    expectedPng.data,
+    actualPng.data,
+    diff.data,
+    actualPng.width,
+    actualPng.height,
+    { threshold: 0.01 }
+  );
+
+  if (numMismatchedPixel > maxPixelDiff) {
+    const diffFile = `diff-${actualSvgFile
+      .replace(/\.svg$/, '')
+      .replaceAll('/', '-')}.png`;
+    writeFileSync(diffFile, PNG.sync.write(diff));
+    return {
+      message: () =>
+        `expected ${actualSvgFile} to be similar to ` +
+        `${expectedPngFile}, but ${numMismatchedPixel} pixels were ` +
+        `different, with at most ${maxPixelDiff} allowed. See ${diffFile}.`,
+      pass: false
+    };
+  }
+
+  return {
+    pass: true,
+    message: () =>
+      `${actualSvgFile} is similar enough to ${expectedPngFile}.` +
+      `Only ${numMismatchedPixel} pixels were different.`
+  };
+}
+
 export function initJestMatchers(): void {
   expect.extend({
     toBeMostlyIdenticalImage,
     toBeIdenticalSvgFiles,
-    toEqualHtmlFragment
+    toEqualHtmlFragment,
+    toRasterizeSimilarTo
   });
 }
 
