@@ -59,10 +59,11 @@ function formatCommitMessages(messages) {
 
 export function renderProjectDataOverview(
   data: any[],
+  namespaceSlug: string,
   projectSlug: string
 ): void {
   const tBody = $('#data-overview');
-  const pSlug = projectSlug;
+  const dataUrl = `/${namespaceSlug}/${projectSlug}/data`;
 
   let hasDesc = false;
 
@@ -89,8 +90,8 @@ export function renderProjectDataOverview(
         <td class="num-col">${row.measurements}</td>
         <td class="num-col">${row.expid}</td>
         <td class="num-col">
-          <a rel="nofollow" href="/${pSlug}/data/${row.expid}.json.gz">JSON</a>,
-          <a rel="nofollow" href="/${pSlug}/data/${row.expid}.csv.gz">CSV</a>
+          <a rel="nofollow" href="${dataUrl}/${row.expid}.json.gz">JSON</a>,
+          <a rel="nofollow" href="${dataUrl}/${row.expid}.csv.gz">CSV</a>
         </td>
       </tr>`);
     tBody.find('a[href="#"]').on('click', expandMessage);
@@ -137,6 +138,7 @@ function setHref(event, projectId: string, isBaseline: boolean) {
   // every time a commit is clicked, check to see if both left and right
   // commit are defined. set link if that is true
   const baseJQ = $(`#p${projectId}-baseline`);
+  const namespaceSlug = baseJQ.data('namespace-slug');
   const projectSlug = baseJQ.data('project-slug');
 
   const clicked = $(event.currentTarget).data('hash');
@@ -157,7 +159,7 @@ function setHref(event, projectId: string, isBaseline: boolean) {
 
   $(`#p${projectId}-compare`).attr(
     'href',
-    `/${projectSlug}/compare/${baseline}..${change}`
+    `/${namespaceSlug}/${projectSlug}/compare/${baseline}..${change}`
   );
 }
 

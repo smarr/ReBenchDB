@@ -45,10 +45,10 @@ const __dirname = getDirname(import.meta.url);
  * Get a robust path, relative to the source directory.
  */
 export const robustPath = __dirname.includes('dist/')
-  ? function (path) {
+  ? function (path: string) {
       return resolve(`${__dirname}/../../../src/${path}`);
     }
-  : function (path) {
+  : function (path: string) {
       return resolve(`${__dirname}/../${path}`);
     };
 
@@ -56,10 +56,10 @@ export const robustPath = __dirname.includes('dist/')
  * Get a robust path in the compiled source directory.
  */
 export const robustSrcPath = __dirname.includes('dist/')
-  ? function (path) {
+  ? function (path: string) {
       return `${__dirname}/../${path}`;
     }
-  : function (path) {
+  : function (path: string) {
       return `${__dirname}/../../dist/src/${path}`;
     };
 
@@ -83,6 +83,9 @@ const _rebench_dev = 'https://rebench.dev';
 const reportsUrl = process.env.REPORTS_URL || '/static/reports';
 const staticUrl = process.env.STATIC_URL || '/static';
 const publicUrl = process.env.PUBLIC_URL || _rebench_dev;
+
+// Backwards Compatibility Support for users/groups
+export const legacyGroupName = process.env.RDB_LEGACY_GROUP_NAME || 'legacy';
 
 // configuration for data export is a little more involved,
 // because the database might run elsewhere, but may produce

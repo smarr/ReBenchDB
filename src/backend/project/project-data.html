@@ -4,6 +4,7 @@
   <script src="/static/theme.js" type="module"></script>
   <meta id="project-id" value="{%= it.project.id %}">
   <meta id="project-slug" value="{%= it.project.slug %}">
+  <meta id="namespace-slug" value="{%= it.project.namespacename %}">
   <title>ReBench: {%= it.project.name %}</title>
   {%- include('header.html', { rebenchVersion: it.rebenchVersion }) %}
   <script src="/static/project-data.js" type="module"></script>

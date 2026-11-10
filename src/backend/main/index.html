@@ -31,13 +31,14 @@
     {% for (const p of it.projects) { %}
     <div class="card project-data" data-id="{%= p.id %}" data-showchanges="{%= p.showchanges %}" data-allresults="{%= p.allresults %}">
       <h5 class="card-header" id="{%= p.slug %}"><a
-        href="/{%= p.slug %}/data">{%= p.name %}</a></h5>
+        href="/{%= p.namespacename %}/{%= p.slug %}/data">{%= p.name %}</a></h5>
       <div class="card-body">
         {% if (p.showchanges) { %}
         <h5>Changes</h5>
         <div class="container min-padding"><div class="row">
           <div class="col-sm min-padding scroll-list">
             <div class="list-group baseline" id="p{%= p.id %}-baseline"
+              data-namespace-slug="{%= p.namespacename %}"
               data-project-slug="{%= p.slug %}"></div>
           </div>
           <div class="col-sm min-padding scroll-list">
@@ -50,7 +51,7 @@
            if (p.allresults) { %}
         <div id="p{%= p.id %}-results" class="timeline-single"></div>
         {% } %}
-        <a href="/{%= p.slug %}/timeline">Timeline</a>
+        <a href="/{%= p.namespacename %}/{%= p.slug %}/timeline">Timeline</a>
       </div>
     </div>
     {% }

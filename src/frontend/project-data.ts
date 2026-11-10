@@ -3,6 +3,7 @@ import { renderProjectDataOverview } from './render.js';
 
 const projectId = <string>$('#project-id').attr('value');
 const projectSlug = <string>$('#project-slug').attr('value');
+const namespaceSlug = <string>$('#namespace-slug').attr('value');
 const dataOverviewP = apiFetch('/rebenchdb/dash/:projectId/data-overview', {
   projectId
 });
@@ -10,5 +11,5 @@ const dataOverviewP = apiFetch('/rebenchdb/dash/:projectId/data-overview', {
 $(async () => {
   const dataOverviewResponse = await dataOverviewP;
   const data = dataOverviewResponse.data;
-  renderProjectDataOverview(data, projectSlug);
+  renderProjectDataOverview(data, namespaceSlug, projectSlug);
 });

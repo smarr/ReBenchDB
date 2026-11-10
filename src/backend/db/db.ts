@@ -16,7 +16,7 @@ import {
   FullPlotData,
   TimelineSuite
 } from '../../shared/api.js';
-import { robustPath, TotalCriterion } from '../util.js';
+import { legacyGroupName, robustPath, TotalCriterion } from '../util.js';
 import { assert } from '../logging.js';
 import { simplifyCmdline } from '../../shared/util.js';
 import type { SummaryStatistics } from '../../shared/stats.js';
@@ -28,6 +28,7 @@ import type {
   MeasurementData,
   Metadata,
   Project,
+  ProjectWithNamespace,
   RevisionComparison,
   RevisionData,
   Run,
@@ -366,14 +367,20 @@ export abstract class Database {
       return cache.get(cacheKey);
     }
 
-    const result = await this.query(insertUnionFetchQ);
-    assert(
-      result.rowCount === 1,
-      'recordCached insertUnionFetchQ did not return exactly one row. ' +
-        'rowCount: ${result.rowCount}'
-    );
-    cache.set(cacheKey, result.rows[0]);
-    return result.rows[0];
+    try {
+      const result = await this.query(insertUnionFetchQ);
+      assert(
+        result.rowCount === 1,
+        'recordCached insertUnionFetchQ did not return exactly one row. ' +
+          'rowCount: ${result.rowCount}'
+      );
+      cache.set(cacheKey, result.rows[0]);
+      return result.rows[0];
+    } catch (e: any) {
+      e.rebenchdbQuery = insertUnionFetchQ;
+      console.log({ e });
+      throw e;
+    }
   }
 
   public async getBenchmarksByProjectId(projectId: number): Promise<
@@ -563,29 +570,35 @@ export abstract class Database {
     return this.recordCached(this.projects, projectName, {
       name: 'insertOrFetchProjectByName',
       text: `WITH insertedRow AS (
-                  INSERT INTO Project (name, slug)
-                  VALUES ($1, regexp_replace($2, '[^0-9a-zA-Z-]', '-', 'g'))
+                  INSERT INTO Project (name, slug, namespaceId)
+                  SELECT $1,
+                         regexp_replace($2, '[^0-9a-zA-Z-]', '-', 'g'),
+                         n.id
+                    FROM Namespace n
+                   WHERE n.name = $3
                   ON CONFLICT DO NOTHING
                   RETURNING *
                 )
                 SELECT * FROM insertedRow
                 UNION ALL
                 SELECT * FROM Project WHERE name = $1;`,
-      values: [projectName, projectName]
+      values: [projectName, projectName, legacyGroupName]
     });
   }
 
-  public async getProjectBySlug(
-    projectNameSlug: string
-  ): Promise<Project | undefined> {
-    const q = {
-      name: 'fetchProjectBySlugName',
-      text: `SELECT * FROM Project
-              WHERE lower($1) = lower(slug)`,
-      values: [projectNameSlug]
-    };
-
-    const result = await this.query(q);
+  public async getProjectBySlugs(
+    namespaceSlug: string,
+    projectSlug: string
+  ): Promise<ProjectWithNamespace | undefined> {
+    const result = await this.query({
+      name: 'fetchProjectByNamespaceAndSlug',
+      text: `SELECT p.*, n.name AS namespacename
+               FROM Project p
+               JOIN Namespace n ON p.namespaceId = n.id
+              WHERE lower(n.name) = lower($1)
+                AND lower(p.slug) = lower($2)`,
+      values: [namespaceSlug, projectSlug]
+    });
 
     if (result.rowCount !== 1) {
       return undefined;
@@ -618,10 +631,13 @@ export abstract class Database {
     });
   }
 
-  public async getAllProjects(): Promise<Project[]> {
+  public async getAllProjects(): Promise<ProjectWithNamespace[]> {
     const result = await this.query({
       name: 'fetchAllProjects',
-      text: 'SELECT * FROM Project ORDER BY position DESC'
+      text: `SELECT p.*, n.name AS namespacename
+               FROM Project p
+               JOIN Namespace n ON p.namespaceId = n.id
+              ORDER BY p.position DESC`
     });
     return result.rows;
   }

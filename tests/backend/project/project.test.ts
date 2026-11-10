@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 import { initJestMatchers } from '../../helpers.js';
-import { Project } from '../../../src/backend/db/types.js';
+import { ProjectWithNamespace } from '../../../src/backend/db/types.js';
 import { prepareTemplate } from '../../../src/backend/templates.js';
 import { robustPath } from '../../../src/backend/util.js';
 
@@ -8,7 +8,7 @@ initJestMatchers();
 
 describe('renderProjectDataPage', () => {
   it('should render the page', () => {
-    const project: Project = {
+    const project: ProjectWithNamespace = {
       id: 1,
       name: 'Test Project',
       slug: 'test-project',
@@ -17,7 +17,9 @@ describe('renderProjectDataPage', () => {
       showchanges: true,
       allresults: true,
       githubnotification: false,
-      basebranch: 'base'
+      basebranch: 'base',
+      namespaceid: 1,
+      namespacename: 'legacy'
     };
 
     const tpl = prepareTemplate(

@@ -118,7 +118,7 @@ export interface Environment {
   /**
    * Settings reported by `rebench-denoise`.
    */
-  denoise?: Record<string, string | boolean | number>;
+  denoise?: Record<string, string | boolean | number> | null;
 }
 
 export interface BenchmarkData {

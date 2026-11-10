@@ -35,13 +35,14 @@
     </div>
     <div class="card">
       <h5 class="card-header" id="{%= it.slug %}"><a
-        href="/{%= it.slug %}/data">{%= it.name %}</a></h5>
+        href="/{%= it.namespacename %}/{%= it.slug %}/data">{%= it.name %}</a></h5>
       <div class="card-body">
         {% if (it.showchanges) { %}
         <h5>Changes</h5>
         <div class="container min-padding"><div class="row">
           <div class="col-sm min-padding scroll-list">
             <div class="list-group baseline" id="p{%= it.id %}-baseline"
+              data-namespace-slug="{%= it.namespacename %}"
               data-project-slug="{%= it.slug %}"></div>
           </div>
           <div class="col-sm min-padding scroll-list">
@@ -55,7 +56,7 @@
         <div id="p{%= it.id %}-results" class="timeline-single"></div>
         {% } %}
         <div class="project-card-content"></div>
-        <a href="/{%= it.slug %}/timeline">Timeline</a>
+        <a href="/{%= it.namespacename %}/{%= it.slug %}/timeline">Timeline</a>
       </div>
     </div>
     <div class="branch-sidebar right">
