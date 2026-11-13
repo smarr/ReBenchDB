@@ -115,8 +115,8 @@ export interface Trial {
 }
 
 export interface SoftwareUse {
-  envid: string;
-  softid: string;
+  trialid: number;
+  softid: number;
 }
 
 export interface Run {

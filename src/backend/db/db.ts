@@ -14,7 +14,8 @@ import {
   TimelineResponse,
   PlotData,
   FullPlotData,
-  TimelineSuite
+  TimelineSuite,
+  VersionInfo as ApiVersionInfo
 } from '../../shared/api.js';
 import { robustPath, TotalCriterion } from '../util.js';
 import { assert } from '../logging.js';
@@ -526,7 +527,7 @@ export abstract class Database {
     }
     const source = await this.recordSource(data.source);
 
-    return this.recordCached(this.trials, cacheKey, {
+    const trial: Trial = await this.recordCached(this.trials, cacheKey, {
       name: 'insertOrFetchTrialByUserEnvIdStartTimeExpId',
       text: `WITH insertedRow AS (
                   INSERT INTO Trial (
@@ -553,6 +554,43 @@ export abstract class Database {
         e.denoise, // $7
         e.memory, // $8
         e.clockSpeed // $9
+      ]
+    });
+
+    const software = (e.software ?? []).filter(
+      (s) => s.name !== null && s.version !== null
+    );
+    if (software.length > 0) {
+      await this.recordSoftwareUse(trial, software);
+    }
+    return trial;
+  }
+
+  private async recordSoftwareUse(
+    trial: Trial,
+    software: ApiVersionInfo[]
+  ): Promise<void> {
+    await this.query({
+      name: 'insertSoftwareUse',
+      text: `WITH sw AS (
+                SELECT * FROM unnest($2::varchar[], $3::varchar[])
+                  AS s(name, version)
+              ), inserted AS (
+                INSERT INTO SoftwareVersionInfo (name, version)
+                  SELECT name, version FROM sw
+                ON CONFLICT DO NOTHING
+                RETURNING id
+              )
+              INSERT INTO SoftwareUse (trialId, softId)
+                SELECT $1::integer, id FROM inserted
+                UNION
+                SELECT $1::integer, svi.id
+                  FROM sw JOIN SoftwareVersionInfo svi USING (name, version)
+              ON CONFLICT DO NOTHING`,
+      values: [
+        trial.id,
+        software.map((s) => s.name),
+        software.map((s) => s.version)
       ]
     });
   }

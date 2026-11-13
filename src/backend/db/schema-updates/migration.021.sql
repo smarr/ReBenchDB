@@ -31,6 +31,16 @@ UPDATE Trial t
   FROM Environment env
   WHERE t.envId = env.id;
 
+DROP TABLE SoftwareUse;
+CREATE TABLE SoftwareUse (
+  trialId integer,
+  softId integer,
+  primary key (trialId, softId),
+
+  foreign key (trialId) references Trial (id),
+  foreign key (softId) references SoftwareVersionInfo (id)
+);
+
 -- Map each environment to the oldest one with the same hostname, OS, and CPU.
 -- PARTITION BY considers NULL values as equal.
 CREATE TEMPORARY TABLE EnvMerge ON COMMIT DROP AS

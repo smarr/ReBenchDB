@@ -7,8 +7,7 @@ CREATE TABLE SchemaVersion (
 );
 INSERT INTO SchemaVersion (version) VALUES (21);
 
--- A specific software version, possibly used by multiple environments
--- or versions of environments.
+-- A specific software version, possibly used by multiple trials.
 CREATE TABLE SoftwareVersionInfo (
   id serial primary key,
   name varchar,
@@ -135,13 +134,13 @@ CREATE TABLE Trial (
 -- Trials are often looked up by their sourceId
 CREATE INDEX trial_sourceid_idx ON Trial (sourceId);
 
--- Documents the software versions used by a specific environment.
+-- Documents the software versions used by a trial.
 CREATE TABLE SoftwareUse (
-  envId integer,
+  trialId integer,
   softId integer,
-  primary key (envId, softId),
+  primary key (trialId, softId),
 
-  foreign key (envId) references Environment (id),
+  foreign key (trialId) references Trial (id),
   foreign key (softId) references SoftwareVersionInfo (id)
 );
 
