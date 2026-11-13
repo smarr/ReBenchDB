@@ -68,7 +68,8 @@ export function asHumanHz(val: number, digits = 0): string {
 }
 
 /**
- * Return a string with the environment information for display.
+ * Return a string with the details that identify the environment.
+ * Memory and clock speed may differ between trials, and are not included.
  */
 export function formatEnvironment(
   envId: number,
@@ -78,9 +79,7 @@ export function formatEnvironment(
   if (env === undefined) {
     return undefined;
   }
-  return `${env.hostname} | ${env.ostype} | ${asHumanMem(env.memory)} | ${
-    env.cpu
-  } | ${asHumanHz(env.clockspeed)}`;
+  return `${env.hostname} | ${env.ostype} | ${env.cpu}`;
 }
 
 /**

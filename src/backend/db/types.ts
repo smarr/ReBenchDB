@@ -44,9 +44,7 @@ export interface Environment {
   id: number;
   hostname: string;
   ostype: string;
-  memory: number;
   cpu: string;
-  clockspeed: number;
   note: string;
 }
 
@@ -108,6 +106,12 @@ export interface Trial {
 
   denoise: string;
   endTime: string;
+
+  /** Memory in bytes, as bigint string. */
+  memory: string | null;
+
+  /** Clock speed in Hz, as bigint string. */
+  clockspeed: string | null;
 }
 
 export interface SoftwareUse {

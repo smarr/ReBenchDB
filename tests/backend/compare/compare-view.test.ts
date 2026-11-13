@@ -61,9 +61,7 @@ const environments: Environment[] = [
     id: 1,
     hostname: 'MyHost',
     ostype: 'Linux',
-    memory: 123456,
     cpu: 'Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz',
-    clockspeed: 2800000000,
     note: 'Some notes'
   }
 ];

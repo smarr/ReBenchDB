@@ -138,17 +138,13 @@ describe('Format Functions for Numerical Values', () => {
         id: 1,
         hostname: 'host',
         ostype: 'Linux',
-        memory: 453454333,
         cpu: 'Intel Something',
-        clockspeed: 10000000,
         note: 'a note'
       }
     ];
 
     it('should return a string, if the environment is found', () => {
-      expect(formatEnvironment(1, envs)).toBe(
-        'host | Linux | 432MB | Intel Something | 10MHz'
-      );
+      expect(formatEnvironment(1, envs)).toBe('host | Linux | Intel Something');
     });
 
     it('should return undefined, if the environment is not found', () => {

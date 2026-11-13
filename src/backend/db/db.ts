@@ -494,14 +494,12 @@ export abstract class Database {
   }
 
   public async recordEnvironment(e: ApiEnvironment): Promise<Environment> {
-    const cacheKey =
-      `${e.hostName}:${e.osType}:` + `${e.memory}:${e.cpu}:${e.clockSpeed}`;
+    const cacheKey = `${e.hostName}:${e.osType}:${e.cpu}`;
     return this.recordCached(this.envs, cacheKey, {
       name: 'insertOrFetchEnvironmentByDetails',
       text: `WITH insertedRow AS (
-                  INSERT INTO Environment (
-                    hostname, osType, memory, cpu, clockSpeed)
-                  VALUES ($1, $2, $3, $4, $5)
+                  INSERT INTO Environment (hostname, osType, cpu)
+                  VALUES ($1, $2, $3)
                   ON CONFLICT DO NOTHING
                   RETURNING *
                 )
@@ -510,10 +508,8 @@ export abstract class Database {
                 SELECT * FROM Environment
                 WHERE hostname = $1 AND
                       osType IS NOT DISTINCT FROM $2 AND
-                      memory IS NOT DISTINCT FROM $3 AND
-                      cpu IS NOT DISTINCT FROM $4 AND
-                      clockSpeed IS NOT DISTINCT FROM $5;`,
-      values: [e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed]
+                      cpu IS NOT DISTINCT FROM $3;`,
+      values: [e.hostName, e.osType, e.cpu]
     });
   }
 
@@ -535,8 +531,8 @@ export abstract class Database {
       text: `WITH insertedRow AS (
                   INSERT INTO Trial (
                     manualRun, startTime, expId, username,
-                    envId, sourceId, denoise)
-                  VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    envId, sourceId, denoise, memory, clockSpeed)
+                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                   ON CONFLICT DO NOTHING
                   RETURNING *
                 )
@@ -554,7 +550,9 @@ export abstract class Database {
         e.userName, // $4
         env.id, // $5
         source.id, // $6
-        e.denoise // $7
+        e.denoise, // $7
+        e.memory, // $8
+        e.clockSpeed // $9
       ]
     });
   }
@@ -841,14 +839,14 @@ export abstract class Database {
   ): Promise<Environment[]> {
     const result = await this.query({
       name: 'fetchEnvForComparison',
-      text: `SELECT
-                env.id as id, env.hostname, env.ostype, env.memory,
-                env.cpu, env.clockspeed, note
+      text: `SELECT DISTINCT
+                env.id as id, env.hostname, env.ostype, env.cpu, env.note
              FROM Source src
                 JOIN Trial t         ON t.sourceId = src.id
                 JOIN Experiment exp  ON exp.id = t.expId
                 JOIN Environment env ON t.envId = env.id
-             WHERE (commitId = $1 OR commitid = $2) AND exp.projectId = $3`,
+             WHERE (commitId = $1 OR commitid = $2) AND exp.projectId = $3
+             ORDER BY env.id`,
       values: [commitHash1, commitHash2, projectId]
     });
     return result.rows;
