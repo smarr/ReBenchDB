@@ -8,7 +8,6 @@ import {
 import { loadSmallPayload, loadSmallPayloadFor } from '../../payload.js';
 import { getCompareViewData } from '../../../src/backend/compare/report.js';
 import type { BenchmarkData } from '../../../src/shared/api.js';
-import type { Project } from '../../../src/backend/db/types.js';
 import type { CompareViewWithData } from '../../../src/shared/view-types.js';
 
 const projectSlug = 'Small-Example-Project';
@@ -131,23 +130,14 @@ describe('Machine changed without changing its hostname', () => {
   });
 
   it('should report both environments for a comparison', async () => {
-    const project = <Project>await db.getProjectBySlug(projectSlug);
-    const envs = await db.getEnvironmentsForComparison(
-      project.id,
-      beforeUpgradeCommit,
-      afterUpgradeCommit
-    );
+    const view = await compare(db, beforeUpgradeCommit, afterUpgradeCommit);
+    const envs = view.stats.environments;
     expect(envs.map((e) => e.cpu).sort()).toEqual([newCpu, oldCpu]);
   });
 
   it('should report only the identity of each environment', async () => {
-    const project = <Project>await db.getProjectBySlug(projectSlug);
-    const envs = await db.getEnvironmentsForComparison(
-      project.id,
-      beforeUpgradeCommit,
-      afterUpgradeCommit
-    );
-    for (const e of envs) {
+    const view = await compare(db, beforeUpgradeCommit, afterUpgradeCommit);
+    for (const e of view.stats.environments) {
       expect(Object.keys(e).sort()).toEqual([
         'cpu',
         'hostname',
@@ -233,6 +223,29 @@ describe('Memory and clock speed are instable measurements', () => {
     const view = await compare(db, beforeUpgradeCommit, afterUpgradeCommit);
     expect(view.stats.acrossVersions.missing).toEqual([]);
     expect(view.stats.environments.map((e) => e.cpu)).toEqual([oldCpu]);
+  });
+
+  it('should summarize the differences of the environment', async () => {
+    const view = await compare(db, beforeUpgradeCommit, afterUpgradeCommit);
+    const table = view.environmentTable;
+    expect(table.columns).toHaveLength(1);
+
+    const env = table.columns[0];
+    expect(env.cpu).toEqual(oldCpu);
+    expect(env.split).toBe(true);
+    expect(table.groups[0]).toEqual({
+      name: 'Hardware',
+      rows: [
+        {
+          name: 'Memory',
+          values: [{ base: ['16.00GB'], change: ['32.00GB'], differs: true }]
+        },
+        {
+          name: 'Clock Speed',
+          values: [{ base: ['2.00GHz'], change: ['3.00GHz'], differs: true }]
+        }
+      ]
+    });
   });
 });
 

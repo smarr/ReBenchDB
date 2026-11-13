@@ -16,7 +16,8 @@ import type {
   RunDetails,
   StatsSummaryPartial,
   ReportConfig,
-  CompareStatsRowAcrossExes
+  CompareStatsRowAcrossExes,
+  EnvironmentTable
 } from '../../../src/shared/view-types.js';
 import { robustPath } from '../../../src/backend/util.js';
 import {
@@ -189,6 +190,82 @@ describe('Compare View Parts', () => {
 
       const result = tpl(data);
       expect(result).toEqualHtmlFragment('compare-view/stats-summary');
+    });
+  });
+
+  describe('Environment Summary', () => {
+    const tpl = prepareTemplate(
+      robustPath('backend/compare/html/environment-summary.html'),
+      true
+    );
+
+    it('should render all machines in a single table', () => {
+      const table: EnvironmentTable = {
+        columns: [
+          {
+            envId: 1,
+            hostname: 'host',
+            ostype: 'Linux',
+            cpu: 'CPU A',
+            inBase: true,
+            inChange: true,
+            split: true
+          },
+          {
+            envId: 2,
+            hostname: 'other',
+            ostype: 'Linux',
+            cpu: 'CPU B',
+            inBase: false,
+            inChange: true,
+            split: false
+          },
+          {
+            envId: 3,
+            hostname: 'third',
+            ostype: 'Darwin',
+            cpu: 'CPU C',
+            inBase: true,
+            inChange: true,
+            split: false
+          }
+        ],
+        groups: [
+          {
+            name: 'Hardware',
+            rows: [
+              {
+                name: 'Memory',
+                values: [
+                  { base: ['16.00GB'], change: ['16.00GB'], differs: false },
+                  { base: [], change: ['32.00GB'], differs: false },
+                  { base: ['8.00GB'], change: ['8.00GB'], differs: false }
+                ]
+              }
+            ]
+          },
+          {
+            name: 'Software',
+            rows: [
+              {
+                name: 'kernel-release',
+                values: [
+                  { base: ['6.1.0', '6.1.1'], change: [], differs: true },
+                  null,
+                  { base: ['24.0'], change: ['24.0'], differs: false }
+                ]
+              }
+            ]
+          }
+        ]
+      };
+
+      const result = tpl({
+        table,
+        baselineHash6: 'aaaaaa',
+        changeHash6: 'bbbbbb'
+      });
+      expect(result).toEqualHtmlFragment('compare-view/environment-summary');
     });
   });
 

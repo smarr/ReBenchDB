@@ -7,7 +7,9 @@ import {
 } from './db-testing.js';
 import { loadSmallPayloadFor } from '../../payload.js';
 import type { VersionInfo } from '../../../src/shared/api.js';
+import type { Project } from '../../../src/backend/db/types.js';
 
+const projectSlug = 'Small-Example-Project';
 const beforeUpdateCommit = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 const afterUpdateCommit = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
 
@@ -69,6 +71,31 @@ describe('Software versions of a trial', () => {
       { exp: 'Before', name: 'kernel-release', version: '6.1.0' },
       { exp: 'After', name: 'architecture', version: 'x86_64' },
       { exp: 'After', name: 'kernel-release', version: '6.8.0' }
+    ]);
+  });
+
+  it('should report the software of the trials of a comparison', async () => {
+    const project = <Project>await db.getProjectBySlug(projectSlug);
+    const trials = await db.getTrialDetailsForComparison(
+      project.id,
+      beforeUpdateCommit,
+      afterUpdateCommit
+    );
+    expect(trials.map((t) => [t.commitid, t.software])).toEqual([
+      [
+        beforeUpdateCommit,
+        [
+          { name: 'architecture', version: 'x86_64' },
+          { name: 'kernel-release', version: '6.1.0' }
+        ]
+      ],
+      [
+        afterUpdateCommit,
+        [
+          { name: 'architecture', version: 'x86_64' },
+          { name: 'kernel-release', version: '6.8.0' }
+        ]
+      ]
     ]);
   });
 

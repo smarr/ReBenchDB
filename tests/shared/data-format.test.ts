@@ -140,11 +140,28 @@ describe('Format Functions for Numerical Values', () => {
         ostype: 'Linux',
         cpu: 'Intel Something',
         note: 'a note'
+      },
+      {
+        id: 3,
+        hostname: '<host>',
+        ostype: 'Linux',
+        cpu: 'CPU "A" & B',
+        note: 'a note'
       }
     ];
 
-    it('should return a string, if the environment is found', () => {
-      expect(formatEnvironment(1, envs)).toBe('host | Linux | Intel Something');
+    it('should return identity and link to details, if found', () => {
+      expect(formatEnvironment(1, envs)).toBe(
+        'host | Linux | Intel Something ' +
+          '<a href="#environment-1" title="Details of all trials">&darr;</a>'
+      );
+    });
+
+    it('should escape the details, since they are shown as HTML', () => {
+      expect(formatEnvironment(3, envs)).toBe(
+        '&lt;host&gt; | Linux | CPU &quot;A&quot; &amp; B ' +
+          '<a href="#environment-3" title="Details of all trials">&darr;</a>'
+      );
     });
 
     it('should return undefined, if the environment is not found', () => {
