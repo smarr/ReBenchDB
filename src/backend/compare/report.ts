@@ -237,16 +237,12 @@ export async function getCompareViewData(
     base,
     change
   );
-  const environments = await db.getEnvironmentsForComparison(
-    projectId,
-    base,
-    change
-  );
+  const trials = await db.getTrialDetailsForComparison(projectId, base, change);
   const profiles = await db.getProfileAvailability(projectId, base, change);
 
   return prepareCompareView(
     results,
-    environments,
+    trials,
     profiles,
     reportId,
     projectSlug,

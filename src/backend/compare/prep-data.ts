@@ -13,12 +13,12 @@ import {
 } from '../../shared/stats.js';
 import type {
   CriterionData,
-  Environment,
   MeasurementData,
   Measurements,
   ProcessedResult,
   RevisionComparison,
-  RevisionData
+  RevisionData,
+  TrialDetails
 } from '../db/types.js';
 import {
   AllStats,
@@ -46,6 +46,11 @@ import { siteAesthetics } from '../../shared/aesthetics.js';
 
 import { collateMeasurements } from './db-data.js';
 import { HasProfile } from '../db/has-profile.js';
+import {
+  environmentsOf,
+  summarizeEnvironments,
+  toEnvironmentTable
+} from './environment-summary.js';
 import { assert } from '../../backend/logging.js';
 import { getBenchmarkArgumentsAsNamePart } from '../../shared/helpers.js';
 import type { ValuesPossiblyMissing } from '../../shared/api.js';
@@ -1076,7 +1081,7 @@ export function calculateDataForOverviewPlot(
 
 export async function prepareCompareView(
   results: MeasurementData[],
-  environments: Environment[],
+  trials: TrialDetails[],
   hasProfiles: HasProfile | null,
   reportId: string,
   projectSlug: string,
@@ -1114,7 +1119,14 @@ export async function prepareCompareView(
 
     notInBoth: allStats.acrossVersions.missing.length > 0,
 
-    stats: { ...allStats, environments },
+    stats: { ...allStats, environments: environmentsOf(trials) },
+    environmentTable: toEnvironmentTable(
+      summarizeEnvironments(
+        trials,
+        revDetails.baseCommitId,
+        revDetails.changeCommitId
+      )
+    ),
     config: {
       reportsUrl: siteConfig.reportsUrl,
       overviewPlotWidth: siteAesthetics.overviewPlotWidth

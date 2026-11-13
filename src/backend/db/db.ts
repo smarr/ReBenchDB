@@ -33,7 +33,8 @@ import type {
   RevisionData,
   Run,
   Source,
-  Trial
+  Trial,
+  TrialDetails
 } from './types.js';
 import { TimedCacheValidity } from './timed-cache-validity.js';
 import { HasProfile } from './has-profile.js';
@@ -870,21 +871,32 @@ export abstract class Database {
     return result.rows;
   }
 
-  public async getEnvironmentsForComparison(
+  public async getTrialDetailsForComparison(
     projectId: number,
     commitHash1: string,
     commitHash2: string
-  ): Promise<Environment[]> {
+  ): Promise<TrialDetails[]> {
     const result = await this.query({
-      name: 'fetchEnvForComparison',
-      text: `SELECT DISTINCT
-                env.id as id, env.hostname, env.ostype, env.cpu, env.note
+      name: 'fetchTrialDetailsForComparison',
+      text: `SELECT
+                t.id as trialId, src.commitId,
+                env.id as envId, env.hostname, env.osType, env.cpu, env.note,
+                t.memory, t.clockSpeed, t.denoise,
+                COALESCE(
+                  json_agg(
+                    json_build_object('name', svi.name, 'version', svi.version)
+                    ORDER BY svi.name, svi.version
+                  ) FILTER (WHERE svi.id IS NOT NULL),
+                  '[]') as software
              FROM Source src
                 JOIN Trial t         ON t.sourceId = src.id
                 JOIN Experiment exp  ON exp.id = t.expId
                 JOIN Environment env ON t.envId = env.id
+                LEFT JOIN SoftwareUse su         ON su.trialId = t.id
+                LEFT JOIN SoftwareVersionInfo svi ON svi.id = su.softId
              WHERE (commitId = $1 OR commitid = $2) AND exp.projectId = $3
-             ORDER BY env.id`,
+             GROUP BY t.id, src.commitId, env.id
+             ORDER BY t.startTime, t.id`,
       values: [commitHash1, commitHash2, projectId]
     });
     return result.rows;
