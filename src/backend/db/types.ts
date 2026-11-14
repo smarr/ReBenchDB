@@ -44,9 +44,7 @@ export interface Environment {
   id: number;
   hostname: string;
   ostype: string;
-  memory: number;
   cpu: string;
-  clockspeed: number;
   note: string;
 }
 
@@ -108,11 +106,40 @@ export interface Trial {
 
   denoise: string;
   endTime: string;
+
+  /** Memory in bytes, as bigint string. */
+  memory: string | null;
+
+  /** Clock speed in Hz, as bigint string. */
+  clockspeed: string | null;
+}
+
+/**
+ * The details of a trial that describe the environment it was executed in.
+ */
+export interface TrialDetails {
+  trialid: number;
+  commitid: string;
+
+  envid: number;
+  hostname: string;
+  ostype: string;
+  cpu: string;
+  note: string;
+
+  /** Memory in bytes, as bigint string. */
+  memory: string | null;
+
+  /** Clock speed in Hz, as bigint string. */
+  clockspeed: string | null;
+
+  denoise: Record<string, string | number | boolean | null> | null;
+  software: { name: string; version: string }[];
 }
 
 export interface SoftwareUse {
-  envid: string;
-  softid: string;
+  trialid: number;
+  softid: number;
 }
 
 export interface Run {

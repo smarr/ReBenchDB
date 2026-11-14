@@ -67,8 +67,21 @@ export function asHumanHz(val: number, digits = 0): string {
   return `${h.toFixed(digits)}${hz[i]}`;
 }
 
+export function escapeHtml(text: string | null): string {
+  if (text === null) {
+    return '';
+  }
+  return text
+    .replace(/&/g, '&amp;') // & must be first
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 /**
- * Return a string with the environment information for display.
+ * Return HTML with the details that identify the environment,
+ * and a link to the summary of the details of all its trials.
  */
 export function formatEnvironment(
   envId: number,
@@ -78,9 +91,11 @@ export function formatEnvironment(
   if (env === undefined) {
     return undefined;
   }
-  return `${env.hostname} | ${env.ostype} | ${asHumanMem(env.memory)} | ${
-    env.cpu
-  } | ${asHumanHz(env.clockspeed)}`;
+  const identity = [env.hostname, env.ostype, env.cpu].map(escapeHtml);
+  return (
+    `${identity.join(' | ')} ` +
+    `<a href="#environment-${env.id}" title="Details of all trials">&darr;</a>`
+  );
 }
 
 /**

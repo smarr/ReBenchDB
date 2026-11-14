@@ -5,10 +5,9 @@ CREATE TABLE SchemaVersion (
   id boolean primary key default true check (id),
   version integer NOT NULL
 );
-INSERT INTO SchemaVersion (version) VALUES (20);
+INSERT INTO SchemaVersion (version) VALUES (21);
 
--- A specific software version, possibly used by multiple environments
--- or versions of environments.
+-- A specific software version, possibly used by multiple trials.
 CREATE TABLE SoftwareVersionInfo (
   id serial primary key,
   name varchar,
@@ -16,21 +15,17 @@ CREATE TABLE SoftwareVersionInfo (
   unique (name, version)
 );
 
--- Identifies the specific state of an environment, including
--- the relevant software versions.
+-- Identifies a specific environment a benchmark was executed in.
+-- We keep only coarse information here. Trials store details
+-- that change frequently.
 CREATE TABLE Environment (
   id serial primary key,
   hostname varchar,
   osType varchar,
-  -- total number of bytes of memory provided by the system
-  memory bigint,
   cpu varchar,
-
-  -- nominal clock speed in Hz
-  clockSpeed bigint,
   note text,
 
-  unique nulls not distinct (hostname, osType, memory, cpu, clockSpeed)
+  unique nulls not distinct (hostname, osType, cpu)
 );
 
 -- A specific criterion that is measured for a benchmark.
@@ -115,6 +110,12 @@ CREATE TABLE Trial (
   -- details on system settings that influence noise level for measurements
   denoise jsonb,
 
+  -- number of bytes of memory reported by a system
+  memory bigint,
+
+  -- clock speed in Hz
+  clockSpeed bigint,
+
   -- can only be supplied when everything is done
   -- but we may want to start storing data before
   endTime timestamp with time zone NULL,
@@ -133,13 +134,13 @@ CREATE TABLE Trial (
 -- Trials are often looked up by their sourceId
 CREATE INDEX trial_sourceid_idx ON Trial (sourceId);
 
--- Documents the software versions used by a specific environment.
+-- Documents the software versions used by a trial.
 CREATE TABLE SoftwareUse (
-  envId integer,
+  trialId integer,
   softId integer,
-  primary key (envId, softId),
+  primary key (trialId, softId),
 
-  foreign key (envId) references Environment (id),
+  foreign key (trialId) references Trial (id),
   foreign key (softId) references SoftwareVersionInfo (id)
 );
 

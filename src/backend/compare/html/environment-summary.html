@@ -1,0 +1,53 @@
+<h2 id="environment">Environment</h2>
+{% if (it.table.columns.length > 0) {
+   const numColumns = 1 + it.table.columns.reduce((n, c) => n + (c.split ? 2 : 1), 0);
+   const base = `<span class="baseline-badge">${it.baselineHash6}</span>`;
+   const change = `<span class="change-badge">${it.changeHash6}</span>`;
+   const valuesOf = (values) => values.length > 0 ? values.join(', ') : '—';
+%}<div class="table-responsive">
+<table class="table table-sm small">
+<thead>
+<tr>
+<th scope="col" rowspan="2"></th>
+{% for (const c of it.table.columns) {
+%}<th scope="{%= c.split ? 'colgroup' : 'col' %}"{% if (c.split) { %} colspan="2"{% } %} id="environment-{%= c.envId %}">{%= c.hostname %}<br><span class="fw-normal text-body-secondary">{%= c.cpu %} | {%= c.ostype %}</span></th>
+{% }
+%}</tr>
+<tr>
+{% for (const c of it.table.columns) {
+     if (c.split) {
+%}<th scope="col">{%- base %}</th>
+<th scope="col">{%- change %}</th>
+{%   } else {
+%}<th scope="col">{%- c.inBase ? base : '' %}{% if (c.inBase && c.inChange) { %} {% } %}{%- c.inChange ? change : '' %}</th>
+{%   }
+   }
+%}</tr>
+</thead>
+{% for (const g of it.table.groups) {
+%}<tbody>
+<tr><th scope="rowgroup" colspan="{%= numColumns %}">{%= g.name %}</th></tr>
+{% for (const r of g.rows) {
+%}<tr>
+<th scope="row">{%= r.name %}</th>
+{%   r.values.forEach((v, i) => {
+       if (it.table.columns[i].split) {
+         if (v === null) {
+%}<td></td>
+<td></td>
+{%       } else {
+%}<td{% if (v.differs) { %} class="table-warning"{% } %}>{%= valuesOf(v.base) %}</td>
+<td{% if (v.differs) { %} class="table-warning"{% } %}>{%= valuesOf(v.change) %}</td>
+{%       }
+       } else {
+%}<td>{%= v === null ? '' : valuesOf(v.base.length > 0 ? v.base : v.change) %}</td>
+{%     }
+     });
+%}</tr>
+{% }
+%}</tbody>
+{% }
+%}</table>
+</div>
+{% }
+%}

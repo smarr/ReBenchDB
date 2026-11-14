@@ -143,7 +143,11 @@
 {% if (it.hasExeComparison) {
 %}{%- include('compare-exes.html', {...it.stats, config: it.config}) %}{%
    }
-%}
+%}{%- include('environment-summary.html', {
+        table: it.environmentTable,
+        baselineHash6: it.baselineHash6,
+        changeHash6: it.changeHash6
+    }) %}
 
 </main>
 </div></div>

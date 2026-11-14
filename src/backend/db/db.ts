@@ -14,7 +14,8 @@ import {
   TimelineResponse,
   PlotData,
   FullPlotData,
-  TimelineSuite
+  TimelineSuite,
+  VersionInfo as ApiVersionInfo
 } from '../../shared/api.js';
 import { robustPath, TotalCriterion } from '../util.js';
 import { assert } from '../logging.js';
@@ -32,7 +33,8 @@ import type {
   RevisionData,
   Run,
   Source,
-  Trial
+  Trial,
+  TrialDetails
 } from './types.js';
 import { TimedCacheValidity } from './timed-cache-validity.js';
 import { HasProfile } from './has-profile.js';
@@ -494,14 +496,12 @@ export abstract class Database {
   }
 
   public async recordEnvironment(e: ApiEnvironment): Promise<Environment> {
-    const cacheKey =
-      `${e.hostName}:${e.osType}:` + `${e.memory}:${e.cpu}:${e.clockSpeed}`;
+    const cacheKey = `${e.hostName}:${e.osType}:${e.cpu}`;
     return this.recordCached(this.envs, cacheKey, {
       name: 'insertOrFetchEnvironmentByDetails',
       text: `WITH insertedRow AS (
-                  INSERT INTO Environment (
-                    hostname, osType, memory, cpu, clockSpeed)
-                  VALUES ($1, $2, $3, $4, $5)
+                  INSERT INTO Environment (hostname, osType, cpu)
+                  VALUES ($1, $2, $3)
                   ON CONFLICT DO NOTHING
                   RETURNING *
                 )
@@ -510,10 +510,8 @@ export abstract class Database {
                 SELECT * FROM Environment
                 WHERE hostname = $1 AND
                       osType IS NOT DISTINCT FROM $2 AND
-                      memory IS NOT DISTINCT FROM $3 AND
-                      cpu IS NOT DISTINCT FROM $4 AND
-                      clockSpeed IS NOT DISTINCT FROM $5;`,
-      values: [e.hostName, e.osType, e.memory, e.cpu, e.clockSpeed]
+                      cpu IS NOT DISTINCT FROM $3;`,
+      values: [e.hostName, e.osType, e.cpu]
     });
   }
 
@@ -530,13 +528,13 @@ export abstract class Database {
     }
     const source = await this.recordSource(data.source);
 
-    return this.recordCached(this.trials, cacheKey, {
+    const trial: Trial = await this.recordCached(this.trials, cacheKey, {
       name: 'insertOrFetchTrialByUserEnvIdStartTimeExpId',
       text: `WITH insertedRow AS (
                   INSERT INTO Trial (
                     manualRun, startTime, expId, username,
-                    envId, sourceId, denoise)
-                  VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    envId, sourceId, denoise, memory, clockSpeed)
+                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                   ON CONFLICT DO NOTHING
                   RETURNING *
                 )
@@ -554,7 +552,46 @@ export abstract class Database {
         e.userName, // $4
         env.id, // $5
         source.id, // $6
-        e.denoise // $7
+        e.denoise, // $7
+        e.memory, // $8
+        e.clockSpeed // $9
+      ]
+    });
+
+    const software = (e.software ?? []).filter(
+      (s) => s.name !== null && s.version !== null
+    );
+    if (software.length > 0) {
+      await this.recordSoftwareUse(trial, software);
+    }
+    return trial;
+  }
+
+  private async recordSoftwareUse(
+    trial: Trial,
+    software: ApiVersionInfo[]
+  ): Promise<void> {
+    await this.query({
+      name: 'insertSoftwareUse',
+      text: `WITH sw AS (
+                SELECT * FROM unnest($2::varchar[], $3::varchar[])
+                  AS s(name, version)
+              ), inserted AS (
+                INSERT INTO SoftwareVersionInfo (name, version)
+                  SELECT name, version FROM sw
+                ON CONFLICT DO NOTHING
+                RETURNING id
+              )
+              INSERT INTO SoftwareUse (trialId, softId)
+                SELECT $1::integer, id FROM inserted
+                UNION
+                SELECT $1::integer, svi.id
+                  FROM sw JOIN SoftwareVersionInfo svi USING (name, version)
+              ON CONFLICT DO NOTHING`,
+      values: [
+        trial.id,
+        software.map((s) => s.name),
+        software.map((s) => s.version)
       ]
     });
   }
@@ -834,21 +871,32 @@ export abstract class Database {
     return result.rows;
   }
 
-  public async getEnvironmentsForComparison(
+  public async getTrialDetailsForComparison(
     projectId: number,
     commitHash1: string,
     commitHash2: string
-  ): Promise<Environment[]> {
+  ): Promise<TrialDetails[]> {
     const result = await this.query({
-      name: 'fetchEnvForComparison',
+      name: 'fetchTrialDetailsForComparison',
       text: `SELECT
-                env.id as id, env.hostname, env.ostype, env.memory,
-                env.cpu, env.clockspeed, note
+                t.id as trialId, src.commitId,
+                env.id as envId, env.hostname, env.osType, env.cpu, env.note,
+                t.memory, t.clockSpeed, t.denoise,
+                COALESCE(
+                  json_agg(
+                    json_build_object('name', svi.name, 'version', svi.version)
+                    ORDER BY svi.name, svi.version
+                  ) FILTER (WHERE svi.id IS NOT NULL),
+                  '[]') as software
              FROM Source src
                 JOIN Trial t         ON t.sourceId = src.id
                 JOIN Experiment exp  ON exp.id = t.expId
                 JOIN Environment env ON t.envId = env.id
-             WHERE (commitId = $1 OR commitid = $2) AND exp.projectId = $3`,
+                LEFT JOIN SoftwareUse su         ON su.trialId = t.id
+                LEFT JOIN SoftwareVersionInfo svi ON svi.id = su.softId
+             WHERE (commitId = $1 OR commitid = $2) AND exp.projectId = $3
+             GROUP BY t.id, src.commitId, env.id
+             ORDER BY t.startTime, t.id`,
       values: [commitHash1, commitHash2, projectId]
     });
     return result.rows;

@@ -214,6 +214,54 @@ export interface CompareViewWithoutData extends CompareViewBasics {
   revisionFound: false;
 }
 
+export interface EnvironmentProperty {
+  name: string;
+
+  /** The distinct values reported by the trials of the baseline. */
+  base: string[];
+
+  /** The distinct values reported by the trials of the change. */
+  change: string[];
+
+  /** Whether baseline and change were executed with different values. */
+  differs: boolean;
+}
+
+/** A machine in the environment table. */
+export interface EnvironmentColumn {
+  envId: number;
+  hostname: string;
+  ostype: string;
+  cpu: string;
+
+  inBase: boolean;
+  inChange: boolean;
+
+  /**
+   * Whether baseline and change are shown in separate columns,
+   * because they were executed with different details.
+   */
+  split: boolean;
+}
+
+export interface EnvironmentRow {
+  name: string;
+
+  /** The values per column, or null if the machine did not report them. */
+  values: (Omit<EnvironmentProperty, 'name'> | null)[];
+}
+
+export interface EnvironmentRowGroup {
+  name: string;
+  rows: EnvironmentRow[];
+}
+
+/** The details of all machines of a comparison, in a single table. */
+export interface EnvironmentTable {
+  columns: EnvironmentColumn[];
+  groups: EnvironmentRowGroup[];
+}
+
 export interface CompareViewWithData extends CompareViewBasics {
   revisionFound: true;
 
@@ -225,6 +273,7 @@ export interface CompareViewWithData extends CompareViewBasics {
   navigation: CompareNavPartial;
 
   stats: CompareStats;
+  environmentTable: EnvironmentTable;
   config: ReportConfig;
 
   hasExeComparison: boolean;

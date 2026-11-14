@@ -1,3 +1,4 @@
+import { escapeHtml } from '../shared/data-format.js';
 import type {
   ChangesResponse,
   ChangesRow,
@@ -9,13 +10,8 @@ import { renderResultsPlots } from './plots.js';
 export function filterCommitMessage(msg: string): string {
   const result = msg
     .normalize() // normalize Unicode first
-    .replace(/Signed-off-by:.*?\n/g, '')
-    .replace(/&/g, '&amp;') // & must be first
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-  return result.trim();
+    .replace(/Signed-off-by:.*?\n/g, '');
+  return escapeHtml(result.trim());
 }
 
 function shortCommitId(commitId) {
