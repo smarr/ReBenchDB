@@ -12,6 +12,7 @@ import { getExpData } from './data-export.js';
 import { Database } from '../db/db.js';
 import { rebenchVersion, robustPath } from '../../backend/util.js';
 import { Source } from '../db/types.js';
+import { isPrefetchRequest, parseId } from '../request-check.js';
 
 const projectHtml = prepareTemplate(robustPath('backend/project/project.html'));
 
@@ -75,18 +76,23 @@ export async function renderDataExport(
   ctx: ParameterizedContext,
   db: Database
 ): Promise<void> {
-  const start = startRequest();
-  const format = ctx.params.expIdAndExtension.endsWith('.json.gz')
-    ? 'json'
-    : 'csv';
-  const expId = ctx.params.expIdAndExtension.replace(`.${format}.gz`, '');
+  if (isPrefetchRequest(ctx)) {
+    ctx.set('Cache-Control', 'must-revalidate');
+    ctx.status = 425; // HTTP Code for 'Too Early'
+    return;
+  }
 
-  const data = await getExpData(
-    ctx.params.projectSlug,
-    Number(expId),
-    db,
-    format
-  );
+  const match = /^(\d+)\.(json|csv)\.gz$/.exec(ctx.params.expIdAndExtension);
+  const expId = parseId(match?.[1]);
+  if (match === null || expId === null) {
+    ctx.status = 404;
+    ctx.body = `Data export ${ctx.params.expIdAndExtension} not found`;
+    return;
+  }
+  const format = match[2] as 'json' | 'csv';
+
+  const start = startRequest();
+  const data = await getExpData(ctx.params.projectSlug, expId, db, format);
 
   if (data.preparingData) {
     ctx.body = expDataTpl({ ...data, rebenchVersion });
