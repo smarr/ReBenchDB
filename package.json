@@ -10,7 +10,7 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "@koa/router": "15.7.0",
+    "@koa/router": "15.7.1",
     "@octokit/auth-app": "8.3.1",
     "@octokit/rest": "22.0.1",
     "@sgratzl/chartjs-chart-boxplot": "4.4.5",
@@ -21,23 +21,20 @@
     "ejs": "7.0.2",
     "graphql": "16.14.2",
     "graphql-request": "7.4.0",
-    "join-images": "1.1.5",
-    "koa": "3.2.1",
+    "join-images": "1.5.0",
+    "koa": "3.3.0",
     "koa-body": "8.0.1",
     "pg": "8.23.1",
     "promisify-child-process": "5.0.1",
     "sharp": "0.35.5",
-    "tslog": "5.4.0",
+    "tslog": "5.5.0",
     "uplot": "1.6.32"
   },
   "overrides": {
-    "join-images": {
-      "sharp": "$sharp"
-    },
     "test-exclude": "^7.0.1"
   },
   "engines": {
-    "node": ">=21.0.0"
+    "node": ">=24.0.0"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -50,21 +47,21 @@
     "@types/pngjs": "6.0.5",
     "@typescript/native-preview": "7.0.0-dev.20260707.2",
     "ajv": "8.20.0",
-    "eslint": "10.13.0",
+    "eslint": "10.15.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-jest": "29.17.0",
     "eslint-plugin-prettier": "5.5.7",
-    "globals": "17.13.0",
+    "globals": "17.14.0",
     "jest": "30.5.2",
-    "nock": "15.0.5",
+    "nock": "15.0.6",
     "nodemon": "3.1.14",
     "patch-package": "8.0.1",
     "pixelmatch": "8.0.0",
-    "prettier": "3.9.10",
+    "prettier": "3.10.1",
     "source-map-support": "0.5.21",
     "terser": "5.51.2",
     "ts-jest": "29.4.15",
-    "typescript-eslint": "8.72.0",
+    "typescript-eslint": "8.72.2",
     "typescript-json-schema": "0.68.0"
   },
   "jest": {
