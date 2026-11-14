@@ -126,18 +126,9 @@ router.get('/:projectSlug', async (ctx) => renderProjectPage(ctx, db));
 defineRoute('/:projectSlug/source/:sourceId', router, db, getSourceAsJson);
 router.get('/:projectSlug/timeline', async (ctx) => renderTimeline(ctx, db));
 router.get('/:projectSlug/data', async (ctx) => renderProjectDataPage(ctx, db));
-router.get('/:projectSlug/data/:expIdAndExtension', async (ctx) => {
-  if (
-    ctx.header['X-Purpose'] === 'preview' ||
-    ctx.header['Purpose'] === 'prefetch' ||
-    ctx.header['X-Moz'] === 'prefetch'
-  ) {
-    ctx.set('Cache-Control', 'must-revalidate');
-    ctx.status = 425; // HTTP Code for 'Too Early'
-    return;
-  }
-  return renderDataExport(ctx, db);
-});
+router.get('/:projectSlug/data/:expIdAndExtension', async (ctx) =>
+  renderDataExport(ctx, db)
+);
 router.get('/:projectSlug/compare/:baseline..:change', async (ctx) =>
   renderComparePage(ctx, db)
 );
